@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [vue()],
   test: {
     globals: true,
-    environment: 'happy-dom',
+    environment: 'node',
     setupFiles: ['./tests/setup.ts'],
     coverage: {
       provider: 'v8',

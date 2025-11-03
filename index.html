@@ -22,7 +22,7 @@
   <script>
     window.MathJax = {
       tex: {
-        inlineMath: [['\\(', '\\)'], ['$', '$']],
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
         displayMath: [['$$', '$$'], ['\\[', '\\]']],
         processEscapes: true,
         processEnvironments: true,
@@ -33,41 +33,26 @@
           N: '\\mathbb{N}',
           Z: '\\mathbb{Z}',
           Q: '\\mathbb{Q}'
-        },
-        packages: { '[+]': ['ams', 'physics', 'color'] }
-      },
-      loader: {
-        load: ['[tex]/ams', '[tex]/physics', '[tex]/color']
+        }
       },
       svg: {
-        scale: 1.2,
+        fontCache: 'global',
+        scale: 1.1,
         minScale: 0.5,
-        mtextInheritFont: true,
-        merrorInheritFont: true,
-        mathmlSpacing: false,
-        skipAttributes: {},
-        exFactor: 0.5,
-        displayAlign: 'center',
-        displayIndent: '0'
+        displayAlign: 'center'
       },
       startup: {
         pageReady: () => {
-          return window.MathJax.startup.defaultPageReady().then(() => {
-            console.log('✅ MathJax 已成功加载并初始化');
-            // 触发自定义事件通知应用 MathJax 已就绪
+          return MathJax.startup.defaultPageReady().then(() => {
+            console.log('✅ MathJax 已成功加载');
             window.dispatchEvent(new Event('mathjax-ready'));
           }).catch((err) => {
-            console.error('❌ MathJax 初始化失败:', err);
+            console.error('❌ MathJax 加载失败:', err);
           });
         }
       },
       options: {
-        enableMenu: true,
-        menuOptions: {
-          settings: {
-            zoom: 'Click'
-          }
-        }
+        enableMenu: true
       }
     };
   </script>
@@ -84,7 +69,6 @@
   <script type="module" src="/src/main.ts"></script>
 
   <!-- 引入 MathJax -->
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 </body>
 

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>张祥前统一场论：空间螺旋运动与力的方向</title>
+  <script src=" https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js "></script>
+  <script src=" https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js "></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background-color: #000;
+      color: white;
+    }
+
+    #container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+      max-width: 300px;
+    }
+
+    #controls {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    button {
+      margin: 5px;
+      padding: 5px 10px;
+      background-color: #444;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #666;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container"></div>
+  <div id="info">
+    <h3>张祥前统一场论可视化</h3>
+    <p>红色箭头：电场方向 (X轴)</p>
+    <p>蓝色箭头：磁场方向 (Z轴)</p>
+    <p>绿色箭头：引力场方向 (径向向内)</p>
+    <p>白色轨迹：空间螺旋运动路径</p>
+  </div>
+  <div id="controls">
+    <button id="playPause">暂停</button>
+    <button id="reset">重置</button>
+    <div>
+      <label for="timeScale">时间速度:</label>
+      <input type="range" id="timeScale" min="0.1" max="2" step="0.1" value="1">
+    </div>
+  </div>
+
+  <script>
+    // 初始化Three.js场景
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000);
+    document.getElementById('container').appendChild(renderer.domElement);
+
+    // 添加轨道控制器
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    camera.position.set(10, 10, 10);
+    controls.update();
+
+    // 添加光源
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 5, 5);
+    scene.add(directionalLight);
+
+    // 创建坐标系
+    const axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+
+    // 创建螺旋运动轨迹
+    const spiralGeometry = new THREE.BufferGeometry();
+    const spiralPoints = [];
+    const tMax = 4 * Math.PI;
+    const segments = 200;
+
+    for (let i = 0; i <= segments; i++) {
+      const t = (i / segments) * tMax;
+      const x = t * Math.sin(Math.PI * t);
+      const y = Math.PI * t;
+      const z = t * Math.cos(Math.PI * t);
+      spiralPoints.push(x, y, z);
+    }
+
+    spiralGeometry.setAttribute('position', new THREE.Float32BufferAttribute(spiralPoints, 3));
+    const spiralMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+    const spiral = new THREE.Line(spiralGeometry, spiralMaterial);
+    scene.add(spiral);
+
+    // 创建移动点（代表空间点）
+    const pointGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+    const pointMaterial = new THREE.MeshPhongMaterial({ color: 0xffff00 });
+    const point = new THREE.Mesh(pointGeometry, pointMaterial);
+    scene.add(point);
+
+    // 创建力方向箭头
+    const arrowLength = 2;
+
+    // 电场箭头 (红色，X轴方向)
+    const electricArrow = new THREE.ArrowHelper(
+      new THREE.Vector3(1, 0, 0),
+      new THREE.Vector3(0, 0, 0),
+      arrowLength,
+      0xff0000
+    );
+    scene.add(electricArrow);
+
+    // 磁场箭头 (蓝色，Z轴方向)
+    const magneticArrow = new THREE.ArrowHelper(
+      new THREE.Vector3(0, 0, 1),
+      new THREE.Vector3(0, 0, 0),
+      arrowLength,
+      0x0000ff
+    );
+    scene.add(magneticArrow);
+
+    // 引力场箭头 (绿色，径向向内)
+    const gravityArrow = new THREE.ArrowHelper(
+      new THREE.Vector3(0, -1, 0),
+      new THREE.Vector3(0, 0, 0),
+      arrowLength,
+      0x00ff00
+    );
+    scene.add(gravityArrow);
+
+    // 动画参数
+    let t = 0;
+    let isPlaying = true;
+    let timeScale = 1;
+
+    // 更新函数
+    function updatePointAndArrows () {
+      if (!isPlaying) return;
+
+      t += 0.01 * timeScale;
+      if (t > tMax) t = 0;
+
+      // 计算空间点位置
+      const x = t * Math.sin(Math.PI * t);
+      const y = Math.PI * t;
+      const z = t * Math.cos(Math.PI * t);
+
+      point.position.set(x, y, z);
+
+      // 计算电场方向 (X轴方向)
+      const electricFieldStrength = 2 * Math.PI * Math.cos(Math.PI * t) - Math.pow(Math.PI, 2) * t * Math.sin(Math.PI * t);
+      electricArrow.setLength(Math.abs(electricFieldStrength) * 0.5 + 0.5);
+      electricArrow.setDirection(new THREE.Vector3(
+        Math.sign(electricFieldStrength), 0, 0
+      ));
+      electricArrow.position.copy(point.position);
+
+      // 计算磁场方向 (Z轴方向)
+      // 根据文档，磁场方向垂直于电场和传播方向(Y轴)
+      magneticArrow.setLength(arrowLength);
+      magneticArrow.setDirection(new THREE.Vector3(0, 0, 1));
+      magneticArrow.position.copy(point.position);
+
+      // 计算引力场方向 (径向向内)
+      const gravityFieldStrength = -2 * Math.PI * Math.sin(Math.PI * t) - Math.pow(Math.PI, 2) * t * Math.cos(Math.PI * t);
+      const radialDirection = new THREE.Vector3(-x, -y, -z).normalize();
+      gravityArrow.setLength(Math.abs(gravityFieldStrength) * 0.5 + 0.5);
+      gravityArrow.setDirection(radialDirection);
+      gravityArrow.position.copy(point.position);
+    }
+
+    // 动画循环
+    function animate () {
+      requestAnimationFrame(animate);
+      updatePointAndArrows();
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // 响应窗口大小变化
+    window.addEventListener('resize', function () {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // 控制按钮
+    document.getElementById('playPause').addEventListener('click', function () {
+      isPlaying = !isPlaying;
+      this.textContent = isPlaying ? '暂停' : '播放';
+    });
+
+    document.getElementById('reset').addEventListener('click', function () {
+      t = 0;
+    });
+
+    document.getElementById('timeScale').addEventListener('input', function (e) {
+      timeScale = parseFloat(e.target.value);
+    });
+  </script>
+</body>
+
+</html>

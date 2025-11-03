@@ -1,55 +1,60 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import type { RouteRecordRaw } from 'vue-router'
+
+const routes: RouteRecordRaw[] = [
+  {
+    path: '/',
+    name: 'Home',
+    component: () => import('../views/HomeView.vue'),
+    meta: { title: '统一场论 - 人工场探索网' }
+  },
+  {
+    path: '/formulas',
+    name: 'Formulas',
+    component: () => import('../views/FormulasView.vue'),
+    meta: { title: '核心公式' }
+  },
+  {
+    path: '/formula/:id',
+    name: 'FormulaDetail',
+    component: () => import('../views/FormulaDetailView.vue'),
+    meta: { title: '公式详情' }
+  },
+  {
+    path: '/visualization',
+    name: 'Visualization',
+    component: () => import('../views/VisualizationView.vue'),
+    meta: { title: '3D可视化' }
+  },
+  {
+    path: '/learn',
+    name: 'Learn',
+    component: () => import('../views/LearnView.vue'),
+    meta: { title: '学习路径' }
+  },
+  {
+    path: '/about',
+    name: 'About',
+    component: () => import('../views/AboutView.vue'),
+    meta: { title: '关于理论' }
+  }
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: HomeView
-    },
-    {
-      path: '/formulas',
-      name: 'formulas',
-      component: () => import('../views/FormulaView.vue')
-    },
-    {
-      path: '/formula/:id',
-      name: 'formula-detail',
-      component: () => import('../views/FormulaDetailView.vue')
-    },
-    {
-      path: '/test-formula',
-      name: 'test-formula',
-      component: () => import('../views/TestFormulaView.vue')
-    },
-    {
-      path: '/learning-path',
-      name: 'learning-path',
-      component: () => import('../views/LearningPathView.vue')
-    },
-    {
-      path: '/relationships',
-      name: 'relationships',
-      component: () => import('../views/RelationshipsView.vue')
-    },
-    {
-      path: '/unified-field',
-      name: 'unified-field',
-      component: () => import('../views/UnifiedFieldVisualization.vue')
-    },
-    {
-      path: '/about',
-      name: 'about',
-      component: () => import('../views/AboutView.vue')
-    },
-    {
-      path: '/:pathMatch(.*)*',
-      name: 'not-found',
-      component: () => import('../views/NotFoundView.vue')
+  routes,
+  scrollBehavior(_, __, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
     }
-  ]
+    return { top: 0 }
+  }
+})
+
+router.beforeEach((to, _, next) => {
+  const title = to.meta.title as string || '统一场论'
+  document.title = `${title} - UTF Star`
+  next()
 })
 
 export default router

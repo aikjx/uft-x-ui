@@ -1,41 +1,18 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-
 import App from './App.vue'
 import router from './router'
-import './style.css'
-
-// 导入插件和工具
-import { registerServiceWorker } from './plugins/pwa'
-import { registerDirectives } from './directives'
-import errorHandler from './composables/core/useErrorHandler'
-import logger from './composables/core/useLogger'
-
-// 添加 MathJax 全局类型声明
-declare global {
-  interface Window {
-    MathJax: any
-  }
-}
+import './assets/styles/main.css'
+import { useAppStore } from './stores/app'
 
 const app = createApp(App)
+const pinia = createPinia()
 
-// 注册插件
-app.use(createPinia())
+app.use(pinia)
 app.use(router)
 
-// 注册自定义指令
-registerDirectives(app)
-
-// 安装错误处理器
-errorHandler.install(app)
-
-// 日志记录
-logger.info('应用启动', { version: '1.0.0' })
-
-// 注册 Service Worker (PWA)
-registerServiceWorker()
+// 初始化应用状态
+const appStore = useAppStore()
+appStore.initialize()
 
 app.mount('#app')
-
-// MathJax已在index.html中全局配置
