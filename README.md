@@ -55,6 +55,7 @@ npm run dev
 | 15 | **变化的磁场产生引力场和电场**<br>$\frac{d\overrightarrow{B}}{dt} = \frac{-\overrightarrow{A}\times\overrightarrow{E}}{c^2} - \frac{\overrightarrow{V}}{c^{2}} \times \frac{d\overrightarrow{E}}{dt}$ |
 | 16 | **统一场论能量方程**<br>$e = m_0 c^2 = m c^2 \sqrt{1 - \frac{v^2}{c^2}}$ |
 | 17 | **光速飞行器动力学方程**<br>$\vec{F} = (\vec{C} - \vec{V}) \frac{dm}{dt}$ |
+| 18 | **核力场定义方程**<br>$\mathbf{D} = - G m \frac{ \mathbf{C} - 3 \frac{\mathbf{R}}{r} \dot{r} }{r^3}$ |
 
 
 
@@ -74,8 +75,8 @@ npm run dev
 
 ### 环境要求
 
-- Node.js >= 16.0.0
-- npm >= 7.0.0
+- Node.js >= v22.11.0
+- npm >= 9.15.3
 
 ### 安装依赖
 

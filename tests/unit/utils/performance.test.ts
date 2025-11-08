@@ -21,7 +21,7 @@ describe('Performance Utils', () => {
 
   it('内存使用估算', () => {
     const estimateMemoryUsage = (geometries: number) => {
-      return Math.round(geometries / 1024) // 转换为 MB
+      return Math.floor(geometries / 1024) // 转换为 MB
     }
     
     expect(estimateMemoryUsage(1024)).toBe(1)

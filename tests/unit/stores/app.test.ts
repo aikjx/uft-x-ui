@@ -1,58 +1,65 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useAppStore } from '@/stores/app'
 
 describe('App Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    // 模拟 localStorage
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn()
+    })
   })
 
   it('正确初始化', () => {
     const store = useAppStore()
     
     expect(store.isLoading).toBe(false)
-    expect(store.currentView).toBe('home')
-    expect(store.theme).toBe('dark')
-    expect(store.sidebarOpen).toBe(true)
+    expect(store.isDarkMode).toBe(true)
+    expect(store.visualizationMode).toBe('spacetime')
+    expect(store.selectedCategory).toBe('all')
+    expect(store.selectedDifficulty).toBe('all')
   })
 
-  it('切换主题', () => {
+  it('切换暗黑模式', () => {
     const store = useAppStore()
     
-    store.toggleTheme()
-    expect(store.theme).toBe('light')
+    store.toggleDarkMode()
+    expect(store.isDarkMode).toBe(false)
     
-    store.toggleTheme()
-    expect(store.theme).toBe('dark')
+    store.toggleDarkMode()
+    expect(store.isDarkMode).toBe(true)
   })
 
-  it('切换侧边栏', () => {
+  it('设置可视化模式', () => {
     const store = useAppStore()
     
-    store.toggleSidebar()
-    expect(store.sidebarOpen).toBe(false)
+    store.setVisualizationMode('electromagnetic')
+    expect(store.visualizationMode).toBe('electromagnetic')
     
-    store.toggleSidebar()
-    expect(store.sidebarOpen).toBe(true)
+    store.setVisualizationMode('spacetime')
+    expect(store.visualizationMode).toBe('spacetime')
   })
 
-  it('设置当前视图', () => {
+  it('设置搜索查询', () => {
     const store = useAppStore()
     
-    store.setCurrentView('formulas')
-    expect(store.currentView).toBe('formulas')
+    store.setSearchQuery('能量')
+    expect(store.searchQuery).toBe('能量')
     
-    store.setCurrentView('visualization')
-    expect(store.currentView).toBe('visualization')
+    store.setSearchQuery('')
+    expect(store.searchQuery).toBe('')
   })
 
-  it('设置加载状态', () => {
+  it('设置分类和难度', () => {
     const store = useAppStore()
     
-    store.setLoading(true)
-    expect(store.isLoading).toBe(true)
+    store.setSelectedCategory('mechanics')
+    expect(store.selectedCategory).toBe('mechanics')
     
-    store.setLoading(false)
-    expect(store.isLoading).toBe(false)
+    store.setSelectedDifficulty('advanced')
+    expect(store.selectedDifficulty).toBe('advanced')
   })
 })

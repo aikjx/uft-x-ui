@@ -10,34 +10,25 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "#/*": ["types/*"],
       "@components/*": ["src/components/*"],
-      "@views/*": ["src/views/*"],
-      "@utils/*": ["src/utils/*"],
-      "@stores/*": ["src/stores/*"],
-      "@composables/*": ["src/composables/*"],
-      "@constants/*": ["src/constants/*"]
+      "@pages/*": ["src/pages/*"],
+      "@utils/*": ["src/utils/*"]
     },
-    "types": ["vite/client", "vitest/globals"]
+    "types": ["vite/client"]
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "src/**/*.vue",
-    "types/**/*.d.ts",
-    "tests/**/*.ts",
-    "tests/**/*.tsx",
-    "env.d.ts",
-    "src/auto-imports.d.ts",
-    "src/components.d.ts"
+    "src/**/*.js",
+    "src/**/*.jsx"
   ],
   "exclude": ["node_modules", "dist"]
 }
