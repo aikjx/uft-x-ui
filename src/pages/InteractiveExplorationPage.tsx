@@ -12,7 +12,9 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
+      staggerChildren: 0.1,
+      duration: 0.7,
+      ease: "easeOut"
     }
   }
 };
@@ -23,7 +25,20 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.5
+      duration: 0.5,
+      ease: "easeOut"
+    }
+  }
+};
+
+const simulationVariants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.6,
+      ease: "easeOut"
     }
   }
 };
@@ -46,6 +61,7 @@ const InteractiveExplorationPage: React.FC = () => {
   const [activeSimulation, setActiveSimulation] = useState<string>('spacetime');
   const [parameters, setParameters] = useState<any>(DEFAULT_PARAMETERS);
   const [isLoading, setIsLoading] = useState(true);
+  const sceneRef = useRef<THREE.Scene | null>(null);
   
   // 使用useCallback优化事件处理函数
   const handleParameterChange = useCallback((simulation: string, paramName: string, value: number) => {
@@ -78,6 +94,9 @@ const InteractiveExplorationPage: React.FC = () => {
 
   // 使用自定义渲染函数创建3D可视化
   const createVisualization = useCallback((scene: THREE.Scene) => {
+    // 设置scene引用
+    sceneRef.current = scene;
+    
     // 添加光源
     const ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
@@ -377,32 +396,7 @@ const InteractiveExplorationPage: React.FC = () => {
     };
   };
 
-  // 处理参数变化
-  const handleParameterChange = (simulation: string, paramName: string, value: number) => {
-    setParameters(prev => ({
-      ...prev,
-      [simulation]: {
-        ...prev[simulation],
-        [paramName]: value
-      }
-    }));
-    toast.success(`已更新 ${paramName} 参数为 ${value}`);
-  };
-
-  // 保存当前场景
-  const saveScene = () => {
-    toast.success('场景已保存');
-  };
-
-  // 重置参数
-  const resetParameters = () => {
-    setParameters({
-      spacetime: { speed: 1, c: 1 },
-      gravity: { mass: 1, distance: 2 },
-      electromagnetic: { charge: 1, strength: 1 }
-    });
-    toast.success('参数已重置');
-  };
+  // 参数控制函数已通过useCallback定义（第67-84行）
 
   // 渲染参数控制滑块
   const renderParameterControls = () => {
@@ -508,7 +502,7 @@ const InteractiveExplorationPage: React.FC = () => {
             {/* 左侧控制面板 - 改进响应式布局和交互 */}
             <motion.div
               className="lg:w-1/4 bg-[#121228] rounded-xl p-6 border border-blue-900/30 h-fit sticky top-4 lg:max-h-[80vh] overflow-hidden flex flex-col"
-              variants={itemVariants}
+              variants={simulationVariants}
             >
               <h2 className="text-xl font-bold text-blue-200 mb-6 flex items-center gap-2">
                 <span className="text-blue-500">⚙️</span>
@@ -527,6 +521,7 @@ const InteractiveExplorationPage: React.FC = () => {
                       whileHover={{ x: 5, transition: { duration: 0.2 } }}
                       whileTap={{ scale: 0.98 }}
                       aria-label={`选择${sim.label}模拟`}
+                      transition={{ type: "spring", stiffness: 300 }}
                     >
                       {sim.label}
                     </motion.button>
@@ -550,6 +545,7 @@ const InteractiveExplorationPage: React.FC = () => {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   aria-label="保存当前场景"
+                  transition={{ type: "spring", stiffness: 400 }}
                 >
                   <span className="text-blue-100">💾</span>
                   保存场景
@@ -560,6 +556,7 @@ const InteractiveExplorationPage: React.FC = () => {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   aria-label="重置所有参数"
+                  transition={{ type: "spring", stiffness: 400 }}
                 >
                   <span className="text-blue-300">🔄</span>
                   重置参数
@@ -574,16 +571,23 @@ const InteractiveExplorationPage: React.FC = () => {
             >
               {/* 3D可视化 */}
               <motion.div
-                className="bg-[#121228] rounded-xl border border-blue-900/30 overflow-hidden relative mb-6 shadow-lg shadow-blue-900/5"
-                whileHover={{ boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)' }}
-                transition={{ duration: 0.3 }}
+                className="bg-[#121228] rounded-xl border border-blue-900/30 overflow-hidden relative mb-6 shadow-lg shadow-blue-900/10 hover:shadow-blue-900/20 transition-all duration-300">
               >
                 {isLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-[#121228]/80 z-10">
-                    <div className="text-blue-400 flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                      <span>正在渲染3D可视化...</span>
-                    </div>
+                    <motion.div 
+                    className="text-blue-400 flex flex-col items-center gap-2"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <motion.div 
+                      className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    ></motion.div>
+                    <span>正在渲染3D可视化...</span>
+                  </motion.div>
                   </div>
                 )}
                 <ThreeJSVisualization
@@ -602,12 +606,11 @@ const InteractiveExplorationPage: React.FC = () => {
 
               {/* 说明面板 */}
               <motion.div
-                className="bg-[#121228] rounded-xl p-6 border border-blue-900/30 shadow-lg shadow-blue-900/5"
+                className="bg-[#121228] rounded-xl p-6 border border-blue-900/30 shadow-lg shadow-blue-900/10 hover:shadow-blue-900/20 transition-all duration-300"
                 key={activeSimulation}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                whileHover={{ boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)' }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
               >
                 {renderSimulationDescription()}
               </motion.div>

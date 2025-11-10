@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { motion } from 'framer-motion';
+import { useThreeScene } from '../hooks/useThreeScene';
+import { VisualizationService } from '../services/visualizationService';
+import { cn } from '../utils';
 
 // 配置选项接口
 export interface ThreeJSVisualizationProps {
@@ -97,8 +100,10 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
   const [hasError, setHasError] = useState<Error | null>(null);
   const [webglSupported, setWebglSupported] = useState<boolean>(true);
   
+  // 使用自定义hooks管理场景状态
+  const { createScene: createThreeScene, getScene, clearScene, updateScene } = useThreeScene({ containerRef });
+  
   // 保存Three.js实例的引用
-  const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
@@ -125,8 +130,8 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       const height = Math.max(minHeight, containerRef.current.clientHeight);
       setDimensions({ width, height });
 
-      // 创建场景
-      const scene = new THREE.Scene();
+      // 使用服务创建场景
+      const scene = createThreeScene();
       
       // 应用场景配置
       if (sceneConfig.backgroundColor) {
@@ -137,15 +142,8 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       
       // 应用雾效果
       if (sceneConfig.fog) {
-        const { type, near = 0, far = 100, color = 0x0a0a14, density = 0.01 } = sceneConfig.fog;
-        if (type === 'linear') {
-          scene.fog = new THREE.Fog(new THREE.Color(color), near, far);
-        } else {
-          scene.fog = new THREE.FogExp2(new THREE.Color(color), density);
-        }
+        VisualizationService.addFogToScene(scene, sceneConfig.fog);
       }
-      
-      sceneRef.current = scene;
 
       // 创建相机
       const { fov = 75, near = 0.1, far = 1000, position = { x: 0, y: 0, z: 5 } } = cameraConfig;
@@ -195,14 +193,8 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       controls.autoRotateSpeed = autoRotateSpeed;
       controlsRef.current = controls;
 
-      // 添加环境光
-      const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
-      scene.add(ambientLight);
-
-      // 添加方向光
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      directionalLight.position.set(1, 1, 1);
-      scene.add(directionalLight);
+      // 使用服务添加默认光照
+      const { ambientLight, directionalLight } = VisualizationService.setupDefaultLighting(scene, rendererConfig.shadowMapEnabled || false);
 
       // 调用用户初始化函数
       if (onInit && scene && camera && renderer && controls) {
@@ -259,10 +251,14 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       }
     }
 
+    // 使用服务更新场景
+    const scene = getScene();
+    updateScene(scene, deltaTime);
+
     // 渲染场景
-    if (rendererRef.current && sceneRef.current && cameraRef.current) {
+    if (rendererRef.current && scene && cameraRef.current) {
       try {
-        rendererRef.current.render(sceneRef.current, cameraRef.current);
+        rendererRef.current.render(scene, cameraRef.current);
       } catch (error) {
         console.error('Render error:', error);
         setHasError(error instanceof Error ? error : new Error('Rendering failed'));
@@ -273,7 +269,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
         }
       }
     }
-  }, [paused, onAnimationFrame]);
+  }, [paused, onAnimationFrame, getScene, updateScene]);
 
   // 清理Three.js资源
   const cleanup = useCallback(() => {
@@ -296,52 +292,13 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       rendererRef.current = null;
     }
     
-    // 清理场景中的对象
-    if (sceneRef.current) {
-      while (sceneRef.current.children.length > 0) {
-        const object = sceneRef.current.children[0];
-        sceneRef.current.remove(object);
-        
-        // 递归清理对象的子对象和材质
-        const disposeObject = (obj: THREE.Object3D) => {
-          if (obj instanceof THREE.Mesh) {
-            obj.geometry.dispose();
-            if (Array.isArray(obj.material)) {
-              obj.material.forEach(material => material.dispose());
-            } else if (obj.material) {
-              obj.material.dispose();
-            }
-          } else if (obj instanceof THREE.Line) {
-            obj.geometry.dispose();
-            if (Array.isArray(obj.material)) {
-              obj.material.forEach(material => material.dispose());
-            } else if (obj.material) {
-              obj.material.dispose();
-            }
-          } else if (obj instanceof THREE.Points) {
-            obj.geometry.dispose();
-            if (Array.isArray(obj.material)) {
-              obj.material.forEach(material => material.dispose());
-            } else if (obj.material) {
-              obj.material.dispose();
-            }
-          } else if (obj instanceof THREE.Light) {
-            // 灯光不需要特殊处理
-          }
-          
-          // 递归清理子对象
-          obj.children.forEach(disposeObject);
-        };
-        
-        disposeObject(object);
-      }
-      sceneRef.current = null;
-    }
+    // 使用hook清理场景
+    clearScene();
     
     // 清理相机
     cameraRef.current = null;
     setIsInitialized(false);
-  }, []);
+  }, [clearScene, getScene]);
 
   // 组件挂载时初始化
   useEffect(() => {
@@ -381,10 +338,10 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
 
   // 渲染用户内容
   useEffect(() => {
-    if (isInitialized && children && sceneRef.current && cameraRef.current && rendererRef.current && controlsRef.current) {
+    if (isInitialized && children && getScene() && cameraRef.current && rendererRef.current && controlsRef.current) {
       try {
         children({
-          scene: sceneRef.current,
+          scene: getScene(),
           camera: cameraRef.current,
           renderer: rendererRef.current,
           controls: controlsRef.current
@@ -394,14 +351,17 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
         setHasError(error instanceof Error ? error : new Error('Children rendering failed'));
       }
     }
-  }, [isInitialized, children]);
+  }, [isInitialized, children, getScene]);
 
   // 错误渲染
   if (hasError) {
     return (
       <div 
         ref={containerRef}
-        className={`relative w-full overflow-hidden ${className} flex flex-col items-center justify-center bg-red-900/10 border border-red-500/30 rounded-lg`}
+        className={cn(
+          'relative w-full overflow-hidden flex flex-col items-center justify-center bg-red-900/10 border border-red-500/30 rounded-lg',
+          className
+        )}
         style={{ minHeight: `${minHeight}px` }}
       >
         <h3 className="text-red-400 font-medium mb-2">Three.js 渲染错误</h3>
@@ -421,7 +381,10 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     return (
       <div 
         ref={containerRef}
-        className={`relative w-full overflow-hidden ${className} flex flex-col items-center justify-center bg-blue-900/10 border border-blue-500/30 rounded-lg`}
+        className={cn(
+          'relative w-full overflow-hidden flex flex-col items-center justify-center bg-blue-900/10 border border-blue-500/30 rounded-lg',
+          className
+        )}
         style={{ minHeight: `${minHeight}px` }}
       >
         <h3 className="text-blue-400 font-medium mb-2">浏览器不支持 WebGL</h3>
@@ -437,7 +400,10 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     return (
       <div 
         ref={containerRef}
-        className={`relative w-full overflow-hidden ${className} flex items-center justify-center bg-gray-900/50`}
+        className={cn(
+          'relative w-full overflow-hidden flex items-center justify-center bg-gray-900/50',
+          className
+        )}
         style={{ minHeight: `${minHeight}px` }}
       >
         <div className="flex flex-col items-center">
@@ -452,7 +418,10 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
   return (
     <motion.div
       ref={containerRef}
-      className={`relative w-full overflow-hidden ${className}`}
+      className={cn(
+        'relative w-full overflow-hidden',
+        className
+      )}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -464,88 +433,12 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
   );
 };
 
-// 辅助函数：创建网格
-interface GridOptions {
-  size?: number;
-  divisions?: number;
-  colorGrid?: number;
-  colorCenterLine?: number;
-}
-
-export const createGrid = (options: GridOptions = {}) => {
-  const { size = 10, divisions = 10, colorGrid = 0x333344, colorCenterLine = 0x444466 } = options;
-  
-  const gridHelper = new THREE.GridHelper(size, divisions, colorGrid, colorCenterLine);
-  gridHelper.position.y = -0.01;
-  return gridHelper;
-};
-
-// 辅助函数：创建坐标轴
-interface AxesOptions {
-  size?: number;
-}
-
-export const createAxesHelper = (options: AxesOptions = {}) => {
-  const { size = 5 } = options;
-  return new THREE.AxesHelper(size);
-};
-
-// 辅助函数：创建公式文本
-interface FormulaTextOptions {
-  text: string;
-  position: THREE.Vector3;
-  size?: number;
-  color?: number;
-}
-
-export const createFormulaText = (options: FormulaTextOptions) => {
-  const { text, position, size = 0.3, color = 0x88ccff } = options;
-  
-  // 由于Three.js原生不支持复杂公式，这里创建一个占位几何体
-  const geometry = new THREE.PlaneGeometry(1.5 * text.length * size, 2 * size);
-  const material = new THREE.MeshBasicMaterial({
-    color,
-    side: THREE.DoubleSide
-  });
-  
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.copy(position);
-  
-  // 这里可以通过其他库（如mathjax-threejs）来渲染实际的数学公式
-  // 暂时用占位符代替
-  return mesh;
-};
-
-// 辅助函数：创建粒子系统
-interface ParticleSystemOptions {
-  count: number;
-  size?: number;
-  color?: THREE.Color;
-  spread?: number;
-}
-
-export const createParticleSystem = (options: ParticleSystemOptions) => {
-  const { count, size = 0.01, color = new THREE.Color(0x0088ff), spread = 5 } = options;
-  
-  const geometry = new THREE.BufferGeometry();
-  const positions = new Float32Array(count * 3);
-  
-  for (let i = 0; i < count * 3; i += 3) {
-    positions[i] = (Math.random() - 0.5) * spread * 2;
-    positions[i + 1] = (Math.random() - 0.5) * spread * 2;
-    positions[i + 2] = (Math.random() - 0.5) * spread * 2;
-  }
-  
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  
-  const material = new THREE.PointsMaterial({
-    size,
-    color,
-    transparent: true,
-    opacity: 0.8
-  });
-  
-  return new THREE.Points(geometry, material);
-};
+// 重新导出VisualizationService中的方法，保持向后兼容性
+export { 
+  createGrid, 
+  createAxesHelper, 
+  createFormulaText, 
+  createParticleSystem 
+} from '../services/visualizationService';
 
 export default ThreeJSVisualization;

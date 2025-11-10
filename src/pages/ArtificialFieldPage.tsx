@@ -1,7 +1,12 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import * as THREE from 'three';
-import { ThreeJSVisualization } from '../components/ThreeJSVisualization';
+import ThreeJSVisualization from '../components/ThreeJSVisualization';
+import { MathJax } from '../components/MathJax';
+import { useThreeScene } from '../hooks/useThreeScene';
+import { ANIMATION_VARIANTS } from '../constants';
+import { cn } from '../utils';
+import { VisualizationService } from '../services/visualizationService';
 
 // 定义标签页类型
 type TabId = 'principles' | 'applications' | 'time';
@@ -17,6 +22,7 @@ const ArtificialFieldPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('principles');
   const [isLoading, setIsLoading] = useState(true);
   const timeRef = useRef<number>(0);
+  const sceneRef = useRef<any>(null); // 添加sceneRef引用
   
   // 标签页配置常量
   const tabs: TabConfig[] = [
@@ -26,7 +32,9 @@ const ArtificialFieldPage: React.FC = () => {
   ];
 
   // 创建可视化场景
-  const createVisualization = useCallback(({ scene }: { scene: THREE.Scene }) => {
+  const createVisualization = useCallback(({ scene, setSceneRef }: { scene: THREE.Scene, setSceneRef: (ref: any) => void }) => {
+    // 设置scene引用
+    setSceneRef({ camera: scene.userData.camera || null });
     // 根据当前标签创建不同的可视化
     switch (activeTab) {
       case 'principles':
@@ -57,7 +65,7 @@ const ArtificialFieldPage: React.FC = () => {
     setActiveTab(tabId);
   };
 
-  // 移除重复的函数定义
+
 
   // 质量归零技术可视化
   const createMassReductionVisualization = (scene: THREE.Scene) => {
@@ -264,9 +272,10 @@ const ArtificialFieldPage: React.FC = () => {
       fieldCylinder.position.y = distance;
       exhaust.position.y = distance - 3;
       
-      // 视角跟随
-      if (sceneRef.current && sceneRef.current.camera) {
-        sceneRef.current.camera.position.y = distance + 5;
+      // 视角跟随 - 修复sceneRef引用问题
+      if (scene.userData.camera) {
+        scene.userData.camera.position.y = distance + 5;
+        scene.userData.camera.lookAt(craftGroup.position);
       }
     };
   };
@@ -394,37 +403,30 @@ const ArtificialFieldPage: React.FC = () => {
     };
   };
 
-  // 动画变体
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-  };
+  // 使用全局动画变体常量
+  const { containerVariants, itemVariants, formulaVariants } = ANIMATION_VARIANTS;
 
   return (
-    <div className="relative w-full min-h-screen flex flex-col bg-[#0a0a14]">
-      <div className="container mx-auto px-4 py-8 flex-grow">
+    <div className="page-container">
+      <motion.div
+        className="relative w-full min-h-[calc(100vh-8rem)] flex flex-col bg-[#0a0a14] py-8"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+      <div className="container mx-auto px-4">
         <motion.h1
-          className="text-3xl md:text-4xl font-bold text-center mb-8 text-blue-300"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+            className="text-3xl md:text-4xl font-bold text-center mb-12 text-blue-300"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
           人工场技术可视化
         </motion.h1>
 
-        {/* 标签页切换 */}
+        {/* 标签页切换 - 改进样式和交互 */}
         <motion.div
-          className="flex justify-center mb-8 border-b border-blue-900/30 overflow-x-auto"
+          className="flex justify-center mb-8 border-b border-blue-900/30 overflow-x-auto max-w-3xl mx-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -433,24 +435,30 @@ const ArtificialFieldPage: React.FC = () => {
             <motion.button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`px-6 py-3 text-lg font-medium whitespace-nowrap transition-all ${activeTab === tab.id ? 'text-blue-300 border-b-2 border-blue-500' : 'text-blue-100/70 hover:text-blue-200'}`}
+              className={`px-6 py-3 text-lg font-medium whitespace-nowrap transition-all duration-300 ${activeTab === tab.id ? 'text-blue-300 border-b-2 border-blue-500 shadow-lg shadow-blue-900/10' : 'text-blue-100/70 hover:text-blue-200'}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
+              variants={tabVariants}
             >
               {tab.label}
             </motion.button>
           ))}
         </motion.div>
 
-        {/* 3D可视化区域 */}
+        {/* 3D可视化区域 - 增强视觉效果 */}
         <motion.div
-          className="bg-[#121228] rounded-xl border border-blue-900/30 overflow-hidden relative mb-8"
+          className="bg-[#121228] rounded-xl border border-blue-900/30 overflow-hidden relative mb-8 shadow-lg shadow-blue-900/5"
           variants={itemVariants}
           initial="hidden"
           animate="visible"
+          whileHover={{ boxShadow: '0 0 30px rgba(59, 130, 246, 0.15)' }}
         >
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[#121228]/80 z-10">
+            <motion.div 
+              className="absolute inset-0 flex items-center justify-center bg-[#121228]/80 z-10"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
               <div className="text-blue-400 flex flex-col items-center gap-2">
                 <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
                 <span>正在渲染3D可视化...</span>
@@ -459,7 +467,7 @@ const ArtificialFieldPage: React.FC = () => {
           )}
           
           <ThreeJSVisualization
-            className="w-full h-[60vh] min-h-[400px]"
+            className={cn("w-full h-[60vh] min-h-[400px] sm:min-h-[500px]")}
             onInit={createVisualization}
             onAnimationFrame={updateVisualization}
             cameraConfig={{
@@ -476,13 +484,15 @@ const ArtificialFieldPage: React.FC = () => {
           />
         </motion.div>
 
-        {/* 详细说明 */}
+        {/* 详细说明 - 增强视觉深度和响应式 */}
         <motion.div
-          className="bg-[#121228] rounded-xl p-6 md:p-8 border border-blue-900/30 shadow-lg"
+          className="bg-[#121228] rounded-xl p-6 md:p-8 border border-blue-900/30 shadow-lg shadow-blue-900/5"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
           key={activeTab}
+          layout
+          transition={{ duration: 0.5 }}
         >
           <motion.h2 
             className="text-2xl md:text-3xl font-bold text-blue-300 mb-6 border-l-4 border-blue-500 pl-4"
@@ -506,12 +516,16 @@ const ArtificialFieldPage: React.FC = () => {
                 质量归零技术是人工场最核心的应用之一，它通过特定的场配置，使物体周围的空间运动状态发生变化，从而降低或消除物体的质量。
               </motion.p>
               <motion.div 
-                className="bg-[#0a0a14] p-4 rounded-lg border border-blue-800/30 font-mono text-sm text-blue-300 shadow-inner"
-                variants={itemVariants}
-                whileHover={{ scale: 1.02 }}
+                className={cn("bg-[#0a0a14] p-4 rounded-lg border border-blue-800/30 shadow-inner relative overflow-hidden")}
+                variants={formulaVariants}
+                whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)' }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
-                质量与空间运动的关系: m = k·dn/dΩ
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent"></div>
+                <div className="relative z-10 text-blue-300">
+                  质量与空间运动的关系: 
+                  <MathJax formula="m = k \\cdot \\frac{dn}{d\\Omega}" className="inline" />
+                </div>
               </motion.div>
             </motion.div>
           )}
@@ -531,12 +545,16 @@ const ArtificialFieldPage: React.FC = () => {
                 飞行器的动力来自于质量的变化，根据公式 F = (C - V)·dm/dt，当飞行器周围的人工场使质量发生变化时，就会产生巨大的推力。
               </motion.p>
               <motion.div 
-                className="bg-[#0a0a14] p-4 rounded-lg border border-blue-800/30 font-mono text-sm text-blue-300 shadow-inner"
-                variants={itemVariants}
-                whileHover={{ scale: 1.02 }}
+                className={cn("bg-[#0a0a14] p-4 rounded-lg border border-blue-800/30 shadow-inner relative overflow-hidden")}
+                variants={formulaVariants}
+                whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)' }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
-                光速飞行器动力学方程: F = (C - V)·dm/dt
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent"></div>
+                <div className="relative z-10 text-blue-300">
+                  光速飞行器动力学方程: 
+                  <MathJax formula="F = (C - V) \\cdot \\frac{dm}{dt}" className="inline" />
+                </div>
               </motion.div>
             </motion.div>
           )}
@@ -556,17 +574,21 @@ const ArtificialFieldPage: React.FC = () => {
                 时间势差的本质是空间运动的不均匀性，通过控制空间的运动状态，可以创造出可控的时间流逝差异。
               </motion.p>
               <motion.div 
-                className="bg-[#0a0a14] p-4 rounded-lg border border-blue-800/30 font-mono text-sm text-blue-300 shadow-inner"
-                variants={itemVariants}
-                whileHover={{ scale: 1.02 }}
+                className={cn("bg-[#0a0a14] p-4 rounded-lg border border-blue-800/30 shadow-inner relative overflow-hidden")}
+                variants={formulaVariants}
+                whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)' }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
-                时间膨胀效应: Δt' = Δt/√(1 - v²/c²)
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent"></div>
+                <div className="relative z-10 text-blue-300">
+                  时间膨胀效应: 
+                  <MathJax formula="\\Delta t' = \\frac{\\Delta t}{\\sqrt{1 - \\frac{v^2}{c^2}}}" className="inline" />
+                </div>
               </motion.div>
             </motion.div>
-          )}
-        </motion.div>
-      </div>
+          )}</motion.div>
+        </div>
+      </motion.div>
     </div>
   );
 };

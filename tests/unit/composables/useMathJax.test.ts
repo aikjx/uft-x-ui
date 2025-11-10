@@ -17,7 +17,7 @@ describe('MathJax Utils', () => {
 
   it('数学公式渲染状态', () => {
     const isMathJaxReady = (mathJax: any) => {
-      return mathJax && mathJax.typesetPromise !== undefined
+      return Boolean(mathJax && mathJax.typesetPromise !== undefined)
     }
     
     const mockMathJax = {

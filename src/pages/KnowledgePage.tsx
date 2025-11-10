@@ -1,29 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { PageContainer } from '../App';
+import { MathJax } from '../components/MathJax';
+import { ANIMATION_VARIANTS } from '../constants';
+import { cn } from '../utils';
 
-// 动画变体配置
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5
-    }
-  }
-};
+// 使用全局动画变体常量
+const { containerVariants, itemVariants, formulaVariants } = ANIMATION_VARIANTS;
 
 const KnowledgePage: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('basics');
@@ -54,21 +37,24 @@ const KnowledgePage: React.FC = () => {
     formulas: {
       title: '核心公式解析',
       content: [
-        {
-          heading: '时空同一化方程',
-          text: 'r(t) = Ct，这个方程揭示了时间和空间的本质联系。时间可以表示为空间以光速运动的积累。',
-          icon: '📈'
-        },
-        {
-          heading: '宇宙大统一方程',
-          text: 'F = dP/dt = C·dm/dt - V·dm/dt + m·dC/dt - m·dV/dt，这个方程统一了四种基本力，揭示了力的本质是空间运动状态的变化。',
-          icon: '🔄'
-        },
-        {
-          heading: '统一场论能量方程',
-          text: 'e = m₀c² = mc²√(1 - v²/c²)，这个方程扩展了爱因斯坦的质能方程，更加全面地描述了能量与质量的关系。',
-          icon: '⚡'
-        }
+          {
+            heading: '时空同一化方程',
+            text: '这个方程揭示了时间和空间的本质联系。时间可以表示为空间以光速运动的积累。',
+            icon: '📈',
+            formula: '\\vec{r}(t) = \\vec{C}t'
+          },
+          {
+            heading: '宇宙大统一方程',
+            text: '这个方程统一了四种基本力，揭示了力的本质是空间运动状态的变化。',
+            icon: '🔄',
+            formula: 'F = \\frac{dP}{dt} = C \\cdot \\frac{dm}{dt} - V \\cdot \\frac{dm}{dt} + m \\cdot \\frac{dC}{dt} - m \\cdot \\frac{dV}{dt}'
+          },
+          {
+            heading: '统一场论能量方程',
+            text: '这个方程扩展了爱因斯坦的质能方程，更加全面地描述了能量与质量的关系。',
+            icon: '⚡',
+            formula: 'e = m_0c^2 = mc^2\\sqrt{1 - \\frac{v^2}{c^2}}'
+          }
       ]
     },
     applications: {
@@ -145,7 +131,7 @@ const KnowledgePage: React.FC = () => {
   ], []);
 
   return (
-    <PageContainer>
+    <div className="page-container">
       <motion.div
         className="relative w-full min-h-[calc(100vh-8rem)] flex flex-col bg-[#0a0a14] py-8"
         variants={containerVariants}
@@ -176,7 +162,7 @@ const KnowledgePage: React.FC = () => {
                 <motion.button
                   key={key}
                   onClick={() => setActiveSection(key)}
-                  className={`px-5 py-2.5 rounded-full transition-all duration-300 flex items-center gap-2 ${activeSection === key ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'bg-blue-900/30 text-blue-200 hover:bg-blue-800/40 hover:shadow-md hover:shadow-blue-900/20'}`}
+                  className={cn(`px-5 py-2.5 rounded-full transition-all duration-300 flex items-center gap-2 ${activeSection === key ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'bg-blue-900/30 text-blue-200 hover:bg-blue-800/40 hover:shadow-md hover:shadow-blue-900/20'}`)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -188,7 +174,7 @@ const KnowledgePage: React.FC = () => {
 
             {/* 理论讲解内容 - 增强视觉效果 */}
             <motion.div
-              className="bg-[#121228] rounded-xl p-6 border border-blue-900/30 shadow-lg shadow-blue-900/5"
+              className={cn("bg-[#121228] rounded-xl p-6 border border-blue-900/30 shadow-lg shadow-blue-900/5")}
               key={activeSection}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -211,6 +197,14 @@ const KnowledgePage: React.FC = () => {
                     <div className="text-2xl mt-1 min-w-[40px]">{item.icon}</div>
                     <div>
                       <h4 className="mb-3 text-lg font-semibold text-blue-200">{item.heading}</h4>
+                      {item.formula && (
+                        <motion.div 
+                          className={cn("mb-3 p-3 bg-[#0a0a14] rounded-lg border border-blue-800/30")}
+                          variants={formulaVariants}
+                        >
+                          <MathJax formula={item.formula} />
+                        </motion.div>
+                      )}
                       <p className="leading-relaxed text-blue-100/80">{item.text}</p>
                     </div>
                   </motion.div>
@@ -232,7 +226,7 @@ const KnowledgePage: React.FC = () => {
               {tutorials.map((tutorial) => (
                 <motion.div
                   key={tutorial.id}
-                  className="bg-[#121228] rounded-xl overflow-hidden border border-blue-900/30 hover:border-blue-500/50 transition-all duration-300"
+                  className={cn("bg-[#121228] rounded-xl overflow-hidden border border-blue-900/30 hover:border-blue-500/50 transition-all duration-300")}
                   whileHover={{ y: -8, boxShadow: '0 15px 30px -10px rgba(59, 130, 246, 0.2)' }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -249,7 +243,7 @@ const KnowledgePage: React.FC = () => {
                     <p className="mb-4 text-sm text-blue-100/70">{tutorial.description}</p>
                     <motion.button
                       onClick={() => navigate(`/formulas`)}
-                      className="w-full py-2.5 bg-blue-900/30 text-blue-300 rounded-lg hover:bg-blue-800/40 transition-colors duration-300"
+                      className={cn("w-full py-2.5 bg-blue-900/30 text-blue-300 rounded-lg hover:bg-blue-800/40 transition-colors duration-300")}
                       whileHover={{ backgroundColor: 'rgba(37, 99, 235, 0.3)' }}
                       whileTap={{ scale: 0.97 }}
                     >
@@ -270,7 +264,7 @@ const KnowledgePage: React.FC = () => {
               科学实验模拟
             </h2>
             <motion.div
-              className="bg-[#121228] rounded-xl p-6 border border-blue-900/30 shadow-lg shadow-blue-900/5"
+              className={cn("bg-[#121228] rounded-xl p-6 border border-blue-900/30 shadow-lg shadow-blue-900/5")}
               whileHover={{ boxShadow: '0 0 30px rgba(59, 130, 246, 0.15)' }}
               transition={{ duration: 0.3 }}
             >
@@ -304,7 +298,7 @@ const KnowledgePage: React.FC = () => {
                   </ul>
                   <motion.button
                     onClick={() => navigate('/interactive')}
-                    className="flex gap-2 items-center px-6 py-3 text-white bg-blue-600 rounded-lg transition-colors duration-300 hover:bg-blue-700"
+                    className={cn("flex gap-2 items-center px-6 py-3 text-white bg-blue-600 rounded-lg transition-colors duration-300 hover:bg-blue-700")}
                     whileHover={{ scale: 1.03, boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
                     whileTap={{ scale: 0.97 }}
                   >
@@ -330,7 +324,7 @@ const KnowledgePage: React.FC = () => {
           </motion.section>
         </div>
       </motion.div>
-    </PageContainer>
+    </div>
   );
 };
 

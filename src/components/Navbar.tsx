@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -8,16 +8,20 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // 使用useRef存储timeoutId
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // 优化的滚动监听函数 - 使用防抖
+  const handleScroll = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      setIsScrolled(window.scrollY > 30);
+    }, 16); // 约60fps
+  }, []);
+
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    
-    const handleScroll = useCallback(() => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        setIsScrolled(window.scrollY > 30);
-      }, 16); // 约60fps
-    }, []);
     
     window.addEventListener('scroll', handleScroll, { passive: true });
     
@@ -34,7 +38,9 @@ const Navbar: React.FC = () => {
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('scroll', closeMenuOnScroll);
-      clearTimeout(timeoutId);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, [isOpen]);
 
