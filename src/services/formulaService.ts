@@ -77,8 +77,8 @@ export class FormulaService {
     let formatted = formula.trim();
     
     // 移除公式环境标记
-    formatted = formatted.replace(/^\\\\(/, '').replace(/\\\\\\)$/, '');
-    formatted = formatted.replace(/^\\\\[/, '').replace(/\\\\\\]$/, '');
+    formatted = formatted.replace(/^\\\(/, '').replace(/\\\)$/, '');
+    formatted = formatted.replace(/^\\\[/, '').replace(/\\\]$/, '');
     formatted = formatted.replace(/^\$/, '').replace(/\$$/, '');
     formatted = formatted.replace(/^\$\$/, '').replace(/\$\$$/, '');
     

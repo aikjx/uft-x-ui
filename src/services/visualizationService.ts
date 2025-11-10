@@ -550,10 +550,10 @@ export class VisualizationService {
   }
   
   /**
-   * 初始化新场景
+   * 创建新场景
    * @returns Three.js场景实例
    */
-  initializeScene(): THREE.Scene {
+  createScene(): THREE.Scene {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(VISUALIZATION_CONFIG.backgroundColor);
     return scene;

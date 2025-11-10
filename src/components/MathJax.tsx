@@ -71,10 +71,26 @@ export const MathJax: React.FC<MathJaxProps> = ({ formula, className = '', inlin
       wrapperRef.current.innerHTML = inline ? `$${formula}$` : `$$${formula}$$`;
       
       // 触发MathJax渲染
-      window.MathJax.typesetClear();
-      window.MathJax.typesetPromise([wrapperRef.current]).catch((err: any) => {
-        console.warn('MathJax渲染错误:', err);
-      });
+      // 安全地调用typesetClear方法
+      if (window.MathJax.typesetClear) {
+        window.MathJax.typesetClear();
+      }
+      
+      // 安全地调用typesetPromise方法，如果不存在则尝试使用typeset方法
+      if (window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([wrapperRef.current]).catch((err: any) => {
+          console.warn('MathJax渲染错误:', err);
+        });
+      } else if (window.MathJax.typeset) {
+        // 降级使用typeset方法
+        try {
+          window.MathJax.typeset([wrapperRef.current]);
+        } catch (err) {
+          console.warn('MathJax渲染错误:', err);
+        }
+      } else {
+        console.warn('MathJax没有可用的渲染方法');
+      }
     }
   }, [formula, isReady, inline]);
 
