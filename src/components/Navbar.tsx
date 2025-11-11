@@ -9,7 +9,7 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
 
   // 使用useRef存储timeoutId
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 优化的滚动监听函数 - 使用防抖
   const handleScroll = useCallback(() => {
@@ -42,7 +42,7 @@ const Navbar: React.FC = () => {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [isOpen]);
+  }, [isOpen, handleScroll]);
 
   // 导航项配置
   const navItems = [

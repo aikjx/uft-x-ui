@@ -1,13 +1,13 @@
 import React, { useRef, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, easeOut } from 'framer-motion';
 import * as THREE from 'three';
 import { CatmullRomCurve3 } from 'three';
 import ThreeJSVisualization from '../components/ThreeJSVisualization';
 import { MathJax } from '../components/MathJax';
 import { useFormula } from '../hooks/useFormula';
 import { useThreeScene } from '../hooks/useThreeScene';
-import { ANIMATION_VARIANTS, FORMULAS } from '../constants';
+import { ANIMATION_VARIANTS, FORMULAS } from '../constants/index';
 import { cn, showNotification } from '../utils';
 import { FormulaService } from '../services/formulaService';
 import { VisualizationService } from '../services/visualizationService';
@@ -17,7 +17,8 @@ const { containerVariants, itemVariants, formulaVariants } = ANIMATION_VARIANTS;
 const FormulaVisualizationPage: React.FC = () => {
   const navigate = useNavigate();
   const { selectedFormula, isLoading, selectFormula, formulas, formulasByCategory } = useFormula();
-  const { createScene: createThreeScene, getScene, clearScene, setUpdateFunction, updateScene } = useThreeScene();
+  // 使用ref存储当前场景引用
+  const currentSceneRef = useRef<THREE.Scene | null>(null);
   
   // 使用useCallback优化导航函数
   const handleFormulaSelect = useCallback((formula: any) => {
@@ -26,16 +27,18 @@ const FormulaVisualizationPage: React.FC = () => {
     showNotification.success(`已选择公式：${formula.name}`);
   }, [navigate, selectFormula]);
 
-  // 页面挂载时初始化场景
-  React.useEffect(() => {
-    return () => {
-      // 清理Three.js资源
-      clearScene();
-    };
-  }, [clearScene]);
+  // ThreeJSVisualization组件会自动处理场景清理，不需要额外的清理逻辑
 
   // 使用自定义渲染函数创建3D可视化
-  const createVisualization = useCallback((scene: THREE.Scene) => {
+  const createVisualization = useCallback(({ scene, camera, renderer, controls }: {
+    scene: THREE.Scene;
+    camera: THREE.Camera;
+    renderer: THREE.WebGLRenderer;
+    controls: any;
+  }) => {
+    // 保存场景引用以供update使用
+    currentSceneRef.current = scene;
+    
     if (!selectedFormula) return;
     
     // 添加坐标轴和网格
@@ -115,10 +118,25 @@ const FormulaVisualizationPage: React.FC = () => {
     }
   }, [selectedFormula]);
   
-  // 更新可视化的动画函数
-  const updateVisualization = useCallback((scene: THREE.Scene, deltaTime: number) => {
-    if (scene.userData.update) {
-      scene.userData.update();
+  // 更新可视化的动画函数 - 只接收deltaTime参数
+  const updateVisualization = useCallback((deltaTime: number) => {
+    try {
+      // 使用保存的场景引用
+      const scene = currentSceneRef.current;
+      if (scene && scene.userData && typeof scene.userData.update === 'function') {
+        try {
+          // 检查update方法是否接受参数
+          if (scene.userData.update.length > 0) {
+            scene.userData.update(deltaTime);
+          } else {
+            scene.userData.update();
+          }
+        } catch (updateError) {
+          console.error('Error in scene update function:', updateError);
+        }
+      }
+    } catch (error) {
+      console.error('Error in visualization update:', error);
     }
   }, []);
 
@@ -605,7 +623,7 @@ const FormulaVisualizationPage: React.FC = () => {
     scene.add(velocityLine);
     
     // 创建磁场线（环形围绕速度方向）
-    const fieldLines = [];
+    const fieldLines: THREE.Line[] = [];
     const numRings = 5;
     const pointsPerRing = 64;
     
@@ -658,7 +676,7 @@ const FormulaVisualizationPage: React.FC = () => {
     scene.add(centralMass);
     
     // 创建引力场线
-    const gravityFieldLines = [];
+    const gravityFieldLines: THREE.Line[] = [];
     const numGravityLines = 8;
     
     for (let i = 0; i < numGravityLines; i++) {
@@ -723,7 +741,7 @@ const FormulaVisualizationPage: React.FC = () => {
       // 电磁场响应
       emFieldGroup.children.forEach((ring, index) => {
         const intensity = Math.sin(time * 2 + index * 0.3);
-        (ring.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 0.1 + intensity * 0.4);
+        ((ring as THREE.Mesh).material as THREE.MeshBasicMaterial).opacity = Math.max(0, 0.1 + intensity * 0.4);
         ring.rotation.y = time * 0.2;
       });
     };
@@ -738,7 +756,7 @@ const FormulaVisualizationPage: React.FC = () => {
     scene.add(source);
     
     // 创建磁矢势A的环
-    const vectorPotentialRings = [];
+    const vectorPotentialRings: THREE.Mesh[] = [];
     const numRings = 8;
     
     for (let i = 0; i < numRings; i++) {
@@ -753,7 +771,7 @@ const FormulaVisualizationPage: React.FC = () => {
     }
     
     // 创建磁场B（A的旋度）
-    const magneticFieldLines = [];
+    const magneticFieldLines: THREE.Line[] = [];
     const numFieldLines = 6;
     
     for (let i = 0; i < numFieldLines; i++) {
@@ -805,7 +823,7 @@ const FormulaVisualizationPage: React.FC = () => {
     scene.add(gravitySource);
     
     // 创建引力场A
-    const aFieldLines = [];
+    const aFieldLines: THREE.Line[] = [];
     const numALines = 8;
     
     for (let i = 0; i < numALines; i++) {
@@ -829,7 +847,7 @@ const FormulaVisualizationPage: React.FC = () => {
     }
     
     // 创建产生的电场E
-    const electricFieldLines = [];
+    const electricFieldLines: THREE.Line[] = [];
     const numELines = 6;
     
     for (let i = 0; i < numELines; i++) {
@@ -889,7 +907,7 @@ const FormulaVisualizationPage: React.FC = () => {
     scene.add(magneticSource);
     
     // 创建磁场线B
-    const magneticFieldLines = [];
+    const magneticFieldLines: THREE.Line[] = [];
     const numBLines = 8;
     
     for (let i = 0; i < numBLines; i++) {
@@ -934,7 +952,7 @@ const FormulaVisualizationPage: React.FC = () => {
     }
     
     // 创建产生的电场E
-    const electricFieldLines = [];
+    const electricFieldLines: THREE.Line[] = [];
     const numELines = 6;
     
     for (let i = 0; i < numELines; i++) {
@@ -976,7 +994,8 @@ const FormulaVisualizationPage: React.FC = () => {
       // 引力场响应
       gravityFieldGroup.children.forEach((ring, index) => {
         const intensity = Math.sin(time * 2 + index * 0.2);
-        (ring.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 0.1 + intensity * 0.2);
+        const mesh = ring as THREE.Mesh;
+        (mesh.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 0.1 + intensity * 0.2);
         ring.rotation.x = time * 0.1 + intensity * 0.1;
       });
       
@@ -1168,7 +1187,7 @@ const FormulaVisualizationPage: React.FC = () => {
     scene.add(nucleus);
     
     // 创建核子（质子/中子）
-    const nucleons = [];
+    const nucleons: THREE.Mesh[] = [];
     const numNucleons = 8;
     
     for (let i = 0; i < numNucleons; i++) {
@@ -1188,7 +1207,7 @@ const FormulaVisualizationPage: React.FC = () => {
     }
     
     // 创建核力场线
-    const nuclearFieldLines = [];
+    const nuclearFieldLines: THREE.Line[] = [];
     const numFieldLines = 12;
     
     for (let i = 0; i < numFieldLines; i++) {
@@ -1265,7 +1284,7 @@ const FormulaVisualizationPage: React.FC = () => {
     scene.add(gravityField);
     
     // 创建光速表示
-    const lightRays = [];
+    const lightRays: THREE.Line[] = [];
     const numRays = 16;
     
     for (let i = 0; i < numRays; i++) {
@@ -1431,12 +1450,11 @@ const FormulaVisualizationPage: React.FC = () => {
                 </div>
               )}
               <ThreeJSVisualization
-                onSceneInit={createVisualization}
-                onAnimate={updateVisualization}
-                initialCameraPosition={{ x: 0, y: 0, z: 5 }}
-                backgroundColor={0x0a0a14}
-                enableOrbitControls={true}
-                orbitControlsConfig={{
+                children={createVisualization}
+                onAnimationFrame={updateVisualization}
+                cameraConfig={{ position: { x: 0, y: 0, z: 5 } }}
+                sceneConfig={{ backgroundColor: 0x0a0a14 }}
+                controlsConfig={{
                   enableDamping: true,
                   dampingFactor: 0.05
                 }}
@@ -1445,7 +1463,6 @@ const FormulaVisualizationPage: React.FC = () => {
           </motion.div>
         </div>
       </motion.div>
-    </PageContainer>
   );
 };
 

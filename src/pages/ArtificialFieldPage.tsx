@@ -4,7 +4,8 @@ import * as THREE from 'three';
 import ThreeJSVisualization from '../components/ThreeJSVisualization';
 import { MathJax } from '../components/MathJax';
 import { useThreeScene } from '../hooks/useThreeScene';
-import { ANIMATION_VARIANTS } from '../constants';
+import { ANIMATION_VARIANTS } from '../constants/index';
+const { tabVariants } = ANIMATION_VARIANTS;
 import { cn } from '../utils';
 import { VisualizationService } from '../services/visualizationService';
 
@@ -32,9 +33,8 @@ const ArtificialFieldPage: React.FC = () => {
   ];
 
   // 创建可视化场景
-  const createVisualization = useCallback(({ scene, setSceneRef }: { scene: THREE.Scene, setSceneRef: (ref: any) => void }) => {
-    // 设置scene引用
-    setSceneRef({ camera: scene.userData.camera || null });
+  const createVisualization = useCallback(({ scene }: { scene: THREE.Scene }) => {
+      // 不需要设置scene引用，因为ThreeJSVisualization组件会处理
     // 根据当前标签创建不同的可视化
     switch (activeTab) {
       case 'principles':
@@ -463,7 +463,7 @@ const ArtificialFieldPage: React.FC = () => {
                 <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
                 <span>正在渲染3D可视化...</span>
               </div>
-            </div>
+            </motion.div>
           )}
           
           <ThreeJSVisualization

@@ -1,4 +1,5 @@
 import { Formula, FeatureItem } from '../types';
+import { easeOut, easeInOut, Easing } from 'framer-motion';
 
 // 统一场论核心公式数据
 export const FORMULAS: Formula[] = [
@@ -175,10 +176,10 @@ export const ANIMATION_VARIANTS = {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
-        duration: 0.7,
-        ease: "easeOut"
-      }
+          staggerChildren: 0.1,
+          duration: 0.7,
+          ease: "easeOut"
+        }
     }
   },
   itemVariants: {
@@ -187,9 +188,9 @@ export const ANIMATION_VARIANTS = {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.5,
-        ease: "easeOut"
-      }
+          duration: 0.5,
+          ease: "easeOut"
+        }
     }
   },
   formulaVariants: {
@@ -198,9 +199,9 @@ export const ANIMATION_VARIANTS = {
       opacity: 1,
       scale: 1,
       transition: {
-        duration: 0.6,
-        ease: "easeOut"
-      }
+          duration: 0.6,
+          ease: "easeInOut"
+        }
     }
   },
   fadeInUpVariants: {
@@ -209,10 +210,10 @@ export const ANIMATION_VARIANTS = {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.6,
-        delay: custom * 0.1,
-        ease: [0.22, 1, 0.36, 1]
-      }
+            duration: 0.6,
+            delay: custom * 0.1,
+            ease: "easeOut"
+          }
     })
   },
   simulationVariants: {
@@ -221,9 +222,9 @@ export const ANIMATION_VARIANTS = {
       opacity: 1,
       scale: 1,
       transition: {
-        duration: 0.5,
-        ease: "easeOut"
-      }
+          duration: 0.5,
+          ease: "easeOut"
+        }
     }
   },
   tabVariants: {
@@ -232,9 +233,9 @@ export const ANIMATION_VARIANTS = {
       opacity: 1,
       x: 0,
       transition: {
-        duration: 0.4,
-        ease: "easeOut"
-      }
+          duration: 0.4,
+          ease: "easeOut"
+        }
     }
   }
 };

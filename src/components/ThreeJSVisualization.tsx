@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { motion } from 'framer-motion';
 import { useThreeScene } from '../hooks/useThreeScene';
-import { VisualizationService } from '../services/visualizationService';
+import { visualizationService, createGridHelper, createAxesHelper } from '../services/visualizationService';
 import { cn } from '../utils';
+import { VISUALIZATION_CONFIG } from '../constants';
 
 // 配置选项接口
 export interface ThreeJSVisualizationProps {
@@ -100,13 +101,31 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
   const [hasError, setHasError] = useState<Error | null>(null);
   const [webglSupported, setWebglSupported] = useState<boolean>(true);
   
-  // 使用自定义hooks管理场景状态
-  const { createScene: createThreeScene, getScene, clearScene, updateScene } = useThreeScene({ containerRef });
+  // 使用useThreeScene返回的实例引用
+  const { 
+    scene, 
+    camera, 
+    renderer, 
+    controls, 
+    isSceneReady, 
+    error: sceneError,
+    currentFPS, 
+    isPerformanceMode,
+    createScene, 
+    getScene, 
+    addToScene,
+    removeFromScene,
+    clearScene, 
+    setUpdateFunction,
+    updateScene
+  } = useThreeScene({ 
+    containerRef,
+    autoUpdate: true,
+    enablePerformanceMonitoring: true,
+    maxObjects: VISUALIZATION_CONFIG.maxObjects || 1000
+  });
   
-  // 保存Three.js实例的引用
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const controlsRef = useRef<OrbitControls | null>(null);
+  // 动画帧引用和时间跟踪
   const animationFrameRef = useRef<number | null>(null);
   const lastFrameTimeRef = useRef<number>(0);
 
@@ -121,6 +140,12 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     }
   }, []);
 
+  // 使用useMemo缓存配置对象，避免每次渲染创建新引用
+  const memoizedCameraConfig = useMemo(() => cameraConfig, Object.values(cameraConfig || {}));
+  const memoizedControlsConfig = useMemo(() => controlsConfig, Object.values(controlsConfig || {}));
+  const memoizedRendererConfig = useMemo(() => rendererConfig, Object.values(rendererConfig || {}));
+  const memoizedSceneConfig = useMemo(() => sceneConfig, Object.values(sceneConfig || {}));
+
   // 初始化Three.js场景
   const initialize = useCallback(() => {
     if (!containerRef.current || !webglSupported) return;
@@ -130,75 +155,43 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       const height = Math.max(minHeight, containerRef.current.clientHeight);
       setDimensions({ width, height });
 
-      // 使用服务创建场景
-      const scene = createThreeScene();
+      // 使用useThreeScene中的场景，避免重复创建
+      const currentScene = getScene() || createScene();
       
-      // 应用场景配置
-      if (sceneConfig.backgroundColor) {
-        scene.background = new THREE.Color(sceneConfig.backgroundColor);
-      } else {
-        scene.background = new THREE.Color(0x0a0a14);
-      }
-      
-      // 应用雾效果
-      if (sceneConfig.fog) {
-        VisualizationService.addFogToScene(scene, sceneConfig.fog);
+      // 应用场景配置到现有的场景
+      if (memoizedSceneConfig.backgroundColor && currentScene) {
+        currentScene.background = new THREE.Color(memoizedSceneConfig.backgroundColor);
       }
 
-      // 创建相机
-      const { fov = 75, near = 0.1, far = 1000, position = { x: 0, y: 0, z: 5 } } = cameraConfig;
-      const camera = new THREE.PerspectiveCamera(fov, width / height, near, far);
-      camera.position.set(position.x, position.y, position.z);
-      cameraRef.current = camera;
-
-      // 创建渲染器
-      const { antialias = true, alpha = false, physicallyCorrectLights = true, shadowMapEnabled = false } = rendererConfig;
-      const renderer = new THREE.WebGLRenderer({ 
-        antialias, 
-        alpha 
-      });
-      
-      renderer.setSize(width, height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 限制像素比例以提高性能
-      renderer.physicallyCorrectLights = physicallyCorrectLights;
-      
-      if (shadowMapEnabled) {
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      // 应用自定义配置到控制器
+      if (controls) {
+        const { 
+          enableDamping = true, 
+          dampingFactor = 0.05, 
+          rotateSpeed = 0.5, 
+          zoomSpeed = 0.8,
+          enablePan = true,
+          autoRotate = false,
+          autoRotateSpeed = 2.0
+        } = memoizedControlsConfig;
+        
+        controls.enableDamping = enableDamping;
+        controls.dampingFactor = dampingFactor;
+        controls.rotateSpeed = rotateSpeed;
+        controls.zoomSpeed = zoomSpeed;
+        controls.enablePan = enablePan;
+        controls.autoRotate = autoRotate;
+        controls.autoRotateSpeed = autoRotateSpeed;
       }
-      
-      // 清除容器并添加渲染器
-      containerRef.current.innerHTML = '';
-      containerRef.current.appendChild(renderer.domElement);
-      rendererRef.current = renderer;
 
-      // 创建控制器
-      const { 
-        enableDamping = true, 
-        dampingFactor = 0.05, 
-        rotateSpeed = 0.5, 
-        zoomSpeed = 0.8,
-        enablePan = true,
-        autoRotate = false,
-        autoRotateSpeed = 2.0
-      } = controlsConfig;
-      
-      const controls = new OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = enableDamping;
-      controls.dampingFactor = dampingFactor;
-      controls.rotateSpeed = rotateSpeed;
-      controls.zoomSpeed = zoomSpeed;
-      controls.enablePan = enablePan;
-      controls.autoRotate = autoRotate;
-      controls.autoRotateSpeed = autoRotateSpeed;
-      controlsRef.current = controls;
-
-      // 使用服务添加默认光照
-      const { ambientLight, directionalLight } = VisualizationService.setupDefaultLighting(scene, rendererConfig.shadowMapEnabled || false);
-
-      // 调用用户初始化函数
-      if (onInit && scene && camera && renderer && controls) {
-        onInit({ scene, camera, renderer, controls });
+      // 调用用户初始化函数，添加错误处理
+      if (onInit && currentScene && camera && renderer && controls) {
+        try {
+          onInit({ scene: currentScene, camera, renderer, controls });
+        } catch (error) {
+          console.error('Error in onInit callback:', error);
+          setHasError(error instanceof Error ? error : new Error('Initialization callback failed'));
+        }
       }
 
       setIsInitialized(true);
@@ -207,7 +200,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       console.error('Three.js initialization error:', error);
       setHasError(error instanceof Error ? error : new Error('Three.js initialization failed'));
     }
-  }, [onInit, cameraConfig, controlsConfig, rendererConfig, sceneConfig, minWidth, minHeight, webglSupported]);
+  }, [onInit, minWidth, minHeight, webglSupported, memoizedControlsConfig, memoizedSceneConfig, getScene, createScene, camera, renderer, controls]);
 
   // 调整大小处理函数
   const handleResize = useCallback(() => {
@@ -226,9 +219,25 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     }
   }, [autoFit, minWidth, minHeight]);
 
-  // 动画循环
+  // 动画循环 - 优化版本
   const animate = useCallback(() => {
     if (paused) return;
+
+    // 性能优化：只在可见区域内渲染
+    const container = containerRef.current;
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      const isVisible = rect.top < window.innerHeight && rect.bottom >= 0 && 
+                       rect.left < window.innerWidth && rect.right >= 0;
+      
+      if (!isVisible) {
+        // 元素不可见时，降低更新频率
+        animationFrameRef.current = setTimeout(() => {
+          requestAnimationFrame(animate);
+        }, 500); // 每500ms检查一次
+        return;
+      }
+    }
 
     animationFrameRef.current = requestAnimationFrame(animate);
     
@@ -238,8 +247,8 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     lastFrameTimeRef.current = currentTime;
 
     // 更新控制器
-    if (controlsRef.current) {
-      controlsRef.current.update();
+    if (controls) {
+      controls.update();
     }
 
     // 调用用户动画帧回调
@@ -252,13 +261,15 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     }
 
     // 使用服务更新场景
-    const scene = getScene();
-    updateScene(scene, deltaTime);
+    const currentScene = getScene();
+    if (currentScene) {
+      updateScene(currentScene, deltaTime);
+    }
 
-    // 渲染场景
-    if (rendererRef.current && scene && cameraRef.current) {
+    // 渲染场景 - 使用useThreeScene提供的实例
+    if (renderer && currentScene && camera) {
       try {
-        rendererRef.current.render(scene, cameraRef.current);
+        renderer.render(currentScene, camera);
       } catch (error) {
         console.error('Render error:', error);
         setHasError(error instanceof Error ? error : new Error('Rendering failed'));
@@ -269,41 +280,38 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
         }
       }
     }
-  }, [paused, onAnimationFrame, getScene, updateScene]);
+  }, [paused, onAnimationFrame, getScene, updateScene, controls, renderer, camera]);
 
-  // 清理Three.js资源
+  // 清理Three.js资源 - 增强版本
   const cleanup = useCallback(() => {
     // 取消动画帧
     if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
+      if (typeof animationFrameRef.current === 'number') {
+        cancelAnimationFrame(animationFrameRef.current);
+      } else {
+        clearTimeout(animationFrameRef.current);
+      }
       animationFrameRef.current = null;
     }
     
-    // 清理控制器
-    if (controlsRef.current) {
-      controlsRef.current.dispose();
-      controlsRef.current = null;
-    }
+    // 重置时间引用
+    lastFrameTimeRef.current = 0;
     
-    // 清理渲染器
-    if (rendererRef.current && containerRef.current) {
-      containerRef.current.removeChild(rendererRef.current.domElement);
-      rendererRef.current.dispose();
-      rendererRef.current = null;
-    }
-    
-    // 使用hook清理场景
+    // 清理场景资源 - useThreeScene已经处理了控制器、渲染器和相机的清理
     clearScene();
     
-    // 清理相机
-    cameraRef.current = null;
     setIsInitialized(false);
-  }, [clearScene, getScene]);
+  }, [clearScene]);
 
   // 组件挂载时初始化
   useEffect(() => {
     const isSupported = checkWebGLSupport();
     setWebglSupported(isSupported);
+    
+    // 设置用户更新函数到场景
+    if (onAnimationFrame) {
+      setUpdateFunction(onAnimationFrame);
+    }
     
     if (isSupported) {
       initialize();
@@ -326,7 +334,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       }
       cleanup();
     };
-  }, [initialize, handleResize, animate, autoFit, paused, checkWebGLSupport, cleanup]);
+  }, [initialize, handleResize, animate, autoFit, paused, checkWebGLSupport, cleanup, onAnimationFrame, setUpdateFunction]);
 
   // 当暂停状态改变时重新开始/停止动画循环
   useEffect(() => {
@@ -335,23 +343,30 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       animate();
     }
   }, [isInitialized, paused, animate]);
+  
+  // 监听场景错误
+  useEffect(() => {
+    if (sceneError) {
+      setHasError(sceneError);
+    }
+  }, [sceneError]);
 
   // 渲染用户内容
   useEffect(() => {
-    if (isInitialized && children && getScene() && cameraRef.current && rendererRef.current && controlsRef.current) {
+    if (isInitialized && children && scene && camera && renderer && controls) {
       try {
         children({
-          scene: getScene(),
-          camera: cameraRef.current,
-          renderer: rendererRef.current,
-          controls: controlsRef.current
+          scene,
+          camera,
+          renderer,
+          controls
         });
       } catch (error) {
         console.error('Children render error:', error);
         setHasError(error instanceof Error ? error : new Error('Children rendering failed'));
       }
     }
-  }, [isInitialized, children, getScene]);
+  }, [isInitialized, children, scene, camera, renderer, controls]);
 
   // 错误渲染
   if (hasError) {
@@ -359,16 +374,16 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       <div 
         ref={containerRef}
         className={cn(
-          'relative w-full overflow-hidden flex flex-col items-center justify-center bg-red-900/10 border border-red-500/30 rounded-lg',
+          'flex overflow-hidden relative flex-col justify-center items-center w-full rounded-lg border bg-red-900/10 border-red-500/30',
           className
         )}
         style={{ minHeight: `${minHeight}px` }}
       >
-        <h3 className="text-red-400 font-medium mb-2">Three.js 渲染错误</h3>
-        <p className="text-red-300/80 text-sm text-center px-4">{hasError.message}</p>
+        <h3 className="mb-2 font-medium text-red-400">Three.js 渲染错误</h3>
+        <p className="px-4 text-sm text-center text-red-300/80">{hasError.message}</p>
         <button 
           onClick={initialize}
-          className="mt-4 px-4 py-2 bg-red-600/20 border border-red-500/50 text-red-300 rounded-md hover:bg-red-600/30 transition-colors"
+          className="px-4 py-2 mt-4 text-red-300 rounded-md border transition-colors bg-red-600/20 border-red-500/50 hover:bg-red-600/30"
         >
           重试初始化
         </button>
@@ -382,13 +397,13 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       <div 
         ref={containerRef}
         className={cn(
-          'relative w-full overflow-hidden flex flex-col items-center justify-center bg-blue-900/10 border border-blue-500/30 rounded-lg',
+          'flex overflow-hidden relative flex-col justify-center items-center w-full rounded-lg border bg-blue-900/10 border-blue-500/30',
           className
         )}
         style={{ minHeight: `${minHeight}px` }}
       >
-        <h3 className="text-blue-400 font-medium mb-2">浏览器不支持 WebGL</h3>
-        <p className="text-blue-300/80 text-sm text-center px-4">
+        <h3 className="mb-2 font-medium text-blue-400">浏览器不支持 WebGL</h3>
+        <p className="px-4 text-sm text-center text-blue-300/80">
           您的浏览器不支持WebGL，无法显示3D可视化内容。请尝试更新浏览器或使用支持WebGL的现代浏览器。
         </p>
       </div>
@@ -401,14 +416,14 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       <div 
         ref={containerRef}
         className={cn(
-          'relative w-full overflow-hidden flex items-center justify-center bg-gray-900/50',
+          'flex overflow-hidden relative justify-center items-center w-full bg-gray-900/50',
           className
         )}
         style={{ minHeight: `${minHeight}px` }}
       >
         <div className="flex flex-col items-center">
-          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-          <p className="text-blue-300 text-sm">初始化3D场景...</p>
+          <div className="mb-3 w-10 h-10 rounded-full border-4 border-blue-500 animate-spin border-t-transparent"></div>
+          <p className="text-sm text-blue-300">初始化3D场景...</p>
         </div>
       </div>
     );
@@ -419,7 +434,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     <motion.div
       ref={containerRef}
       className={cn(
-        'relative w-full overflow-hidden',
+        'overflow-hidden relative w-full',
         className
       )}
       initial={{ opacity: 0 }}
@@ -435,10 +450,8 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
 
 // 重新导出VisualizationService中的方法，保持向后兼容性
 export { 
-  createGrid, 
-  createAxesHelper, 
-  createFormulaText, 
-  createParticleSystem 
+  createGridHelper, 
+  createAxesHelper
 } from '../services/visualizationService';
 
 export default ThreeJSVisualization;

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, easeOut } from 'framer-motion';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { toast } from 'sonner';
 import ThreeJSVisualization from '../components/ThreeJSVisualization';
-import { PageContainer } from '../App';
 
 // 动画变体
 const containerVariants = {
@@ -12,10 +11,10 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      duration: 0.7,
-      ease: "easeOut"
-    }
+          staggerChildren: 0.1,
+          duration: 0.7,
+          ease: easeOut
+        }
   }
 };
 
@@ -25,9 +24,9 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.5,
-      ease: "easeOut"
-    }
+          duration: 0.5,
+          ease: easeOut
+        }
   }
 };
 
@@ -37,9 +36,9 @@ const simulationVariants = {
     opacity: 1,
     scale: 1,
     transition: {
-      duration: 0.6,
-      ease: "easeOut"
-    }
+          duration: 0.6,
+          ease: easeOut
+        }
   }
 };
 
@@ -65,7 +64,7 @@ const InteractiveExplorationPage: React.FC = () => {
   
   // 使用useCallback优化事件处理函数
   const handleParameterChange = useCallback((simulation: string, paramName: string, value: number) => {
-    setParameters(prev => ({
+    setParameters((prev: typeof parameters) => ({
       ...prev,
       [simulation]: {
         ...prev[simulation],
@@ -93,7 +92,7 @@ const InteractiveExplorationPage: React.FC = () => {
   }, []);
 
   // 使用自定义渲染函数创建3D可视化
-  const createVisualization = useCallback((scene: THREE.Scene) => {
+  const createVisualization = useCallback(({ scene }: { scene: THREE.Scene; camera: THREE.PerspectiveCamera; renderer: THREE.WebGLRenderer; controls: OrbitControls; }) => {
     // 设置scene引用
     sceneRef.current = scene;
     
@@ -124,9 +123,9 @@ const InteractiveExplorationPage: React.FC = () => {
   }, [activeSimulation]);
   
   // 更新可视化的动画函数
-  const updateVisualization = useCallback((scene: THREE.Scene, deltaTime: number) => {
-    if (scene.userData.update) {
-      scene.userData.update();
+  const updateVisualization = useCallback((deltaTime: number) => {
+    if (sceneRef.current?.userData.update) {
+      sceneRef.current.userData.update();
     }
   }, []);
   
@@ -572,7 +571,6 @@ const InteractiveExplorationPage: React.FC = () => {
               {/* 3D可视化 */}
               <motion.div
                 className="bg-[#121228] rounded-xl border border-blue-900/30 overflow-hidden relative mb-6 shadow-lg shadow-blue-900/10 hover:shadow-blue-900/20 transition-all duration-300">
-              >
                 {isLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-[#121228]/80 z-10">
                     <motion.div 
@@ -591,16 +589,15 @@ const InteractiveExplorationPage: React.FC = () => {
                   </div>
                 )}
                 <ThreeJSVisualization
-                  onSceneInit={createVisualization}
-                  onAnimate={updateVisualization}
-                  initialCameraPosition={{ x: 0, y: 0, z: 10 }}
-                  backgroundColor={0x0a0a14}
-                  enableOrbitControls={true}
-                  orbitControlsConfig={{
-                    enableDamping: true,
-                    dampingFactor: 0.05
-                  }}
-                  style={{ width: '100%', height: '60vh', minHeight: '400px' }}
+                  onInit={createVisualization}
+                  onAnimationFrame={updateVisualization}
+                  cameraConfig={{ position: { x: 0, y: 0, z: 10 } }}
+                  sceneConfig={{ backgroundColor: 0x0a0a14 }}
+                  controlsConfig={{
+                      enableDamping: true,
+                      dampingFactor: 0.05
+                    }}
+                    className="w-full h-[60vh] min-h-[400px]"
                 />
               </motion.div>
 
@@ -618,7 +615,6 @@ const InteractiveExplorationPage: React.FC = () => {
           </div>
         </div>
       </motion.div>
-    </PageContainer>
   );
 };
 

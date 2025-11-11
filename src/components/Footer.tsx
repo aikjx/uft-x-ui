@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, easeOut } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 // 配置常量
@@ -43,7 +43,7 @@ const itemVariants = {
     y: 0,
     transition: {
       duration: 0.5,
-      ease: "easeOut"
+      ease: easeOut
     }
   }
 };

@@ -7,7 +7,7 @@ import ParticleBackground from './components/ParticleBackground';
 import { MathJax } from './components/MathJax';
 import { showNotification } from './utils';
 
-// 使用React.lazy进行代码分割
+// 使用React.lazy进行代码分割，确保只导入一个HomePage组件
 const HomePage = lazy(() => import('./pages/HomePage'));
 const FormulaVisualizationPage = lazy(() => import('./pages/FormulaVisualizationPage'));
 const ArtificialFieldPage = lazy(() => import('./pages/ArtificialFieldPage'));
@@ -16,7 +16,7 @@ const KnowledgePage = lazy(() => import('./pages/KnowledgePage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 // 页面容器组件，用于处理每个页面的通用布局
-const PageContainer: React.FC<{ children: React.ReactNode; hideBackground?: boolean }> = ({ 
+export const PageContainer: React.FC<{ children: React.ReactNode; hideBackground?: boolean }> = ({ 
   children, 
   hideBackground = false 
 }) => {
@@ -85,6 +85,7 @@ function App() {
               <HomePage />
             </PageContainer>
           } 
+          // 确保首页路由正确配置，只使用一个HomePage组件
         />
         <Route 
           path="/formulas/:id?" 

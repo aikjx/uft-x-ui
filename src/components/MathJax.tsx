@@ -1,12 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '../utils';
-
-// 声明MathJax全局对象
-declare global {
-  interface Window {
-    MathJax: any;
-  }
-}
+import { MathJax as MathJaxService } from '../utils/mathjax';
 
 interface MathJaxProps {
   formula: string;
@@ -15,81 +9,39 @@ interface MathJaxProps {
 }
 
 export const MathJax: React.FC<MathJaxProps> = ({ formula, className = '', inline = false }) => {
-  const scriptRef = useRef<HTMLScriptElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
 
-  // 加载MathJax库
+  // 初始化MathJax服务
   useEffect(() => {
-    if (window.MathJax) {
-      setIsReady(true);
-      return;
-    }
-
-    // 创建MathJax配置
-    const configScript = document.createElement('script');
-    configScript.type = 'text/javascript';
-    configScript.text = `
-      window.MathJax = {
-        tex: {
-          inlineMath: [['$', '$'], ['\\(', '\\)']],
-          displayMath: [['$$', '$$'], ['\\[', '\\]']],
-          packages: ['base', 'ams', 'noerrors', 'noundefined']
-        },
-        svg: {
-          fontCache: 'global',
-          scale: 1.1
-        },
-        startup: {
-          typeset: false
-        }
+    // 确保在客户端环境中初始化
+    if (typeof window !== 'undefined') {
+      MathJaxService.initialize();
+      
+      // 监听MathJax就绪状态
+      const handleReady = () => {
+        setIsReady(true);
       };
-    `;
-    document.head.appendChild(configScript);
-
-    // 加载MathJax脚本
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js';
-    script.async = true;
-    script.onload = () => {
-      setIsReady(true);
-    };
-    document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(configScript);
-      if (script.parentNode) {
-        document.head.removeChild(script);
-      }
-    };
+      
+      MathJaxService.onReady(handleReady);
+      
+      return () => {
+        MathJaxService.offReady(handleReady);
+      };
+    }
   }, []);
 
   // 渲染公式
   useEffect(() => {
-    if (isReady && wrapperRef.current && window.MathJax) {
+    if (isReady && wrapperRef.current) {
       // 清空容器
       wrapperRef.current.innerHTML = inline ? `$${formula}$` : `$$${formula}$$`;
       
-      // 触发MathJax渲染
-      // 安全地调用typesetClear方法
-      if (window.MathJax.typesetClear) {
-        window.MathJax.typesetClear();
-      }
-      
-      // 安全地调用typesetPromise方法，如果不存在则尝试使用typeset方法
-      if (window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise([wrapperRef.current]).catch((err: any) => {
-          console.warn('MathJax渲染错误:', err);
-        });
-      } else if (window.MathJax.typeset) {
-        // 降级使用typeset方法
-        try {
-          window.MathJax.typeset([wrapperRef.current]);
-        } catch (err) {
-          console.warn('MathJax渲染错误:', err);
-        }
-      } else {
-        console.warn('MathJax没有可用的渲染方法');
+      // 使用MathJaxService进行渲染
+      try {
+        MathJaxService.queueTypeset(wrapperRef.current);
+      } catch (err) {
+        console.warn('MathJax渲染错误:', err);
       }
     }
   }, [formula, isReady, inline]);

@@ -1,9 +1,7 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, easeOut } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
-import ParticleBackground from '../components/ParticleBackground';
-import { PageContainer } from '../App';
 
 // 类型定义
 interface FeatureItem {
@@ -61,7 +59,7 @@ const fadeInUpVariants = {
     transition: {
       duration: 0.6,
       delay: custom * 0.1,
-      ease: [0.22, 1, 0.36, 1]
+      ease: easeOut
     }
   })
 };
@@ -88,7 +86,7 @@ const cardHoverVariants = {
     boxShadow: '0 20px 25px -5px rgba(74, 108, 247, 0.1), 0 10px 10px -5px rgba(74, 108, 247, 0.04)',
     transition: {
       duration: 0.3,
-      ease: [0.22, 1, 0.36, 1]
+      ease: easeOut
     }
   }
 };
@@ -105,26 +103,18 @@ const HomePage: React.FC = () => {
   );
 
   return (
-    <PageContainer>
-      <div className="relative w-full h-full min-h-screen flex flex-col">
-        {/* 使用优化后的ParticleBackground组件替代自定义canvas */}
-        <ParticleBackground 
-          particleCount={1500}
-          enableMouseInteraction={true}
-          enableAutoRotation={true}
-          autoRotationSpeed={0.0005}
-        />
+      <div className="relative">
 
         {/* 英雄区 - 增强视觉效果 */}
         <motion.section
-          className="relative flex-1 flex flex-col items-center justify-center px-4 md:px-8 text-center z-10 py-16 md:py-24 overflow-hidden"
+          className="flex relative z-10 flex-col justify-center items-center px-4 py-16 text-center md:px-8 md:py-24"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
         >
           {/* 装饰元素 - 增强渐变和动画效果 */}
           <motion.div 
-            className="absolute inset-0 flex items-center justify-center opacity-5"
+            className="flex absolute inset-0 justify-center items-center opacity-5"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 0.5 }}
             transition={{ duration: 2, delay: 0.5 }}
@@ -148,7 +138,7 @@ const HomePage: React.FC = () => {
           </motion.h1>
           
           <motion.p
-            className="text-lg md:text-xl text-blue-100 mb-8 max-w-3xl relative z-10"
+            className="relative z-10 mb-8 max-w-3xl text-lg text-blue-100 md:text-xl"
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.8 }}
@@ -157,14 +147,14 @@ const HomePage: React.FC = () => {
           </motion.p>
 
           <motion.div
-            className="flex flex-col sm:flex-row gap-4 mb-12 relative z-10"
+            className="flex relative z-10 flex-col gap-4 mb-12 sm:flex-row"
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
           >
             <motion.button
               onClick={() => navigate('/formulas')}
-              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-full hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+              className="px-8 py-3 font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-full transition-all hover:shadow-lg hover:shadow-blue-500/30"
               whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(79, 70, 229, 0.5)' }}
               whileTap={{ scale: 0.98 }}
             >
@@ -172,7 +162,7 @@ const HomePage: React.FC = () => {
             </motion.button>
             <motion.button
               onClick={() => navigate('/interactive')}
-              className="px-8 py-3 bg-transparent border border-blue-400 text-blue-300 font-medium rounded-full hover:bg-blue-900/20 transition-all"
+              className="px-8 py-3 font-medium text-blue-300 bg-transparent rounded-full border border-blue-400 transition-all hover:bg-blue-900/20"
               whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(96, 165, 250, 0.3)' }}
               whileTap={{ scale: 0.98 }}
             >
@@ -182,7 +172,7 @@ const HomePage: React.FC = () => {
 
           {/* 实时模拟指示器 */}
           <motion.div
-            className="flex items-center gap-2 text-blue-300 relative z-10"
+            className="flex relative z-10 gap-2 items-center text-blue-300"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1, duration: 0.8 }}
@@ -191,7 +181,7 @@ const HomePage: React.FC = () => {
               {[1, 2, 3].map((i) => (
                 <motion.div
                   key={i}
-                  className="w-2 h-2 rounded-full bg-blue-400"
+                  className="w-2 h-2 bg-blue-400 rounded-full"
                   animate={{
                     opacity: [0.5, 1, 0.5],
                     scale: [1, 1.5, 1]
@@ -212,7 +202,7 @@ const HomePage: React.FC = () => {
         <section className="relative z-10 bg-gradient-to-b from-transparent to-[#0a0a14]/90 py-20 px-4">
           <div className="container mx-auto max-w-7xl">
             <motion.h2
-              className="text-3xl md:text-4xl font-bold text-center mb-16 text-blue-100"
+              className="mb-16 text-3xl font-bold text-center text-blue-100 md:text-4xl"
               variants={fadeInUpVariants}
               initial="hidden"
               whileInView="visible"
@@ -223,7 +213,7 @@ const HomePage: React.FC = () => {
             </motion.h2>
 
             <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3"
               variants={staggerContainerVariants}
               initial="hidden"
               whileInView="visible"
@@ -249,19 +239,19 @@ const HomePage: React.FC = () => {
                   ></motion.div>
                   
                   {/* 卡片内发光效果 */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20 pointer-events-none"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-transparent pointer-events-none to-black/20"></div>
                   
-                  <div className="relative z-10 flex flex-col h-full">
+                  <div className="flex relative z-10 flex-col h-full">
                     <motion.div 
-                      className="text-4xl mb-4"
+                      className="mb-4 text-4xl"
                       initial={{ rotate: -5 }}
                       whileHover={{ rotate: 5, scale: 1.1 }}
                       transition={{ duration: 0.3 }}
                     >
                       {feature.icon}
                     </motion.div>
-                    <h3 className="text-xl font-bold text-blue-200 mb-3">{feature.title}</h3>
-                    <p className="text-blue-100/70 mb-6 flex-grow leading-relaxed">{feature.description}</p>
+                    <h3 className="mb-3 text-xl font-bold text-blue-200">{feature.title}</h3>
+                    <p className="flex-grow mb-6 leading-relaxed text-blue-100/70">{feature.description}</p>
                     <motion.div
                       whileHover={{ x: 5 }}
                       transition={{ duration: 0.2 }}
@@ -271,7 +261,7 @@ const HomePage: React.FC = () => {
                         className={`text-transparent bg-clip-text bg-gradient-to-r ${feature.color} hover:text-blue-300 flex items-center gap-2 transition-all duration-300 group-hover:underline`}
                       >
                         <span>了解更多</span>
-                        <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 transition-transform duration-300 transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                         </svg>
                       </button>
@@ -287,7 +277,7 @@ const HomePage: React.FC = () => {
         <section className="relative z-10 py-20 px-4 bg-[#0a0a14]">
           <div className="container mx-auto max-w-7xl">
             <motion.h2
-              className="text-3xl md:text-4xl font-bold text-center mb-16 text-blue-100"
+              className="mb-16 text-3xl font-bold text-center text-blue-100 md:text-4xl"
               variants={fadeInUpVariants}
               initial="hidden"
               whileInView="visible"
@@ -306,11 +296,11 @@ const HomePage: React.FC = () => {
               className="bg-[#121228] rounded-xl p-4 md:p-8 border border-blue-900/30 shadow-xl hover:shadow-blue-500/5 transition-all duration-300 relative overflow-hidden"
             >
               {/* 背景装饰 */}
-              <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"></div>
-              <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"></div>
+              <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full blur-3xl bg-blue-500/10"></div>
+              <div className="absolute -bottom-24 -left-24 w-64 h-64 rounded-full blur-3xl bg-purple-500/10"></div>
               
               <div className="relative z-10">
-                <h3 className="text-xl font-semibold text-blue-200 mb-4 flex items-center gap-2">
+                <h3 className="flex gap-2 items-center mb-4 text-xl font-semibold text-blue-200">
                   <span className="inline-block w-2 h-6 bg-blue-500 rounded-full"></span>
                   空间波动模拟
                 </h3>
@@ -388,7 +378,6 @@ const HomePage: React.FC = () => {
           </div>
         </section>
       </div>
-    </PageContainer>
   );
 };
 

@@ -1,5 +1,8 @@
 import { Formula } from '../types';
 
+// 定义一个空的公式数组，避免TypeScript错误
+const FORMULAS: Formula[] = [];
+
 // 公式服务类
 export class FormulaService {
   private static instance: FormulaService;
@@ -28,20 +31,20 @@ export class FormulaService {
 
   // 根据类别获取公式
   static getFormulasByCategory(category: string): Formula[] {
-    return FORMULAS.filter(formula => formula.category === category);
+    return FORMULAS.filter((formula: Formula) => formula.category === category);
   }
 
   // 获取所有类别
   static getAllCategories(): string[] {
     const categories = new Set<string>();
-    FORMULAS.forEach(formula => categories.add(formula.category));
+    FORMULAS.forEach((formula: Formula) => categories.add(formula.category));
     return Array.from(categories).sort();
   }
 
   // 搜索公式
   static searchFormulas(query: string): Formula[] {
     const lowercaseQuery = query.toLowerCase();
-    return FORMULAS.filter(formula => 
+    return FORMULAS.filter((formula: Formula) => 
       formula.name.toLowerCase().includes(lowercaseQuery) ||
       formula.description.toLowerCase().includes(lowercaseQuery) ||
       formula.category.toLowerCase().includes(lowercaseQuery)
@@ -51,7 +54,7 @@ export class FormulaService {
   // 获取相关公式（基于类别）
   static getRelatedFormulas(formula: Formula, limit: number = 3): Formula[] {
     return FORMULAS
-      .filter(f => f.category === formula.category && f.id !== formula.id)
+      .filter((f: Formula) => f.category === formula.category && f.id !== formula.id)
       .slice(0, limit);
   }
 

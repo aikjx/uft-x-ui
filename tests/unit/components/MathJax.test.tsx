@@ -7,24 +7,26 @@ describe('MathJax Component', () => {
     // 在每个测试前清除所有模拟
     vi.clearAllMocks()
     // 删除全局MathJax对象
-    delete global.MathJax
-    delete window.MathJax
+    if (typeof window !== 'undefined') {
+      delete window.MathJax
+    }
   })
   
   afterEach(() => {
     // 测试后清理
-    delete global.MathJax
-    delete window.MathJax
+    if (typeof window !== 'undefined') {
+      delete window.MathJax
+    }
   })
   
   it('renders without crashing', () => {
-    // 基本渲染测试，不依赖MathJax
-    const { container } = render(<MathJax>测试内容</MathJax>)
+    // 基本渲染测试，使用正确的formula prop
+    const { container } = render(<MathJax formula="E=mc^2" />)
     expect(container).toBeDefined()
   })
   
   it('handles MathJax not being available', () => {
     // 确保当MathJax不可用时不会抛出错误
-    expect(() => render(<MathJax>\\(E=mc^2\\)</MathJax>)).not.toThrow()
+    expect(() => render(<MathJax formula="E=mc^2" />)).not.toThrow()
   })
 })

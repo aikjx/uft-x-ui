@@ -197,10 +197,12 @@ const KnowledgePage: React.FC = () => {
                     <div className="text-2xl mt-1 min-w-[40px]">{item.icon}</div>
                     <div>
                       <h4 className="mb-3 text-lg font-semibold text-blue-200">{item.heading}</h4>
-                      {item.formula && (
+                      {("formula" in item) && item.formula && (
                         <motion.div 
                           className={cn("mb-3 p-3 bg-[#0a0a14] rounded-lg border border-blue-800/30")}
-                          variants={formulaVariants}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.6 }}
                         >
                           <MathJax formula={item.formula} />
                         </motion.div>

@@ -1,23 +1,38 @@
 import React, { useState, useRef } from 'react';
+import * as THREE from 'three';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import ParticleBackground from '../components/ParticleBackground';
 import ThreeJSVisualization from '../components/ThreeJSVisualization';
 import { MathJax } from '../components/MathJax';
 import { useThreeScene } from '../hooks/useThreeScene';
-import { FORMULAS, FEATURES, ANIMATION_VARIANTS } from '../constants';
+import { FEATURES, ANIMATION_VARIANTS } from '../constants/index';
+// 从formulaService获取公式数据
 import { cn, showNotification } from '../utils';
 import { FormulaService } from '../services/formulaService';
 import { VisualizationService } from '../services/visualizationService';
 
-const { containerVariants, itemVariants, featureVariants, formulaVariants } = ANIMATION_VARIANTS;
+const { containerVariants, itemVariants } = ANIMATION_VARIANTS;
+// 移除未使用的itemVariants定义
+// 定义一个简单的动画变体以避免类型错误
+const formulaVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({ 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      delay: i * 0.1,
+      duration: 0.5
+    }
+  })
+};
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'features' | 'formulas'>('features');
   const [isLoading, setIsLoading] = useState(true);
   const heroRef = useRef<HTMLDivElement>(null);
-  const { createScene, getScene, updateScene } = useThreeScene();
+  const { createScene, getScene, updateScene } = useThreeScene({ containerRef: heroRef });
 
   // 模拟加载数据
   React.useEffect(() => {
@@ -30,7 +45,7 @@ const Home: React.FC = () => {
   }, []);
 
   // 创建动态背景可视化
-  const createHeroVisualization = (scene: any) => {
+  const createHeroVisualization = ({ scene }: { scene: THREE.Scene; camera: THREE.PerspectiveCamera; renderer: THREE.WebGLRenderer; controls: any }) => {
     // 添加坐标轴和网格
     const axesHelper = VisualizationService.createAxesHelper(10);
     scene.add(axesHelper);
@@ -45,7 +60,9 @@ const Home: React.FC = () => {
     scene.add(particles);
     
     // 添加表示公式的环形
-    const torus = VisualizationService.createTorus(3, 0.05, 0x00aaff);
+    const torusGeometry = new THREE.TorusGeometry(3, 0.05, 16, 100);
+    const torusMaterial = new THREE.MeshBasicMaterial({ color: 0x00aaff });
+    const torus = new THREE.Mesh(torusGeometry, torusMaterial);
     scene.add(torus);
     
     // 设置更新函数
@@ -69,13 +86,13 @@ const Home: React.FC = () => {
     showNotification.info(`导航至：${feature.title}`);
   };
 
-  const handleFormulaClick = (formulaId: number) => {
+  const handleFormulaClick = (formulaId: number | string) => {
     navigate(`/formulas/${formulaId}`);
     showNotification.info(`查看公式详情`);
   };
 
   // 获取核心公式（限制为3个）
-  const coreFormulas = FORMULAS.slice(0, 3);
+  const coreFormulas = FormulaService.getAllFormulas().slice(0, 3);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#050518] to-[#0a0a28] text-white">
@@ -119,7 +136,7 @@ const Home: React.FC = () => {
         <div className="absolute inset-0 z-0">
           <ThreeJSVisualization 
             className="w-full h-full" 
-            createVisualization={createHeroVisualization}
+            onInit={createHeroVisualization}
             cameraConfig={{ position: { x: 0, y: 0, z: 10 } }}
           />
         </div>
@@ -156,10 +173,10 @@ const Home: React.FC = () => {
         {/* 功能卡片 */}
         {activeTab === 'features' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {FEATURES.map((feature) => (
+            {FEATURES.map((feature: any) => (
               <motion.div
                 key={feature.id}
-                variants={featureVariants}
+                variants={itemVariants}
                 className="bg-gradient-to-b from-blue-900/10 to-blue-900/5 backdrop-blur-sm border border-blue-800/30 rounded-xl p-6 hover:shadow-lg hover:shadow-blue-500/10 transition-all hover:-translate-y-1 cursor-pointer"
                 whileHover={{ scale: 1.02 }}
                 onClick={() => handleFeatureClick(feature)}
@@ -203,7 +220,9 @@ const Home: React.FC = () => {
         {/* 底部CTA */}
         <motion.div 
           className="mt-20 text-center"
-          variants={itemVariants}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
         >
           <h2 className="text-3xl font-bold text-blue-300 mb-6">开始您的统一场论探索之旅</h2>
           <div className="flex flex-wrap justify-center gap-4">

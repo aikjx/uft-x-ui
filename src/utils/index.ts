@@ -34,7 +34,7 @@ export const debounce = <T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): ((...args: Parameters<T>) => void) => {
-  let timeout: NodeJS.Timeout | null = null;
+  let timeout: number | null = null;
   
   return (...args: Parameters<T>) => {
     if (timeout) {
@@ -136,7 +136,8 @@ export const validateFormula = (formula: string): boolean => {
 
 // 深度合并对象
 export const deepMerge = <T extends Record<string, any>, U extends Record<string, any>>(target: T, source: U): T & U => {
-  const output = { ...target };
+  // 使用类型断言确保output是T & U类型
+  const output = { ...target } as T & U;
   
   if (isObject(target) && isObject(source)) {
     Object.keys(source).forEach(key => {
@@ -144,7 +145,8 @@ export const deepMerge = <T extends Record<string, any>, U extends Record<string
         if (!(key in target)) {
           Object.assign(output, { [key]: source[key] });
         } else {
-          output[key] = deepMerge(target[key], source[key]);
+          // 使用Object.assign来避免索引赋值的类型问题
+          Object.assign(output, { [key]: deepMerge(target[key] as Record<string, any>, source[key] as Record<string, any>) });
         }
       } else {
         Object.assign(output, { [key]: source[key] });

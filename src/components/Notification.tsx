@@ -123,7 +123,7 @@ const Notification: React.FC<NotificationProps> = ({
   playSound = true,
 }) => {
   const [isVisible, setIsVisible] = useState(true);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const controls = useAnimation();
   const notificationRef = useRef<HTMLDivElement>(null);
   
@@ -131,7 +131,7 @@ const Notification: React.FC<NotificationProps> = ({
 
   // 初始化动画和定时器
   useEffect(() => {
-    controls.start('animate', { custom: index });
+    controls.start('animate');
     
     // 播放通知声音
     if (playSound) {
@@ -356,9 +356,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
           <div 
             key={notification.id} 
             className="pointer-events-auto w-full"
-            style={{ 
-              // 使用CSS变量确保通知有不同的z-index，避免动画冲突
-              '--notification-index': notifications.length - index 
+            style={{
+              // 使用类型断言来支持CSS变量
+              ['--notification-index' as any]: notifications.length - index
             }}
           >
             <Notification

@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, easeOut } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '../App';
 import ParticleBackground from '../components/ParticleBackground';
@@ -24,7 +24,7 @@ const itemVariants = {
     transition: {
       duration: 0.7,
       delay: custom * 0.1,
-      ease: [0.22, 1, 0.36, 1]
+      ease: easeOut
     }
   })
 };
