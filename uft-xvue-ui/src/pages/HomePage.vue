@@ -22,12 +22,7 @@
     <!-- 英雄区域 -->
     <section class="hero">
       <div class="container">
-        <motion.div 
-          class="hero-content"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
+        <div class="hero-content">
           <h1 class="hero-title">
             探索宇宙的统一奥秘
             <span class="highlight">统一场论可视化</span>
@@ -44,19 +39,14 @@
               查看公式
             </router-link>
           </div>
-        </motion.div>
-        <motion.div 
-          class="hero-visual"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
+        </div>
+        <div class="hero-visual">
           <!-- 这里可以放置一个3D可视化组件 -->
           <div class="visual-placeholder">
             <div class="visual-icon">🔬</div>
             <p>3D场论可视化</p>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
 
@@ -65,18 +55,13 @@
       <div class="container">
         <h2 class="section-title">核心特性</h2>
         <div class="features-grid">
-          <motion.div 
-            class="feature-card"
+          <div class="feature-card"
             v-for="feature in features"
-            :key="feature.id"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 * feature.id }}
-          >
+            :key="feature.id">
             <div class="feature-icon">{{ feature.icon }}</div>
             <h3 class="feature-title">{{ feature.title }}</h3>
             <p class="feature-description">{{ feature.description }}</p>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
@@ -84,12 +69,7 @@
     <!-- 快速开始 -->
     <section class="quick-start">
       <div class="container">
-        <motion.div 
-          class="quick-start-content"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-        >
+        <div class="quick-start-content">
           <h2 class="section-title">快速开始</h2>
           <div class="steps">
             <div class="step" v-for="step in steps" :key="step.id">
@@ -103,7 +83,7 @@
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
 
@@ -140,7 +120,6 @@
 import { ref, onMounted } from 'vue'
 import { useCounterStore } from '@/stores/counter'
 import { useVisualizationStore } from '@/stores/visualization'
-import { motion } from 'framer-motion'
 
 // 使用Store
 const counterStore = useCounterStore()

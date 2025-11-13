@@ -96,10 +96,4 @@ export const useFormulaStore = defineStore('formula', () => {
     selectFormula,
     clearSelection
   }
-}, {
-  persist: {
-    key: 'formula',
-    storage: sessionStorage,
-    paths: ['selectedFormulaId']
-  }
 })

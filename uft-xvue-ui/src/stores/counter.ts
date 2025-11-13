@@ -32,11 +32,4 @@ export const useCounterStore = defineStore('counter', () => {
     decrement,
     reset
   }
-}, {
-  // 持久化配置
-  persist: {
-    key: 'counter',
-    storage: localStorage,
-    paths: ['count']
-  }
 })

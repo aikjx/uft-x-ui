@@ -6,7 +6,7 @@ const HomePage = () => import('@/pages/HomePage.vue')
 const FormulaVisualizationPage = () => import('@/pages/FormulaVisualizationPage.vue')
 const InteractiveExplorationPage = () => import('@/pages/InteractiveExplorationPage.vue')
 const KnowledgePage = () => import('@/pages/KnowledgePage.vue')
-const NotFoundPage = () => import('@/pages/NotFoundPage.vue')
+const NotFoundPage = () => import('@/pages/NotFound.vue')
 
 // 路由配置
 const routes: RouteRecordRaw[] = [
@@ -54,9 +54,9 @@ const routes: RouteRecordRaw[] = [
 
 // 创建路由实例
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL || '/'),
   routes,
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior(_to, _from, savedPosition) {
     // 保存滚动位置
     if (savedPosition) {
       return savedPosition
@@ -67,7 +67,7 @@ const router = createRouter({
 })
 
 // 全局前置守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   // 设置页面标题
   document.title = to.meta.title as string || 'UFT-X - 统一场论可视化'
   next()

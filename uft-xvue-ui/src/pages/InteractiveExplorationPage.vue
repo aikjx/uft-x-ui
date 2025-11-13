@@ -230,14 +230,8 @@
         <div class="visualization-area">
           <!-- 3D 渲染容器 -->
           <div class="render-container">
-            <!-- 这里将由Three.js或其他3D库渲染 -->
-            <div class="render-placeholder">
-              <div class="loading-spinner"></div>
-              <p class="loading-text">正在初始化3D渲染...</p>
-              <p class="instruction-text">
-                使用鼠标拖动旋转视角，滚轮缩放，右键拖动平移
-              </p>
-            </div>
+            <!-- 使用ThreeJSFieldVisualization组件 -->
+            <ThreeJSFieldVisualization />
           </div>
 
           <!-- 实时数据显示 -->
@@ -311,6 +305,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useVisualizationStore } from '../stores/visualization'
 import MathJax from '../components/MathJax.vue'
+import ThreeJSFieldVisualization from '../components/ThreeJSFieldVisualization.vue'
 
 // 状态管理
 const visualizationStore = useVisualizationStore()

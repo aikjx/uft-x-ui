@@ -95,10 +95,4 @@ export const useVisualizationStore = defineStore('visualization', () => {
     stopRendering,
     resetConfig
   }
-}, {
-  persist: {
-    key: 'visualization',
-    storage: localStorage,
-    paths: ['config']
-  }
 })
