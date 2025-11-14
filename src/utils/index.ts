@@ -169,3 +169,77 @@ export const generateSimulationData = (count: number, amplitude: number = 1, fre
     value: Math.sin(i * frequency) * amplitude + (Math.random() - 0.5) * 0.2
   }));
 };
+
+// 科幻性能优化系统导入
+import SciFiPerformanceSystem from './sciFiPerformanceController';
+
+// 🚀 科幻性能优化系统 - 快速启用函数
+
+/**
+ * 快速启动科幻级性能优化系统
+ * 一行代码启用AI+量子+神经网络三重性能优化
+ */
+export const startSciFiPerformance = SciFiPerformanceSystem.quickStart;
+
+/**
+ * 启用量子超神模式 - 最强性能
+ */
+export const enableQuantumMode = (container?: HTMLElement) => 
+  SciFiPerformanceSystem.quickStart(container, { 
+    quantumMode: true, 
+    enableHologram: true,
+    autoMode: true,
+    neuralOptimization: true 
+  });
+
+/**
+ * 启用极简模式 - 最快启动
+ */
+export const enableMinimalMode = () => SciFiPerformanceSystem.minimal();
+
+/**
+ * 启用游戏模式 - 平衡性能
+ */
+export const enableGamingMode = (container?: HTMLElement) => 
+  SciFiPerformanceSystem.quickStart(container, { 
+    quantumMode: true,
+    enableHologram: false,
+    autoMode: true 
+  });
+
+/**
+ * 启用节能模式 - 绿色计算
+ */
+export const enableEnergyMode = () => 
+  SciFiPerformanceSystem.quickStart(undefined, { 
+    energySaving: true,
+    autoMode: true 
+  });
+
+/**
+ * 启用演示模式 - 视觉效果优先
+ */
+export const enablePresentationMode = (container?: HTMLElement) => 
+  SciFiPerformanceSystem.quickStart(container, { 
+    quantumMode: true,
+    enableHologram: true,
+    autoMode: true,
+    neuralOptimization: true
+  });
+
+// 导出科幻性能系统主类
+export { SciFiPerformanceSystem };
+
+// 高级功能导出
+export * from './aiPerformanceEngine';
+export * from './quantumRenderOptimizer';
+export * from './neuralResourceScheduler';
+export { default as HolographicPerformanceUI } from '../components/HolographicPerformanceUI';
+
+// 显示启动通知
+if (typeof window !== 'undefined') {
+  console.log('🚀 科幻性能优化系统已加载');
+  console.log('💡 使用方法:');
+  console.log('  import { startSciFiPerformance } from "@/utils"');
+  console.log('  await startSciFiPerformance();');
+}

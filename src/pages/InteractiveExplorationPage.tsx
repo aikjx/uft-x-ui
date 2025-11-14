@@ -615,6 +615,7 @@ const InteractiveExplorationPage: React.FC = () => {
           </div>
         </div>
       </motion.div>
+    </PageContainer>
   );
 };
 

@@ -6,6 +6,18 @@ import { useThreeScene } from '../hooks/useThreeScene';
 import { visualizationService, createGridHelper, createAxesHelper } from '../services/visualizationService';
 import { cn } from '../utils';
 import { VISUALIZATION_CONFIG } from '../constants';
+import { 
+  performanceOptimizationManager 
+} from '../utils/performanceOptimizationManager';
+import { 
+  devicePerformanceAnalyzer 
+} from '../utils/devicePerformanceAnalyzer';
+import { 
+  performanceDataCollector 
+} from '../utils/performanceDataCollector';
+import { 
+  sceneComplexityAnalyzer 
+} from '../utils/sceneComplexityAnalyzer';
 
 // 配置选项接口
 export interface ThreeJSVisualizationProps {
@@ -111,6 +123,9 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     error: sceneError,
     currentFPS, 
     isPerformanceMode,
+    performanceMonitor,
+    renderOptimizer,
+    particleOptimizer,
     createScene, 
     getScene, 
     addToScene,
@@ -124,6 +139,12 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     enablePerformanceMonitoring: true,
     maxObjects: VISUALIZATION_CONFIG.maxObjects || 1000
   });
+  
+  // 性能面板状态
+  const [showPerformancePanel, setShowPerformancePanel] = useState(false);
+  const [currentMemory, setCurrentMemory] = useState(0);
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [autoModeEnabled, setAutoModeEnabled] = useState(false);
   
   // 动画帧引用和时间跟踪
   const animationFrameRef = useRef<number | null>(null);
@@ -146,7 +167,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
   const memoizedRendererConfig = useMemo(() => rendererConfig, Object.values(rendererConfig || {}));
   const memoizedSceneConfig = useMemo(() => sceneConfig, Object.values(sceneConfig || {}));
 
-  // 初始化Three.js场景
+  // 初始化Three.js场景和性能优化系统
   const initialize = useCallback(() => {
     if (!containerRef.current || !webglSupported) return;
 
@@ -184,6 +205,9 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
         controls.autoRotateSpeed = autoRotateSpeed;
       }
 
+      // 初始化性能优化系统
+      initializePerformanceSystem(currentScene);
+
       // 调用用户初始化函数，添加错误处理
       if (onInit && currentScene && camera && renderer && controls) {
         try {
@@ -201,6 +225,82 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       setHasError(error instanceof Error ? error : new Error('Three.js initialization failed'));
     }
   }, [onInit, minWidth, minHeight, webglSupported, memoizedControlsConfig, memoizedSceneConfig, getScene, createScene, camera, renderer, controls]);
+  
+  // 初始化性能优化系统
+  const initializePerformanceSystem = useCallback((currentScene: THREE.Scene) => {
+    if (!performanceMonitor || !renderOptimizer || !particleOptimizer) return;
+    
+    // 初始化所有性能组件
+    performanceDataCollector.setPerformanceMonitor(performanceMonitor);
+    performanceDataCollector.setRenderOptimizer(renderOptimizer);
+    performanceDataCollector.setParticleOptimizer(particleOptimizer);
+    
+    // 将性能工具传递给管理器
+    performanceOptimizationManager.setPerformanceTools({
+      performanceMonitor,
+      renderOptimizer,
+      particleOptimizer
+    });
+    
+    // 设置场景复杂度分析器
+    sceneComplexityAnalyzer.setScene(currentScene);
+    sceneComplexityAnalyzer.setCamera(camera);
+    
+    // 启动自动性能检测
+    devicePerformanceAnalyzer.detectPerformanceTier().then(tier => {
+      console.log('检测到设备性能级别:', tier);
+      // 根据设备性能自动选择合适的性能模式
+      if (tier === 'low') {
+        performanceOptimizationManager.setPerformanceMode('low');
+      } else if (tier === 'medium') {
+        performanceOptimizationManager.setPerformanceMode('medium');
+      } else {
+        performanceOptimizationManager.setPerformanceMode('high');
+      }
+    });
+    
+    // 订阅性能数据更新
+    performanceMonitor.on('memoryUpdated', (memory: number) => {
+      setCurrentMemory(memory);
+    });
+  }, [performanceMonitor, renderOptimizer, particleOptimizer, camera]);
+  
+  // 性能设置变更处理
+  const handleSettingsChanged = useCallback((settings: Record<string, any>) => {
+    console.log('性能设置已更新:', settings);
+    setAutoModeEnabled(settings.autoMode || false);
+    
+    // 确保场景已初始化
+    const currentScene = getScene();
+    if (!currentScene) return;
+    
+    // 更新渲染器设置
+    if (renderer && settings.pixelRatio !== undefined) {
+      renderer.setPixelRatio(settings.pixelRatio === 'auto' ? window.devicePixelRatio : settings.pixelRatio);
+    }
+  }, [getScene, renderer]);
+  
+  // 一键优化
+  const runOneClickOptimization = useCallback(async () => {
+    setIsOptimizing(true);
+    
+    try {
+      // 运行性能测试
+      const result = await devicePerformanceAnalyzer.runPerformanceTest();
+      
+      // 应用最佳设置
+      devicePerformanceAnalyzer.applyOptimalSettings(performanceOptimizationManager);
+      
+      // 分析场景复杂度并调整
+      const complexityAnalysis = sceneComplexityAnalyzer.analyzeScene();
+      
+      console.log('一键优化完成:', { result, complexityAnalysis });
+    } catch (error) {
+      console.error('一键优化失败:', error);
+    } finally {
+      setIsOptimizing(false);
+    }
+  }, []);
 
   // 调整大小处理函数
   const handleResize = useCallback(() => {
@@ -244,11 +344,26 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     // 计算时间差
     const currentTime = performance.now();
     const deltaTime = lastFrameTimeRef.current ? (currentTime - lastFrameTimeRef.current) / 1000 : 0;
+    const frameTime = deltaTime * 1000; // 转换为毫秒
     lastFrameTimeRef.current = currentTime;
 
     // 更新控制器
     if (controls) {
       controls.update();
+    }
+    
+    // 应用性能优化
+    if (autoModeEnabled && performanceOptimizationManager.isAutoModeEnabled()) {
+      // 使用性能优化管理器进行自动优化
+      performanceOptimizationManager.update();
+      
+      // 分析场景复杂度
+      const complexity = sceneComplexityAnalyzer.analyzeScene();
+      
+      // 如果场景复杂度过高，应用额外优化
+      if (complexity.level === 'high' || complexity.level === 'very_high') {
+        performanceOptimizationManager.applyComplexityOptimization(complexity);
+      }
     }
 
     // 调用用户动画帧回调
@@ -265,10 +380,24 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     if (currentScene) {
       updateScene(currentScene, deltaTime);
     }
+    
+    // 收集性能数据
+    performanceDataCollector.recordFrameData({
+      fps: currentFPS || 0,
+      frameTime,
+      memory: currentMemory,
+      drawCalls: renderOptimizer?.getDrawCalls() || 0,
+      sceneComplexity: sceneComplexityAnalyzer.getCurrentComplexity()
+    });
 
     // 渲染场景 - 使用useThreeScene提供的实例
     if (renderer && currentScene && camera) {
       try {
+        // 帧跳过逻辑
+        if (renderOptimizer?.shouldSkipFrame()) {
+          return;
+        }
+        
         renderer.render(currentScene, camera);
       } catch (error) {
         console.error('Render error:', error);
@@ -280,9 +409,9 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
         }
       }
     }
-  }, [paused, onAnimationFrame, getScene, updateScene, controls, renderer, camera]);
+  }, [paused, onAnimationFrame, getScene, updateScene, controls, renderer, camera, currentFPS, currentMemory, autoModeEnabled, renderOptimizer]);
 
-  // 清理Three.js资源 - 增强版本
+  // 清理Three.js资源和性能优化系统
   const cleanup = useCallback(() => {
     // 取消动画帧
     if (animationFrameRef.current) {
@@ -296,6 +425,10 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     
     // 重置时间引用
     lastFrameTimeRef.current = 0;
+    
+    // 停止性能监控和收集
+    performanceDataCollector.stopCollection();
+    sceneComplexityAnalyzer.stopAnalysis();
     
     // 清理场景资源 - useThreeScene已经处理了控制器、渲染器和相机的清理
     clearScene();
@@ -325,6 +458,9 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       if (!paused) {
         animate();
       }
+      
+      // 开始性能数据收集
+      performanceDataCollector.startCollection();
     }
     
     // 组件卸载时清理资源
@@ -431,20 +567,67 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
 
   // 正常渲染
   return (
-    <motion.div
-      ref={containerRef}
-      className={cn(
-        'overflow-hidden relative w-full',
-        className
+    <div className="relative">
+      <motion.div
+        ref={containerRef}
+        className={cn(
+          'overflow-hidden relative w-full',
+          className
+        )}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        style={{ 
+          minHeight: `${minHeight}px`,
+          width: minWidth > 0 ? `${minWidth}px` : '100%'
+        }}
+      />
+      
+      {/* FPS 指示器 */}
+      <div className="absolute top-2 left-2 px-2 py-1 text-xs font-medium text-white bg-black/70 rounded backdrop-blur-sm">
+        {currentFPS?.toFixed(1) || '--'} FPS
+      </div>
+      
+      {/* 内存使用指示器 */}
+      <div className="absolute top-2 left-20 px-2 py-1 text-xs font-medium text-white bg-black/70 rounded backdrop-blur-sm">
+        {currentMemory?.toFixed(0) || '--'} MB
+      </div>
+      
+      {/* 性能控制面板按钮 */}
+      <button
+        onClick={() => setShowPerformancePanel(true)}
+        className="absolute top-2 right-2 px-3 py-1 text-xs font-medium text-white bg-indigo-600/80 hover:bg-indigo-700/90 rounded transition-colors backdrop-blur-sm"
+      >
+        性能优化
+      </button>
+      
+      {/* 一键优化按钮 */}
+      <button
+        onClick={runOneClickOptimization}
+        disabled={isOptimizing}
+        className={`absolute top-2 right-24 px-3 py-1 text-xs font-medium rounded transition-colors backdrop-blur-sm ${isOptimizing ? 'bg-gray-600/80 text-gray-300 cursor-not-allowed' : 'bg-emerald-600/80 text-white hover:bg-emerald-700/90'}`}
+      >
+        {isOptimizing ? '优化中...' : '一键优化'}
+      </button>
+      
+      {/* 高级性能控制面板 */}
+      {showPerformancePanel && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setShowPerformancePanel(false)}
+        >
+          <div 
+            className="relative w-full max-w-md mx-4 bg-gray-900 rounded-lg shadow-xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <AdvancedPerformancePanel
+              onClose={() => setShowPerformancePanel(false)}
+              onSettingsChanged={handleSettingsChanged}
+            />
+          </div>
+        </div>
       )}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      style={{ 
-        minHeight: `${minHeight}px`,
-        width: minWidth > 0 ? `${minWidth}px` : '100%'
-      }}
-    />
+    </div>
   );
 };
 

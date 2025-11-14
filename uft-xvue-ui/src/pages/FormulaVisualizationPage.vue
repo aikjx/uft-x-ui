@@ -31,8 +31,8 @@
             class="formula-card"
             :class="{ selected: selectedFormula?.id === formula.id }"
             @click="selectFormula(formula.id)"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            :while-hover="{ scale: 1.02 }"
+            :while-tap="{ scale: 0.98 }"
           >
             <h3 class="formula-title">{{ formula.name }}</h3>
             <div class="formula-math">
@@ -46,9 +46,9 @@
         <motion.div 
           v-if="selectedFormula" 
           class="formula-detail"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          :initial="{ opacity: 0, y: 20 }"
+          :animate="{ opacity: 1, y: 0 }"
+          :transition="{ duration: 0.5 }"
         >
           <div class="detail-header">
             <h2>{{ selectedFormula.name }}</h2>

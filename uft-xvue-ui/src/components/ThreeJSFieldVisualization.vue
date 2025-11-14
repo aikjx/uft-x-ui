@@ -3,13 +3,17 @@
     <div ref="canvasContainer" class="canvas-container"></div>
     
     <!-- 控制面板 -->
-    <div class="control-panel">
-      <h3>场论参数控制</h3>
+    <div class="control-panel" :class="{collapsed: !panelExpanded}">
+      <div class="panel-header">
+        <h3>场论参数控制</h3>
+        <button @click="togglePanelExpanded" class="panel-toggle">{{ panelExpanded ? '收起' : '展开' }}</button>
+      </div>
       
-      <!-- 场类型选择 -->
+      <div class="panel-content">
+      <!-- 场类型选择和预设 -->
       <div class="control-group">
         <label>场类型:</label>
-        <select v-model="fieldType" @change="updateFieldType">
+        <select v-model="fieldType" @change="updateFieldType" class="field-type-select">
           <option value="gravity">引力场</option>
           <option value="magnetic">磁场</option>
           <option value="electric">电场</option>
@@ -18,30 +22,57 @@
         </select>
       </div>
       
+      <!-- 预设方案 -->
+      <div class="preset-section">
+        <h4>预设方案</h4>
+        <div class="preset-buttons">
+          <button @click="applyPreset('solarSystem')" class="preset-btn" :class="{active: activePreset === 'solarSystem'}">太阳系</button>
+          <button @click="applyPreset('magneticField')" class="preset-btn" :class="{active: activePreset === 'magneticField'}">磁场环</button>
+          <button @click="applyPreset('electricDipole')" class="preset-btn" :class="{active: activePreset === 'electricDipole'}">电偶极</button>
+          <button @click="applyPreset('wavePropagation')" class="preset-btn" :class="{active: activePreset === 'wavePropagation'}">波传播</button>
+          <button @click="applyPreset('quantumInterference')" class="preset-btn" :class="{active: activePreset === 'quantumInterference'}">量子干涉</button>
+        </div>
+      </div>
+      
       <!-- 场强度 -->
       <div class="control-group">
         <label>场强度: {{ fieldStrength.toFixed(2) }}</label>
-        <input 
-          type="range" 
-          min="0.1" 
-          max="3" 
-          step="0.1" 
-          v-model.number="fieldStrength" 
-          @input="updateFieldStrength"
-        >
+        <div class="slider-container">
+          <input 
+            type="range" 
+            min="0.1" 
+            max="3" 
+            step="0.1" 
+            v-model.number="fieldStrength" 
+            @input="updateFieldStrength"
+            :disabled="isParameterLocked('fieldStrength')"
+            class="slider"
+          >
+          <button 
+            @click="toggleParameterLock('fieldStrength')" 
+            class="lock-btn" 
+            :class="{locked: isParameterLocked('fieldStrength')}"
+            title="锁定/解锁参数"
+          >
+            🔒
+          </button>
+        </div>
       </div>
       
       <!-- 粒子密度 -->
       <div class="control-group">
         <label>粒子密度: {{ particleDensity.toFixed(0) }}</label>
-        <input 
-          type="range" 
-          min="50" 
-          max="500" 
-          step="10" 
-          v-model.number="particleDensity" 
-          @input="updateParticleDensity"
-        >
+        <div class="slider-container">
+          <input 
+            type="range" 
+            min="50" 
+            max="500" 
+            step="10" 
+            v-model.number="particleDensity" 
+            @input="updateParticleDensity"
+            class="slider"
+          >
+        </div>
       </div>
       
       <!-- 动画速度 -->
@@ -265,15 +296,30 @@
       </div>
     </div>
     
-    <!-- 性能监控增强 -->
-    <div class="performance-monitor" :class="{ 'high': fpsStatus === 'high', 'medium': fpsStatus === 'medium', 'low': fpsStatus === 'low' }">
-      <div class="fps-counter" :class="fpsStatus">FPS: {{ fps }}</div>
-      <div class="particle-count">粒子数: {{ particlesCount }}</div>
-      <div class="render-time">渲染时间: {{ renderTime.toFixed(2) }}ms</div>
-      <div class="avg-frame-time">平均帧时间: {{ avgFrameTime.toFixed(2) }}ms</div>
-      <div class="performance-mode">性能模式: {{ performanceMode === 'high' ? '高性能' : performanceMode === 'medium' ? '中性能' : '低性能' }}</div>
-      <div v-if="performanceWarning" class="performance-warning">{{ performanceWarning }}</div>
-      <button @click="togglePerformanceMode" class="performance-mode-toggle">切换性能模式</button>
+    <!-- 性能控制面板 -->
+    <PerformanceControlPanel 
+      :fps="fps"
+      :fps-status="fpsStatus"
+      :memory-usage="memoryUsage"
+      :memory-peak="memoryPeak"
+      :draw-calls="drawCalls"
+      :resource-count="resourceCount"
+      :performance-mode="performanceMode"
+      :render-scale="renderScale"
+      :auto-optimize-enabled="autoOptimizeEnabled"
+      :shadow-quality="shadowQuality"
+      :max-particles="maxParticles"
+      :frame-skip-threshold="frameSkipThreshold"
+      :is-mobile="isMobileDevice"
+      @performance-mode-change="setPerformanceMode"
+      @auto-optimize-change="handleAutoOptimizeChange"
+      @render-scale-change="handleRenderScaleChange"
+      @shadow-quality-change="handleShadowQualityChange"
+      @max-particles-change="handleMaxParticlesChange"
+      @frame-skip-threshold-change="handleFrameSkipThresholdChange"
+      @clean-memory="cleanMemory"
+      @reset-settings="handleResetSettings"
+    />
     </div>
   </div>
 </template>
@@ -284,6 +330,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { FieldTheoryService, FieldType, Particle, FieldParameters } from '../services/fieldTheoryService';
+import { performanceMonitor, particleOptimizer, renderOptimizer } from '../../../../../src/utils/performanceUtils';
+import PerformanceControlPanel from './PerformanceControlPanel.vue';
 
 // 响应式状态
   const canvasContainer = ref<HTMLElement>();
@@ -291,10 +339,24 @@ import { FieldTheoryService, FieldType, Particle, FieldParameters } from '../ser
   const fieldStrength = ref(1.0);
   const particleDensity = ref(200);
   const animationSpeed = ref(0.03);
+  // 性能控制面板相关状态
+  const renderScale = ref(1.0);
+  const autoOptimizeEnabled = ref(true);
+  const shadowQuality = ref<'high' | 'medium' | 'low'>('medium');
+  const maxParticles = ref(500);
+  const frameSkipThreshold = ref(16); // 默认60fps的阈值（约16ms）
   const fieldResolution = ref(30);
   const colorMap = ref('viridis');
   const showGrid = ref(true);
   const showAxes = ref(true);
+  // 控制面板增强
+  const panelExpanded = ref(true);
+  const activePreset = ref('');
+  const lockedParameters = ref<Record<string, boolean>>({});
+  
+  // 设备信息和响应式优化
+  const deviceType = ref<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const isTouchDevice = ref(false);
   
   // 性能模式和自适应状态
   const performanceMode = ref<'high' | 'medium' | 'low'>('high');
@@ -334,8 +396,20 @@ const lastFrameTime = ref(0);
 const frameTimeHistory = ref<number[]>([]);
 const avgFrameTime = ref(0);
 const memoryUsage = ref(0);
+const memoryPeak = ref(0); // 内存使用峰值
+const drawCalls = ref(0);
+const performanceSuggestions = ref<string[]>([]);
 const performanceWarning = ref('');
 const fpsStatus = ref<'high' | 'medium' | 'low'>('high');
+// 资源计数
+const resourceCount = ref({
+  geometries: 0,
+  materials: 0,
+  textures: 0,
+  renderTargets: 0
+});
+let frameIndex = 0;
+let memoryCheckInterval: number | null = null;
 
 // Three.js核心对象
 let scene: THREE.Scene;
@@ -430,6 +504,100 @@ const colorMaps = {
     [0.982846, 0.941114, 0.799148],
     [0.997038, 0.982326, 0.916474]
   ]
+};
+
+// 启动内存监控
+const startMemoryMonitoring = () => {
+  // 清除可能存在的旧定时器
+  if (memoryCheckInterval) {
+    clearInterval(memoryCheckInterval);
+  }
+  
+  // 每秒检查一次内存使用
+  memoryCheckInterval = window.setInterval(() => {
+    const currentMemory = memoryUsage.value;
+    memoryPeak.value = Math.max(memoryPeak.value, currentMemory);
+    
+    // 内存使用警告
+    if (currentMemory > 500) {
+      console.warn(`内存使用过高: ${currentMemory.toFixed(2)}MB`);
+      // 当内存使用过高时，尝试优化
+      if (currentMemory > 800 && performanceMode.value !== 'low') {
+        console.warn('强制降低性能模式以减少内存使用');
+        performanceMode.value = 'low';
+      }
+    }
+    
+    // 更新资源计数
+    updateResourceCount();
+  }, 1000);
+};
+
+// 更新资源计数
+const updateResourceCount = () => {
+  if (renderer) {
+    try {
+      // 使用Three.js的内部统计（如果可用）
+      if ('info' in renderer) {
+        const info = (renderer as any).info;
+        if (info) {
+          resourceCount.value = {
+            geometries: info.memory.geometries || 0,
+            materials: info.memory.materials || 0,
+            textures: info.memory.textures || 0,
+            renderTargets: info.memory.renderTargets || 0
+          };
+        }
+      }
+    } catch (error) {
+      console.error('更新资源计数时出错:', error);
+    }
+  }
+};
+
+// 手动触发资源清理
+const cleanupResources = () => {
+  console.log('执行资源清理...');
+  
+  // 清理可能泄露的粒子系统
+  if (particlesArray) {
+    particlesArray = [];
+  }
+  
+  // 清理场效果网格
+  if (fieldEffectMesh) {
+    if (scene && fieldEffectMesh.parent === scene) {
+      scene.remove(fieldEffectMesh);
+    }
+    if (fieldEffectMesh.geometry) {
+      fieldEffectMesh.geometry.dispose();
+    }
+    if (fieldEffectMesh.material) {
+      (fieldEffectMesh.material as THREE.Material).dispose();
+    }
+    fieldEffectMesh = null as any;
+  }
+  
+  // 清理缓存（如果有）
+  if (fieldService) {
+    try {
+      (fieldService as any).clearCache();
+    } catch (error) {
+      console.error('清理场服务缓存时出错:', error);
+    }
+  }
+  
+  // 触发垃圾回收（如果浏览器支持）
+  if (window.gc && typeof window.gc === 'function') {
+    try {
+      window.gc();
+      console.log('已触发垃圾回收');
+    } catch (error) {
+      console.log('无法触发垃圾回收:', error);
+    }
+  }
+  
+  console.log('资源清理完成');
 };
 
 // 初始化场景优化
@@ -536,19 +704,50 @@ const initScene = () => {
   // 启动动画循环
   animate();
   
+  // 初始化设备检测
+  initializeDeviceDetection();
+  detectDeviceOrientation();
+  
   // 监听窗口大小变化
   window.addEventListener('resize', onWindowResize);
   
-  // 监听设备方向变化（移动设备）
-  if (isMobileDevice.value) {
-    window.addEventListener('orientationchange', onWindowResize);
+  // 监听设备方向变化
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+      onWindowResize();
+      detectDeviceOrientation();
+    }, 100); // 添加小延迟确保尺寸更新完成
+  });
+  
+  // 监听触摸事件以优化触屏体验
+  if (isTouchDevice.value) {
+    renderer.domElement.addEventListener('touchstart', () => {
+      // 在触摸时临时禁用某些性能密集型效果
+      if (particles && particles.material) {
+        const material = particles.material as THREE.PointsMaterial;
+        const originalSize = material.size;
+        material.size = Math.max(originalSize * 0.8, 1.0);
+        
+        // 触摸结束后恢复
+        setTimeout(() => {
+          if (particles && particles.material) {
+            (particles.material as THREE.PointsMaterial).size = originalSize;
+          }
+        }, 200);
+      }
+    }, { passive: true });
   }
 };
 
 // 创建粒子系统
 const createParticleSystem = () => {
-  const count = particleDensity.value;
+  // 使用粒子优化器确定初始粒子数量
+  const baseCount = particleDensity.value;
+  const optimizedCount = particleOptimizer.getOptimalParticleCount(baseCount, performanceMode.value, camera.position.length());
+  const count = optimizedCount;
   particlesCount.value = count;
+  
+  console.log(`创建粒子系统: 基础数量=${baseCount}, 优化后数量=${count}, 性能模式=${performanceMode.value}, 相机距离=${camera.position.length().toFixed(2)}`);
   
   // 使用场论服务初始化粒子
   const bounds = {
@@ -614,12 +813,108 @@ const createParticleSystem = () => {
   scene.add(particles);
 };
 
-// 更新粒子系统
+// 优化的粒子系统更新
+// 平滑调整粒子数量的辅助变量
+let targetParticlesCount = 0;
+let currentParticlesCount = 0;
+let particlesTransitionProgress = 0;
+let needsParticleCountUpdate = false;
+
 const updateParticleSystem = () => {
   if (!particles || !particleSystem || !particlesArray) return;
   
   const delta = clock.getDelta();
   time += delta * animationSpeed.value;
+  
+  // 每帧更新时检查并优化粒子数量
+  if (frameIndex % 30 === 0 || needsParticleCountUpdate) {
+    const cameraDistance = camera.position.length();
+    const baseCount = particleDensity.value;
+    const newOptimalCount = particleOptimizer.getOptimalParticleCount(baseCount, performanceMode.value, cameraDistance);
+    
+    // 如果优化后的粒子数量与当前有显著差异，则开始平滑过渡
+    if (Math.abs(newOptimalCount - particlesArray.length) > baseCount * 0.1) {
+      targetParticlesCount = newOptimalCount;
+      currentParticlesCount = particlesArray.length;
+      particlesTransitionProgress = 0;
+      needsParticleCountUpdate = true;
+      console.log(`优化粒子数量: 当前=${particlesArray.length}, 目标=${targetParticlesCount}, 相机距离=${cameraDistance.toFixed(2)}`);
+    }
+  }
+  
+  // 平滑过渡粒子数量
+  if (needsParticleCountUpdate) {
+    particlesTransitionProgress += delta * 1.5; // 过渡速度
+    if (particlesTransitionProgress >= 1) {
+      particlesTransitionProgress = 1;
+      needsParticleCountUpdate = false;
+    }
+    
+    // 使用缓动函数使过渡更自然
+    const easeProgress = 1 - Math.pow(1 - particlesTransitionProgress, 3);
+    const newCount = Math.floor(currentParticlesCount + (targetParticlesCount - currentParticlesCount) * easeProgress);
+    
+    // 更新粒子数量（添加或移除粒子）
+    if (newCount !== particlesArray.length && newCount > 0) {
+      const bounds = {
+        min: new THREE.Vector3(-8, -8, -8),
+        max: new THREE.Vector3(8, 8, 8)
+      };
+      
+      // 调整粒子数组大小
+      particlesArray = fieldService.resizeParticlesArray(
+        particlesArray,
+        newCount,
+        bounds,
+        FieldType[fieldType.value.toUpperCase() as keyof typeof FieldType]
+      );
+      
+      // 更新缓冲区大小
+      const newPositions = new Float32Array(newCount * 3);
+      const newColors = new Float32Array(newCount * 3);
+      
+      // 复制现有数据
+      const positionAttr = particleSystem.attributes.position;
+      const colorAttr = particleSystem.attributes.color;
+      const oldPositions = positionAttr.array as Float32Array;
+      const oldColors = colorAttr.array as Float32Array;
+      
+      const copyCount = Math.min(particlesArray.length, oldPositions.length / 3) * 3;
+      for (let i = 0; i < copyCount; i++) {
+        newPositions[i] = oldPositions[i];
+        newColors[i] = oldColors[i];
+      }
+      
+      // 更新属性
+      positionAttr.array = newPositions;
+      colorAttr.array = newColors;
+      positionAttr.count = newCount;
+      colorAttr.count = newCount;
+      positionAttr.needsUpdate = true;
+      colorAttr.needsUpdate = true;
+      
+      // 更新粒子材质大小，根据粒子数量进行优化
+      const material = particles.material as THREE.PointsMaterial;
+      const sizeFactor = Math.min(1, Math.sqrt(baseCount / newCount) * 0.9);
+      const baseSize = 0.08;
+      
+      const sizeMap = {
+        gravity: 0.08 * sizeFactor,
+        magnetic: 0.06 * sizeFactor,
+        electric: 0.07 * sizeFactor,
+        wave: 0.09 * sizeFactor,
+        quantum: 0.1 * sizeFactor
+      };
+      
+      if (sizeMap[fieldType.value as keyof typeof sizeMap]) {
+        material.size = sizeMap[fieldType.value as keyof typeof sizeMap];
+      } else {
+        material.size = baseSize * sizeFactor;
+      }
+      
+      particlesCount.value = newCount;
+    }
+  }
   
   // 准备场参数
   const fieldParams: FieldParameters = {
@@ -671,12 +966,24 @@ const updateParticleSystem = () => {
   // 使用场论服务更新粒子
   fieldService.updateParticles(particlesArray, delta, fieldParams);
   
-  // 更新缓冲区数据
-  for (let i = 0; i < particlesArray.length; i++) {
+  // 更新缓冲区数据 - 使用批处理和数据视图优化性能
+  const positionAttr = particleSystem.attributes.position;
+  const colorAttr = particleSystem.attributes.color;
+  const positionArray = positionAttr.array as Float32Array;
+  const colorArray = colorAttr.array as Float32Array;
+  
+  // 批量更新粒子数据，减少重复访问
+  // 使用粒子优化器的LOD逻辑优化渲染
+  const cameraDistance = camera.position.length();
+  const lodLevel = particleOptimizer.getLODLevel(cameraDistance);
+  const step = Math.max(1, lodLevel); // 根据LOD级别决定步长
+  
+  // 对于远距离，只更新和渲染部分粒子
+  for (let i = 0; i < particlesArray.length; i += step) {
     const index = i * 3;
     const particle = particlesArray[i];
     
-    // 边界检查和处理
+    // 优化的边界检查和处理
     const maxDistance = 15;
     const distance = particle.position.length();
     
@@ -687,20 +994,83 @@ const updateParticleSystem = () => {
       particle.velocity.multiplyScalar(-0.5);
     }
     
-    // 更新缓冲区
-    particlePositions[index] = particle.position.x;
-    particlePositions[index + 1] = particle.position.y;
-    particlePositions[index + 2] = particle.position.z;
+    // 批量更新缓冲区 - 直接操作数组提升性能
+    positionArray[index] = particle.position.x;
+    positionArray[index + 1] = particle.position.y;
+    positionArray[index + 2] = particle.position.z;
     
-    // 使用粒子的颜色（由场论服务更新）
-    particleColors[index] = particle.color.r;
-    particleColors[index + 1] = particle.color.g;
-    particleColors[index + 2] = particle.color.b;
+    colorArray[index] = particle.color.r;
+    colorArray[index + 1] = particle.color.g;
+    colorArray[index + 2] = particle.color.b;
   }
   
-  // 更新缓冲区
-  particleSystem.attributes.position.needsUpdate = true;
-  particleSystem.attributes.color.needsUpdate = true;
+  // 一次性更新属性标记
+  positionAttr.needsUpdate = true;
+  colorAttr.needsUpdate = true;
+};
+
+// 场渲染优化：根据场类型添加特殊效果
+let fieldEffectMesh: THREE.Mesh | null = null;
+const updateFieldEffects = () => {
+  // 移除旧的效果网格
+  if (fieldEffectMesh && scene) {
+    scene.remove(fieldEffectMesh);
+    fieldEffectMesh.geometry.dispose();
+    (fieldEffectMesh.material as THREE.Material).dispose();
+    fieldEffectMesh = null;
+  }
+  
+  // 只在高性能模式且粒子数量适中时添加效果
+  if (performanceMode.value !== 'high' || particleDensity.value < 150) {
+    return;
+  }
+  
+  // 根据场类型添加不同的视觉效果
+  switch (fieldType.value) {
+    case 'magnetic':
+      // 添加磁场线效果
+      if (scene) {
+        const torusGeometry = new THREE.TorusGeometry(6, 0.1, 8, 64);
+        const torusMaterial = new THREE.MeshBasicMaterial({
+          color: 0x3b82f6,
+          transparent: true,
+          opacity: 0.3
+        });
+        fieldEffectMesh = new THREE.Mesh(torusGeometry, torusMaterial);
+        fieldEffectMesh.rotation.x = Math.PI / 2;
+        scene.add(fieldEffectMesh);
+      }
+      break;
+    case 'electric':
+      // 添加电场辐射效果
+      if (scene) {
+        const sphereGeometry = new THREE.SphereGeometry(8, 32, 32);
+        const sphereMaterial = new THREE.MeshBasicMaterial({
+          color: isPositiveCharge.value ? 0xef4444 : 0x3b82f6,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.15
+        });
+        fieldEffectMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(fieldEffectMesh);
+      }
+      break;
+    case 'wave':
+      // 添加波场效果
+      if (scene) {
+        const planeGeometry = new THREE.PlaneGeometry(15, 15, 32, 32);
+        const planeMaterial = new THREE.MeshBasicMaterial({
+          color: 0x8b5cf6,
+          transparent: true,
+          opacity: 0.2,
+          side: THREE.DoubleSide,
+          wireframe: true
+        });
+        fieldEffectMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+        scene.add(fieldEffectMesh);
+      }
+      break;
+  }
 };
 
 // 重置时间
@@ -739,6 +1109,8 @@ const interpolateColorMap = (value: number): [number, number, number] => {
 
 // 性能检测和优化函数
 const detectDevicePerformance = () => {
+  // 启动内存监控
+  startMemoryMonitoring();
   // 检测是否为移动设备
   isMobileDevice.value = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   
@@ -785,16 +1157,22 @@ const setPerformanceMode = (mode: 'high' | 'medium' | 'low') => {
       fieldResolution.value = isMobileDevice.value ? 25 : 30;
       particleDensity.value = isMobileDevice.value ? 250 : 300;
       (particles?.material as THREE.PointsMaterial).size = 0.09;
+      renderScale.value = 1.0;
+      shadowQuality.value = 'high';
       break;
     case 'medium':
       fieldResolution.value = 20;
       particleDensity.value = 200;
       (particles?.material as THREE.PointsMaterial).size = 0.07;
+      renderScale.value = 0.8;
+      shadowQuality.value = 'medium';
       break;
     case 'low':
       fieldResolution.value = 15;
       particleDensity.value = 100;
       (particles?.material as THREE.PointsMaterial).size = 0.05;
+      renderScale.value = 0.6;
+      shadowQuality.value = 'low';
       break;
   }
   
@@ -814,6 +1192,76 @@ const setPerformanceMode = (mode: 'high' | 'medium' | 'low') => {
   }
 };
 
+// 性能控制面板事件处理函数
+const handleAutoOptimizeChange = (enabled: boolean) => {
+  autoOptimizeEnabled.value = enabled;
+  if (autoOptimizeEnabled.value) {
+    renderOptimizer.enableDynamicResolution = true;
+    renderOptimizer.enableFrameSkipping = true;
+  } else {
+    renderOptimizer.enableDynamicResolution = false;
+    renderOptimizer.enableFrameSkipping = false;
+    // 恢复默认渲染分辨率
+    renderScale.value = 1.0;
+  }
+};
+
+const handleRenderScaleChange = (scale: number) => {
+  renderScale.value = scale;
+  // 禁用自动优化
+  if (autoOptimizeEnabled.value) {
+    autoOptimizeEnabled.value = false;
+    renderOptimizer.enableDynamicResolution = false;
+  }
+  // 应用新的渲染分辨率
+  if (renderer && canvasContainer.value) {
+    const width = canvasContainer.value.clientWidth * scale;
+    const height = canvasContainer.value.clientHeight * scale;
+    renderer.setSize(width, height, false);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+  }
+};
+
+const handleShadowQualityChange = (quality: 'high' | 'medium' | 'low') => {
+  shadowQuality.value = quality;
+  renderOptimizer.setShadowQuality(quality);
+};
+
+const handleMaxParticlesChange = (max: number) => {
+  maxParticles.value = max;
+  particleOptimizer.setMaxParticles(max);
+  // 如果当前粒子密度超过最大值，调整粒子密度
+  if (particleDensity.value > max) {
+    particleDensity.value = max;
+    updateFieldType();
+  }
+};
+
+const handleFrameSkipThresholdChange = (threshold: number) => {
+  frameSkipThreshold.value = threshold;
+  renderOptimizer.setFrameSkipThreshold(threshold);
+};
+
+const handleResetSettings = () => {
+  // 重置性能设置到默认值
+  autoOptimizeEnabled.value = true;
+  renderScale.value = 1.0;
+  shadowQuality.value = 'medium';
+  maxParticles.value = 500;
+  frameSkipThreshold.value = 16;
+  
+  // 重新启用自动优化
+  renderOptimizer.enableDynamicResolution = true;
+  renderOptimizer.enableFrameSkipping = true;
+  renderOptimizer.setShadowQuality('medium');
+  renderOptimizer.setFrameSkipThreshold(16);
+  particleOptimizer.setMaxParticles(500);
+  
+  // 重置性能模式
+  setPerformanceMode('medium');
+};
+
 // 动画循环优化
 let lastTime = 0;
 let frames = 0;
@@ -823,7 +1271,8 @@ const animate = () => {
   // 计算FPS
   frames++;
   if (currentTime - lastTime >= 1000) {
-    fps.value = Math.round((frames * 1000) / (currentTime - lastTime));
+    // 使用performanceMonitor更新FPS
+    fps.value = performanceMonitor.updateFPS();
     
     // 更新FPS状态
     if (fps.value >= 45) fpsStatus.value = 'high';
@@ -833,8 +1282,77 @@ const animate = () => {
     // 自动调整性能
     adjustPerformanceSettings();
     
+    // 获取性能模式并更新
+    const isMonitorPerformanceMode = performanceMonitor.getPerformanceMode();
+    if (isMonitorPerformanceMode && performanceMode.value !== 'low') {
+      setPerformanceMode('low');
+      performanceWarning.value = '性能较低，已自动切换至低性能模式';
+      setTimeout(() => { performanceWarning.value = ''; }, 5000);
+    } else if (!isMonitorPerformanceMode && performanceMode.value === 'low' && !isLowPerformanceDevice.value) {
+      setPerformanceMode('medium');
+    }
+    
+    // 更新内存使用信息
+    // 每30帧进行一次内存优化检查
+    if (frames % 30 === 0) {
+      const memoryInfo = (window as any).performance?.memory;
+      if (memoryInfo) {
+        const currentMemoryMB = memoryInfo.usedJSHeapSize / 1024 / 1024;
+        memoryUsage.value = Math.round(currentMemoryMB * 10) / 10; // 保留一位小数
+        
+        // 更新内存峰值
+        if (!memoryPeak.value) memoryPeak.value = 0;
+        memoryPeak.value = Math.max(memoryPeak.value, memoryUsage.value);
+        
+        // 当内存使用过高时，自动触发资源清理
+        if (currentMemoryMB > 600 && frames % 180 === 0) { // 每6秒执行一次清理
+          console.log('动画循环中检测到内存使用过高，触发资源清理');
+          cleanupResources();
+        }
+      }
+      
+      // 更新资源计数
+      if (renderer?.info?.memory && !resourceCount.value) {
+        resourceCount.value = {
+          geometries: renderer.info.memory.geometries,
+          materials: scene.children.reduce((count, child) => {
+            return count + (child.material ? 1 : 0);
+          }, 0),
+          textures: renderer.info.memory.textures
+        };
+      }
+      
+      // 更新渲染分辨率缩放
+      if (!renderScale.value) renderScale.value = 1;
+      renderScale.value = renderOptimizer.calculateRenderScale(fps.value, renderScale.value, performanceMode.value === 'low');
+    }
+    const geometriesCount = scene ? scene.children.length : 0;
+    const texturesCount = renderer?.info?.memory?.textures || 0;
+    const shadersCount = renderer?.info?.memory?.programs || 0;
+    memoryUsage.value = Math.round(performanceMonitor.estimateMemoryUsage(geometriesCount, texturesCount, shadersCount));
+    
+    // 更新内存峰值
+    if (!memoryPeak.value) memoryPeak.value = 0;
+    memoryPeak.value = Math.max(memoryPeak.value, memoryUsage.value);
+    
+    // 更新绘制调用信息
+    drawCalls.value = performanceMonitor.getDrawCallCount();
+    
+    // 获取性能优化建议
+    performanceSuggestions.value = performanceMonitor.getOptimizationSuggestions();
+    if (performanceSuggestions.value.length > 0 && !performanceWarning.value) {
+      performanceWarning.value = performanceSuggestions.value[0];
+    }
+    
     frames = 0;
     lastTime = currentTime;
+  }
+  
+  // 智能帧跳过 - 根据当前FPS决定是否跳过渲染
+  if (renderOptimizer.shouldSkipFrame(frameIndex, fps.value)) {
+    frameIndex++;
+    animationFrameId = requestAnimationFrame(animate);
+    return;
   }
   
   // 计算帧时间
@@ -862,11 +1380,48 @@ const animate = () => {
     updateParticleSystem();
   }
   
+  // 应用渲染分辨率缩放
+  if (renderScale.value !== 1 && renderScale.value) {
+    renderer.setSize(window.innerWidth * renderScale.value, window.innerHeight * renderScale.value, false);
+    renderer.domElement.style.width = `${window.innerWidth}px`;
+    renderer.domElement.style.height = `${window.innerHeight}px`;
+  } else {
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+    renderer.domElement.style.width = '';
+    renderer.domElement.style.height = '';
+  }
+  
+  // 对重要对象按优先级排序（性能模式下尤为重要）
+  if (performanceMode.value === 'low' && frames % 10 === 0) {
+    // 仅对可见对象进行处理
+    const visibleObjects = scene.children.filter(child => 
+      child.visible && renderOptimizer.isObjectVisible(child.position, 
+      child.geometry?.boundingSphere?.radius || 1, camera)
+    );
+    
+    // 根据优先级排序
+    const prioritizedObjects = renderOptimizer.sortObjectsByPriority(
+      visibleObjects,
+      camera,
+      performanceMode.value === 'low'
+    );
+    
+    // 可以根据需要调整对象的渲染顺序、可见性或细节级别
+    // 这里可以实现基于优先级的LOD或简化策略
+  }
+  
   // 渲染场景
   renderer.render(scene, camera);
   
   // 计算渲染时间
   renderTime.value = performance.now() - startTime;
+  
+  // 更新绘制调用计数
+  if (renderer.info) {
+    performanceMonitor.updateDrawCallCount(renderer.info.render.calls);
+  }
+  
+  frameIndex++;
   
   // 继续动画循环
   animationFrameId = requestAnimationFrame(animate);
@@ -876,8 +1431,19 @@ const animate = () => {
 const onWindowResize = () => {
   if (!canvasContainer.value || !camera || !renderer) return;
   
-  const width = canvasContainer.value.clientWidth;
-  const height = canvasContainer.value.clientHeight;
+  let width = canvasContainer.value.clientWidth;
+  let height = canvasContainer.value.clientHeight;
+  
+  // 在移动设备上，收起面板时给渲染器更多空间
+  if (deviceType.value === 'mobile' && !panelExpanded.value) {
+    // 计算剩余空间
+    const totalHeight = window.innerHeight;
+    const controlPanel = document.querySelector('.control-panel');
+    if (controlPanel) {
+      // 减去控制面板高度和一些边距
+      height = totalHeight - controlPanel.clientHeight - 20;
+    }
+  }
   
   // 防止极小尺寸
   const minSize = 100;
@@ -888,8 +1454,16 @@ const onWindowResize = () => {
   camera.aspect = safeWidth / safeHeight;
   camera.updateProjectionMatrix();
   
-  // 根据性能模式调整渲染分辨率
-  const renderScale = performanceMode.value === 'high' ? 1 : (performanceMode.value === 'medium' ? 0.8 : 0.6);
+  // 根据设备类型和性能模式调整渲染分辨率
+  let renderScale = 1;
+  if (deviceType.value === 'mobile') {
+    // 移动设备默认降低分辨率
+    renderScale = performanceMode.value === 'high' ? 0.8 : (performanceMode.value === 'medium' ? 0.6 : 0.5);
+  } else {
+    // 桌面设备正常分辨率
+    renderScale = performanceMode.value === 'high' ? 1 : (performanceMode.value === 'medium' ? 0.8 : 0.6);
+  }
+  
   const targetWidth = Math.floor(safeWidth * renderScale);
   const targetHeight = Math.floor(safeHeight * renderScale);
   
@@ -900,15 +1474,21 @@ const onWindowResize = () => {
   
   // 检测是否需要调整性能模式（基于窗口大小）
   const area = safeWidth * safeHeight;
-  if (area > 200000 && performanceMode.value === 'low') {
-    // 大屏幕但低性能模式，考虑提高性能
-    if (!isLowPerformanceDevice.value && fps.value > 40) {
-      setPerformanceMode('medium');
-    }
-  } else if (area < 50000) {
-    // 小屏幕，考虑降低性能设置
-    if (performanceMode.value === 'high' && fps.value < 30) {
-      setPerformanceMode('medium');
+  if (adaptiveSettings.value.enabled) {
+    if (area > 200000 && performanceMode.value === 'low') {
+      // 大屏幕但低性能模式，考虑提高性能
+      if (!isLowPerformanceDevice.value && fps.value > 40) {
+        setPerformanceMode('medium');
+      }
+    } else if (area < 50000) {
+      // 小屏幕，考虑降低性能设置
+      if (performanceMode.value === 'high' && fps.value < 30) {
+        setPerformanceMode('medium');
+      }
+      // 移动设备竖屏模式强制使用低性能
+      if (deviceType.value === 'mobile' && window.innerHeight > window.innerWidth) {
+        setPerformanceMode('low');
+      }
     }
   }
   
@@ -936,6 +1516,356 @@ const targetFieldParams = reactive({
   quantumStrength: quantumStrength.value,
   quantumFluctuation: quantumFluctuation.value
 });
+
+// 预设方案定义
+const presets = {
+  solarSystem: {
+    fieldType: 'gravity',
+    fieldStrength: 1.5,
+    particleDensity: 150,
+    animationSpeed: 0.02,
+    gravityStrength: 45,
+    description: '模拟太阳系引力场'
+  },
+  magneticField: {
+    fieldType: 'magnetic',
+    fieldStrength: 2.0,
+    particleDensity: 250,
+    animationSpeed: 0.04,
+    magneticStrength: 80,
+    description: '环形磁场效果'
+  },
+  electricDipole: {
+    fieldType: 'electric',
+    fieldStrength: 1.8,
+    particleDensity: 200,
+    animationSpeed: 0.03,
+    electricStrength: 70,
+    isPositiveCharge: true,
+    description: '电偶极场分布'
+  },
+  wavePropagation: {
+    fieldType: 'wave',
+    fieldStrength: 1.2,
+    particleDensity: 300,
+    animationSpeed: 0.05,
+    waveAmplitude: 12,
+    waveFrequency: 3.0,
+    waveLength: 6,
+    description: '球面波传播'
+  },
+  quantumInterference: {
+    fieldType: 'quantum',
+    fieldStrength: 2.5,
+    particleDensity: 350,
+    animationSpeed: 0.06,
+    quantumStrength: 60,
+    quantumFluctuation: 4.0,
+    quantumFrequency: 5.0,
+    wavePacketWidth: 2.0,
+    description: '量子干涉图案'
+  }
+};
+
+// 面板展开/收起切换
+const togglePanelExpanded = () => {
+  panelExpanded.value = !panelExpanded.value;
+  
+  // 在移动设备上，切换面板时调整渲染器尺寸
+  if (deviceType.value === 'mobile') {
+    onWindowResize();
+  }
+  
+  // 使用anime.js为面板收起/展开添加平滑动画
+  anime({
+    targets: '.control-panel',
+    height: panelExpanded.value ? 'auto' : '80px',
+    opacity: panelExpanded.value ? 1 : 0.8,
+    duration: 300,
+    easing: 'easeInOutQuad'
+  });
+};
+
+// 初始化设备检测
+const initializeDeviceDetection = () => {
+  // 检测设备类型
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isTablet = window.innerWidth >= 768 && window.innerWidth <= 1024;
+  
+  if (isMobile) {
+    deviceType.value = 'mobile';
+    isMobileDevice.value = true;
+  } else if (isTablet) {
+    deviceType.value = 'tablet';
+  } else {
+    deviceType.value = 'desktop';
+  }
+  
+  // 检测是否为触屏设备
+  isTouchDevice.value = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  // 在移动设备上默认收起面板，提供更大的渲染区域
+  if (deviceType.value === 'mobile') {
+    panelExpanded.value = false;
+  }
+  
+  // 针对移动设备优化初始参数
+  if (deviceType.value === 'mobile') {
+    // 降低初始粒子密度以提高性能
+    const originalDensity = particleDensity.value;
+    if (particleDensity.value > 150) {
+      particleDensity.value = 150;
+    }
+    // 降低场分辨率
+    const originalResolution = fieldResolution.value;
+    if (fieldResolution.value > 20) {
+      fieldResolution.value = 20;
+    }
+    // 默认使用中性能模式
+    const originalPerformanceMode = performanceMode.value;
+    if (performanceMode.value === 'high') {
+      performanceMode.value = 'medium';
+    }
+    
+    console.log('移动设备优化应用:', {
+      originalDensity,
+      newDensity: particleDensity.value,
+      originalResolution,
+      newResolution: fieldResolution.value,
+      originalPerformanceMode,
+      newPerformanceMode: performanceMode.value
+    });
+  }
+  
+  console.log('设备检测完成:', {
+    deviceType: deviceType.value,
+    isMobileDevice: isMobileDevice.value,
+    isTouchDevice: isTouchDevice.value,
+    windowSize: `${window.innerWidth}x${window.innerHeight}`,
+    panelExpanded: panelExpanded.value,
+    currentParams: {
+      particleDensity: particleDensity.value,
+      fieldResolution: fieldResolution.value,
+      performanceMode: performanceMode.value
+    }
+  });
+};
+
+// 检测设备方向变化，调整渲染参数
+const detectDeviceOrientation = () => {
+  if (!canvasContainer.value) return;
+  
+  if (window.innerWidth > window.innerHeight) {
+    // 横屏模式，可使用更高的性能设置
+    if (deviceType.value === 'mobile' && adaptiveSettings.value.enabled) {
+      // 在横屏时可适当提升性能设置
+      if (particleDensity.value < 200 && !isLowPerformanceDevice.value) {
+        particleDensity.value = Math.min(200, particleDensity.value + 50);
+      }
+    }
+  } else {
+    // 竖屏模式，优先考虑性能
+    if (deviceType.value === 'mobile' && adaptiveSettings.value.enabled) {
+      // 在竖屏时降低性能消耗
+      if (particleDensity.value > 100) {
+        particleDensity.value = Math.max(100, particleDensity.value - 50);
+      }
+    }
+  }
+  
+  // 调整渲染器尺寸
+  onWindowResize();
+};
+
+// 触摸事件处理 - 用于移动设备上的交互优化
+let touchStartX = 0;
+let touchStartY = 0;
+let touchStartTime = 0;
+const isPinching = ref(false);
+const initialPinchDistance = ref(0);
+
+// 处理触摸开始
+const handleTouchStart = (event: TouchEvent) => {
+  if (!isTouchDevice.value) return;
+  
+  const touches = event.touches;
+  touchStartTime = Date.now();
+  
+  console.log('触摸开始事件:', {
+    touchCount: touches.length,
+    timestamp: touchStartTime,
+    screenSize: `${window.innerWidth}x${window.innerHeight}`,
+    deviceType: deviceType.value
+  });
+  
+  if (touches.length === 1) {
+    // 单指操作 - 记录初始位置
+    touchStartX = touches[0].clientX;
+    touchStartY = touches[0].clientY;
+    console.log('单指触摸开始位置:', { x: touchStartX, y: touchStartY });
+  } else if (touches.length === 2) {
+    // 双指操作 - 处理缩放
+    isPinching.value = true;
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    initialPinchDistance.value = Math.sqrt(dx * dx + dy * dy);
+    console.log('双指触摸开始:', { 
+      pinchDistance: initialPinchDistance.value,
+      touch1: { x: touches[0].clientX, y: touches[0].clientY },
+      touch2: { x: touches[1].clientX, y: touches[1].clientY }
+    });
+  }
+};
+
+// 处理触摸移动
+const handleTouchMove = (event: TouchEvent) => {
+  if (!isTouchDevice.value) return;
+  
+  // 阻止默认行为以避免滚动冲突
+  event.preventDefault();
+  
+  const touches = event.touches;
+  
+  console.log('触摸移动事件:', { touchCount: touches.length, isPinching: isPinching.value });
+  
+  if (touches.length === 1 && !isPinching.value) {
+    // 单指滑动 - 可以用于旋转或平移视图
+    const currentX = touches[0].clientX;
+    const currentY = touches[0].clientY;
+    
+    // 计算移动距离
+    const deltaX = currentX - touchStartX;
+    const deltaY = currentY - touchStartY;
+    
+    console.log('单指触摸移动:', { deltaX, deltaY });
+    
+    // 更新相机角度或位置（这里需要根据实际的相机控制方式实现）
+    if (controls && (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2)) {
+      console.log('应用相机控制移动');
+      // 对于OrbitControls，我们可以模拟鼠标移动
+      // 如果使用自定义控制逻辑，这里需要相应地调整
+    }
+    
+    // 更新起始位置
+    touchStartX = currentX;
+    touchStartY = currentY;
+  } else if (touches.length === 2) {
+    // 双指缩放
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    const currentDistance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (initialPinchDistance.value > 0) {
+      const scaleFactor = currentDistance / initialPinchDistance.value;
+      
+      console.log('双指触摸缩放:', {
+        currentDistance,
+        initialDistance: initialPinchDistance.value,
+        scaleFactor
+      });
+      
+      // 应用缩放（根据实际相机控制方式实现）
+      if (camera && Math.abs(scaleFactor - 1) > 0.01) { // 添加阈值避免微小变化
+        // 对于OrbitControls，可以调整相机位置或缩放
+        camera.position.multiplyScalar(1.0 + (1.0 - scaleFactor) * 0.1);
+        // 限制最小和最大缩放
+        camera.position.clampLength(20, 100);
+        console.log('相机位置缩放后:', { x: camera.position.x, y: camera.position.y, z: camera.position.z });
+      }
+    }
+    
+    initialPinchDistance.value = currentDistance;
+  }
+};
+
+// 处理触摸结束
+const handleTouchEnd = () => {
+  if (!isTouchDevice.value) return;
+  
+  const touchDuration = Date.now() - touchStartTime;
+  
+  console.log('触摸结束事件:', {
+    touchDuration,
+    isPinching: isPinching.value,
+    deviceType: deviceType.value
+  });
+  
+  // 检查是否为点击（短时间内触摸）
+  if (touchDuration < 200 && !isPinching.value) {
+    console.log('检测到快速点击事件');
+    // 处理点击事件，例如可以切换控制面板的显示状态
+    // 在移动设备上，可以点击空白区域收起控制面板
+    if (deviceType.value === 'mobile' && panelExpanded.value) {
+      console.log('移动设备上点击且面板展开，触发面板切换');
+      togglePanelExpanded();
+    }
+  }
+  
+  // 重置触摸状态
+  console.log('重置触摸状态');
+  isPinching.value = false;
+  initialPinchDistance.value = 0;
+  
+  console.log('触摸交互完成，当前状态:', {
+    panelExpanded: panelExpanded.value,
+    cameraPosition: camera ? { x: camera.position.x, y: camera.position.y, z: camera.position.z } : null
+  });
+};
+
+// 应用预设
+const applyPreset = (presetName: string) => {
+  const preset = presets[presetName as keyof typeof presets];
+  if (!preset) return;
+  
+  // 保存当前激活的预设
+  activePreset.value = presetName;
+  
+  // 使用GSAP进行平滑过渡
+  gsap.to({}, {
+    duration: 0.8,
+    onUpdate: () => {
+      // 在过渡期间更新参数
+      if (!isParameterLocked('fieldType')) {
+        fieldType.value = preset.fieldType || fieldType.value;
+      }
+      if (!isParameterLocked('fieldStrength')) {
+        fieldStrength.value = preset.fieldStrength || fieldStrength.value;
+      }
+      if (!isParameterLocked('particleDensity')) {
+        particleDensity.value = preset.particleDensity || particleDensity.value;
+      }
+      if (!isParameterLocked('animationSpeed')) {
+        animationSpeed.value = preset.animationSpeed || animationSpeed.value;
+      }
+      
+      // 特定场类型参数
+      if (preset.gravityStrength !== undefined) gravityStrength.value = preset.gravityStrength;
+      if (preset.magneticStrength !== undefined) magneticStrength.value = preset.magneticStrength;
+      if (preset.electricStrength !== undefined) electricStrength.value = preset.electricStrength;
+      if (preset.isPositiveCharge !== undefined) isPositiveCharge.value = preset.isPositiveCharge;
+      if (preset.waveAmplitude !== undefined) waveAmplitude.value = preset.waveAmplitude;
+      if (preset.waveFrequency !== undefined) waveFrequency.value = preset.waveFrequency;
+      if (preset.waveLength !== undefined) waveLength.value = preset.waveLength;
+      if (preset.quantumStrength !== undefined) quantumStrength.value = preset.quantumStrength;
+      if (preset.quantumFluctuation !== undefined) quantumFluctuation.value = preset.quantumFluctuation;
+      if (preset.quantumFrequency !== undefined) quantumFrequency.value = preset.quantumFrequency;
+      if (preset.wavePacketWidth !== undefined) wavePacketWidth.value = preset.wavePacketWidth;
+    },
+    onComplete: () => {
+      // 完成后更新场类型
+      updateFieldType();
+    }
+  });
+};
+
+// 参数锁定功能
+const toggleParameterLock = (paramName: string) => {
+  lockedParameters.value[paramName] = !lockedParameters.value[paramName];
+};
+
+const isParameterLocked = (paramName: string): boolean => {
+  return !!lockedParameters.value[paramName];
+};
 
 // 导入动画库
 import anime from 'animejs';
@@ -1136,7 +2066,14 @@ const toggleAxes = () => {
 
 // 生命周期钩子
 onMounted(() => {
+  // 初始化设备检测
+  initializeDeviceDetection();
+  
+  // 初始化场景
   initScene();
+  
+  // 监听方向变化（针对移动设备）
+  window.addEventListener('orientationchange', detectDeviceOrientation);
 });
 
 onUnmounted(() => {
@@ -1162,11 +2099,32 @@ onUnmounted(() => {
   
   // 清理渲染器
   if (renderer) {
+    // 清理渲染器资源
+    if ('info' in renderer && renderer.info && 'memory' in renderer.info) {
+      // 可以记录最终的资源使用情况
+      console.log('组件卸载前的资源使用情况:', renderer.info.memory);
+    }
     renderer.dispose();
-    if (canvasContainer.value && renderer.domElement) {
-      canvasContainer.value.removeChild(renderer.domElement);
+    
+    // 从DOM中移除canvas元素
+    if (renderer.domElement && renderer.domElement.parentNode) {
+      renderer.domElement.parentNode.removeChild(renderer.domElement);
     }
     renderer = null as any;
+  }
+  
+  // 清理内存监控
+  if (memoryCheckInterval) {
+    clearInterval(memoryCheckInterval);
+    memoryCheckInterval = null;
+  }
+  
+  // 执行全面的资源清理
+  cleanupResources();
+  
+  // 清理场服务实例
+  if (fieldService) {
+    fieldService = null;
   }
   
   // 清理辅助对象
@@ -1181,28 +2139,27 @@ onUnmounted(() => {
     }
   }
   
+  // 移除事件监听器
+  window.removeEventListener('resize', onWindowResize);
+  window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener('orientationchange', detectDeviceOrientation);
+  
+  // 移除触摸事件监听器
+  if (canvasContainer.value) {
+    canvasContainer.value.removeEventListener('touchstart', handleTouchStart);
+    canvasContainer.value.removeEventListener('touchmove', handleTouchMove);
+    canvasContainer.value.removeEventListener('touchend', handleTouchEnd);
+  }
+  
   // 清理场论服务资源
   if (fieldService) {
     fieldService.clearCache();
+    fieldService = null as any;
   }
   
-  // 移除事件监听器
-  window.removeEventListener('resize', onWindowResize);
-  window.removeEventListener('orientationchange', onWindowResize);
-  
-  // 清空粒子数组和缓存
-  particlesArray = [];
-  frameTimeHistory.value = [];
-  
-  // 释放引用以帮助垃圾回收
-  scene = null as any;
-  camera = null as any;
-  controls = null as any;
-  particleSystem = null as any;
-  particlePositions = null as any;
+  // 清理其他引用
   particleColors = null as any;
   clock = null as any;
-  fieldService = null as any;
 });
 </script>
 
@@ -1253,16 +2210,159 @@ onUnmounted(() => {
   overflow-y: auto;
   position: relative;
   z-index: 1;
+  transition: all 0.3s ease;
+}
+
+/* 面板收起状态 */
+.control-panel.collapsed {
+  max-height: 80px;
+  padding: 16px 24px;
+  overflow: hidden;
+}
+
+/* 面板内容 */
+.panel-content {
+  transition: opacity 0.3s ease;
+}
+
+.control-panel.collapsed .panel-content {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  /* 移动设备上的主容器 */
+  .field-visualization-container {
+    border-radius: 0;
+    box-shadow: none;
+  }
+  
+  /* 画布容器在移动设备上 */
+  .canvas-container {
+    min-height: 300px;
+    flex: 1;
+  }
+  
+  /* 控制面板在移动设备上 */
+  .control-panel {
+    padding: 16px;
+    background: rgba(20, 20, 40, 0.95);
+    backdrop-filter: blur(10px);
+  }
+  
+  /* 控制面板标题在移动设备上 */
+  .control-panel h3 {
+    font-size: 1.1rem;
+  }
+  
+  /* 控制组在移动设备上 */
+  .control-group {
+    margin-bottom: 16px;
+  }
+  
+  /* 预设按钮在移动设备上 */
+  .preset-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  
+  /* 预设按钮样式调整 */
+  .preset-btn {
+    font-size: 0.75rem;
+    padding: 10px 8px;
+    text-align: center;
+  }
+  
+  /* 滑块调整 */
+  .slider {
+    height: 8px;
+  }
+  
+  .slider::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* 触屏设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 增大按钮点击区域 */
+  .preset-btn,
+  .lock-btn,
+  .panel-toggle,
+  .control-group button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* 增大滑块触控区域 */
+  .slider {
+    height: 12px;
+  }
+  
+  .slider::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+  }
+  
+  /* 选择框优化 */
+  .field-type-select {
+    padding: 12px 16px;
+    font-size: 1rem;
+  }
+}
+
+/* 平板设备适配 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .control-panel {
+    max-height: 350px;
+  }
+  
+  .preset-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+}
+
+/* 控制面板头部 */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
 }
 
 /* 控制面板标题 */
 .control-panel h3 {
   color: #ffffff;
-  margin: 0 0 24px 0;
+  margin: 0;
   font-size: 1.3rem;
   font-weight: 600;
   position: relative;
   display: inline-block;
+}
+
+/* 面板展开/收起按钮 */
+.panel-toggle {
+  background: rgba(99, 102, 241, 0.2);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.panel-toggle:hover {
+  background: rgba(99, 102, 241, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
 }
 
 .control-panel h3::after {
@@ -1313,6 +2413,147 @@ onUnmounted(() => {
 }
 
 .control-group.checkbox-control label:hover {
+  color: #ffffff;
+}
+
+/* 预设方案样式 */
+.preset-section {
+  margin: 24px 0;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.preset-section h4 {
+  color: #e0e0e0;
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.preset-btn {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.preset-btn:hover {
+  background: rgba(99, 102, 241, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.preset-btn.active {
+  background: rgba(99, 102, 241, 0.3);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.5);
+}
+
+/* 滑块容器样式 */
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 滑块样式增强 */
+.slider {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  -webkit-appearance: none;
+  transition: background 0.3s ease;
+}
+
+.slider:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #6366f1;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+}
+
+.slider:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 参数锁定按钮 */
+.lock-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.lock-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.lock-btn.locked {
+  color: #ef4444;
+  opacity: 1;
+  transform: rotate(15deg);
+}
+
+/* 场类型选择器样式增强 */
+.field-type-select {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.field-type-select:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.field-type-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.field-type-select option {
+  background: #1a1a2e;
   color: #ffffff;
 }
 
@@ -1705,6 +2946,20 @@ onUnmounted(() => {
 
 .performance-monitor.low .performance-mode {
   color: #ef4444;
+}
+
+/* 内存和资源显示 */
+.performance-monitor .memory-usage {
+  color: #64b5f6;
+}
+
+.performance-monitor .memory-peak {
+  color: #ffb74d;
+}
+
+.performance-monitor .resources-count {
+  color: #81c784;
+  font-size: 0.8em;
 }
 
 /* 性能警告 */
