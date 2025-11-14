@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水星进动 | 广义相对论的伟大胜利</title>
+    
+    <!-- 外部资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- MathJax 3 for LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- MathJax 配置 -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                packages: {'[+]': ['noerrors']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                pageReady: function() {
+                    return MathJax.startup.defaultPageReady().then(function() {
+                        // 公式渲染完成后的回调
+                        console.log('MathJax rendering completed');
+                        document.dispatchEvent(new Event('mathjax-ready'));
+                    });
+                }
+            },
+            chtml: {
+                scale: 1.1,
+                mtextInheritFont: true,
+                mathmlSpacing: true,
+                matchFontHeight: true
+            }
+        };
+    </script>
+    
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#059669',
+                        accent: '#dc2626',
+                        dark: '#0f172a',
+                        light: '#f8fafc',
+                        space: '#0c1426',
+                        cosmic: '#1e293b',
+                        starlight: '#fbbf24',
+                        nebula: '#8b5cf6',
+                        math: '#3b82f6'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        serif: ['Georgia', 'serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                        math: ['KaTeX_Main', 'Times New Roman', 'serif']
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
+                        'spin-slow': 'spin 20s linear infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'slide-up': 'slideUp 0.8s ease-out',
+                        'fade-in': 'fadeIn 1s ease-out',
+                        'scale-in': 'scaleIn 0.6s ease-out',
+                        'orbit': 'orbit 20s linear infinite',
+                        'math-appear': 'mathAppear 0.8s ease-out',
+                        'math-glow': 'mathGlow 2s ease-in-out infinite alternate'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-20px)' }
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.5)' },
+                            '100%': { boxShadow: '0 0 30px rgba(59, 130, 246, 0.8), 0 0 40px rgba(59, 130, 246, 0.3)' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(50px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        scaleIn: {
+                            '0%': { transform: 'scale(0.9)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        },
+                        orbit: {
+                            '0%': { transform: 'rotate(0deg) translateX(150px) rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg) translateX(150px) rotate(-360deg)' }
+                        },
+                        mathAppear: {
+                            '0%': { transform: 'scale(0.95)', opacity: '0', filter: 'blur(10px)' },
+                            '100%': { transform: 'scale(1)', opacity: '1', filter: 'blur(0px)' }
+                        },
+                        mathGlow: {
+                            '0%': { boxShadow: '0 0 10px rgba(59, 130, 246, 0.3)' },
+                            '100%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.6), 0 0 30px rgba(59, 130, 246, 0.2)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义样式 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            
+            /* 数学公式样式 */
+            .math-block {
+                background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                border-left: 4px solid #3b82f6;
+                padding: 1.5rem;
+                margin: 1.5rem 0;
+                border-radius: 0 1rem 1rem 0;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+                transition: all 0.3s ease;
+            }
+            
+            .math-block:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+                animation: math-glow 2s ease-in-out infinite alternate;
+            }
+            
+            .math-block.math-important {
+                background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+                border-left-color: #60a5fa;
+            }
+            
+            .equation-number {
+                float: right;
+                font-size: 0.875rem;
+                color: #94a3b8;
+                font-family: 'JetBrains Mono', monospace;
+            }
+            
+            .math-description {
+                background: rgba(59, 130, 246, 0.1);
+                border-radius: 0.5rem;
+                padding: 1rem;
+                margin-top: 1rem;
+                border-left: 3px solid #3b82f6;
+            }
+            
+            .math-variable {
+                display: inline-block;
+                background: rgba(59, 130, 246, 0.1);
+                padding: 0.2rem 0.5rem;
+                border-radius: 0.3rem;
+                margin: 0.1rem;
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 0.9rem;
+            }
+            
+            .math-explanation {
+                font-size: 0.9rem;
+                line-height: 1.6;
+                color: #94a3b8;
+            }
+            
+            /* 公式渲染优化 */
+            .MathJax {
+                transition: all 0.3s ease;
+            }
+            
+            .MathJax:hover {
+                filter: brightness(1.1);
+            }
+            
+            /* 其他样式保持不变 */
+            .glass-effect {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+            
+            .cosmic-gradient {
+                background: linear-gradient(135deg, #0c1426 0%, #1e293b 50%, #334155 100%);
+            }
+            
+            .stellar-gradient {
+                background: linear-gradient(45deg, #1e40af, #8b5cf6, #dc2626);
+                background-size: 200% 200%;
+                animation: gradientShift 3s ease infinite;
+            }
+            
+            @keyframes gradientShift {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+            }
+            
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            }
+            
+            .hover-lift {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            .hover-lift:hover {
+                transform: translateY(-8px) scale(1.02);
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            }
+            
+            .section-divider {
+                background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+                height: 2px;
+                margin: 3rem 0;
+                opacity: 0.3;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-space text-light overflow-x-hidden font-sans">
+    <!-- 背景动画 -->
+    <div class="fixed inset-0 z-0">
+        <!-- 星空背景 -->
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.1)_0%,transparent_50%),radial-gradient(circle_at_80%_20%,rgba(139,92,246,0.1)_0%,transparent_50%)]"></div>
+        
+        <!-- 浮动的星星 -->
+        <div class="absolute top-10 left-10 w-2 h-2 bg-white rounded-full animate-pulse-slow"></div>
+        <div class="absolute top-32 right-20 w-1 h-1 bg-white rounded-full animate-pulse-slow" style="animation-delay: 1s;"></div>
+        <div class="absolute bottom-32 left-20 w-1.5 h-1.5 bg-white rounded-full animate-pulse-slow" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-10 right-10 w-2 h-2 bg-starlight rounded-full animate-pulse-slow" style="animation-delay: 0.5s;"></div>
+        
+        <!-- 轨道动画 -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-300 h-300">
+            <div class="absolute w-1 h-1 bg-starlight rounded-full animate-orbit"></div>
+        </div>
+    </div>
+
+    <!-- 导航栏 -->
+    <nav class="relative z-50 glass-effect sticky top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 stellar-gradient rounded-full flex items-center justify-center animate-glow">
+                        <i class="fas fa-atom text-white text-lg"></i>
+                    </div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                        相对论研究
+                    </h1>
+                </div>
+                
+                <div class="hidden md:flex space-x-8">
+                    <a href="#hero" class="text-gray-300 hover:text-blue-400 transition-colors duration-300 flex items-center space-x-2">
+                        <i class="fas fa-home"></i>
+                        <span>首页</span>
+                    </a>
+                    <a href="#derivation" class="text-gray-300 hover:text-blue-400 transition-colors duration-300 flex items-center space-x-2">
+                        <i class="fas fa-calculator"></i>
+                        <span>推导过程</span>
+                    </a>
+                    <a href="#results" class="text-gray-300 hover:text-blue-400 transition-colors duration-300 flex items-center space-x-2">
+                        <i class="fas fa-chart-line"></i>
+                        <span>结果验证</span>
+                    </a>
+                    <a href="#visualization" class="text-gray-300 hover:text-blue-400 transition-colors duration-300 flex items-center space-x-2">
+                        <i class="fas fa-eye"></i>
+                        <span>可视化</span>
+                    </a>
+                    <a href="#conclusion" class="text-gray-300 hover:text-blue-400 transition-colors duration-300 flex items-center space-x-2">
+                        <i class="fas fa-flag-checkered"></i>
+                        <span>结论</span>
+                    </a>
+                </div>
+                
+                <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 移动端菜单 -->
+        <div id="mobileMenu" class="md:hidden hidden glass-effect">
+            <div class="px-4 py-6 space-y-4">
+                <a href="#hero" class="block text-gray-300 hover:text-blue-400 transition-colors">首页</a>
+                <a href="#derivation" class="block text-gray-300 hover:text-blue-400 transition-colors">推导过程</a>
+                <a href="#results" class="block text-gray-300 hover:text-blue-400 transition-colors">结果验证</a>
+                <a href="#visualization" class="block text-gray-300 hover:text-blue-400 transition-colors">可视化</a>
+                <a href="#conclusion" class="block text-gray-300 hover:text-blue-400 transition-colors">结论</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主标题区域 -->
+    <section id="hero" class="relative z-10 min-h-screen flex items-center justify-center pt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <!-- 主标题动画 -->
+            <div class="animate-slide-up">
+                <h1 class="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-red-400 bg-clip-text text-transparent text-shadow">
+                    水星进动
+                </h1>
+                <h2 class="text-2xl md:text-4xl font-light mb-8 text-gray-300">
+                    广义相对论的伟大胜利
+                </h2>
+            </div>
+            
+            <!-- 副标题 -->
+            <div class="animate-fade-in" style="animation-delay: 0.5s;">
+                <p class="text-xl md:text-2xl text-gray-400 mb-12 max-w-4xl mx-auto leading-relaxed">
+                    从牛顿力学到爱因斯坦的时空弯曲，探索宇宙中最精妙的引力现象
+                </p>
+            </div>
+            
+            <!-- 核心数据展示 -->
+            <div class="animate-scale-in" style="animation-delay: 1s;">
+                <div class="grid md:grid-cols-3 gap-8 mb-16">
+                    <div class="glass-effect rounded-2xl p-8 hover-lift">
+                        <div class="text-4xl font-bold text-blue-400 mb-2">43</div>
+                        <div class="text-gray-300 mb-2">角秒/世纪</div>
+                        <div class="text-sm text-gray-400">理论预测值</div>
+                    </div>
+                    <div class="glass-effect rounded-2xl p-8 hover-lift">
+                        <div class="text-4xl font-bold text-purple-400 mb-2">43.11±0.45</div>
+                        <div class="text-gray-300 mb-2">角秒/世纪</div>
+                        <div class="text-sm text-gray-400">观测值</div>
+                    </div>
+                    <div class="glass-effect rounded-2xl p-8 hover-lift">
+                        <div class="text-4xl font-bold text-green-400 mb-2">1915</div>
+                        <div class="text-gray-300 mb-2">年</div>
+                        <div class="text-sm text-gray-400">爱因斯坦的发现</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 行动按钮 -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style="animation-delay: 1.5s;">
+                <button onclick="scrollToSection('derivation')" class="stellar-gradient text-white px-8 py-4 rounded-full font-semibold hover:scale-105 transition-transform duration-300 shadow-lg">
+                    <i class="fas fa-play mr-2"></i>
+                    开始探索
+                </button>
+                <button onclick="scrollToSection('visualization')" class="glass-effect text-white px-8 py-4 rounded-full font-semibold hover:bg-white/20 transition-colors duration-300">
+                    <i class="fas fa-eye mr-2"></i>
+                    可视化演示
+                </button>
+            </div>
+        </div>
+        
+        <!-- 滚动指示器 -->
+        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+            <i class="fas fa-chevron-down text-2xl text-gray-400"></i>
+        </div>
+    </section>
+
+    <!-- 历史背景 -->
+    <section id="history" class="relative z-10 py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    历史背景
+                </h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    一个困扰物理学界半个多世纪的谜题
+                </p>
+            </div>
+            
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- 左侧内容 -->
+                <div class="space-y-8">
+                    <div class="glass-effect rounded-2xl p-8 hover-lift">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-calendar-alt text-white text-xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-blue-400">1859年</h3>
+                        </div>
+                        <p class="text-gray-300 leading-relaxed">
+                            法国天文学家勒维里埃（Le Verrier）发现水星近日点的进动值比牛顿力学计算的理论值每百年快38角秒，这一微小差异预示着牛顿力学可能存在局限性。
+                        </p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-2xl p-8 hover-lift">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-search text-white text-xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-purple-400">1882年</h3>
+                        </div>
+                        <p class="text-gray-300 leading-relaxed">
+                            美国天文学家纽科姆（Simon Newcomb）重新测定，将异常进动值修正为43角秒/世纪。科学家们提出了各种假设，包括"火神星"的存在，但都未能得到证实。
+                        </p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-2xl p-8 hover-lift">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-lightbulb text-white text-xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-red-400">1915年</h3>
+                        </div>
+                        <p class="text-gray-300 leading-relaxed">
+                            爱因斯坦提出广义相对论，成功解释了水星进动的异常现象。这一成就成为广义相对论的第一个重大实验验证，彻底改变了人类对引力的理解。
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 右侧图表 -->
+                <div class="space-y-8">
+                    <div class="glass-effect rounded-2xl p-8">
+                        <h3 class="text-2xl font-bold mb-6 text-center text-blue-400">水星进动数据对比</h3>
+                        <canvas id="precessionChart" class="w-full h-80"></canvas>
+                    </div>
+                    
+                    <!-- 水星轨道示意图 -->
+                    <div class="glass-effect rounded-2xl p-8 text-center">
+                        <h3 class="text-xl font-bold mb-4 text-purple-400">水星轨道示意图</h3>
+                        <div class="relative w-full h-64 flex items-center justify-center">
+                            <!-- 太阳 -->
+                            <div class="w-8 h-8 bg-starlight rounded-full animate-pulse-slow absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                            
+                            <!-- 轨道 -->
+                            <svg class="absolute w-full h-full" viewBox="-150 -150 300 300">
+                                <!-- 椭圆轨道 -->
+                                <ellipse cx="0" cy="0" rx="120" ry="80" fill="none" stroke="rgba(59, 130, 246, 0.3)" stroke-width="2">
+                                    <animate attributeName="stroke-dashoffset" values="0;-800" dur="20s" repeatCount="indefinite"/>
+                                    <animate attributeName="stroke-dasharray" values="800;800" dur="20s" repeatCount="indefinite"/>
+                                </ellipse>
+                                
+                                <!-- 进动箭头 -->
+                                <g transform="rotate(10)">
+                                    <ellipse cx="0" cy="0" rx="120" ry="80" fill="none" stroke="rgba(139, 92, 246, 0.2)" stroke-width="1">
+                                        <animate attributeName="stroke-dashoffset" values="0;-800" dur="25s" repeatCount="indefinite"/>
+                                        <animate attributeName="stroke-dasharray" values="800;800" dur="25s" repeatCount="indefinite"/>
+                                    </ellipse>
+                                </g>
+                                
+                                <!-- 水星 -->
+                                <circle cx="120" cy="0" r="3" fill="#3b82f6">
+                                    <animate attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="20s" repeatCount="indefinite"/>
+                                </circle>
+                            </svg>
+                            
+                            <!-- 标签 -->
+                            <div class="absolute top-2 left-2 text-xs text-gray-400">
+                                <div>近日点进动方向</div>
+                                <div class="flex items-center mt-1">
+                                    <i class="fas fa-arrow-right text-blue-400 mr-1"></i>
+                                    <span>每世纪43角秒</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 理论框架 -->
+    <section id="theory" class="relative z-10 py-20 cosmic-gradient">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
+                    理论框架
+                </h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    从牛顿力学到广义相对论的革命性跨越
+                </p>
+            </div>
+            
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- 左侧：时空弯曲可视化 -->
+                <div class="space-y-8">
+                    <div class="glass-effect rounded-2xl p-8">
+                        <h3 class="text-2xl font-bold mb-6 text-center text-green-400">时空弯曲示意图</h3>
+                        <div class="relative w-full h-80 flex items-center justify-center">
+                            <!-- 网格平面 -->
+                            <div class="absolute w-80 h-80 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full transform -rotate-x-60"></div>
+                            
+                            <!-- 弯曲效果 -->
+                            <div class="absolute w-80 h-80 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full transform -rotate-x-60 animate-pulse-slow"></div>
+                            
+                            <!-- 太阳 -->
+                            <div class="absolute w-12 h-12 bg-starlight rounded-full animate-glow"></div>
+                            
+                            <!-- 行星轨道 -->
+                            <svg class="absolute w-96 h-96" viewBox="-192 -192 384 384">
+                                <ellipse cx="0" cy="0" rx="160" ry="120" fill="none" stroke="rgba(59, 130, 246, 0.5)" stroke-width="2">
+                                    <animate attributeName="stroke-dashoffset" values="0;-1000" dur="30s" repeatCount="indefinite"/>
+                                    <animate attributeName="stroke-dasharray" values="1000;1000" dur="30s" repeatCount="indefinite"/>
+                                </ellipse>
+                                
+                                <!-- 水星 -->
+                                <circle cx="160" cy="0" r="4" fill="#3b82f6">
+                                    <animate attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="30s" repeatCount="indefinite"/>
+                                </circle>
+                            </svg>
+                            
+                            <!-- 光线弯曲效果 -->
+                            <div class="absolute w-full h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent transform rotate-45 animate-pulse-slow"></div>
+                            <div class="absolute w-full h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent transform -rotate-45 animate-pulse-slow" style="animation-delay: 1s;"></div>
+                        </div>
+                        <p class="text-sm text-gray-400 text-center mt-4">
+                            大质量天体（如太阳）会弯曲周围的时空，行星在弯曲时空中沿测地线运动
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 右侧：数学公式 -->
+                <div class="space-y-8">
+                    <!-- 爱因斯坦场方程 -->
+                    <div class="glass-effect rounded-2xl p-8">
+                        <h3 class="text-2xl font-bold mb-6 text-center text-blue-400">爱因斯坦场方程</h3>
+                        <div class="math-block math-important animate-math-appear">
+                            <div class="text-center">
+                                $$ R_{\mu\nu} - \frac{1}{2}g_{\mu\nu}R = \frac{8\pi G}{c^4}T_{\mu\nu} $$
+                            </div>
+                            <span class="equation-number">(1)</span>
+                        </div>
+                        
+                        <div class="math-description mt-6">
+                            <h4 class="text-lg font-semibold text-blue-400 mb-3">符号说明</h4>
+                            <div class="grid md:grid-cols-2 gap-4 text-sm text-gray-300">
+                                <div><span class="math-variable">$R_{\mu\nu}$</span>: 里奇张量</div>
+                                <div><span class="math-variable">$g_{\mu\nu}$</span>: 度规张量</div>
+                                <div><span class="math-variable">$R$</span>: 标量曲率</div>
+                                <div><span class="math-variable">$T_{\mu\nu}$</span>: 能量-动量张量</div>
+                                <div><span class="math-variable">$G$</span>: 万有引力常数</div>
+                                <div><span class="math-variable">$c$</span>: 光速</div>
+                            </div>
+                        </div>
+                        
+                        <div class="math-explanation mt-4">
+                            <p>这是广义相对论的核心方程，描述了物质如何弯曲时空，以及弯曲的时空如何影响物质的运动。方程左边描述时空的几何性质，右边描述物质的分布。</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Schwarzschild度规 -->
+                    <div class="glass-effect rounded-2xl p-8">
+                        <h3 class="text-2xl font-bold mb-6 text-center text-purple-400">Schwarzschild度规</h3>
+                        <div class="math-block animate-math-appear" style="animation-delay: 0.3s;">
+                            <div class="text-center">
+                                $$ c^2d\tau^2 = c^2\left(1 - \frac{2GM}{rc^2}\right)dt^2 - \left(1 - \frac{2GM}{rc^2}\right)^{-1}dr^2 - r^2d\theta^2 - r^2\sin^2\theta d\phi^2 $$
+                            </div>
+                            <span class="equation-number">(2)</span>
+                        </div>
+                        
+                        <div class="math-description mt-6">
+                            <h4 class="text-lg font-semibold text-purple-400 mb-3">物理意义</h4>
+                            <p class="text-sm text-gray-300">
+                                描述球对称质量分布周围的时空几何。其中 <span class="math-variable">$r_s = \frac{2GM}{c^2}$</span> 是Schwarzschild半径。对于太阳，Schwarzschild半径约为3公里。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 详细推导 -->
+    <section id="derivation" class="relative z-10 py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    详细推导过程
+                </h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    从测地线方程到进动角公式的完整推导
+                </p>
+            </div>
+            
+            <!-- 推导步骤导航 -->
+            <div class="flex flex-wrap justify-center gap-4 mb-16">
+                <button onclick="showStep(1)" class="step-btn glass-effect px-6 py-3 rounded-full text-white font-semibold hover:bg-white/20 transition-colors duration-300 active">
+                    步骤 1: 测地线方程
+                </button>
+                <button onclick="showStep(2)" class="step-btn glass-effect px-6 py-3 rounded-full text-white font-semibold hover:bg-white/20 transition-colors duration-300">
+                    步骤 2: Christoffel符号
+                </button>
+                <button onclick="showStep(3)" class="step-btn glass-effect px-6 py-3 rounded-full text-white font-semibold hover:bg-white/20 transition-colors duration-300">
+                    步骤 3: 运动方程
+                </button>
+                <button onclick="showStep(4)" class="step-btn glass-effect px-6 py-3 rounded-full text-white font-semibold hover:bg-white/20 transition-colors duration-300">
+                    步骤 4: 轨道方程
+                </button>
+                <button onclick="showStep(5)" class="step-btn glass-effect px-6 py-3 rounded-full text-white font-semibold hover:bg-white/20 transition-colors duration-300">
+                    步骤 5: 进动角公式
+                </button>
+            </div>
+            
+            <!-- 推导内容区域 -->
+            <div class="space-y-8">
+                <!-- 步骤 1: 测地线方程 -->
+                <div id="step1" class="derivation-step">
+                    <div class="glass-effect rounded-2xl p-8">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mr-4">
+                                <span class="text-white font-bold text-xl">1</span>
+                            </div>
+                            <h3 class="text-3xl font-bold text-blue-400">测地线方程</h3>
+                        </div>
+                        
+                        <p class="text-gray-300 leading-relaxed mb-6">
+                            在广义相对论中，质点在引力场中的运动遵循测地线方程，这是时空几何的自然结果：
+                        </p>
+                        
+                        <div class="math-block math-important animate-math-appear">
+                            <div class="text-center">
+                                $$ \frac{d^2x^\alpha}{d\tau^2} + \Gamma^\alpha_{\beta\gamma}\frac{dx^\beta}{d\tau}\frac{dx^\gamma}{d\tau} = 0 $$
+                            </div>
+                            <span class="equation-number">(3)</span>
+                        </div>
+                        
+                        <div class="math-description mt-6">
+                            <h4 class="text-lg font-semibold text-blue-400 mb-3">关键概念</h4>
+                            <div class="grid md:grid-cols-2 gap-4 text-sm text-gray-300">
+                                <div><span class="math-variable">$x^\alpha$</span>: 时空坐标 (t, r, θ, φ)</div>
+                                <div><span class="math-variable">$\tau$</span>: 固有时</div>
+                                <div><span class="math-variable">$\Gamma^\alpha_{\beta\gamma}$</span>: Christoffel符号</div>
+                                <div>描述质点在弯曲时空中的自然运动轨迹</div>
+                            </div>
+                        </div>
+                        
+                        <div class="math-explanation mt-4">
+                            <p>测地线是弯曲时空中的"直线"，自由粒子沿测地线运动。这意味着引力不是传统意义上的力，而是时空弯曲的表现。行星轨道实际上是测地线在三维空间中的投影。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 步骤 2: Christoffel符号 -->
+                <div id="step2" class="derivation-step hidden">
+                    <div class="glass-effect rounded-2xl p-8">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mr-4">
+                                <span class="text-white font-bold text-xl">2</span>
+                            </div>
+                            <h3 class="text-3xl font-bold text-purple-400">Christoffel符号计算</h3>
+                        </div>
+                        
+                        <p class="text-gray-300 leading-relaxed mb-6">
+                            Christoffel符号由度规张量决定，描述时空的弯曲程度：
+                        </p>
+                        
+                        <div class="math-block animate-math-appear">
+                            <div class="text-center">
+                                $$ \Gamma^\alpha_{\beta\gamma} = \frac{1}{2}g^{\alpha\delta}\left(\frac{\partial g_{\delta\beta}}{\partial x^\gamma} + \frac{\partial g_{\delta\gamma}}{\partial x^\beta} - \frac{\partial g_{\beta\gamma}}{\partial x^\delta}\right) $$
+                            </div>
+                            <span class="equation-number">(4)</span>
+                        </div>
+                        
+                        <div class="math-description mt-6">
+                            <h4 class="text-lg font-semibold text-purple-400 mb-3">Schwarzschild度规的非零Christoffel符号</h4>
+                            <div class="grid md:grid-cols-2 gap-4 text-sm text-gray-300">
+                                <div>$$ \Gamma^0_{01} = \Gamma^0_{10} = \frac{GM}{r^2c^2}\left(1 - \frac{2GM}{rc^2}\right)^{-1} $$</div>
+                                <div>$$ \Gamma^1_{00} = \frac{GM}{r^2}\left(1 - \frac{2GM}{rc^2}\right) $$</div>
+                                <div>$$ \Gamma^1_{11} = -\frac{GM}{r^2}\left(1 - \frac{2GM}{rc^2}\right)^{-1} $$</div>
+                                <div>$$ \Gamma^1_{22} = -r\left(1 - \frac{2GM}{rc^2}\right) $$</div>
+                                <div>$$ \Gamma^1_{33} = -r\sin^2\theta\left(1 - \frac{2GM}{rc^2}\right) $$</div>
+                                <div>$$ \Gamma^2_{12} = \Gamma^2_{21} = \frac{1}{r} $$</div>
+                                <div>$$ \Gamma^2_{33} = -\sin\theta\cos\theta $$</div>
+                                <div>$$ \Gamma^3_{13} = \Gamma^3_{31} = \frac{1}{r} $$</div>
+                                <div>$$ \Gamma^3_{23} = \Gamma^3_{32} = \cot\theta $$</div>
+                            </div>
+                        </div>
+                        
+                        <div class="math-explanation mt-4">
+                            <p>Christoffel符号虽然名称中带有"符号"，但它们实际上是描述时空几何的函数。这些符号的非零值表明时空发生了弯曲，正是这种弯曲导致了水星轨道的进动。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 步骤 3: 运动方程 -->
+                <div id="step3" class="derivation-step hidden">
+                    <div class="glass-effect rounded-2xl p-8">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mr-4">
+                                <span class="text-white font-bold text-xl">3</span>
+                            </div>
+                            <h3 class="text-3xl font-bold text-green-400">运动方程的建立</h3>
+                        </div>
+                        
+                        <p class="text-gray-300 leading-relaxed mb-6">
+                            假设水星在赤道平面内运动（$\theta = \pi/2$），则运动方程简化为三个分量：
+                        </p>
+                        
+                        <div class="grid md:grid-cols-3 gap-6 mb-6">
+                            <!-- 时间分量 -->
+                            <div class="math-block animate-math-appear" style="animation-delay: 0.1s;">
+                                <h4 class="text-center font-semibold text-blue-400 mb-2">时间分量 ($\alpha = 0$)</h4>
+                                <div class="text-center">
+                                    $$ \frac{d^2t}{d\tau^2} + 2\Gamma^0_{01}\frac{dt}{d\tau}\frac{dr}{d\tau} = 0 $$
+                                </div>
+                                <span class="equation-number">(5a)</span>
+                            </div>
+                            
+                            <!-- 径向分量 -->
+                            <div class="math-block animate-math-appear" style="animation-delay: 0.2s;">
+                                <h4 class="text-center font-semibold text-green-400 mb-2">径向分量 ($\alpha = 1$)</h4>
+                                <div class="text-center">
+                                    $$ \frac{d^2r}{d\tau^2} + \Gamma^1_{00}\left(\frac{dt}{d\tau}\right)^2 + \Gamma^1_{11}\left(\frac{dr}{d\tau}\right)^2 + \Gamma^1_{33}\left(\frac{d\phi}{d\tau}\right)^2 = 0 $$
+                                </div>
+                                <span class="equation-number">(5b)</span>
+                            </div>
+                            
+                            <!-- 角向分量 -->
+                            <div class="math-block animate-math-appear" style="animation-delay: 0.3s;">
+                                <h4 class="text-center font-semibold text-purple-400 mb-2">角向分量 ($\alpha = 3$)</h4>
+                                <div class="text-center">
+                                    $$ \frac{d^2\phi}{d\tau^2} + 2\Gamma^3_{13}\frac{dr}{d\tau}\frac{d\phi}{d\tau} = 0 $$
+                                </div>
+                                <span class="equation-number">(5c)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="math-description mt-6">
+                            <h4 class="text-lg font-semibold text-green-400 mb-3">守恒量的推导</h4>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <h5 class="font-semibold text-blue-400 mb-2">角动量守恒</h5>
+                                    <div class="text-center">
+                                        $$ r^2\frac{d\phi}{d\tau} = L = \text{常数} $$
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-2">从角向方程积分得到</p>
+                                </div>
+                                <div>
+                                    <h5 class="font-semibold text-purple-400 mb-2">能量守恒</h5>
+                                    <div class="text-center">
+                                        $$ \left(1 - \frac{2GM}{rc^2}\right)\frac{dt}{d\tau} = E = \text{常数} $$
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-2">从时间方程积分得到</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="math-explanation mt-4">
+                            <p>这些运动方程描述了水星在弯曲时空中的运动规律。通过求解这些方程，我们可以得到水星的轨道方程，进而计算出近日点的进动角。守恒量的存在反映了时空的对称性。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 步骤 4: 轨道方程 -->
+                <div id="step4" class="derivation-step hidden">
+                    <div class="glass-effect rounded-2xl p-8">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center mr-4">
+                                <span class="text-white font-bold text-xl">4</span>
+                            </div>
+                            <h3 class="text-3xl font-bold text-yellow-400">轨道方程的建立</h3>
+                        </div>
+                        
+                        <p class="text-gray-300 leading-relaxed mb-6">
+                            将守恒量代入径向方程，并引入变量变换 $u = 1/r$，得到相对论性轨道方程：
+                        </p>
+                        
+                        <div class="math-block math-important animate-math-appear">
+                            <div class="text-center">
+                                $$ \frac{d^2u}{d\phi^2} + u = \frac{GM}{L^2} + 3\frac{GM}{c^2}u^2 $$
+                            </div>
+                            <span class="equation-number">(6)</span>
+                        </div>
+                        
+                        <div class="math-description mt-6">
+                            <h4 class="text-lg font-semibold text-yellow-400 mb-3">方程分析</h4>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="bg-blue-500/10 rounded-xl p-4">
+                                    <h5 class="font-semibold text-blue-400 mb-2">牛顿项</h5>
+                                    <div class="text-center">
+                                        $$ \frac{d^2u}{d\phi^2} + u = \frac{GM}{L^2} $$
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-2">描述椭圆轨道</p>
+                                </div>
+                                <div class="bg-red-500/10 rounded-xl p-4">
+                                    <h5 class="font-semibold text-red-400 mb-2">相对论修正项</h5>
+                                    <div class="text-center">
+                                        $$ 3\frac{GM}{c^2}u^2 $$
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-2">导致轨道进动</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="math-explanation mt-4">
+                            <p>这个方程是整个推导的关键。左边是标准的简谐振动方程，右边包含了牛顿引力项和相对论修正项。正是这个额外的修正项 $3\frac{GM}{c^2}u^2$ 导致了水星轨道的进动，使其不再是闭合的椭圆。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 步骤 5: 进动角公式 -->
+                <div id="step5" class="derivation-step hidden">
+                    <div class="glass-effect rounded-2xl p-8">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mr-4">
+                                <span class="text-white font-bold text-xl">5</span>
+                            </div>
+                            <h3 class="text-3xl font-bold text-red-400">进动角公式</h3>
+                        </div>
+                        
+                        <p class="text-gray-300 leading-relaxed mb-6">
+                            通过求解相对论性轨道方程，最终得到水星近日点的进动角公式：
+                        </p>
+                        
+                        <div class="math-block math-important animate-math-appear">
+                            <div class="text-center">
+                                $$ \delta\phi = \frac{6\pi GM}{c^2a(1 - e^2)} $$
+                            </div>
+                            <span class="equation-number">(7)</span>
+                        </div>
+                        
+                        <div class="math-description mt-6">
+                            <h4 class="text-lg font-semibold text-red-400 mb-3">公式参数</h4>
+                            <div class="grid md:grid-cols-3 gap-4 text-sm text-gray-300">
+                                <div><span class="math-variable">$G$</span>: 万有引力常数</div>
+                                <div><span class="math-variable">$M$</span>: 太阳质量</div>
+                                <div><span class="math-variable">$c$</span>: 光速</div>
+                                <div><span class="math-variable">$a$</span>: 水星轨道半长轴</div>
+                                <div><span class="math-variable">$e$</span>: 水星轨道偏心率</div>
+                                <div><span class="math-variable">$\delta\phi$</span>: 每圈进动角</div>
+                            </div>
+                        </div>
+                        
+                        <div class="math-description mt-6">
+                            <h4 class="text-lg font-semibold text-red-400 mb-3">数值计算</h4>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center p-3 bg-blue-500/10 rounded-lg">
+                                    <span class="text-gray-300">每圈进动角</span>
+                                    <span class="text-blue-400 font-bold">0.1035 角秒</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-purple-500/10 rounded-lg">
+                                    <span class="text-gray-300">每年公转圈数</span>
+                                    <span class="text-purple-400 font-bold">4.152 圈/年</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-green-500/10 rounded-lg border-2 border-green-500/30">
+                                    <span class="text-gray-300 font-semibold">每世纪进动角</span>
+                                    <span class="text-green-400 font-bold text-xl">43 角秒/世纪</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="math-explanation mt-4">
+                            <p>这就是爱因斯坦在1915年得到的著名公式。当我们代入水星和太阳的实际参数时，得到的结果与观测值完美吻合，这是广义相对论的第一个重大实验验证，也是物理学史上的一个里程碑。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 结果验证 -->
+    <section id="results" class="relative z-10 py-20 cosmic-gradient">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">
+                    结果验证
+                </h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    理论与观测的完美吻合
+                </p>
+            </div>
+            
+            <div class="grid lg:grid-cols-2 gap-12">
+                <!-- 左侧：数据对比 -->
+                <div class="space-y-8">
+                    <div class="glass-effect rounded-2xl p-8">
+                        <h3 class="text-2xl font-bold mb-6 text-center text-green-400">水星进动数据对比</h3>
+                        <div class="space-y-6">
+                            <div class="flex justify-between items-center p-4 bg-blue-500/10 rounded-xl">
+                                <span class="text-gray-300">牛顿力学预测值</span>
+                                <span class="text-xl font-bold text-blue-400">531.63±0.69 角秒/世纪</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-4 bg-purple-500/10 rounded-xl">
+                                <span class="text-gray-300">观测值</span>
+                                <span class="text-xl font-bold text-purple-400">575.19 角秒/世纪</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-4 bg-red-500/10 rounded-xl">
+                                <span class="text-gray-300">异常差值</span>
+                                <span class="text-xl font-bold text-red-400">43.11±0.45 角秒/世纪</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-4 bg-green-500/10 rounded-xl border-2 border-green-500/30">
+                                <span class="text-gray-300 font-semibold">广义相对论预测</span>
+                                <span class="text-xl font-bold text-green-400">43 角秒/世纪</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8 p-4 bg-green-500/10 rounded-xl border border-green-500/30">
+                            <div class="flex items-center justify-center">
+                                <i class="fas fa-check-circle text-green-400 text-2xl mr-3"></i>
+                                <span class="text-green-400 font-semibold">理论与观测完全吻合！</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-effect rounded-2xl p-8">
+                        <h3 class="text-xl font-bold mb-6 text-center text-blue-400">其他行星的进动预测</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-gray-600">
+                                        <th class="text-left py-3 text-gray-300">行星</th>
+                                        <th class="text-left py-3 text-gray-300">理论值</th>
+                                        <th class="text-left py-3 text-gray-300">观测值</th>
+                                        <th class="text-left py-3 text-gray-300">吻合度</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-gray-400">
+                                    <tr class="border-b border-gray-700">
+                                        <td class="py-3 font-medium">水星</td>
+                                        <td class="py-3">43.03</td>
+                                        <td class="py-3">43.11±0.45</td>
+                                        <td class="py-3 text-green-400">✓</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-700">
+                                        <td class="py-3 font-medium">金星</td>
+                                        <td class="py-3">8.6</td>
+                                        <td class="py-3">8.4±4.8</td>
+                                        <td class="py-3 text-blue-400">✓</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-700">
+                                        <td class="py-3 font-medium">地球</td>
+                                        <td class="py-3">3.8</td>
+                                        <td class="py-3">5.0±1.2</td>
+                                        <td class="py-3 text-blue-400">✓</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 font-medium">伊卡鲁斯</td>
+                                        <td class="py-3">10.3</td>
+                                        <td class="py-3">9.8±0.8</td>
+                                        <td class="py-3 text-green-400">✓</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右侧：图表展示 -->
+                <div class="space-y-8">
+                    <div class="glass-effect rounded-2xl p-8">
+                        <h3 class="text-xl font-bold mb-6 text-center text-purple-400">进动值对比图表</h3>
+                        <canvas id="comparisonChart" class="w-full h-80"></canvas>
+                    </div>
+                    
+                    <div class="glass-effect rounded-2xl p-8">
+                        <h3 class="text-xl font-bold mb-6 text-center text-teal-400">精度分析</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-gray-300">理论计算精度</span>
+                                    <span class="text-green-400">99.7%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-green-400 h-2 rounded-full" style="width: 99.7%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-gray-300">观测数据精度</span>
+                                    <span class="text-blue-400">99.0%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-blue-400 h-2 rounded-full" style="width: 99.0%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-gray-300">理论与观测吻合度</span>
+                                    <span class="text-purple-400">99.8%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-purple-400 h-2 rounded-full" style="width: 99.8%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 p-4 bg-purple-500/10 rounded-xl">
+                            <p class="text-sm text-gray-300 text-center">
+                                <i class="fas fa-info-circle text-purple-400 mr-2"></i>
+                                广义相对论的预测精度达到了前所未有的水平，为现代物理学奠定了坚实基础
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 可视化演示 -->
+    <section id="visualization" class="relative z-10 py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                    可视化演示
+                </h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    直观感受水星进动的奇妙现象
+                </p>
+            </div>
+            
+            <div class="grid lg:grid-cols-2 gap-12">
+                <!-- 左侧：3D动画 -->
+                <div class="space-y-8">
+                    <div class="glass-effect rounded-2xl p-8">
+                        <h3 class="text-2xl font-bold mb-6 text-center text-cyan-400">水星轨道进动动画</h3>
+                        <div class="relative w-full h-96 flex items-center justify-center">
+                            <!-- 太阳 -->
+                            <div class="absolute w-16 h-16 bg-starlight rounded-full animate-glow"></div>
+                            
+                            <!-- 牛顿轨道 -->
+                            <svg class="absolute w-96 h-96" viewBox="-192 -192 384 384">
+                                <ellipse cx="0" cy="0" rx="160" ry="120" fill="none" stroke="rgba(107, 114, 128, 0.5)" stroke-width="1">
+                                    <animate attributeName="stroke-dashoffset" values="0;-1000" dur="20s" repeatCount="indefinite"/>
+                                    <animate attributeName="stroke-dasharray" values="1000;1000" dur="20s" repeatCount="indefinite"/>
+                                </ellipse>
+                            </svg>
+                            
+                            <!-- 相对论轨道（进动） -->
+                            <svg class="absolute w-96 h-96" viewBox="-192 -192 384 384">
+                                <ellipse cx="0" cy="0" rx="160" ry="120" fill="none" stroke="rgba(59, 130, 246, 0.8)" stroke-width="2">
+                                    <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="43 0 0" dur="100s" repeatCount="indefinite"/>
+                                    <animate attributeName="stroke-dashoffset" values="0;-1000" dur="20s" repeatCount="indefinite"/>
+                                    <animate attributeName="stroke-dasharray" values="1000;1000" dur="20s" repeatCount="indefinite"/>
+                                </ellipse>
+                            </svg>
+                            
+                            <!-- 水星 -->
+                            <div class="absolute w-4 h-4 bg-blue-400 rounded-full animate-orbit"></div>
+                            
+                            <!-- 近日点标记 -->
+                            <div class="absolute right-8 top-1/2 transform -translate-y-1/2">
+                                <div class="w-2 h-2 bg-red-400 rounded-full animate-pulse-slow"></div>
+                                <div class="text-xs text-red-400 mt-1">近日点</div>
+                            </div>
+                            
+                            <!-- 控制按钮 -->
+                            <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                                <button onclick="toggleAnimation()" id="playBtn" class="px-3 py-1 bg-blue-500 rounded text-xs hover:bg-blue-600 transition-colors">
+                                    <i class="fas fa-pause mr-1"></i>暂停
+                                </button>
+                                <button onclick="resetAnimation()" class="px-3 py-1 bg-gray-600 rounded text-xs hover:bg-gray-700 transition-colors">
+                                    <i class="fas fa-redo mr-1"></i>重置
+                                </button>
+                                <button onclick="speedUpAnimation()" class="px-3 py-1 bg-green-600 rounded text-xs hover:bg-green-700 transition-colors">
+                                    <i class="fas fa-forward mr-1"></i>加速
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 grid md:grid-cols-3 gap-4 text-center text-sm">
+                            <div class="bg-blue-500/10 rounded-lg p-3">
+                                <div class="text-blue-400 font-semibold">牛顿力学</div>
+                                <div class="text-gray-400">固定椭圆轨道</div>
+                            </div>
+                            <div class="bg-purple-500/10 rounded-lg p-3">
+                                <div class="text-purple-400 font-semibold">广义相对论</div>
+                                <div class="text-gray-400">进动椭圆轨道</div>
+                            </div>
+                            <div class="bg-red-500/10 rounded-lg p-3">
+                                <div class="text-red-400 font-semibold">进动速率</div>
+                                <div class="text-gray-400">43角秒/世纪</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右侧：交互式计算器 -->
+                <div class="space-y-8">
+                    <div class="glass-effect rounded-2xl p-8">
+                        <h3 class="text-2xl font-bold mb-6 text-center text-purple-400">进动角计算器</h3>
+                        
+                        <div class="space-y-6">
+                            <!-- 参数输入 -->
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">太阳质量 (M)</label>
+                                    <input type="number" id="sunMass" value="1.9885e30" step="1e28" 
+                                           class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-blue-400 focus:outline-none">
+                                    <div class="text-xs text-gray-400 mt-1">单位: kg</div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">行星半长轴 (a)</label>
+                                    <input type="number" id="semiMajorAxis" value="57.91e9" step="1e9"
+                                           class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-blue-400 focus:outline-none">
+                                    <div class="text-xs text-gray-400 mt-1">单位: m</div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">轨道偏心率 (e)</label>
+                                    <input type="number" id="eccentricity" value="0.206" step="0.001" min="0" max="0.99"
+                                           class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-blue-400 focus:outline-none">
+                                    <div class="text-xs text-gray-400 mt-1">0 ≤ e < 1</div>
+                                </div>
+                            </div>
+                            
+                            <!-- 计算按钮 -->
+                            <button onclick="calculatePrecession()" class="w-full stellar-gradient text-white py-3 rounded-lg font-semibold hover:scale-105 transition-transform duration-300">
+                                <i class="fas fa-calculator mr-2"></i>
+                                计算进动角
+                            </button>
+                            
+                            <!-- 计算结果 -->
+                            <div id="calculationResult" class="hidden bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+                                <h4 class="text-lg font-semibold text-green-400 mb-4 text-center">计算结果</h4>
+                                <div class="grid md:grid-cols-2 gap-4 text-sm">
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-green-400" id="perOrbit">0.1035</div>
+                                        <div class="text-gray-400">角秒/圈</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-blue-400" id="perCentury">43.0</div>
+                                        <div class="text-gray-400">角秒/世纪</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 物理意义解释 -->
+                    <div class="glass-effect rounded-2xl p-8">
+                        <h3 class="text-xl font-bold mb-6 text-center text-teal-400">物理意义解释</h3>
+                        <div class="space-y-4 text-sm text-gray-300">
+                            <div class="flex items-start space-x-3">
+                                <i class="fas fa-bullseye text-teal-400 mt-1"></i>
+                                <div>
+                                    <strong class="text-teal-400">时空弯曲：</strong>
+                                    太阳的质量弯曲了周围的时空，改变了水星的运动轨迹
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start space-x-3">
+                                <i class="fas fa-bullseye text-blue-400 mt-1"></i>
+                                <div>
+                                    <strong class="text-blue-400">测地线运动：</strong>
+                                    水星在弯曲时空中沿测地线运动，表现为轨道进动
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start space-x-3">
+                                <i class="fas fa-bullseye text-purple-400 mt-1"></i>
+                                <div>
+                                    <strong class="text-purple-400">相对论效应：</strong>
+                                    只有在强引力场中才能观察到这种效应
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start space-x-3">
+                                <i class="fas fa-bullseye text-red-400 mt-1"></i>
+                                <div>
+                                    <strong class="text-red-400">理论验证：</strong>
+                                    水星进动是广义相对论的重要实验验证
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 结论 -->
+    <section id="conclusion" class="relative z-10 py-20 cosmic-gradient">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-pink-400 to-red-400 bg-clip-text text-transparent">
+                    结论与意义
+                </h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    广义相对论的伟大胜利，物理学史上的里程碑
+                </p>
+            </div>
+            
+            <div class="grid lg:grid-cols-3 gap-8 mb-16">
+                <div class="glass-effect rounded-2xl p-8 text-center hover-lift">
+                    <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-glow">
+                        <i class="fas fa-bullseye text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4 text-blue-400">理论突破</h3>
+                    <p class="text-gray-300 leading-relaxed">
+                        水星进动的成功解释标志着人类对引力本质的认识从牛顿的"超距作用"转变为爱因斯坦的"时空弯曲"，实现了物理学的革命性突破。
+                    </p>
+                </div>
+                
+                <div class="glass-effect rounded-2xl p-8 text-center hover-lift">
+                    <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-glow">
+                        <i class="fas fa-check-circle text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4 text-purple-400">实验验证</h3>
+                    <p class="text-gray-300 leading-relaxed">
+                        理论计算值43角秒/世纪与观测值43.11±0.45角秒/世纪在误差范围内完全吻合，为广义相对论提供了强有力的实验支持。
+                    </p>
+                </div>
+                
+                <div class="glass-effect rounded-2xl p-8 text-center hover-lift">
+                    <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-glow">
+                        <i class="fas fa-rocket text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4 text-green-400">科学影响</h3>
+                    <p class="text-gray-300 leading-relaxed">
+                        这一成就不仅验证了广义相对论的正确性，也为后来的宇宙学研究、黑洞理论和引力波探测奠定了坚实基础。
+                    </p>
+                </div>
+            </div>
+            
+            <!-- 名言引用 -->
+            <div class="glass-effect rounded-2xl p-12 text-center">
+                <blockquote class="text-2xl md:text-3xl font-light text-gray-300 mb-6 italic">
+                    "想象力比知识更重要，因为知识是有限的，而想象力概括着世界上的一切，推动着进步，并且是知识进化的源泉。"
+                </blockquote>
+                <cite class="text-xl text-blue-400 font-semibold">— 阿尔伯特·爱因斯坦</cite>
+            </div>
+            
+            <!-- 现代应用 -->
+            <div class="mt-16">
+                <h3 class="text-3xl font-bold mb-8 text-center text-teal-400">现代应用与发展</h3>
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="glass-effect rounded-xl p-6 text-center hover-lift">
+                        <i class="fas fa-satellite-dish text-3xl text-blue-400 mb-4"></i>
+                        <h4 class="font-semibold text-blue-400 mb-2">GPS导航</h4>
+                        <p class="text-xs text-gray-400">需要相对论修正</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 text-center hover-lift">
+                        <i class="fas fa-bullseye text-3xl text-purple-400 mb-4"></i>
+                        <h4 class="font-semibold text-purple-400 mb-2">黑洞研究</h4>
+                        <p class="text-xs text-gray-400">引力透镜效应</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 text-center hover-lift">
+                        <i class="fas fa-wave-square text-3xl text-green-400 mb-4"></i>
+                        <h4 class="font-semibold text-green-400 mb-2">引力波探测</h4>
+                        <p class="text-xs text-gray-400">LIGO实验验证</p>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 text-center hover-lift">
+                        <i class="fas fa-bullseye text-3xl text-red-400 mb-4"></i>
+                        <h4 class="font-semibold text-red-400 mb-2">宇宙学</h4>
+                        <p class="text-xs text-gray-400">宇宙膨胀理论</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="relative z-10 bg-dark py-16 border-t border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 stellar-gradient rounded-full flex items-center justify-center animate-glow">
+                            <i class="fas fa-atom text-white text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                            相对论研究
+                        </h3>
+                    </div>
+                    <p class="text-gray-400 leading-relaxed">
+                        深入探索爱因斯坦的时空理论，理解宇宙的基本规律。
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4 text-gray-300">相关链接</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-blue-400 transition-colors">爱因斯坦原始论文</a></li>
+                        <li><a href="#" class="hover:text-blue-400 transition-colors">Schwarzschild度规</a></li>
+                        <li><a href="#" class="hover:text-blue-400 transition-colors">现代相对论验证</a></li>
+                        <li><a href="#" class="hover:text-blue-400 transition-colors">引力波探测</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4 text-gray-300">科学概念</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-purple-400 transition-colors">时空弯曲</a></li>
+                        <li><a href="#" class="hover:text-purple-400 transition-colors">测地线运动</a></li>
+                        <li><a href="#" class="hover:text-purple-400 transition-colors">黑洞理论</a></li>
+                        <li><a href="#" class="hover:text-purple-400 transition-colors">宇宙学</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4 text-gray-300">引用信息</h4>
+                    <div class="text-gray-400 text-sm leading-relaxed">
+                        <p>爱因斯坦, A. (1915).</p>
+                        <p>用广义相对论解释水星近日点运动.</p>
+                        <p>普鲁士科学院会议报告, 47, 831-839.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 pt-8 text-center">
+                <div class="flex justify-center space-x-6 mb-6">
+                    <a href="#" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
+                        <i class="fab fa-github text-white"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
+                        <i class="fab fa-twitter text-white"></i>
+                    </a>
+                    <a href="#" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
+                        <i class="fab fa-youtube text-white"></i>
+                    </a>
+                </div>
+                <p class="text-gray-400">
+                    &copy; 2024 广义相对论研究. 基于1915年经典理论推导. | 
+                    <span class="text-blue-400">用现代技术重现科学经典</span>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 返回顶部按钮 -->
+    <button id="backToTop" class="fixed bottom-8 right-8 w-12 h-12 stellar-gradient rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform duration-300 opacity-0 pointer-events-none z-50 animate-glow">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- JavaScript -->
+    <script>
+        // 全局变量
+        let animationRunning = true;
+        let animationSpeed = 1;
+        let mathRendered = false;
+
+        // DOM 加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            initializeEventListeners();
+            initializeScrollAnimations();
+            
+            // 监听MathJax渲染完成事件
+            document.addEventListener('mathjax-ready', function() {
+                console.log('MathJax rendering completed');
+                mathRendered = true;
+                addMathAnimations();
+            });
+        });
+
+        // 初始化图表
+        function initializeCharts() {
+            // 进动数据对比图表
+            const precessionCtx = document.getElementById('precessionChart').getContext('2d');
+            new Chart(precessionCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['牛顿力学', '观测值', '异常差值', '广义相对论'],
+                    datasets: [{
+                        label: '进动值 (角秒/世纪)',
+                        data: [531.63, 575.19, 43.11, 43.0],
+                        backgroundColor: [
+                            'rgba(107, 114, 128, 0.5)',
+                            'rgba(139, 92, 246, 0.5)',
+                            'rgba(239, 68, 68, 0.5)',
+                            'rgba(34, 197, 94, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgba(107, 114, 128, 1)',
+                            'rgba(139, 92, 246, 1)',
+                            'rgba(239, 68, 68, 1)',
+                            'rgba(34, 197, 94, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#94a3b8'
+                            },
+                            grid: {
+                                color: 'rgba(107, 114, 128, 0.3)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#94a3b8'
+                            },
+                            grid: {
+                                color: 'rgba(107, 114, 128, 0.3)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 对比图表
+            const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+            new Chart(comparisonCtx, {
+                type: 'line',
+                data: {
+                    labels: ['水星', '金星', '地球', '伊卡鲁斯'],
+                    datasets: [{
+                        label: '理论值',
+                        data: [43.03, 8.6, 3.8, 10.3],
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4
+                    }, {
+                        label: '观测值',
+                        data: [43.11, 8.4, 5.0, 9.8],
+                        borderColor: 'rgba(139, 92, 246, 1)',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#94a3b8'
+                            },
+                            grid: {
+                                color: 'rgba(107, 114, 128, 0.3)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#94a3b8'
+                            },
+                            grid: {
+                                color: 'rgba(107, 114, 128, 0.3)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 初始化事件监听器
+        function initializeEventListeners() {
+            // 移动端菜单
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // 平滑滚动
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // 返回顶部按钮
+            const backToTopButton = document.getElementById('backToTop');
+            
+            window.addEventListener('scroll', () => {
+                if (window.pageYOffset > 300) {
+                    backToTopButton.classList.remove('opacity-0', 'pointer-events-none');
+                } else {
+                    backToTopButton.classList.add('opacity-0', 'pointer-events-none');
+                }
+            });
+
+            backToTopButton.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        }
+
+        // 初始化滚动动画
+        function initializeScrollAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // 观察所有需要动画的元素
+            document.querySelectorAll('.hover-lift, .glass-effect').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(el);
+            });
+        }
+
+        // 为数学公式添加动画
+        function addMathAnimations() {
+            if (!mathRendered) return;
+            
+            const mathElements = document.querySelectorAll('.MathJax');
+            mathElements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = 'scale(0.95)';
+                el.style.transition = 'all 0.6s ease';
+                
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'scale(1)';
+                }, index * 100);
+            });
+        }
+
+        // 滚动到指定区域
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }
+
+        // 推导步骤切换
+        function showStep(stepNumber) {
+            // 隐藏所有步骤
+            document.querySelectorAll('.derivation-step').forEach(step => {
+                step.classList.add('hidden');
+            });
+            
+            // 显示当前步骤
+            document.getElementById(`step${stepNumber}`).classList.remove('hidden');
+            
+            // 更新按钮状态
+            document.querySelectorAll('.step-btn').forEach((btn, index) => {
+                if (index + 1 === stepNumber) {
+                    btn.classList.add('active', 'bg-white/20');
+                    btn.classList.remove('hover:bg-white/20');
+                } else {
+                    btn.classList.remove('active', 'bg-white/20');
+                    btn.classList.add('hover:bg-white/20');
+                }
+            });
+            
+            // 等待MathJax渲染完成后添加动画
+            setTimeout(() => {
+                if (mathRendered) {
+                    const currentStep = document.getElementById(`step${stepNumber}`);
+                    const mathElements = currentStep.querySelectorAll('.MathJax');
+                    mathElements.forEach((el, index) => {
+                        el.style.opacity = '0';
+                        el.style.transform = 'scale(0.95)';
+                        
+                        setTimeout(() => {
+                            el.style.opacity = '1';
+                            el.style.transform = 'scale(1)';
+                        }, index * 200);
+                    });
+                }
+            }, 100);
+        }
+
+        // 动画控制
+        function toggleAnimation() {
+            const playBtn = document.getElementById('playBtn');
+            const mercury = document.querySelector('.animate-orbit');
+            
+            if (animationRunning) {
+                mercury.style.animationPlayState = 'paused';
+                playBtn.innerHTML = '<i class="fas fa-play mr-1"></i>播放';
+                animationRunning = false;
+            } else {
+                mercury.style.animationPlayState = 'running';
+                playBtn.innerHTML = '<i class="fas fa-pause mr-1"></i>暂停';
+                animationRunning = true;
+            }
+        }
+
+        function resetAnimation() {
+            const mercury = document.querySelector('.animate-orbit');
+            mercury.style.animation = 'none';
+            setTimeout(() => {
+                mercury.style.animation = `orbit ${20/animationSpeed}s linear infinite`;
+            }, 10);
+        }
+
+        function speedUpAnimation() {
+            animationSpeed *= 2;
+            if (animationSpeed > 8) animationSpeed = 1;
+            
+            const mercury = document.querySelector('.animate-orbit');
+            mercury.style.animation = `orbit ${20/animationSpeed}s linear infinite`;
+        }
+
+        // 进动角计算
+        function calculatePrecession() {
+            const G = 6.67430e-11; // 万有引力常数
+            const c = 299792458;   // 光速
+            
+            const M = parseFloat(document.getElementById('sunMass').value);
+            const a = parseFloat(document.getElementById('semiMajorAxis').value);
+            const e = parseFloat(document.getElementById('eccentricity').value);
+            
+            // 计算每圈进动角（弧度）
+            const deltaPhiRad = (6 * Math.PI * G * M) / (c * c * a * (1 - e * e));
+            
+            // 转换为角秒
+            const deltaPhiArcsec = deltaPhiRad * (180 / Math.PI) * 3600;
+            
+            // 水星公转周期（秒）
+            const T = 87.97 * 24 * 3600;
+            
+            // 每年公转圈数
+            const orbitsPerYear = (365.25 * 24 * 3600) / T;
+            
+            // 每世纪进动角
+            const deltaPhiPerCentury = deltaPhiArcsec * orbitsPerYear * 100;
+            
+            // 显示结果
+            document.getElementById('perOrbit').textContent = deltaPhiArcsec.toFixed(4);
+            document.getElementById('perCentury').textContent = deltaPhiPerCentury.toFixed(1);
+            document.getElementById('calculationResult').classList.remove('hidden');
+            
+            // 添加计算完成动画
+            const resultDiv = document.getElementById('calculationResult');
+            resultDiv.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                resultDiv.style.transform = 'scale(1)';
+            }, 100);
+        }
+
+        // 添加鼠标跟随效果
+        document.addEventListener('mousemove', (e) => {
+            const cursor = document.querySelector('.cursor');
+            if (cursor) {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            }
+        });
+
+        // 添加页面加载完成动画
+        window.addEventListener('load', () => {
+            document.body.style.opacity = '0';
+            document.body.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                document.body.style.transition = 'opacity 1s ease, transform 1s ease';
+                document.body.style.opacity = '1';
+                document.body.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

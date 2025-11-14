@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科技科OA系统</title>
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+            color: #333333;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .tech-card {
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid rgba(22, 93, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(22, 93, 255, 0.1);
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+            padding: 15px;
+        }
+        
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(22, 93, 255, 0.5) transparent;
+        }
+        
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .table-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb {
+            background-color: rgba(22, 93, 255, 0.5);
+            border-radius: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        th {
+            background: linear-gradient(to right, #165DFF, #0E42D2);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-weight: 600;
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(22, 93, 255, 0.6);
+            padding: 12px;
+            border: none;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(22, 93, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        tr:nth-child(odd) {
+            background-color: #f1f5f9;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #ffffff;
+        }
+        
+        tr:hover td {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(22, 93, 255, 0.2);
+            background-color: rgba(22, 93, 255, 0.1);
+        }
+        
+        .header-title {
+            color: #165DFF;
+            font-size: 24px;
+            font-weight: 600;
+            border-bottom: 2px solid #e8e8e8;
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-img {
+            width: 40px;
+            height: 40px;
+            margin-right: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .logo-img {
+                width: 32px;
+                height: 32px;
+                margin-right: 8px;
+            }
+            .header-title {
+                font-size: 20px;
+            }
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="flex justify-between items-center mb-8">
+            <div class="logo-container">
+                <img src="https://s.coze.cn/t/Q4rFV-UjVrs/" alt="科技科OA系统logo" class="logo-img">
+                <h1 class="header-title">科技科OA系统</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-user-circle text-blue-500 text-xl"></i>
+                    <span class="text-sm text-blue-600">用户入口</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tech-card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr class="text-left">
+                            <th>用户名</th>
+                            <th>性别</th>
+                            <th>出生日期</th>
+                            <th>电话号码</th>
+                            <th>电子邮件</th>
+                            <th>地址</th>
+                            <th>身份证号码</th>
+                            <th>婚姻状况</th>
+                            <th>最高学历</th>
+                            <th>职业</th>
+                            <th>工作单位</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-medium">马化花</td>
+                            <td>女</td>
+                            <td>2000-01-24</td>
+                            <td>13800000000</td>
+                            <td>mahuahua@uibot.com</td>
+                            <td>中国某省某市某区某街道</td>
+                            <td>320104199509087890</td>
+                            <td>未婚</td>
+                            <td>小学</td>
+                            <td>技术支持</td>
+                            <td>京东集团</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="font-medium">刘弱西</td>
+                            <td>男</td>
+                            <td>2000-03-19</td>
+                            <td>13800138000</td>
+                            <td>liuruoxi@uibot.com</td>
+                            <td>北京市朝阳区XX路XX号</td>
+                            <td>420102198005102345</td>
+                            <td>未婚</td>
+                            <td>本科</td>
+                            <td>销售</td>
+                            <td>百度在线网络技术公司</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="font-medium">王兼邻</td>
+                            <td>男</td>
+                            <td>1999-05-27</td>
+                            <td>13700213700</td>
+                            <td>wangjianlin@uibot.com</td>
+                            <td>上海市黄浦区YY街YY号</td>
+                            <td>310101199212305678</td>
+                            <td>离异</td>
+                            <td>本科</td>
+                            <td>高级管理</td>
+                            <td>阿里巴巴集团</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="font-medium">马雨</td>
+                            <td>女</td>
+                            <td>1998-02-01</td>
+                            <td>13600313600</td>
+                            <td>mayu@uibot.com</td>
+                            <td>武汉市武昌区ZZ小区ZZ栋</td>
+                            <td>110105198908071234</td>
+                            <td>已婚</td>
+                            <td>初中</td>
+                            <td>后勤</td>
+                            <td>腾讯科技有限公司</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="font-medium">公孙永耗</td>
+                            <td>男</td>
+                            <td>2001-09-04</td>
+                            <td>13500413500</td>
+                            <td>gongsunyonghao@uibot.com</td>
+                            <td>南京市秦淮区XX小区XX栋</td>
+                            <td>123456789012345678</td>
+                            <td>未婚</td>
+                            <td>高中</td>
+                            <td>通信技术</td>
+                            <td>某科技有限公司</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer class="text-center text-sm text-blue-600 py-4">
+            <p>created by <a href="https://space.coze.cn" class="text-blue-500 hover:text-blue-700 transition-colors">coze space</a></p>
+            <p>页面内容均由 AI 生成，仅供参考</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 表格行悬停效果
+            const tableRows = document.querySelectorAll('tbody tr');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 10px rgba(22, 93, 255, 0.2)';
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

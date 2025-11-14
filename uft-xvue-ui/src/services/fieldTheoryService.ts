@@ -1,4 +1,4 @@
-import { Vector3 } from 'three';
+import { Vector3, Color } from 'three';
 
 // 场论类型枚举
 export enum FieldType {
@@ -192,7 +192,7 @@ export class FieldTheoryService {
     
     if (!cached) {
       const color = new Color();
-      this.calculateParticleColor(color, fieldType, particleIndex, velocity);
+      this.calculateParticleColor(color, fieldType, particleIndex);
       return color;
     }
     
@@ -211,7 +211,7 @@ export class FieldTheoryService {
   /**
    * 优化的颜色计算
    */
-  private calculateParticleColor(color: Color, fieldType: FieldType, particleIndex: number, velocity?: Vector3): void {
+  private calculateParticleColor(color: Color, fieldType: FieldType, particleIndex: number): void {
     const time = this.currentTime;
     const { TWO_PI, HALF_PI } = FieldTheoryService.MATH_CONSTANTS;
     
@@ -263,12 +263,7 @@ export class FieldTheoryService {
     );
     
     // 缓存计算结果
-    const cached = this.colorCache.get(fieldType);
-    if (cached) {
-      cached.r = color.r;
-      cached.g = color.g;
-      cached.b = color.b;
-    }
+    this.colorCache.set(fieldType, { r: color.r, g: color.g, b: color.b });
   }
   
   /**
@@ -432,7 +427,8 @@ export class FieldTheoryService {
    /**
     * 生成量子波包
     */
-   private generateWavePacket(position: Vector3, time: number, params: FieldParams): Vector3 {
+   // @ts-ignore - 暂时移除未使用的方法
+  private generateWavePacket(position: Vector3, time: number, params: FieldParams): Vector3 {
      // 高斯波包的简化模型
      const sigma = params.wavePacketWidth; // 波包宽度
      const k0 = new Vector3(params.quantumWaveVectorX, params.quantumWaveVectorY, params.quantumWaveVectorZ); // 波矢

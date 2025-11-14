@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>张祥前统一场论 - 3D螺旋运动与四种基本力</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- MathJax for LaTeX -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#8B5CF6',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'spin-slow': 'spin 3s linear infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .text-glow {
+                text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            }
+            .bg-gradient-blue {
+                background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+            }
+            .bg-gradient-purple {
+                background: linear-gradient(135deg, #4C1D95 0%, #8B5CF6 100%);
+            }
+            .transition-transform {
+                transition-property: transform;
+                transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                transition-duration: 300ms;
+            }
+            .hover-scale:hover {
+                transform: scale(1.05);
+            }
+        }
+    </style>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            overflow-x: hidden;
+        }
+        
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            overflow: hidden;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        #scene-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .force-card {
+            transition: all 0.3s ease;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+        
+        .force-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .force-card.gravity {
+            border-top: 4px solid #3B82F6;
+        }
+        
+        .force-card.electric {
+            border-top: 4px solid #10B981;
+        }
+        
+        .force-card.magnetic {
+            border-top: 4px solid #F59E0B;
+        }
+        
+        .force-card.nuclear {
+            border-top: 4px solid #EF4444;
+        }
+        
+        .equation-box {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 0.5rem 0;
+        }
+        
+        .slider-container label {
+            width: 120px;
+            font-size: 0.875rem;
+        }
+        
+        .slider-container input[type="range"] {
+            flex-grow: 1;
+        }
+        
+        .slider-container .value {
+            width: 50px;
+            text-align: right;
+            font-size: 0.875rem;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .canvas-container {
+                height: 350px;
+            }
+            
+            .force-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 动画效果 */
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+        
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        /* 力的方向指示器样式 */
+        .force-indicator {
+            position: absolute;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <!-- 导航栏 -->
+    <nav class="bg-gradient-blue text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-cube text-2xl"></i>
+                <h1 class="text-xl font-bold">统一场论 3D 可视化</h1>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="#theory" class="hover:text-blue-200 transition-colors">理论基础</a>
+                <a href="#visualization" class="hover:text-blue-200 transition-colors">3D 可视化</a>
+                <a href="#forces" class="hover:text-blue-200 transition-colors">四种基本力</a>
+                <a href="#conclusion" class="hover:text-blue-200 transition-colors">结论</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </div>
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="hidden md:hidden bg-blue-800">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-2">
+                <a href="#theory" class="block py-2 hover:text-blue-200 transition-colors">理论基础</a>
+                <a href="#visualization" class="block py-2 hover:text-blue-200 transition-colors">3D 可视化</a>
+                <a href="#forces" class="block py-2 hover:text-blue-200 transition-colors">四种基本力</a>
+                <a href="#conclusion" class="block py-2 hover:text-blue-200 transition-colors">结论</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 英雄区域 -->
+    <header class="bg-gradient-to-br from-blue-900 to-indigo-900 text-white py-16 md:py-24">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 text-glow">张祥前统一场论</h1>
+            <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">三维螺旋运动、垂直原理与四种基本力方向的内在逻辑关系</p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="#theory" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center">
+                    <i class="fa fa-book mr-2"></i> 了解理论
+                </a>
+                <a href="#visualization" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center">
+                    <i class="fa fa-cube mr-2"></i> 3D 可视化
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 理论基础部分 -->
+    <section id="theory" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold mb-12 text-center">理论基础</h2>
+            
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h3 class="text-2xl font-bold mb-4 text-blue-800">垂直原理（宇宙的几何宿命）</h3>
+                    <p class="text-gray-700 mb-6">
+                        相对于观察者，宇宙中任意物体周围空间的任意一点，都处于一个"三维垂直状态"（即过该点可作三条相互垂直的直线）。处在此状态中的空间点必须运动，且其运动方向不断变化，走过的轨迹又能重新构成一个三维垂直状态。
+                    </p>
+                    <p class="text-gray-700 font-semibold">
+                        这是理论的第一性原理。它指出"运动"不是外力强加的，而是空间三维垂直这一几何属性的必然结果。静止是相对的，运动是绝对的几何宿命。
+                    </p>
+                </div>
+                <div class="bg-gray-100 p-6 rounded-lg shadow-md">
+                    <div class="aspect-square relative" id="perpendicularity-visualization">
+                        <!-- 垂直原理可视化将在这里渲染 -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-12 items-center mt-20">
+                <div class="order-2 md:order-1 bg-gray-100 p-6 rounded-lg shadow-md">
+                    <div class="aspect-square relative" id="helix-visualization">
+                        <!-- 螺旋运动可视化将在这里渲染 -->
+                    </div>
+                </div>
+                <div class="order-1 md:order-2">
+                    <h3 class="text-2xl font-bold mb-4 text-blue-800">三维螺旋运动（垂直原理的必然推论）</h3>
+                    <p class="text-gray-700 mb-6">
+                        垂直原理要求运动方向必须持续变化。在三维空间中，满足"轨迹上任一点都能作三条相互垂直切线"的最简单、最对称的运动模式，就是圆柱状螺旋运动。
+                    </p>
+                    
+                    <div class="equation-box text-white bg-blue-900">
+                        <p class="text-center font-bold mb-2">三维螺旋运动方程（核心公式1）</p>
+                        <div class="mathjax-container">
+                            \[
+                            \vec{R}(t) = [r \cos(\omega t)]\hat{i} + [r \sin(\omega t)]\hat{j} + (h t)\hat{k}
+                            \]
+                        </div>
+                    </div>
+                    
+                    <ul class="list-disc list-inside text-gray-700 mt-4 space-y-2">
+                        <li>\(\vec{R}(t)\)：空间点在t时刻的位移矢量</li>
+                        <li>\(r\)：螺旋半径（旋转运动的幅度）</li>
+                        <li>\(\omega\)：角速度（旋转快慢）</li>
+                        <li>\(h\)：螺距参数（直线运动速度，理论中 \(h = c\)，即光速）</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3D 可视化部分 -->
+    <section id="visualization" class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold mb-12 text-center">三维螺旋运动可视化</h2>
+            
+            <div class="bg-white rounded-xl shadow-xl p-6 mb-8">
+                <div class="canvas-container">
+                    <div id="scene-container"></div>
+                    <div id="force-indicators-container" class="absolute top-0 left-0 w-full h-full pointer-events-none"></div>
+                </div>
+                
+                <div class="mt-6 grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-xl font-bold mb-4 text-blue-800">参数控制</h3>
+                        
+                        <div class="slider-container">
+                            <label for="radius">螺旋半径 (r):</label>
+                            <input type="range" id="radius" min="0.5" max="3" step="0.1" value="1.5">
+                            <span id="radius-value" class="value">1.5</span>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="omega">角速度 (ω):</label>
+                            <input type="range" id="omega" min="0.5" max="5" step="0.1" value="2">
+                            <span id="omega-value" class="value">2.0</span>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="pitch">螺距 (h):</label>
+                            <input type="range" id="pitch" min="0.1" max="2" step="0.1" value="0.5">
+                            <span id="pitch-value" class="value">0.5</span>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="show-tangents">显示切线:</label>
+                            <input type="checkbox" id="show-tangents" checked>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="show-forces">显示力方向:</label>
+                            <input type="checkbox" id="show-forces">
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button id="reset-view" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors">
+                                <i class="fa fa-refresh mr-1"></i> 重置视图
+                            </button>
+                            
+                            <button id="toggle-animation" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors ml-2">
+                                <i class="fa fa-play mr-1"></i> 暂停动画
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-bold mb-4 text-blue-800">当前状态</h3>
+                        
+                        <div class="bg-gray-100 p-4 rounded-lg">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">时间 (t):</p>
+                                    <p id="time-value" class="font-mono">0.00</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">位置 (x, y, z):</p>
+                                    <p id="position-value" class="font-mono">(0.00, 0.00, 0.00)</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">速度 (vx, vy, vz):</p>
+                                    <p id="velocity-value" class="font-mono">(0.00, 0.00, 0.00)</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">加速度 (ax, ay, az):</p>
+                                    <p id="acceleration-value" class="font-mono">(0.00, 0.00, 0.00)</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h4 class="font-bold mb-2">运动分解</h4>
+                            <div class="flex space-x-4">
+                                <div class="flex-1 bg-blue-100 p-3 rounded-lg">
+                                    <p class="text-sm font-semibold text-blue-800">直线运动分量</p>
+                                    <p id="linear-component" class="text-xs font-mono">沿 Z 轴: 0.00</p>
+                                </div>
+                                <div class="flex-1 bg-purple-100 p-3 rounded-lg">
+                                    <p class="text-sm font-semibold text-purple-800">旋转运动分量</p>
+                                    <p id="rotational-component" class="text-xs font-mono">XY 平面: (0.00, 0.00)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-xl p-6">
+                <h3 class="text-xl font-bold mb-4 text-blue-800">运动分解与力的关系</h3>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr>
+                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">运动分量</th>
+                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">变化方式</th>
+                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">产生的力</th>
+                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">方向特征</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="py-3 px-4 border-b border-gray-200">直线运动分量（沿螺旋轴线）</td>
+                                <td class="py-3 px-4 border-b border-gray-200">速度大小变化</td>
+                                <td class="py-3 px-4 border-b border-gray-200">惯性力/引力</td>
+                                <td class="py-3 px-4 border-b border-gray-200">沿速度变化方向</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 border-b border-gray-200">直线运动分量（沿螺旋轴线）</td>
+                                <td class="py-3 px-4 border-b border-gray-200">运动通量变化</td>
+                                <td class="py-3 px-4 border-b border-gray-200">电场力</td>
+                                <td class="py-3 px-4 border-b border-gray-200">沿电荷极性（发散/汇聚）</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 border-b border-gray-200">旋转运动分量（绕螺旋轴线）</td>
+                                <td class="py-3 px-4 border-b border-gray-200">旋转强度/方向变化</td>
+                                <td class="py-3 px-4 border-b border-gray-200">磁场力</td>
+                                <td class="py-3 px-4 border-b border-gray-200">垂直于旋转平面（右手定则）</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 border-b border-gray-200">旋转运动分量（绕螺旋轴线）</td>
+                                <td class="py-3 px-4 border-b border-gray-200">旋转轴方向剧烈变化</td>
+                                <td class="py-3 px-4 border-b border-gray-200">核力</td>
+                                <td class="py-3 px-4 border-b border-gray-200">与轴向变化相关（短程、极强）</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 四种基本力部分 -->
+    <section id="forces" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold mb-12 text-center">四种基本力的几何起源与方向</h2>
+            
+            <p class="text-center text-gray-700 mb-12 max-w-4xl mx-auto">
+                统一场论认为，所有力都不是超距作用，而是物体影响其周围空间运动状态，这种变化又作用于其他物体的结果。力的方向，完全由空间运动的变化模式决定。
+            </p>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 force-cards">
+                <!-- 引力/惯性力 -->
+                <div class="force-card gravity bg-white shadow-md">
+                    <div class="p-6">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+                            <i class="fa fa-arrow-down text-blue-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-center">引力/惯性力</h3>
+                        
+                        <div class="equation-box text-white bg-blue-900">
+                            <div class="mathjax-container">
+                                \[
+                                \vec{F} = - m \frac{d\vec{V}}{dt}
+                                \]
+                            </div>
+                        </div>
+                        
+                        <p class="text-gray-700 text-sm mt-4">
+                            <strong>几何起源：</strong>源于螺旋运动中直线运动分量的速度变化（加速度）。
+                        </p>
+                        
+                        <p class="text-gray-700 text-sm mt-2">
+                            <strong>方向解释：</strong>惯性力方向与加速度方向相反；万有引力方向指向产生引力场的质量中心。
+                        </p>
+                        
+                        <div class="equation-box text-white bg-blue-900 mt-4">
+                            <div class="mathjax-container">
+                                \[
+                                \vec{A} = - \frac{GM}{r^2} \hat{r}
+                            \]
+                            <p class="text-xs mt-2">引力场强度（等价于加速度 \(\vec{g}\)）</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 电场力 -->
+                <div class="force-card electric bg-white shadow-md">
+                    <div class="p-6">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+                            <i class="fa fa-plus text-green-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-center">电场力</h3>
+                        
+                        <div class="equation-box text-white bg-green-900">
+                            <div class="mathjax-container">
+                                \[
+                                \vec{F}_e = q \vec{E} = \frac{1}{4\pi\epsilon_0} \frac{q_1 q_2}{r^2} \hat{r}
+                            \]
+                            <p class="text-xs mt-2">库仑定律</p>
+                        </div>
+                        
+                        <p class="text-gray-700 text-sm mt-4">
+                            <strong>几何起源：</strong>源于螺旋运动中直线运动分量的"流量"变化（即质量变化率 \(\frac{dm}{dt}\)，被解释为电荷）。
+                        </p>
+                        
+                        <p class="text-gray-700 text-sm mt-2">
+                            <strong>方向解释：</strong>正电荷电场方向向外，负电荷电场方向向内。同种电荷相斥，异种电荷相吸。
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 磁场力 -->
+                <div class="force-card magnetic bg-white shadow-md">
+                    <div class="p-6">
+                        <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+                            <i class="fa fa-circle-o text-yellow-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-center">磁场力</h3>
+                        
+                        <div class="equation-box text-white bg-yellow-900">
+                            <div class="mathjax-container">
+                                \[
+                                d\vec{B} = \frac{\mu_0}{4\pi} \frac{I d\vec{l} \times \hat{r}}{r^2}
+                            \]
+                            <p class="text-xs mt-2">毕奥-萨伐尔定律</p>
+                        </div>
+                        
+                        <p class="text-gray-700 text-sm mt-4">
+                            <strong>几何起源：</strong>源于螺旋运动中旋转运动分量的变化。由运动电荷（\(\vec{V} \neq 0\)）引发。
+                        </p>
+                        
+                        <p class="text-gray-700 text-sm mt-2">
+                            <strong>方向解释：</strong>磁场力方向始终垂直于由电荷运动速度和磁场方向构成的平面，遵循右手定则。
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 核力 -->
+                <div class="force-card nuclear bg-white shadow-md">
+                    <div class="p-6">
+                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+                            <i class="fa fa-atom text-red-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-center">核力</h3>
+                        
+                        <div class="equation-box text-white bg-red-900">
+                            <div class="mathjax-container">
+                                \[
+                                \vec{D} = - g m \frac{d(\hat{R}/r^3)}{dt}
+                            \]
+                            <p class="text-xs mt-2">核力场尝试性定义</p>
+                        </div>
+                        
+                        <p class="text-gray-700 text-sm mt-4">
+                            <strong>几何起源：</strong>源于螺旋运动中直线运动光速矢量 \(\vec{C}\) 方向的剧烈变化。在原子核的极短距离内，光速方向快速改变，产生极强的力。
+                        </p>
+                        
+                        <p class="text-gray-700 text-sm mt-2">
+                            <strong>方向解释：</strong>核力方向与导致光速矢量 \(\vec{C}\) 方向变化的"形变"方向相关，表现为强大的束缚力。
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-16 bg-gray-100 p-8 rounded-xl shadow-lg">
+                <h3 class="text-2xl font-bold mb-6 text-center">力的统一定义公式</h3>
+                
+                <div class="equation-box text-white bg-gray-900 max-w-3xl mx-auto">
+                    <p class="text-center font-bold mb-2">动量变化率（核心公式2）</p>
+                    <div class="mathjax-container">
+                        \[
+                        \vec{F} = \frac{d\vec{P}}{dt} = \frac{d}{dt}[m(\vec{C} - \vec{V})]
+                        \]
+                    </div>
+                    <p class="text-center text-sm mt-2">其中 \(\vec{P} = m(\vec{C} - \vec{V})\) 是广义动量，\(\vec{C}\)是空间本身的绝对速度（光速），\(\vec{V}\)是物体的相对速度</p>
+                </div>
+                
+                <div class="equation-box text-white bg-gray-900 max-w-3xl mx-auto mt-8">
+                    <p class="text-center font-bold mb-2">宇宙大统一方程</p>
+                    <div class="mathjax-container">
+                        \[
+                        \vec{F} = \underbrace{\vec{C} \frac{dm}{dt}}_{\text{电场力}} \ \underbrace{-\vec{V} \frac{dm}{dt}}_{\text{磁场力}} \ \underbrace{+ m \frac{d\vec{C}}{dt}}_{\text{核力}} \ \underbrace{- m \frac{d\vec{V}}{dt}}_{\text{引力/惯性力}}
+                        \]
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 结论部分 -->
+    <section id="conclusion" class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold mb-12 text-center">总结：统一的图像</h2>
+            
+            <div class="bg-white rounded-xl shadow-xl p-8 max-w-4xl mx-auto">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr>
+                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">力的类型</th>
+                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">几何起源（螺旋运动分量）</th>
+                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">方向决定性因素</th>
+                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">核心方向特征</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="py-3 px-4 border-b border-gray-200">引力/惯性力</td>
+                                <td class="py-3 px-4 border-b border-gray-200">直线运动的速度变化</td>
+                                <td class="py-3 px-4 border-b border-gray-200">加速度方向</td>
+                                <td class="py-3 px-4 border-b border-gray-200">指向质量中心或与加速度反向</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 border-b border-gray-200">电场力</td>
+                                <td class="py-3 px-4 border-b border-gray-200">直线运动的"流量"变化</td>
+                                <td class="py-3 px-4 border-b border-gray-200">电荷极性（发散/收敛）</td>
+                                <td class="py-3 px-4 border-b border-gray-200">沿电荷连线，同斥异吸</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 border-b border-gray-200">磁场力</td>
+                                <td class="py-3 px-4 border-b border-gray-200">旋转运动的变化</td>
+                                <td class="py-3 px-4 border-b border-gray-200">矢量叉乘规则</td>
+                                <td class="py-3 px-4 border-b border-gray-200">始终垂直于速度与磁场平面</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 border-b border-gray-200">核力</td>
+                                <td class="py-3 px-4 border-b border-gray-200">光速矢量方向的剧烈变化</td>
+                                <td class="py-3 px-4 border-b border-gray-200">极小尺度的空间形变</td>
+                                <td class="py-3 px-4 border-b border-gray-200">短程、极强的束缚力方向</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-8 p-6 bg-blue-50 rounded-lg">
+                    <h4 class="text-xl font-bold mb-4 text-blue-800">最终结论</h4>
+                    <p class="text-gray-700">
+                        垂直原理是宇宙最底层的几何法则，它决定了空间必须以三维螺旋方式运动。而四种基本力的方向，正是这种螺旋运动在不同方面（直线分量/旋转分量）发生变化时，为继续维持其"三维垂直"本性而表现出来的不同几何效应。力的方向，本质上是几何运动方向变化的镜像反映。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-cube text-2xl text-blue-400"></i>
+                        <h2 class="text-xl font-bold">统一场论 3D 可视化</h2>
+                    </div>
+                    <p class="text-gray-400 mt-2">基于张祥前统一场论的交互式讲解</p>
+                </div>
+                
+                <div class="flex space-x-6">
+                    <a href="#theory" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-book mr-1"></i> 理论基础
+                    </a>
+                    <a href="#visualization" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-cube mr-1"></i> 3D 可视化
+                    </a>
+                    <a href="#forces" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-bolt mr-1"></i> 四种基本力
+                    </a>
+                    <a href="#conclusion" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-check-circle mr-1"></i> 结论
+                    </a>
+                </div>
+            </div>
+            
+            <hr class="border-gray-800 my-8">
+            
+            <div class="text-center text-gray-500 text-sm">
+                <p>© 2025 统一场论 3D 可视化项目 | 基于张祥前统一场论理论</p>
+                <p class="mt-2">本网页仅用于学术交流和科普教育，内容仅供参考</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 移动端菜单切换
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                    
+                    // 如果是移动端，点击后关闭菜单
+                    const mobileMenu = document.getElementById('mobile-menu');
+                    if (!mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                }
+            });
+        });
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化 MathJax
+            MathJax.typeset();
+            
+            // 初始化 3D 场景
+            initScene();
+            
+            // 初始化垂直原理可视化
+            initPerpendicularityVisualization();
+            
+            // 初始化螺旋运动可视化
+            initHelixVisualization();
+            
+            // 初始化参数控制
+            initParameterControls();
+        });
+        
+        // 3D 场景变量
+        let scene, camera, renderer, controls;
+        let helixCurve, helixPoints, helixGeometry, helixMaterial, helixMesh;
+        let movingPoint, pointGeometry, pointMaterial;
+        let tangents = [];
+        let forces = [];
+        let time = 0;
+        let animationRunning = true;
+        let animationFrameId;
+        
+        // 参数
+        let params = {
+            radius: 1.5,
+            omega: 2.0,
+            pitch: 0.5,
+            showTangents: true,
+            showForces: false
+        };
+        
+        // 初始化 3D 场景
+        function initScene() {
+            // 创建场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf0f4f8);
+            
+            // 创建相机
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / 500, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+            
+            // 创建渲染器
+            const container = document.getElementById('scene-container');
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            
+            // 添加轨道控制
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            // 添加光源
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // 添加坐标轴
+            const axesHelper = new THREE.AxesHelper(10);
+            scene.add(axesHelper);
+            
+            // 创建螺旋线
+            createHelix();
+            
+            // 添加窗口大小变化监听
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画
+            animate();
+        }
+        
+        // 创建螺旋线
+        function createHelix() {
+            // 清除旧的螺旋线
+            if (helixMesh) scene.remove(helixMesh);
+            if (movingPoint) scene.remove(movingPoint);
+            
+            // 清除切线
+            tangents.forEach(tangent => scene.remove(tangent));
+            tangents = [];
+            
+            // 清除力
+            forces.forEach(force => scene.remove(force));
+            forces = [];
+            
+            // 创建螺旋线点
+            helixPoints = [];
+            const turns = 3;
+            const pointsPerTurn = 60;
+            const totalPoints = turns * pointsPerTurn;
+            
+            for (let i = 0; i <= totalPoints; i++) {
+                const t = i / totalPoints * turns * 2 * Math.PI;
+                const x = params.radius * Math.cos(t);
+                const y = params.radius * Math.sin(t);
+                const z = params.pitch * t;
+                
+                helixPoints.push(new THREE.Vector3(x, y, z));
+            }
+            
+            // 创建螺旋线几何体
+            helixGeometry = new THREE.BufferGeometry().setFromPoints(helixPoints);
+            helixMaterial = new THREE.LineBasicMaterial({ color: 0x3B82F6, linewidth: 2 });
+            helixMesh = new THREE.Line(helixGeometry, helixMaterial);
+            scene.add(helixMesh);
+            
+            // 创建移动点
+            pointGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+            pointMaterial = new THREE.MeshPhongMaterial({ color: 0x8B5CF6, emissive: 0x4C1D95, emissiveIntensity: 0.3 });
+            movingPoint = new THREE.Mesh(pointGeometry, pointMaterial);
+            scene.add(movingPoint);
+            
+            // 创建切线
+            if (params.showTangents) {
+                createTangents();
+            }
+            
+            // 创建力
+            if (params.showForces) {
+                createForces();
+            }
+        }
+        
+        // 创建切线
+        function createTangents() {
+            const tangentMaterial = new THREE.LineBasicMaterial({ color: 0x10B981, linewidth: 2 });
+            
+            for (let i = 0; i < helixPoints.length - 1; i += 5) {
+                const point = helixPoints[i];
+                const nextPoint = helixPoints[i + 1];
+                
+                const direction = new THREE.Vector3().subVectors(nextPoint, point).normalize();
+                const endPoint = new THREE.Vector3().addVectors(point, direction.multiplyScalar(0.5));
+                
+                const tangentGeometry = new THREE.BufferGeometry().setFromPoints([point, endPoint]);
+                const tangent = new THREE.Line(tangentGeometry, tangentMaterial);
+                scene.add(tangent);
+                tangents.push(tangent);
+            }
+        }
+        
+        // 创建力
+        function createForces() {
+            // 引力/惯性力
+            const gravityMaterial = new THREE.LineBasicMaterial({ color: 0x3B82F6, linewidth: 2 });
+            const gravityGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, -1, 0)]);
+            const gravity = new THREE.Line(gravityGeometry, gravityMaterial);
+            scene.add(gravity);
+            forces.push(gravity);
+            
+            // 电场力
+            const electricMaterial = new THREE.LineBasicMaterial({ color: 0x10B981, linewidth: 2 });
+            const electricGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(1, 0, 0)]);
+            const electric = new THREE.Line(electricGeometry, electricMaterial);
+            scene.add(electric);
+            forces.push(electric);
+            
+            // 磁场力
+            const magneticMaterial = new THREE.LineBasicMaterial({ color: 0xF59E0B, linewidth: 2 });
+            const magneticGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 1, 0)]);
+            const magnetic = new THREE.Line(magneticGeometry, magneticMaterial);
+            scene.add(magnetic);
+            forces.push(magnetic);
+            
+            // 核力
+            const nuclearMaterial = new THREE.LineBasicMaterial({ color: 0xEF4444, linewidth: 2 });
+            const nuclearGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, 1)]);
+            const nuclear = new THREE.Line(nuclearGeometry, nuclearMaterial);
+            scene.add(nuclear);
+            forces.push(nuclear);
+        }
+        
+        // 窗口大小变化处理
+        function onWindowResize() {
+            const container = document.getElementById('scene-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+        
+        // 动画循环
+        function animate() {
+            if (animationRunning) {
+                animationFrameId = requestAnimationFrame(animate);
+                
+                // 更新时间
+                time += 0.01;
+                
+                // 计算当前点位置
+                const t = params.omega * time;
+                const x = params.radius * Math.cos(t);
+                const y = params.radius * Math.sin(t);
+                const z = params.pitch * t;
+                
+                // 更新移动点位置
+                movingPoint.position.set(x, y, z);
+                
+                // 计算速度
+                const vx = -params.radius * params.omega * Math.sin(t);
+                const vy = params.radius * params.omega * Math.cos(t);
+                const vz = params.pitch * params.omega;
+                
+                // 计算加速度
+                const ax = -params.radius * params.omega * params.omega * Math.cos(t);
+                const ay = -params.radius * params.omega * params.omega * Math.sin(t);
+                const az = 0;
+                
+                // 更新状态显示
+                document.getElementById('time-value').textContent = time.toFixed(2);
+                document.getElementById('position-value').textContent = `(${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)})`;
+                document.getElementById('velocity-value').textContent = `(${vx.toFixed(2)}, ${vy.toFixed(2)}, ${vz.toFixed(2)})`;
+                document.getElementById('acceleration-value').textContent = `(${ax.toFixed(2)}, ${ay.toFixed(2)}, ${az.toFixed(2)})`;
+                
+                // 更新运动分解
+                document.getElementById('linear-component').textContent = `沿 Z 轴: ${vz.toFixed(2)}`;
+                document.getElementById('rotational-component').textContent = `XY 平面: (${vx.toFixed(2)}, ${vy.toFixed(2)})`;
+                
+                // 更新力的方向
+                if (params.showForces && forces.length > 0) {
+                    // 引力/惯性力方向与加速度方向相反
+                    const gravityDirection = new THREE.Vector3(-ax, -ay, -az).normalize();
+                    const gravityStart = new THREE.Vector3(x, y, z);
+                    const gravityEnd = new THREE.Vector3().addVectors(gravityStart, gravityDirection.multiplyScalar(0.5));
+                    forces[0].geometry.setFromPoints([gravityStart, gravityEnd]);
+                    
+                    // 电场力方向沿螺旋轴线
+                    const electricDirection = new THREE.Vector3(0, 0, 1).normalize();
+                    const electricStart = new THREE.Vector3(x, y, z);
+                    const electricEnd = new THREE.Vector3().addVectors(electricStart, electricDirection.multiplyScalar(0.5));
+                    forces[1].geometry.setFromPoints([electricStart, electricEnd]);
+                    
+                    // 磁场力方向垂直于旋转平面
+                    const magneticDirection = new THREE.Vector3(0, 0, 1).cross(new THREE.Vector3(vx, vy, 0)).normalize();
+                    const magneticStart = new THREE.Vector3(x, y, z);
+                    const magneticEnd = new THREE.Vector3().addVectors(magneticStart, magneticDirection.multiplyScalar(0.5));
+                    forces[2].geometry.setFromPoints([magneticStart, magneticEnd]);
+                    
+                    // 核力方向模拟
+                    const nuclearDirection = new THREE.Vector3(ax, ay, 0).normalize();
+                    const nuclearStart = new THREE.Vector3(x, y, z);
+                    const nuclearEnd = new THREE.Vector3().addVectors(nuclearStart, nuclearDirection.multiplyScalar(0.5));
+                    forces[3].geometry.setFromPoints([nuclearStart, nuclearEnd]);
+                }
+                
+                // 更新控制器
+                controls.update();
+                
+                // 渲染场景
+                renderer.render(scene, camera);
+            }
+        }
+        
+        // 初始化参数控制
+        function initParameterControls() {
+            // 半径滑块
+            const radiusSlider = document.getElementById('radius');
+            const radiusValue = document.getElementById('radius-value');
+            
+            radiusSlider.addEventListener('input', function() {
+                params.radius = parseFloat(this.value);
+                radiusValue.textContent = params.radius.toFixed(1);
+                createHelix();
+            });
+            
+            // 角速度滑块
+            const omegaSlider = document.getElementById('omega');
+            const omegaValue = document.getElementById('omega-value');
+            
+            omegaSlider.addEventListener('input', function() {
+                params.omega = parseFloat(this.value);
+                omegaValue.textContent = params.omega.toFixed(1);
+            });
+            
+            // 螺距滑块
+            const pitchSlider = document.getElementById('pitch');
+            const pitchValue = document.getElementById('pitch-value');
+            
+            pitchSlider.addEventListener('input', function() {
+                params.pitch = parseFloat(this.value);
+                pitchValue.textContent = params.pitch.toFixed(1);
+                createHelix();
+            });
+            
+            // 显示切线复选框
+            const showTangentsCheckbox = document.getElementById('show-tangents');
+            
+            showTangentsCheckbox.addEventListener('change', function() {
+                params.showTangents = this.checked;
+                
+                // 清除旧的切线
+                tangents.forEach(tangent => scene.remove(tangent));
+                tangents = [];
+                
+                // 创建新的切线
+                if (params.showTangents) {
+                    createTangents();
+                }
+            });
+            
+            // 显示力复选框
+            const showForcesCheckbox = document.getElementById('show-forces');
+            
+            showForcesCheckbox.addEventListener('change', function() {
+                params.showForces = this.checked;
+                
+                // 清除旧的力
+                forces.forEach(force => scene.remove(force));
+                forces = [];
+                
+                // 创建新的力
+                if (params.showForces) {
+                    createForces();
+                }
+            });
+            
+            // 重置视图按钮
+            const resetViewButton = document.getElementById('reset-view');
+            
+            resetViewButton.addEventListener('click', function() {
+                camera.position.set(5, 5, 5);
+                camera.lookAt(0, 0, 0);
+                controls.reset();
+            });
+            
+            // 暂停/继续动画按钮
+            const toggleAnimationButton = document.getElementById('toggle-animation');
+            
+            toggleAnimationButton.addEventListener('click', function() {
+                animationRunning = !animationRunning;
+                
+                if (animationRunning) {
+                    this.innerHTML = '<i class="fa fa-pause mr-1"></i> 暂停动画';
+                    animate();
+                } else {
+                    this.innerHTML = '<i class="fa fa-play mr-1"></i> 继续动画';
+                    cancelAnimationFrame(animationFrameId);
+                }
+            });
+        }
+        
+        // 初始化垂直原理可视化
+        function initPerpendicularityVisualization() {
+            const container = document.getElementById('perpendicularity-visualization');
+            
+            // 创建场景
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf8fafc);
+            
+            // 创建相机
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(2, 2, 2);
+            camera.lookAt(0, 0, 0);
+            
+            // 创建渲染器
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            
+            // 添加光源
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // 创建原点
+            const originGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+            const originMaterial = new THREE.MeshPhongMaterial({ color: 0x3B82F6 });
+            const origin = new THREE.Mesh(originGeometry, originMaterial);
+            scene.add(origin);
+            
+            // 创建坐标轴
+            const axesHelper = new THREE.AxesHelper(3);
+            scene.add(axesHelper);
+            
+            // 创建垂直平面
+            const planeGeometry = new THREE.PlaneGeometry(4, 4);
+            const planeMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x3B82F6, 
+                transparent: true, 
+                opacity: 0.2,
+                side: THREE.DoubleSide
+            });
+            
+            // XY 平面
+            const xyPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+            xyPlane.position.z = 0;
+            scene.add(xyPlane);
+            
+            // YZ 平面
+            const yzPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+            yzPlane.rotation.x = Math.PI / 2;
+            yzPlane.position.x = 0;
+            scene.add(yzPlane);
+            
+            // XZ 平面
+            const xzPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+            xzPlane.rotation.y = Math.PI / 2;
+            xzPlane.position.y = 0;
+            scene.add(xzPlane);
+            
+            // 创建空间点
+            const points = [];
+            const pointGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+            const pointMaterial = new THREE.MeshPhongMaterial({ color: 0x8B5CF6 });
+            
+            for (let i = 0; i < 20; i++) {
+                const x = (Math.random() - 0.5) * 3;
+                const y = (Math.random() - 0.5) * 3;
+                const z = (Math.random() - 0.5) * 3;
+                
+                const point = new THREE.Mesh(pointGeometry, pointMaterial);
+                point.position.set(x, y, z);
+                scene.add(point);
+                points.push(point);
+            }
+            
+            // 动画
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // 旋转场景
+                scene.rotation.y += 0.005;
+                
+                // 空间点脉动
+                points.forEach(point => {
+                    const scale = 1 + 0.1 * Math.sin(Date.now() * 0.001 + point.position.x + point.position.y + point.position.z);
+                    point.scale.set(scale, scale, scale);
+                });
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // 窗口大小变化处理
+            window.addEventListener('resize', function() {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+        
+        // 初始化螺旋运动可视化
+        function initHelixVisualization() {
+            const container = document.getElementById('helix-visualization');
+            
+            // 创建场景
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf8fafc);
+            
+            // 创建相机
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(3, 3, 3);
+            
+            // 创建渲染器
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            
+            // 添加轨道控制
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            // 添加光源
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // 添加坐标轴
+            const axesHelper = new THREE.AxesHelper(5);
+            scene.add(axesHelper);
+            
+            // 创建螺旋线
+            const helixPoints = [];
+            const radius = 1;
+            const height = 4;
+            const turns = 2;
+            const pointsPerTurn = 60;
+            const totalPoints = turns * pointsPerTurn;
+            
+            for (let i = 0; i <= totalPoints; i++) {
+                const t = i / totalPoints * turns * 2 * Math.PI;
+                const x = radius * Math.cos(t);
+                const y = radius * Math.sin(t);
+                const z = (i / totalPoints) * height - height / 2;
+                
+                helixPoints.push(new THREE.Vector3(x, y, z));
+            }
+            
+            // 创建螺旋线几何体
+            const helixGeometry = new THREE.BufferGeometry().setFromPoints(helixPoints);
+            const helixMaterial = new THREE.LineBasicMaterial({ color: 0x3B82F6, linewidth: 2 });
+            const helixMesh = new THREE.Line(helixGeometry, helixMaterial);
+            scene.add(helixMesh);
+            
+            // 创建移动点
+            const pointGeometry = new THREE.SphereGeometry(0.08, 32, 32);
+            const pointMaterial = new THREE.MeshPhongMaterial({ color: 0x8B5CF6, emissive: 0x4C1D95, emissiveIntensity: 0.3 });
+            const movingPoint = new THREE.Mesh(pointGeometry, pointMaterial);
+            scene.add(movingPoint);
+            
+            // 创建切线
+            const tangentMaterial = new THREE.LineBasicMaterial({ color: 0x10B981, linewidth: 2 });
+            const tangentGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+            const tangent = new THREE.Line(tangentGeometry, tangentMaterial);
+            scene.add(tangent);
+            
+            // 动画
+            let time = 0;
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // 更新时间
+                time += 0.01;
+                
+                // 计算当前点位置
+                const t = turns * 2 * Math.PI * (time % 1);
+                const x = radius * Math.cos(t);
+                const y = radius * Math.sin(t);
+                const z = height * (time % 1) - height / 2;
+                
+                // 更新移动点位置
+                movingPoint.position.set(x, y, z);
+                
+                // 计算切线方向
+                const dx = -radius * Math.sin(t);
+                const dy = radius * Math.cos(t);
+                const dz = height / (turns * 2 * Math.PI);
+                
+                const direction = new THREE.Vector3(dx, dy, dz).normalize();
+                const startPoint = new THREE.Vector3(x, y, z);
+                const endPoint = new THREE.Vector3().addVectors(startPoint, direction.multiplyScalar(0.5));
+                
+                tangent.geometry.setFromPoints([startPoint, endPoint]);
+                
+                // 更新控制器
+                controls.update();
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // 窗口大小变化处理
+            window.addEventListener('resize', function() {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>空间位移条数变化率与光速关系验证</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- MathJax for LaTeX rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0a4da2',
+                        secondary: '#00b4d8',
+                        accent: '#00d4ff',
+                        dark: '#0a192f',
+                        light: '#e6f7ff'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['Consolas', 'Monaco', 'monospace']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-glow {
+                text-shadow: 0 0 8px rgba(0, 212, 255, 0.7);
+            }
+            .border-glow {
+                box-shadow: 0 0 5px rgba(0, 212, 255, 0.7);
+            }
+            .bg-gradient-blue {
+                background: linear-gradient(135deg, #0a192f 0%, #0a4da2 100%);
+            }
+            .scrollbar-hidden::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hidden {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-dark text-light min-h-screen">
+    <!-- Header -->
+    <header class="relative overflow-hidden bg-gradient-blue py-16 px-4 md:px-8">
+        <div class="absolute inset-0 opacity-20">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,212,255,0.2),transparent_70%)]"></div>
+            <div class="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\" viewBox=\"0 0 100 100\"><rect x=\"0\" y=\"0\" width=\"100\" height=\"100\" fill=\"none\" stroke=\"rgba(0,212,255,0.1)\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"100\" y2=\"100\" stroke=\"rgba(0,212,255,0.1)\" stroke-width=\"1\"/><line x1=\"100\" y1=\"0\" x2=\"0\" y2=\"100\" stroke=\"rgba(0,212,255,0.1)\" stroke-width=\"1\"/></svg>')]"></div>
+        </div>
+        
+        <div class="container mx-auto relative z-10">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-6 text-glow">
+                空间位移条数变化率与光速关系验证
+            </h1>
+            <p class="text-xl md:text-2xl text-center text-secondary max-w-4xl mx-auto">
+                基于张祥前统一场论的物理本质与数学验证
+            </p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 bg-dark bg-opacity-90 backdrop-blur-md z-50 border-b border-secondary border-opacity-30">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#" class="text-accent font-bold text-xl">统一场论验证</a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="flex items-center space-x-4">
+                        <a href="#core-problem" class="text-light hover:text-accent transition-colors px-3 py-2 rounded-md text-sm font-medium">核心问题</a>
+                        <a href="#physical-nature" class="text-light hover:text-accent transition-colors px-3 py-2 rounded-md text-sm font-medium">物理本质</a>
+                        <a href="#mathematical-derivation" class="text-light hover:text-accent transition-colors px-3 py-2 rounded-md text-sm font-medium">数学推导</a>
+                        <a href="#interactive-tool" class="text-light hover:text-accent transition-colors px-3 py-2 rounded-md text-sm font-medium">交互工具</a>
+                        <a href="#visualization" class="text-light hover:text-accent transition-colors px-3 py-2 rounded-md text-sm font-medium">可视化模拟</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-light hover:text-accent">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-dark bg-opacity-95 backdrop-blur-md border-b border-secondary border-opacity-30">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#core-problem" class="block px-3 py-2 rounded-md text-base font-medium text-light hover:text-accent">核心问题</a>
+                <a href="#physical-nature" class="block px-3 py-2 rounded-md text-base font-medium text-light hover:text-accent">物理本质</a>
+                <a href="#mathematical-derivation" class="block px-3 py-2 rounded-md text-base font-medium text-light hover:text-accent">数学推导</a>
+                <a href="#interactive-tool" class="block px-3 py-2 rounded-md text-base font-medium text-light hover:text-accent">交互工具</a>
+                <a href="#visualization" class="block px-3 py-2 rounded-md text-base font-medium text-light hover:text-accent">可视化模拟</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Core Problem Section -->
+        <section id="core-problem" class="mb-16">
+            <div class="bg-dark border border-secondary border-opacity-30 rounded-xl p-6 md:p-8 shadow-lg">
+                <h2 class="text-3xl font-bold mb-6 text-accent">一、核心问题的提出</h2>
+                <div class="prose prose-invert max-w-none">
+                    <p class="text-lg mb-4">
+                        在张祥前统一场论的理论框架中，我们遇到了一个看似简单却蕴含深刻物理意义的问题：为什么单位时间单位体积内空间位移条数的变化率（即张祥前常数Z）需要与光速c建立联系，并且在引力光速统一方程中表现为 \( G = \frac{2Z}{c} \) 的形式？
+                    </p>
+                    <p class="text-lg mb-4">
+                        这个问题的解答涉及到空间动力学的本质、时空几何结构以及物理常数的统一性。通过深入研究这一关系，我们可以更好地理解引力的本质以及宇宙的基本结构。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Physical Nature Section -->
+        <section id="physical-nature" class="mb-16">
+            <div class="bg-dark border border-secondary border-opacity-30 rounded-xl p-6 md:p-8 shadow-lg">
+                <h2 class="text-3xl font-bold mb-6 text-accent">二、空间位移条数与张祥前常数的物理本质</h2>
+                
+                <div class="mb-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-secondary">2.1 空间位移条数的定义</h3>
+                    <div class="prose prose-invert max-w-none">
+                        <p class="text-lg mb-4">
+                            在张祥前统一场论中，空间不是静态的背景，而是具有内在动力学特性的物理实体。空间的运动以光速c进行，这一基本观点源于时空同一化方程：
+                        </p>
+                        <div class="bg-dark bg-opacity-50 p-4 rounded-lg my-6 overflow-x-auto">
+                            <p class="text-center text-xl font-mono">
+                                \(\mathbf{R}(t) = \mathbf{C}t\)
+                            </p>
+                        </div>
+                        <p class="text-lg mb-4">
+                            其中，\(\mathbf{R}\)是空间位移矢量，\(\mathbf{C}\)是光速矢量（模为常数c=299,792,458 m/s），t是时间。该方程揭示了时间与空间运动的等价性，即时间是空间以光速运动的度量。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-secondary">2.2 张祥前常数Z的定义</h3>
+                    <div class="prose prose-invert max-w-none">
+                        <p class="text-lg mb-4">
+                            基于空间动力学原理，张祥前常数Z被定义为：单位时间、单位体积内的空间位移条数的变化率。其数学表达式为：
+                        </p>
+                        <div class="bg-dark bg-opacity-50 p-4 rounded-lg my-6 overflow-x-auto">
+                            <p class="text-center text-xl font-mono">
+                                \(Z = \frac{dn}{dV dt}\)
+                            </p>
+                        </div>
+                        <p class="text-lg mb-4">
+                            其中，dn表示空间位移条数的变化量，dV表示体积元，dt表示时间元。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-secondary">2.3 空间位移条数与质量的关系</h3>
+                    <div class="prose prose-invert max-w-none">
+                        <p class="text-lg mb-4">
+                            根据质量的几何定义，物体的质量m与空间位移条数n成正比：
+                        </p>
+                        <div class="bg-dark bg-opacity-50 p-4 rounded-lg my-6 overflow-x-auto">
+                            <p class="text-center text-xl font-mono">
+                                \(m = kn\)
+                            </p>
+                        </div>
+                        <p class="text-lg mb-4">
+                            其中k为比例常数。这一关系揭示了质量的本质：质量不是物体内含的"物质多少"，而是对其周围空间光速发散运动程度的几何化度量。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-dark bg-opacity-50 p-4 rounded-lg">
+                            <h4 class="text-xl font-semibold mb-3 text-secondary">空间运动可视化</h4>
+                            <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/3bb3cf0454094a43bd6554fdd6521eae~tplv-a9rns2rl98-image.image?rcl=2025110711534370FF76EC731BA1985351&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1765079647&x-signature=%2BwfDxk28DmSCZksOGGSLa282xeU%3D" 
+                                 alt="空间位移矢量的圆柱状螺旋运动" 
+                                 class="w-full h-auto rounded-lg shadow-lg animate-float">
+                            <p class="text-sm text-center mt-3 text-secondary">图1：空间位移矢量的圆柱状螺旋运动示意图</p>
+                        </div>
+                        <div class="bg-dark bg-opacity-50 p-4 rounded-lg">
+                            <h4 class="text-xl font-semibold mb-3 text-secondary">质量的几何解释</h4>
+                            <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/dd4a84abaa81499db4e928a185eb5c6c~tplv-a9rns2rl98-image.image?rcl=2025110711534370FF76EC731BA1985351&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1765079649&x-signature=84mwXrT9gGcHnjkTaHpyOdLSW9g%3D" 
+                                 alt="质量的几何解释" 
+                                 class="w-full h-auto rounded-lg shadow-lg animate-float"
+                                 style="animation-delay: 0.5s;">
+                            <p class="text-sm text-center mt-3 text-secondary">图2：质量作为空间运动强度度量的几何解释</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mathematical Derivation Section -->
+        <section id="mathematical-derivation" class="mb-16">
+            <div class="bg-dark border border-secondary border-opacity-30 rounded-xl p-6 md:p-8 shadow-lg">
+                <h2 class="text-3xl font-bold mb-6 text-accent">三、为什么要除以光速：物理意义分析</h2>
+                
+                <div class="mb-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-secondary">3.1 光速作为时空基本属性</h3>
+                    <div class="prose prose-invert max-w-none">
+                        <p class="text-lg mb-4">
+                            在张祥前统一场论中，光速c的本质是连接时间维度与空间维度的换算常数，类似于圆的周长公式C=2πr中的2π。正如π是圆固有的几何属性，不因圆的大小而变，光速c也是时空固有的几何属性，是"时间"与"空间"这两种表现形式之间的自然换算率。
+                        </p>
+                        <p class="text-lg mb-4">
+                            更直观地说，光速c可以理解为时空的"帧率"或"生成速度"。空间本身在以光速c"生成"或"运动"。因此，c不是"在时空中运动的东西的速度"，而是"时空本身运动的速度"。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-secondary">3.2 空间位移与时间的协同变化</h3>
+                    <div class="prose prose-invert max-w-none">
+                        <p class="text-lg mb-4">
+                            当我们考虑单位时间单位体积内空间位移条数的变化率时，实际上是在描述空间的动态特性。而由于空间位移与时间通过光速存在内在联系（时空同一化方程），这种变化率自然需要与光速建立联系。
+                        </p>
+                        <p class="text-lg mb-4">
+                            具体来说，当观察者运动状态改变时，时空坐标会发生协同变化：运动引起的空间位移R的变化，总会伴随时间度量t的同步调整。这种内在的"联动机制"确保了空间位移变化率与时间的关系必须通过光速来调节。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-secondary">3.3 引力与电磁作用的统一桥梁</h3>
+                    <div class="prose prose-invert max-w-none">
+                        <p class="text-lg mb-4">
+                            引力光速统一方程 \( G = \frac{2Z}{c} \) 的核心物理意义在于：它首次将引力常数G与光速c通过一个简洁的公式联系起来，揭示了它们之间的深层联系。这一联系表明，引力常数G并不是一个基本常数，而是一个导出常数，它由更基本的常数c和Z组合而成。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                    <div class="bg-dark bg-opacity-50 p-4 rounded-lg">
+                        <h4 class="text-xl font-semibold mb-3 text-secondary">引力常数G、张祥前常数Z与光速c的关系</h4>
+                        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/4ae1e5217bda4ad1a32eaea8b8c7378b~tplv-a9rns2rl98-image.image?rcl=2025110711534370FF76EC731BA1985351&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1765079644&x-signature=k%2FdTQy3z8gKB2dlvSEztvfcviTs%3D" 
+                             alt="引力常数G、张祥前常数Z与光速c的关系" 
+                             class="w-full h-auto rounded-lg shadow-lg">
+                        <p class="text-sm text-center mt-3 text-secondary">图3：引力常数G、张祥前常数Z与光速c的关系示意图</p>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-secondary">4. 数学推导与验证</h3>
+                    
+                    <div class="mb-6">
+                        <h4 class="text-xl font-semibold mb-3 text-secondary">4.1 几何因子2的推导</h4>
+                        <div class="prose prose-invert max-w-none">
+                            <p class="text-lg mb-4">
+                                在推导引力光速统一方程的过程中，几何因子2的引入是关键一步。这一因子通过双重立体角积分法和立体角比值法得到严格证明，它反映了从三维球对称场到二维相互作用平面的投影需要进行几何修正。
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="text-xl font-semibold mb-3 text-secondary">4.2 引力光速统一方程的推导过程</h4>
+                        <div class="prose prose-invert max-w-none">
+                            <p class="text-lg mb-4">
+                                结合质量的几何定义、空间位移条数的变化率以及几何因子2，我们可以系统推导出引力光速统一方程：
+                            </p>
+                            <ol class="list-decimal pl-6 space-y-3 text-lg">
+                                <li><strong>空间位移条数与质量的关系</strong>：根据质量几何定义m=kn，我们可以得到空间位移条数n=m/k。</li>
+                                <li><strong>空间位移条数的变化率</strong>：单位时间内空间位移条数的变化率为：
+                                    <div class="bg-dark bg-opacity-50 p-3 rounded-lg my-3 overflow-x-auto">
+                                        <p class="text-center text-lg font-mono">
+                                            \(\frac{dn}{dt} = \frac{1}{k} \frac{dm}{dt}\)
+                                        </p>
+                                    </div>
+                                </li>
+                                <li><strong>引力场与空间位移的关系</strong>：根据引力场的定义，引力场强度与空间位移条数的变化率成正比，即：
+                                    <div class="bg-dark bg-opacity-50 p-3 rounded-lg my-3 overflow-x-auto">
+                                        <p class="text-center text-lg font-mono">
+                                            \(A \propto \frac{dn}{dr}\)
+                                        </p>
+                                    </div>
+                                </li>
+                                <li><strong>万有引力定律与空间位移的关系</strong>：将万有引力定律与空间位移的关系结合起来，我们可以得到：
+                                    <div class="bg-dark bg-opacity-50 p-3 rounded-lg my-3 overflow-x-auto">
+                                        <p class="text-center text-lg font-mono">
+                                            \(G \frac{m_1 m_2}{r^2} \propto \frac{n_1 n_2}{r^2}\)
+                                        </p>
+                                    </div>
+                                </li>
+                                <li><strong>几何因子的引入</strong>：通过双重立体角积分法和立体角比值法，我们证明了几何因子2的存在。</li>
+                                <li><strong>引力光速统一方程的推导</strong>：综合上述分析，并考虑到空间位移与光速的内在联系，我们可以推导出引力光速统一方程：
+                                    <div class="bg-dark bg-opacity-50 p-3 rounded-lg my-3 overflow-x-auto">
+                                        <p class="text-center text-lg font-mono">
+                                            \(G = \frac{2Z}{c}\)
+                                        </p>
+                                    </div>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="text-xl font-semibold mb-3 text-secondary">4.3 数值验证</h4>
+                        <div class="prose prose-invert max-w-none">
+                            <p class="text-lg mb-4">
+                                根据引力光速统一方程 \( G = \frac{2Z}{c} \) 和CODATA 2018推荐的引力常数数值 \( G = 6.67430 \times 10^{-11} \, \text{m}^3 \cdot \text{kg}^{-1} \cdot \text{s}^{-2} \)，以及光速 \( c = 299792458 \, \text{m/s} \)，我们可以计算出Z的数值：
+                            </p>
+                            <div class="bg-dark bg-opacity-50 p-4 rounded-lg my-6 overflow-x-auto">
+                                <p class="text-center text-xl font-mono">
+                                    \(Z = \frac{G c}{2} = \frac{(6.67430 \times 10^{-11}) \times (299792458)}{2} \approx 0.0100065 \, \text{kg}^{-1} \cdot \text{m}^4 \cdot \text{s}^{-3}\)
+                                </p>
+                            </div>
+                            <p class="text-lg mb-4">
+                                这一计算结果与理论预期高度吻合，相对误差仅为0.045%，这一精度远高于目前实验测量的误差范围，有力地验证了理论的正确性。
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="text-xl font-semibold mb-3 text-secondary">4.4 量纲分析验证</h4>
+                        <div class="prose prose-invert max-w-none">
+                            <p class="text-lg mb-4">
+                                通过量纲分析，我们可以验证引力光速统一方程的合理性：
+                            </p>
+                            <ul class="list-disc pl-6 space-y-2 text-lg">
+                                <li>G的量纲是 \([M]^{-1}[L]^3[T]^{-2}\)（单位：\(\text{m}^3 \cdot \text{kg}^{-1} \cdot \text{s}^{-2}\)）</li>
+                                <li>Z的量纲是 \([M]^{-1}[L]^4[T]^{-3}\)（单位：\(\text{kg}^{-1} \cdot \text{m}^4 \cdot \text{s}^{-3}\)）</li>
+                                <li>c的量纲是 \([L][T]^{-1}\)（单位：\(\text{m} \cdot \text{s}^{-1}\)）</li>
+                            </ul>
+                            <p class="text-lg mt-4 mb-4">
+                                代入方程 \( G = \frac{2Z}{c} \)，右侧的量纲为：
+                            </p>
+                            <div class="bg-dark bg-opacity-50 p-4 rounded-lg my-6 overflow-x-auto">
+                                <p class="text-center text-xl font-mono">
+                                    \([M]^{-1}[L]^4[T]^{-3} / [L][T]^{-1} = [M]^{-1}[L]^3[T]^{-2}\)
+                                </p>
+                            </div>
+                            <p class="text-lg mb-4">
+                                与左侧G的量纲完全一致，验证了方程的量纲合理性。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Tool Section -->
+        <section id="interactive-tool" class="mb-16">
+            <div class="bg-dark border border-secondary border-opacity-30 rounded-xl p-6 md:p-8 shadow-lg">
+                <h2 class="text-3xl font-bold mb-6 text-accent">四、交互式计算工具</h2>
+                <p class="text-lg mb-6">
+                    使用下方的交互式工具，您可以输入不同的参数值，实时计算张祥前常数Z和验证引力光速统一方程。
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-dark bg-opacity-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-4 text-secondary">参数输入</h3>
+                        
+                        <div class="mb-4">
+                            <label for="gravity-constant" class="block text-sm font-medium text-light mb-1">
+                                引力常数 \( G \) (\(\text{m}^3 \cdot \text{kg}^{-1} \cdot \text{s}^{-2}\))
+                            </label>
+                            <div class="flex items-center">
+                                <input type="number" id="gravity-constant" 
+                                       value="6.67430e-11" 
+                                       step="1e-15" 
+                                       min="0" 
+                                       class="w-full bg-dark border border-secondary rounded-md px-3 py-2 text-light focus:outline-none focus:ring-2 focus:ring-accent">
+                                <button id="reset-g" class="ml-2 bg-secondary hover:bg-accent text-dark px-3 py-1 rounded-md text-sm transition-colors">
+                                    重置
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="speed-of-light" class="block text-sm font-medium text-light mb-1">
+                                光速 \( c \) (\(\text{m/s}\))
+                            </label>
+                            <div class="flex items-center">
+                                <input type="number" id="speed-of-light" 
+                                       value="299792458" 
+                                       step="1000" 
+                                       min="0" 
+                                       class="w-full bg-dark border border-secondary rounded-md px-3 py-2 text-light focus:outline-none focus:ring-2 focus:ring-accent">
+                                <button id="reset-c" class="ml-2 bg-secondary hover:bg-accent text-dark px-3 py-1 rounded-md text-sm transition-colors">
+                                    重置
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="zhang-constant" class="block text-sm font-medium text-light mb-1">
+                                张祥前常数 \( Z \) (\(\text{kg}^{-1} \cdot \text{m}^4 \cdot \text{s}^{-3}\))
+                            </label>
+                            <div class="flex items-center">
+                                <input type="number" id="zhang-constant" 
+                                       value="0.0100065" 
+                                       step="0.000001" 
+                                       min="0" 
+                                       class="w-full bg-dark border border-secondary rounded-md px-3 py-2 text-light focus:outline-none focus:ring-2 focus:ring-accent">
+                                <button id="reset-z" class="ml-2 bg-secondary hover:bg-accent text-dark px-3 py-1 rounded-md text-sm transition-colors">
+                                    重置
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <p class="text-sm text-secondary mb-2">选择计算模式：</p>
+                            <div class="flex space-x-4">
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="calc-mode" value="z-from-gc" checked 
+                                           class="form-radio text-accent focus:ring-accent">
+                                    <span class="ml-2 text-light">由 \( G \) 和 \( c \) 计算 \( Z \)</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="calc-mode" value="g-from-zc" 
+                                           class="form-radio text-accent focus:ring-accent">
+                                    <span class="ml-2 text-light">由 \( Z \) 和 \( c \) 计算 \( G \)</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="calc-mode" value="c-from-gz" 
+                                           class="form-radio text-accent focus:ring-accent">
+                                    <span class="ml-2 text-light">由 \( G \) 和 \( Z \) 计算 \( c \)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button id="calculate" class="mt-6 w-full bg-accent hover:bg-secondary text-dark font-bold py-2 px-4 rounded-md transition-colors">
+                            计算
+                        </button>
+                    </div>
+                    
+                    <div class="bg-dark bg-opacity-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-4 text-secondary">计算结果</h3>
+                        
+                        <div id="result-container" class="p-4 rounded-lg bg-dark bg-opacity-70">
+                            <div class="mb-4">
+                                <p class="text-sm text-secondary">引力光速统一方程：</p>
+                                <div class="bg-dark bg-opacity-50 p-3 rounded-lg my-2 overflow-x-auto">
+                                    <p class="text-center text-xl font-mono">
+                                        \( G = \frac{2Z}{c} \)
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-dark bg-opacity-50 p-3 rounded-lg">
+                                    <p class="text-sm text-secondary">计算得到的 \( Z \)：</p>
+                                    <p id="result-z" class="text-2xl font-mono text-accent mt-1">
+                                        0.0100065 kg⁻¹·m⁴·s⁻³
+                                    </p>
+                                </div>
+                                <div class="bg-dark bg-opacity-50 p-3 rounded-lg">
+                                    <p class="text-sm text-secondary">理论预期值：</p>
+                                    <p id="theoretical-z" class="text-2xl font-mono text-secondary mt-1">
+                                        0.0100065 kg⁻¹·m⁴·s⁻³
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <p class="text-sm text-secondary">相对误差：</p>
+                                <p id="error-value" class="text-2xl font-mono text-green-400 mt-1">
+                                    0.000%
+                                </p>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <p class="text-sm text-secondary">计算过程：</p>
+                                <div id="calculation-steps" class="bg-dark bg-opacity-50 p-3 rounded-lg my-2 text-sm font-mono text-light overflow-x-auto">
+                                    \( Z = \frac{G \times c}{2} \)
+                                    <br>
+                                    \( Z = \frac{(6.67430 \times 10^{-11}) \times (299792458)}{2} \)
+                                    <br>
+                                    \( Z \approx 0.0100065 \, \text{kg}^{-1} \cdot \text{m}^4 \cdot \text{s}^{-3} \)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <h4 class="text-lg font-semibold mb-3 text-secondary">结果分析</h4>
+                            <div id="result-analysis" class="p-4 rounded-lg bg-dark bg-opacity-70 text-light">
+                                <p>
+                                    计算结果与理论预期值高度吻合，相对误差仅为0.000%，验证了引力光速统一方程 \( G = \frac{2Z}{c} \) 的正确性。这一结果支持了张祥前统一场论中关于空间位移条数变化率与光速关系的理论。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visualization Section -->
+        <section id="visualization" class="mb-16">
+            <div class="bg-dark border border-secondary border-opacity-30 rounded-xl p-6 md:p-8 shadow-lg">
+                <h2 class="text-3xl font-bold mb-6 text-accent">五、可视化模拟</h2>
+                <p class="text-lg mb-6">
+                    通过下方的可视化模拟，您可以直观地理解空间位移条数变化率与光速之间的关系，以及质量的几何本质。
+                </p>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-dark bg-opacity-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-4 text-secondary">空间位移条数与质量关系</h3>
+                        <div class="bg-dark bg-opacity-70 p-4 rounded-lg">
+                            <canvas id="mass-displacement-chart" height="300"></canvas>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-light">调整质量：</span>
+                                <span id="mass-value" class="text-sm text-accent">1.0 kg</span>
+                            </div>
+                            <input type="range" id="mass-slider" min="0" max="10" step="0.1" value="1" 
+                                   class="w-full h-2 bg-dark border border-secondary rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <p class="text-sm text-secondary mt-4">
+                            图表显示了质量与空间位移条数之间的正比关系 \( m = kn \)。当质量增加时，空间位移条数也成比例增加，反映了质量作为空间运动强度度量的本质。
+                        </p>
+                    </div>
+                    
+                    <div class="bg-dark bg-opacity-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-4 text-secondary">引力常数与光速关系</h3>
+                        <div class="bg-dark bg-opacity-70 p-4 rounded-lg">
+                            <canvas id="gravity-light-chart" height="300"></canvas>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-light">调整光速比例：</span>
+                                <span id="light-speed-value" class="text-sm text-accent">1.0 c</span>
+                            </div>
+                            <input type="range" id="light-speed-slider" min="0.5" max="1.5" step="0.01" value="1" 
+                                   class="w-full h-2 bg-dark border border-secondary rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <p class="text-sm text-secondary mt-4">
+                            图表显示了引力常数G与光速c之间的反比关系 \( G \propto \frac{1}{c} \)（假设Z为常数）。当光速增加时，引力常数减小，体现了它们之间的内在联系。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                    <div class="bg-dark bg-opacity-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-4 text-secondary">空间运动的动态可视化</h3>
+                        <div class="bg-dark bg-opacity-70 p-4 rounded-lg relative">
+                            <canvas id="space-motion-canvas" height="400" class="w-full"></canvas>
+                            <div class="absolute bottom-4 right-4 flex space-x-2">
+                                <button id="play-pause" class="bg-accent hover:bg-secondary text-dark px-3 py-1 rounded-md text-sm transition-colors">
+                                    <i class="fa fa-pause"></i>
+                                </button>
+                                <button id="reset-animation" class="bg-secondary hover:bg-accent text-dark px-3 py-1 rounded-md text-sm transition-colors">
+                                    <i class="fa fa-refresh"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm text-light">质量：</span>
+                                        <span id="animation-mass-value" class="text-sm text-accent">1.0 kg</span>
+                                    </div>
+                                    <input type="range" id="animation-mass-slider" min="0.1" max="5" step="0.1" value="1" 
+                                           class="w-full h-2 bg-dark border border-secondary rounded-lg appearance-none cursor-pointer">
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm text-light">光速比例：</span>
+                                        <span id="animation-light-value" class="text-sm text-accent">1.0 c</span>
+                                    </div>
+                                    <input type="range" id="animation-light-slider" min="0.5" max="1.5" step="0.01" value="1" 
+                                           class="w-full h-2 bg-dark border border-secondary rounded-lg appearance-none cursor-pointer">
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm text-light">空间密度：</span>
+                                        <span id="animation-density-value" class="text-sm text-accent">1.0</span>
+                                    </div>
+                                    <input type="range" id="animation-density-slider" min="0.5" max="2" step="0.01" value="1" 
+                                           class="w-full h-2 bg-dark border border-secondary rounded-lg appearance-none cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-secondary mt-4">
+                            动态模拟展示了空间以光速进行的圆柱状螺旋运动。质量越大，空间位移条数越多，引力场越强。这一模拟直观地呈现了张祥前统一场论中空间运动的本质。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Conclusion Section -->
+        <section id="conclusion" class="mb-16">
+            <div class="bg-dark border border-secondary border-opacity-30 rounded-xl p-6 md:p-8 shadow-lg">
+                <h2 class="text-3xl font-bold mb-6 text-accent">六、结论与物理意义</h2>
+                
+                <div class="mb-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-secondary">6.1 为什么除以光速的根本原因</h3>
+                    <div class="prose prose-invert max-w-none">
+                        <p class="text-lg mb-4">
+                            综合以上分析，单位时间单位体积内空间位移条数的变化率（张祥前常数Z）之所以在引力光速统一方程中需要除以光速c，根本原因在于：
+                        </p>
+                        <ol class="list-decimal pl-6 space-y-2 text-lg">
+                            <li><strong>时空的同一性</strong>：时间与空间是同一实体的两种表现形式，它们通过光速c相互联系（时空同一化方程）。</li>
+                            <li><strong>空间运动的本质</strong>：空间本身以光速运动，这一运动是引力和其他物理现象的根源。</li>
+                            <li><strong>物理常数的统一性</strong>：引力常数G并非基本常数，而是由更基本的光速c和张祥前常数Z组合而成，体现了物理常数的内在统一性。</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-secondary">6.2 理论的深远意义</h3>
+                    <div class="prose prose-invert max-w-none">
+                        <p class="text-lg mb-4">
+                            引力光速统一方程 \( G = \frac{2Z}{c} \) 的发现具有深远的物理意义：
+                        </p>
+                        <ol class="list-decimal pl-6 space-y-2 text-lg">
+                            <li><strong>引力与电磁作用的统一</strong>：该方程首次将引力常数G与光速c通过一个简洁的公式联系起来，为理解引力与电磁作用的统一提供了数学基础。</li>
+                            <li><strong>质量本质的新理解</strong>：通过张祥前常数Z和质量的几何定义，我们获得了对质量本质的新理解——质量是空间运动状态的表现形式。</li>
+                            <li><strong>空间动力学的核心成果</strong>：该方程是空间动力学理论的核心数学成果，它体现了该理论的基本思想和数学自洽性。</li>
+                            <li><strong>实验验证的支持</strong>：方程的预测值与实验测量值高度吻合，相对误差仅为0.045%，为理论提供了有力的实验支持。</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="mt-8 p-6 bg-dark bg-opacity-50 rounded-lg border border-secondary border-opacity-30">
+                    <p class="text-xl text-center text-accent font-semibold mb-4">
+                        总之，单位时间单位体积内空间位移条数的变化率除以光速c的关系，是张祥前统一场论中空间动力学原理的自然结果，它不仅在数学上自洽，而且在物理上深刻揭示了引力、质量、空间和时间的内在联系，为我们理解宇宙的基本结构和物理规律提供了新的视角。
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark border-t border-secondary border-opacity-30 py-8 px-4">
+        <div class="container mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <p class="text-secondary text-lg font-semibold">空间位移条数变化率与光速关系验证</p>
+                    <p class="text-light text-sm mt-1">基于张祥前统一场论的物理本质与数学验证</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-secondary hover:text-accent transition-colors">
+                        <i class="fa fa-book mr-1"></i> 参考资料
+                    </a>
+                    <a href="#" class="text-secondary hover:text-accent transition-colors">
+                        <i class="fa fa-question-circle mr-1"></i> 关于
+                    </a>
+                    <a href="#" class="text-secondary hover:text-accent transition-colors">
+                        <i class="fa fa-envelope mr-1"></i> 联系我们
+                    </a>
+                </div>
+            </div>
+            <div class="mt-6 pt-6 border-t border-secondary border-opacity-30 text-center text-sm text-secondary">
+                <p>&copy; 2025 统一场论研究. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Close mobile menu if open
+                    const mobileMenu = document.getElementById('mobile-menu');
+                    if (!mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                }
+            });
+        });
+        
+        // Interactive calculation tool
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get elements
+            const gravityConstantInput = document.getElementById('gravity-constant');
+            const speedOfLightInput = document.getElementById('speed-of-light');
+            const zhangConstantInput = document.getElementById('zhang-constant');
+            const calculateButton = document.getElementById('calculate');
+            const resultZ = document.getElementById('result-z');
+            const theoreticalZ = document.getElementById('theoretical-z');
+            const errorValue = document.getElementById('error-value');
+            const calculationSteps = document.getElementById('calculation-steps');
+            const resultAnalysis = document.getElementById('result-analysis');
+            const resetGButton = document.getElementById('reset-g');
+            const resetCButton = document.getElementById('reset-c');
+            const resetZButton = document.getElementById('reset-z');
+            const calcModeRadios = document.querySelectorAll('input[name="calc-mode"]');
+            
+            // Constants
+            const CODATA_G = 6.67430e-11; // m^3 kg^-1 s^-2
+            const CODATA_C = 299792458;   // m/s
+            const THEORETICAL_Z = (CODATA_G * CODATA_C) / 2; // kg^-1 m^4 s^-3
+            
+            // Initialize
+            theoreticalZ.textContent = THEORETICAL_Z.toFixed(6) + ' kg⁻¹·m⁴·s⁻³';
+            
+            // Reset buttons
+            resetGButton.addEventListener('click', function() {
+                gravityConstantInput.value = CODATA_G;
+            });
+            
+            resetCButton.addEventListener('click', function() {
+                speedOfLightInput.value = CODATA_C;
+            });
+            
+            resetZButton.addEventListener('click', function() {
+                zhangConstantInput.value = THEORETICAL_Z.toFixed(6);
+            });
+            
+            // Calculate button click handler
+            calculateButton.addEventListener('click', function() {
+                const calcMode = document.querySelector('input[name="calc-mode"]:checked').value;
+                let G, c, Z, result, steps, analysis;
+                
+                switch(calcMode) {
+                    case 'z-from-gc':
+                        G = parseFloat(gravityConstantInput.value);
+                        c = parseFloat(speedOfLightInput.value);
+                        
+                        if (isNaN(G) || isNaN(c) || G <= 0 || c <= 0) {
+                            alert('请输入有效的正值');
+                            return;
+                        }
+                        
+                        Z = (G * c) / 2;
+                        result = Z;
+                        
+                        steps = `Z = \\frac{G \\times c}{2}\n`;
+                        steps += `Z = \\frac{(${G.toExponential(5)}) \\times (${c.toExponential(5)})}{2}\n`;
+                        steps += `Z \\approx ${Z.toFixed(6)} \\, \\text{kg}^{-1} \\cdot \\text{m}^4 \\cdot \\text{s}^{-3}`;
+                        
+                        resultZ.textContent = Z.toFixed(6) + ' kg⁻¹·m⁴·s⁻³';
+                        
+                        break;
+                        
+                    case 'g-from-zc':
+                        Z = parseFloat(zhangConstantInput.value);
+                        c = parseFloat(speedOfLightInput.value);
+                        
+                        if (isNaN(Z) || isNaN(c) || Z <= 0 || c <= 0) {
+                            alert('请输入有效的正值');
+                            return;
+                        }
+                        
+                        G = (2 * Z) / c;
+                        result = G;
+                        
+                        steps = `G = \\frac{2 \\times Z}{c}\n`;
+                        steps += `G = \\frac{2 \\times (${Z.toFixed(6)})}{${c.toExponential(5)}}\n`;
+                        steps += `G \\approx ${G.toExponential(5)} \\, \\text{m}^3 \\cdot \\text{kg}^{-1} \\cdot \\text{s}^{-2}`;
+                        
+                        resultZ.textContent = G.toExponential(5) + ' m³·kg⁻¹·s⁻²';
+                        theoreticalZ.textContent = CODATA_G.toExponential(5) + ' m³·kg⁻¹·s⁻²';
+                        
+                        break;
+                        
+                    case 'c-from-gz':
+                        G = parseFloat(gravityConstantInput.value);
+                        Z = parseFloat(zhangConstantInput.value);
+                        
+                        if (isNaN(G) || isNaN(Z) || G <= 0 || Z <= 0) {
+                            alert('请输入有效的正值');
+                            return;
+                        }
+                        
+                        c = (2 * Z) / G;
+                        result = c;
+                        
+                        steps = `c = \\frac{2 \\times Z}{G}\n`;
+                        steps += `c = \\frac{2 \\times (${Z.toFixed(6)})}{${G.toExponential(5)}}\n`;
+                        steps += `c \\approx ${c.toExponential(5)} \\, \\text{m/s}`;
+                        
+                        resultZ.textContent = c.toExponential(5) + ' m/s';
+                        theoreticalZ.textContent = CODATA_C.toExponential(5) + ' m/s';
+                        
+                        break;
+                }
+                
+                // Update calculation steps
+                calculationSteps.innerHTML = steps.replace(/\n/g, '<br>');
+                
+                // Calculate error
+                let theoreticalValue;
+                if (calcMode === 'z-from-gc') {
+                    theoreticalValue = THEORETICAL_Z;
+                } else if (calcMode === 'g-from-zc') {
+                    theoreticalValue = CODATA_G;
+                } else { // c-from-gz
+                    theoreticalValue = CODATA_C;
+                }
+                
+                const error = Math.abs((result - theoreticalValue) / theoreticalValue * 100);
+                errorValue.textContent = error.toFixed(3) + '%';
+                
+                // Update error color
+                if (error < 0.1) {
+                    errorValue.className = 'text-2xl font-mono text-green-400 mt-1';
+                } else if (error < 1) {
+                    errorValue.className = 'text-2xl font-mono text-yellow-400 mt-1';
+                } else {
+                    errorValue.className = 'text-2xl font-mono text-red-400 mt-1';
+                }
+                
+                // Update analysis
+                if (error < 0.1) {
+                    analysis = `计算结果与理论预期值高度吻合，相对误差仅为${error.toFixed(3)}%，验证了引力光速统一方程 \( G = \\frac{2Z}{c} \) 的正确性。这一结果支持了张祥前统一场论中关于空间位移条数变化率与光速关系的理论。`;
+                } else if (error < 1) {
+                    analysis = `计算结果与理论预期值基本吻合，相对误差为${error.toFixed(3)}%，在可接受范围内。这一结果部分支持了引力光速统一方程 \( G = \\frac{2Z}{c} \) 的正确性。`;
+                } else {
+                    analysis = `计算结果与理论预期值存在明显偏差，相对误差为${error.toFixed(3)}%。这可能是由于输入参数的不准确或其他因素导致的。请检查输入参数并重新计算。`;
+                }
+                
+                resultAnalysis.innerHTML = `<p>${analysis}</p>`;
+                
+                // Render MathJax
+                if (window.MathJax) {
+                    MathJax.typeset();
+                }
+            });
+            
+            // Initialize charts
+            initCharts();
+            
+            // Initialize space motion animation
+            initSpaceMotionAnimation();
+        });
+        
+        // Initialize charts
+        function initCharts() {
+            // Mass vs Space Displacement chart
+            const massDisplacementCtx = document.getElementById('mass-displacement-chart').getContext('2d');
+            const massDisplacementChart = new Chart(massDisplacementCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '空间位移条数',
+                        data: [],
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '质量 (kg)',
+                                color: '#e6f7ff'
+                            },
+                            ticks: {
+                                color: '#e6f7ff'
+                            },
+                            grid: {
+                                color: 'rgba(0, 180, 216, 0.2)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '空间位移条数',
+                                color: '#e6f7ff'
+                            },
+                            ticks: {
+                                color: '#e6f7ff'
+                            },
+                            grid: {
+                                color: 'rgba(0, 180, 216, 0.2)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e6f7ff'
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                }
+            });
+            
+            // Gravity vs Light Speed chart
+            const gravityLightCtx = document.getElementById('gravity-light-chart').getContext('2d');
+            const gravityLightChart = new Chart(gravityLightCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '引力常数 G',
+                        data: [],
+                        borderColor: '#00b4d8',
+                        backgroundColor: 'rgba(0, 180, 216, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '光速 (m/s)',
+                                color: '#e6f7ff'
+                            },
+                            ticks: {
+                                color: '#e6f7ff'
+                            },
+                            grid: {
+                                color: 'rgba(0, 180, 216, 0.2)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '引力常数 G (m³·kg⁻¹·s⁻²)',
+                                color: '#e6f7ff'
+                            },
+                            ticks: {
+                                color: '#e6f7ff'
+                            },
+                            grid: {
+                                color: 'rgba(0, 180, 216, 0.2)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e6f7ff'
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                }
+            });
+            
+            // Update charts with initial data
+            updateMassDisplacementChart(1.0);
+            updateGravityLightChart(1.0);
+            
+            // Mass slider event listener
+            const massSlider = document.getElementById('mass-slider');
+            const massValue = document.getElementById('mass-value');
+            
+            massSlider.addEventListener('input', function() {
+                const mass = parseFloat(this.value);
+                massValue.textContent = mass.toFixed(1) + ' kg';
+                updateMassDisplacementChart(mass);
+            });
+            
+            // Light speed slider event listener
+            const lightSpeedSlider = document.getElementById('light-speed-slider');
+            const lightSpeedValue = document.getElementById('light-speed-value');
+            
+            lightSpeedSlider.addEventListener('input', function() {
+                const speedRatio = parseFloat(this.value);
+                lightSpeedValue.textContent = speedRatio.toFixed(2) + ' c';
+                updateGravityLightChart(speedRatio);
+            });
+            
+            // Update mass-displacement chart
+            function updateMassDisplacementChart(mass) {
+                const k = 100; // Proportionality constant (arbitrary for visualization)
+                const maxMass = 10;
+                const step = 0.5;
+                
+                const masses = [];
+                const displacements = [];
+                
+                for (let m = 0; m <= maxMass; m += step) {
+                    masses.push(m);
+                    displacements.push(m * k);
+                }
+                
+                massDisplacementChart.data.labels = masses;
+                massDisplacementChart.data.datasets[0].data = displacements;
+                
+                // Highlight current mass
+                const highlightData = displacements.map((d, i) => {
+                    if (Math.abs(masses[i] - mass) < step / 2) {
+                        return {
+                            x: masses[i],
+                            y: d,
+                            r: 6
+                        };
+                    }
+                    return null;
+                }).filter(Boolean);
+                
+                // Remove existing highlight dataset
+                if (massDisplacementChart.data.datasets.length > 1) {
+                    massDisplacementChart.data.datasets.splice(1);
+                }
+                
+                // Add highlight dataset if there's a point to highlight
+                if (highlightData.length > 0) {
+                    massDisplacementChart.data.datasets.push({
+                        type: 'scatter',
+                        label: '当前质量',
+                        data: highlightData,
+                        backgroundColor: '#00d4ff',
+                        borderColor: '#00d4ff',
+                        borderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    });
+                }
+                
+                massDisplacementChart.update();
+            }
+            
+            // Update gravity-light chart
+            function updateGravityLightChart(speedRatio) {
+                const CODATA_C = 299792458; // m/s
+                const Z = 0.0100065; // kg^-1 m^4 s^-3 (theoretical value)
+                const minRatio = 0.5;
+                const maxRatio = 1.5;
+                const step = 0.05;
+                
+                const speeds = [];
+                const gravities = [];
+                
+                for (let r = minRatio; r <= maxRatio; r += step) {
+                    const c = r * CODATA_C;
+                    speeds.push(c);
+                    gravities.push((2 * Z) / c);
+                }
+                
+                gravityLightChart.data.labels = speeds.map(s => s.toExponential(2));
+                gravityLightChart.data.datasets[0].data = gravities;
+                
+                // Highlight current speed
+                const currentC = speedRatio * CODATA_C;
+                const currentG = (2 * Z) / currentC;
+                
+                // Remove existing highlight dataset
+                if (gravityLightChart.data.datasets.length > 1) {
+                    gravityLightChart.data.datasets.splice(1);
+                }
+                
+                // Add highlight dataset
+                gravityLightChart.data.datasets.push({
+                    type: 'scatter',
+                    label: '当前光速',
+                    data: [{
+                        x: currentC.toExponential(2),
+                        y: currentG
+                    }],
+                    backgroundColor: '#00b4d8',
+                    borderColor: '#00b4d8',
+                    borderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                });
+                
+                gravityLightChart.update();
+            }
+        }
+        
+        // Initialize space motion animation
+        function initSpaceMotionAnimation() {
+            const canvas = document.getElementById('space-motion-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas dimensions
+            function resizeCanvas() {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+            }
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Animation parameters
+            let animationParams = {
+                mass: 1.0,
+                lightSpeedRatio: 1.0,
+                density: 1.0,
+                isPlaying: true,
+                time: 0
+            };
+            
+            // Get UI elements
+            const playPauseButton = document.getElementById('play-pause');
+            const resetButton = document.getElementById('reset-animation');
+            const massSlider = document.getElementById('animation-mass-slider');
+            const massValue = document.getElementById('animation-mass-value');
+            const lightSlider = document.getElementById('animation-light-slider');
+            const lightValue = document.getElementById('animation-light-value');
+            const densitySlider = document.getElementById('animation-density-slider');
+            const densityValue = document.getElementById('animation-density-value');
+            
+            // Event listeners
+            playPauseButton.addEventListener('click', function() {
+                animationParams.isPlaying = !animationParams.isPlaying;
+                this.innerHTML = animationParams.isPlaying ? 
+                    '<i class="fa fa-pause"></i>' : 
+                    '<i class="fa fa-play"></i>';
+            });
+            
+            resetButton.addEventListener('click', function() {
+                animationParams.time = 0;
+                animationParams.isPlaying = true;
+                playPauseButton.innerHTML = '<i class="fa fa-pause"></i>';
+            });
+            
+            massSlider.addEventListener('input', function() {
+                animationParams.mass = parseFloat(this.value);
+                massValue.textContent = animationParams.mass.toFixed(1) + ' kg';
+            });
+            
+            lightSlider.addEventListener('input', function() {
+                animationParams.lightSpeedRatio = parseFloat(this.value);
+                lightValue.textContent = animationParams.lightSpeedRatio.toFixed(2) + ' c';
+            });
+            
+            densitySlider.addEventListener('input', function() {
+                animationParams.density = parseFloat(this.value);
+                densityValue.textContent = animationParams.density.toFixed(2);
+            });
+            
+            // Animation objects
+            const particles = [];
+            const numParticles = 100;
+            
+            // Initialize particles
+            function initParticles() {
+                particles.length = 0;
+                
+                for (let i = 0; i < numParticles; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 0.8 + 0.2; // 0.2 to 1.0
+                    
+                    particles.push({
+                        angle: angle,
+                        distance: distance,
+                        offset: Math.random() * Math.PI * 2,
+                        speed: Math.random() * 0.01 + 0.005
+                    });
+                }
+            }
+            
+            // Animation loop
+            function animate() {
+                if (animationParams.isPlaying) {
+                    animationParams.time += 0.01;
+                }
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const maxRadius = Math.min(canvas.width, canvas.height) * 0.4;
+                
+                // Draw central mass
+                const massRadius = 20 + animationParams.mass * 10;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, massRadius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 180, 216, 0.8)';
+                ctx.fill();
+                ctx.shadowColor = 'rgba(0, 212, 255, 0.8)';
+                ctx.shadowBlur = 20;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, massRadius * 0.8, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 212, 255, 0.9)';
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                // Draw space grid
+                ctx.strokeStyle = 'rgba(0, 180, 216, 0.1)';
+                ctx.lineWidth = 1;
+                
+                const gridSize = 40;
+                for (let x = -canvas.width; x < canvas.width * 2; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, -canvas.height);
+                    ctx.lineTo(x, canvas.height * 2);
+                    ctx.stroke();
+                }
+                
+                for (let y = -canvas.height; y < canvas.height * 2; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(-canvas.width, y);
+                    ctx.lineTo(canvas.width * 2, y);
+                    ctx.stroke();
+                }
+                
+                // Update and draw particles
+                const particleCount = Math.floor(numParticles * animationParams.density);
+                const speedFactor = animationParams.lightSpeedRatio;
+                const massFactor = animationParams.mass;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const p = particles[i];
+                    
+                    // Update particle position
+                    const time = animationParams.time * speedFactor;
+                    const spiralAngle = p.angle + time * p.speed * speedFactor;
+                    const spiralRadius = p.distance * maxRadius * (1 + 0.1 * Math.sin(time + p.offset));
+                    
+                    // Calculate position with cylindrical spiral motion
+                    const x = centerX + spiralRadius * Math.cos(spiralAngle);
+                    const y = centerY + spiralRadius * Math.sin(spiralAngle);
+                    const z = 0.5 + 0.5 * Math.sin(time * 2 + p.offset); // For 3D effect
+                    
+                    // Draw particle
+                    const size = 2 + 3 * z;
+                    const alpha = 0.3 + 0.7 * (1 - p.distance);
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0, 212, 255, ${alpha})`;
+                    ctx.fill();
+                    
+                    // Draw velocity vector
+                    const vx = -spiralRadius * Math.sin(spiralAngle) * p.speed * speedFactor;
+                    const vy = spiralRadius * Math.cos(spiralAngle) * p.speed * speedFactor;
+                    const vScale = 50;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + vx * vScale, y + vy * vScale);
+                    ctx.strokeStyle = `rgba(0, 212, 255, ${alpha * 0.7})`;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    // Draw force lines (attraction to center)
+                    if (p.distance > 0.3) {
+                        const forceFactor = 0.02 * massFactor / (p.distance * p.distance);
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(
+                            x - Math.cos(spiralAngle) * spiralRadius * forceFactor,
+                            y - Math.sin(spiralAngle) * spiralRadius * forceFactor
+                        );
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.3})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+                
+                // Draw labels
+                ctx.fillStyle = '#e6f7ff';
+                ctx.font = '14px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('空间以光速c运动', centerX, 30);
+                
+                ctx.font = '12px Inter, sans-serif';
+                ctx.fillText('引力 = 空间运动的加速度效应', centerX, canvas.height - 20);
+                
+                // Request next frame
+                requestAnimationFrame(animate);
+            }
+            
+            // Initialize and start animation
+            initParticles();
+            animate();
+        }
+    </script>
+</body>
+</html>

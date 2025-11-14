@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>光速不变性 - 张祥前统一场论终极可视化</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', 'Microsoft YaHei', 'STHeiti', sans-serif;
+      background: #000000;
+      color: #ffffff;
+      overflow: hidden;
+    }
+    
+    #container {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    
+    #canvas3d {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    
+    /* Title Section with Advanced Styling */
+    .title-section {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      z-index: 100;
+      background: radial-gradient(ellipse at center, rgba(10, 10, 30, 0.95) 0%, rgba(10, 10, 30, 0.7) 100%);
+      padding: 30px 60px;
+      border-radius: 20px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+      backdrop-filter: blur(15px);
+      box-shadow: 0 12px 48px rgba(255, 215, 0, 0.3), inset 0 0 40px rgba(255, 215, 0, 0.05);
+      animation: titleGlow 3s ease-in-out infinite;
+    }
+    
+    @keyframes titleGlow {
+      0%, 100% { box-shadow: 0 12px 48px rgba(255, 215, 0, 0.3), inset 0 0 40px rgba(255, 215, 0, 0.05); }
+      50% { box-shadow: 0 12px 60px rgba(255, 215, 0, 0.5), inset 0 0 50px rgba(255, 215, 0, 0.1); }
+    }
+    
+    .main-title {
+      font-size: 42px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 25%, #ffd700 50%, #ffed4e 75%, #ffd700 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+      text-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+      letter-spacing: 3px;
+      animation: shimmer 3s linear infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+    
+    .subtitle {
+      font-size: 17px;
+      color: #a0d0ff;
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-shadow: 0 0 20px rgba(160, 208, 255, 0.5);
+    }
+    
+    .subtitle-sub {
+      font-size: 13px;
+      color: #708090;
+      margin-top: 8px;
+      letter-spacing: 1px;
+    }
+    
+    /* Enhanced Info Panels */
+    .info-panel {
+      position: absolute;
+      top: 160px;
+      left: 30px;
+      background: linear-gradient(135deg, rgba(15, 15, 40, 0.95) 0%, rgba(20, 20, 50, 0.9) 100%);
+      padding: 28px;
+      border-radius: 16px;
+      border: 1px solid rgba(74, 144, 226, 0.5);
+      backdrop-filter: blur(20px);
+      max-width: 450px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(74, 144, 226, 0.1) inset;
+      transition: all 0.3s ease;
+    }
+    
+    .info-panel:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 16px 64px rgba(74, 144, 226, 0.4), 0 0 0 1px rgba(74, 144, 226, 0.3) inset;
+    }
+    
+    .info-title {
+      font-size: 22px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #4a90e2, #5ba3f5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 18px;
+      border-bottom: 2px solid rgba(74, 144, 226, 0.4);
+      padding-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    
+    .info-item {
+      margin: 14px 0;
+      display: flex;
+      align-items: flex-start;
+      font-size: 15px;
+      line-height: 1.8;
+      padding: 8px;
+      border-radius: 8px;
+      transition: background 0.3s ease;
+    }
+    
+    .info-item:hover {
+      background: rgba(74, 144, 226, 0.1);
+    }
+    
+    .info-label {
+      color: #ffd700;
+      font-weight: 700;
+      min-width: 110px;
+      display: inline-block;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    }
+    
+    .info-value {
+      color: #e8e8e8;
+      flex: 1;
+    }
+    
+    .info-highlight {
+      background: rgba(255, 215, 0, 0.15);
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 15px;
+      border-left: 3px solid #ffd700;
+    }
+    
+    /* Equation Panel with Math Rendering */
+    .equation-panel {
+      position: absolute;
+      top: 160px;
+      right: 30px;
+      background: linear-gradient(135deg, rgba(15, 40, 15, 0.95) 0%, rgba(20, 50, 20, 0.9) 100%);
+      padding: 28px;
+      border-radius: 16px;
+      border: 1px solid rgba(39, 174, 96, 0.5);
+      backdrop-filter: blur(20px);
+      max-width: 480px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(39, 174, 96, 0.1) inset;
+      transition: all 0.3s ease;
+    }
+    
+    .equation-panel:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 16px 64px rgba(39, 174, 96, 0.4), 0 0 0 1px rgba(39, 174, 96, 0.3) inset;
+    }
+    
+    .equation-title {
+      font-size: 22px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 18px;
+      border-bottom: 2px solid rgba(39, 174, 96, 0.4);
+      padding-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    
+    .equation {
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(10, 10, 10, 0.5) 100%);
+      padding: 18px;
+      border-radius: 10px;
+      margin: 14px 0;
+      font-family: 'Courier New', 'Consolas', monospace;
+      font-size: 17px;
+      color: #ffd700;
+      border-left: 4px solid #ffd700;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      line-height: 1.6;
+    }
+    
+    .equation:hover {
+      transform: translateX(5px);
+      border-left-color: #ffed4e;
+      box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
+    }
+    
+    .equation-desc {
+      font-size: 13px;
+      color: #b8b8b8;
+      margin-top: 8px;
+      padding-left: 8px;
+      line-height: 1.6;
+      border-left: 2px solid rgba(184, 184, 184, 0.3);
+    }
+    
+    .equation-result {
+      color: #2ecc71;
+      font-weight: 700;
+      font-size: 19px;
+    }
+    
+    /* Speed Display with Advanced Animation */
+    .speed-display {
+      position: absolute;
+      bottom: 140px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(ellipse at center, rgba(10, 10, 30, 0.98) 0%, rgba(10, 10, 30, 0.85) 100%);
+      padding: 25px 50px;
+      border-radius: 16px;
+      border: 3px solid rgba(255, 215, 0, 0.6);
+      backdrop-filter: blur(20px);
+      text-align: center;
+      box-shadow: 0 12px 48px rgba(255, 215, 0, 0.4), inset 0 0 30px rgba(255, 215, 0, 0.1);
+      animation: speedPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes speedPulse {
+      0%, 100% { 
+        transform: translateX(-50%) scale(1);
+        box-shadow: 0 12px 48px rgba(255, 215, 0, 0.4), inset 0 0 30px rgba(255, 215, 0, 0.1);
+      }
+      50% { 
+        transform: translateX(-50%) scale(1.05);
+        box-shadow: 0 16px 64px rgba(255, 215, 0, 0.6), inset 0 0 40px rgba(255, 215, 0, 0.2);
+      }
+    }
+    
+    .speed-label {
+      font-size: 15px;
+      color: #a0d0ff;
+      margin-bottom: 10px;
+      font-weight: 400;
+      letter-spacing: 1px;
+    }
+    
+    .speed-value {
+      font-size: 48px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-family: 'Courier New', monospace;
+      text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+      letter-spacing: 2px;
+    }
+    
+    .speed-subtext {
+      font-size: 13px;
+      color: #708090;
+      margin-top: 8px;
+      font-style: italic;
+    }
+    
+    /* Conclusion Box Enhanced */
+    .conclusion-box {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      background: linear-gradient(135deg, rgba(26, 26, 62, 0.98) 0%, rgba(30, 30, 70, 0.95) 100%);
+      padding: 24px;
+      border-radius: 14px;
+      border: 2px solid rgba(156, 89, 182, 0.6);
+      backdrop-filter: blur(20px);
+      max-width: 400px;
+      box-shadow: 0 12px 48px rgba(156, 89, 182, 0.4), 0 0 0 1px rgba(156, 89, 182, 0.1) inset;
+      transition: all 0.3s ease;
+    }
+    
+    .conclusion-box:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 16px 64px rgba(156, 89, 182, 0.6);
+    }
+    
+    .conclusion-title {
+      font-size: 18px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #9b59b6, #b370cf);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    
+    .conclusion-text {
+      font-size: 14px;
+      color: #e8e8e8;
+      line-height: 1.8;
+    }
+    
+    /* Legend Box */
+    .legend-box {
+      position: absolute;
+      bottom: 30px;
+      left: 30px;
+      background: linear-gradient(135deg, rgba(15, 15, 40, 0.95) 0%, rgba(20, 20, 50, 0.9) 100%);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(15px);
+      max-width: 280px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    
+    .legend-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #a0d0ff;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(160, 208, 255, 0.3);
+      padding-bottom: 8px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+      font-size: 13px;
+      color: #d0d0d0;
+    }
+    
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      margin-right: 10px;
+      box-shadow: 0 0 10px currentColor;
+    }
+    
+    /* Controls Enhanced */
+    .controls {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 800px;
+    }
+    
+    .control-btn {
+      background: linear-gradient(135deg, rgba(74, 144, 226, 0.3) 0%, rgba(74, 144, 226, 0.2) 100%);
+      border: 2px solid rgba(74, 144, 226, 0.6);
+      color: #ffffff;
+      padding: 14px 32px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      text-transform: uppercase;
+    }
+    
+    .control-btn:hover {
+      background: linear-gradient(135deg, rgba(74, 144, 226, 0.6) 0%, rgba(74, 144, 226, 0.4) 100%);
+      border-color: #4a90e2;
+      box-shadow: 0 6px 24px rgba(74, 144, 226, 0.5);
+      transform: translateY(-3px);
+    }
+    
+    .control-btn:active {
+      transform: translateY(-1px);
+    }
+    
+    .control-btn.active {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.5) 0%, rgba(255, 215, 0, 0.3) 100%);
+      border-color: #ffd700;
+      box-shadow: 0 6px 24px rgba(255, 215, 0, 0.4);
+    }
+    
+    /* Stats Display */
+    .stats-panel {
+      position: absolute;
+      top: 480px;
+      left: 30px;
+      background: linear-gradient(135deg, rgba(15, 15, 40, 0.95) 0%, rgba(20, 20, 50, 0.9) 100%);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(231, 76, 60, 0.5);
+      backdrop-filter: blur(15px);
+      max-width: 450px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    
+    .stats-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #e74c3c;
+      margin-bottom: 12px;
+      border-bottom: 2px solid rgba(231, 76, 60, 0.3);
+      padding-bottom: 8px;
+    }
+    
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+      font-size: 14px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .stat-label {
+      color: #b0b0b0;
+    }
+    
+    .stat-value {
+      color: #ffffff;
+      font-weight: 600;
+      font-family: 'Courier New', monospace;
+    }
+    
+    /* Fade in animation */
+    @keyframes fadeIn {
+      from { 
+        opacity: 0; 
+        transform: translateY(30px); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0); 
+      }
+    }
+    
+    .fade-in {
+      animation: fadeIn 1.2s ease-out;
+    }
+    
+    /* Loading screen */
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      transition: opacity 0.5s ease;
+    }
+    
+    #loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .loader {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(255, 215, 0, 0.3);
+      border-top-color: #ffd700;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="loader"></div>
+  </div>
+  
+  <div id="container">
+    <canvas id="canvas3d"></canvas>
+    
+    <div class="title-section fade-in">
+      <div class="main-title">光速不变性的几何本质</div>
+      <div class="subtitle">张祥前统一场论 · 时空同一化方程</div>
+      <div class="subtitle-sub">Nature级别科学可视化 · 三维交互式演示</div>
+    </div>
+    
+    <div class="info-panel fade-in">
+      <div class="info-title">理论框架与参数</div>
+      <div class="info-item">
+        <span class="info-label">核心方程:</span>
+        <span class="info-value">R(t) = C · t</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">光速常数:</span>
+        <span class="info-value">c = 299,792,458 m/s</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">飞船速度:</span>
+        <span class="info-value">v = c - 0.01 m/s</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">相对速度:</span>
+        <span class="info-value">v/c ≈ 0.9999999999666...</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">参考系:</span>
+        <span class="info-value">S (地球) ⟷ S' (飞船)</span>
+      </div>
+      <div class="info-highlight">
+        <div style="font-size: 13px; line-height: 1.7; color: #e0e0e0;">
+          <strong style="color: #ffd700;">关键洞察:</strong> 金色光束展示光的传播，蓝色网格表示时空结构。红色箭头显示飞船运动。无论观察者如何运动，所有参考系测得的光速始终精确为 c。
+        </div>
+      </div>
+    </div>
+    
+    <div class="equation-panel fade-in">
+      <div class="equation-title">矢量光速变换推导</div>
+      
+      <div class="equation">
+        C'<sub>x'</sub> = (C<sub>x</sub> - v) / (1 - C<sub>x</sub>v/c²)
+      </div>
+      <div class="equation-desc">
+        步骤 1: 张祥前理论的矢量光速变换公式
+      </div>
+      
+      <div class="equation">
+        当 C<sub>x</sub> = c 时:<br>
+        C'<sub>x'</sub> = (c - v) / (1 - v/c)
+      </div>
+      <div class="equation-desc">
+        步骤 2: 代入光沿 x 轴传播的条件
+      </div>
+      
+      <div class="equation">
+        = (c - v) / [(c - v)/c]<br>
+        = c · (c - v) / (c - v)
+      </div>
+      <div class="equation-desc">
+        步骤 3: 代数化简，分子分母约分
+      </div>
+      
+      <div class="equation equation-result">
+        C'<sub>x'</sub> = c  ✓
+      </div>
+      <div class="equation-desc">
+        <strong>结论:</strong> 代数恒等式，精确成立。光速在 S' 系中仍为 c，误差为零。
+      </div>
+      
+      <div class="equation" style="border-left-color: #27ae60; color: #27ae60; margin-top: 18px;">
+        |C'| = √(c² + 0² + 0²) = c
+      </div>
+      <div class="equation-desc">
+        <strong>验证:</strong> 光速模在任何惯性系中保持不变
+      </div>
+    </div>
+    
+    <div class="stats-panel fade-in">
+      <div class="stats-title">实时计算数据</div>
+      <div class="stat-item">
+        <span class="stat-label">洛伦兹因子 γ:</span>
+        <span class="stat-value">√(1 - v²/c²) ≈ 1.0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">时间膨胀因子:</span>
+        <span class="stat-value">1/γ ≈ 1.0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">长度收缩因子:</span>
+        <span class="stat-value">√(1 - v²/c²) ≈ 1.0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">相对论动量:</span>
+        <span class="stat-value">p = γmv ≈ mv</span>
+      </div>
+      <div class="stat-item" style="border-bottom: none; padding-top: 12px; border-top: 2px solid rgba(231, 76, 60, 0.3); margin-top: 8px;">
+        <span class="stat-label">测得光速 (S 系):</span>
+        <span class="stat-value" style="color: #ffd700;">c</span>
+      </div>
+      <div class="stat-item" style="border-bottom: none;">
+        <span class="stat-label">测得光速 (S' 系):</span>
+        <span class="stat-value" style="color: #ffd700;">c</span>
+      </div>
+    </div>
+    
+    <div class="speed-display">
+      <div class="speed-label">S' 系测得光速</div>
+      <div class="speed-value">c</div>
+      <div class="speed-subtext">299,792,458 m/s (精确不变)</div>
+    </div>
+    
+    <div class="legend-box fade-in">
+      <div class="legend-title">可视化图例</div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #ffd700; box-shadow: 0 0 15px #ffd700;"></div>
+        <span>光束粒子 (c速传播)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #4a90e2; box-shadow: 0 0 15px #4a90e2;"></div>
+        <span>S系 (地球参考系)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #9b59b6; box-shadow: 0 0 15px #9b59b6;"></div>
+        <span>S'系 (飞船参考系)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #e74c3c; box-shadow: 0 0 15px #e74c3c;"></div>
+        <span>速度矢量 (v方向)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: rgba(74, 144, 226, 0.3); border: 1px solid #4a90e2;"></div>
+        <span>时空网格结构</span>
+      </div>
+    </div>
+    
+    <div class="conclusion-box fade-in">
+      <div class="conclusion-title">核心结论与物理意义</div>
+      <div class="conclusion-text">
+        光速不变性源于<strong style="color: #ffd700;">时空同一化方程</strong> R = C·t。时间与空间本质统一，光速 c 是时空的"固有兑换率"。当观察者运动时，空间位移 ΔR 与时间增量 Δt 发生<strong style="color: #4a90e2;">协同变化</strong>，确保比值 c = |R|/t 恒定。这揭示了光速不变性的<strong style="color: #9b59b6;">几何本质</strong>，超越了电磁学的现象描述，直达时空结构的深层原理。
+      </div>
+    </div>
+    
+    <div class="controls">
+      <button class="control-btn active" onclick="setView('default')">🌐 默认视角</button>
+      <button class="control-btn" onclick="setView('side')">↔️ 侧视图</button>
+      <button class="control-btn" onclick="setView('top')">⬇️ 俯视图</button>
+      <button class="control-btn" onclick="setView('close')">🔍 近距观察</button>
+      <button class="control-btn" onclick="toggleAnimation()">⏯️ 暂停/播放</button>
+      <button class="control-btn" onclick="resetScene()">🔄 重置场景</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // Hide loading screen
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('loading').classList.add('hidden');
+      }, 500);
+    });
+
+    // Scene setup with enhanced settings
+    const canvas = document.getElementById('canvas3d');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x000000, 0.015);
+    
+    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(10, 7, 14);
+    camera.lookAt(0, 0, 0);
+    
+    const renderer = new THREE.WebGLRenderer({ 
+      canvas: canvas, 
+      antialias: true, 
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+    // Enhanced lighting system
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    scene.add(ambientLight);
+    
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    mainLight.position.set(10, 15, 10);
+    mainLight.castShadow = true;
+    mainLight.shadow.mapSize.width = 2048;
+    mainLight.shadow.mapSize.height = 2048;
+    scene.add(mainLight);
+    
+    const pointLight1 = new THREE.PointLight(0xffd700, 2, 60);
+    pointLight1.position.set(5, 12, 5);
+    scene.add(pointLight1);
+    
+    const pointLight2 = new THREE.PointLight(0x4a90e2, 1.5, 50);
+    pointLight2.position.set(-5, 8, -5);
+    scene.add(pointLight2);
+    
+    const pointLight3 = new THREE.PointLight(0x9b59b6, 1.2, 45);
+    pointLight3.position.set(0, 5, -8);
+    scene.add(pointLight3);
+    
+    // Create advanced spacetime grid with wave effect
+    function createAdvancedSpacetimeGrid() {
+      const group = new THREE.Group();
+      
+      // Primary grid
+      const gridSize = 40;
+      const divisions = 60;
+      const gridHelper = new THREE.GridHelper(gridSize, divisions, 0x4a90e2, 0x2c5aa0);
+      gridHelper.material.opacity = 0.4;
+      gridHelper.material.transparent = true;
+      group.add(gridHelper);
+      
+      // Secondary perpendicular grid
+      const gridHelper2 = new THREE.GridHelper(gridSize, divisions, 0x5ba3f5, 0x3a6aaa);
+      gridHelper2.material.opacity = 0.2;
+      gridHelper2.material.transparent = true;
+      gridHelper2.rotation.x = Math.PI / 2;
+      gridHelper2.position.y = 8;
+      group.add(gridHelper2);
+      
+      // Create glowing axis lines
+      const axisLines = [];
+      for (let i = -4; i <= 4; i++) {
+        const geometry = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(i * 3, 0, -20),
+          new THREE.Vector3(i * 3, 0, 20)
+        ]);
+        const material = new THREE.LineBasicMaterial({ 
+          color: i === 0 ? 0xffd700 : 0x4a90e2, 
+          opacity: i === 0 ? 0.8 : 0.5, 
+          transparent: true,
+          linewidth: i === 0 ? 2 : 1
+        });
+        const line = new THREE.Line(geometry, material);
+        group.add(line);
+        axisLines.push(line);
+      }
+      
+      // Create wave plane with displacement
+      const planeGeometry = new THREE.PlaneGeometry(40, 40, 60, 60);
+      const planeMaterial = new THREE.MeshPhongMaterial({
+        color: 0x1a3a5a,
+        transparent: true,
+        opacity: 0.15,
+        side: THREE.DoubleSide,
+        wireframe: false,
+        shininess: 80
+      });
+      const wavePlane = new THREE.Mesh(planeGeometry, planeMaterial);
+      wavePlane.rotation.x = -Math.PI / 2;
+      wavePlane.position.y = -0.5;
+      group.add(wavePlane);
+      
+      group.userData.wavePlane = wavePlane;
+      group.userData.axisLines = axisLines;
+      
+      return group;
+    }
+    
+    const spacetimeGrid = createAdvancedSpacetimeGrid();
+    scene.add(spacetimeGrid);
+    
+    // Create enhanced Earth reference frame
+    function createEnhancedEarthFrame() {
+      const group = new THREE.Group();
+      
+      // Earth sphere with texture-like appearance
+      const earthGeometry = new THREE.SphereGeometry(1, 48, 48);
+      const earthMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0x4a90e2,
+        emissive: 0x2c5aa0,
+        emissiveIntensity: 0.4,
+        shininess: 100,
+        specular: 0x8ab4f8
+      });
+      const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+      earth.position.set(-8, 1.5, 0);
+      earth.castShadow = true;
+      earth.receiveShadow = true;
+      group.add(earth);
+      
+      // Add continents (simple representation)
+      for (let i = 0; i < 8; i++) {
+        const spotGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+        const spotMaterial = new THREE.MeshPhongMaterial({ 
+          color: 0x27ae60,
+          emissive: 0x1e8449,
+          emissiveIntensity: 0.2
+        });
+        const spot = new THREE.Mesh(spotGeometry, spotMaterial);
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI;
+        spot.position.set(
+          Math.sin(phi) * Math.cos(theta) * 1,
+          Math.sin(phi) * Math.sin(theta) * 1,
+          Math.cos(phi) * 1
+        );
+        spot.position.add(earth.position);
+        group.add(spot);
+      }
+      
+      // Orbital rings
+      for (let r = 0; r < 3; r++) {
+        const ringGeometry = new THREE.TorusGeometry(1.5 + r * 0.3, 0.02, 16, 100);
+        const ringMaterial = new THREE.MeshBasicMaterial({ 
+          color: 0x4a90e2, 
+          transparent: true,
+          opacity: 0.4 - r * 0.1
+        });
+        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+        ring.position.copy(earth.position);
+        ring.rotation.x = Math.PI / 2 + Math.random() * 0.5;
+        ring.rotation.y = Math.random() * Math.PI;
+        group.add(ring);
+      }
+      
+      // Label sphere
+      const labelGeometry = new THREE.SphereGeometry(1.8, 32, 32);
+      const labelMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x4a90e2, 
+        transparent: true, 
+        opacity: 0.08,
+        wireframe: true
+      });
+      const labelSphere = new THREE.Mesh(labelGeometry, labelMaterial);
+      labelSphere.position.copy(earth.position);
+      group.add(labelSphere);
+      
+      group.userData.earth = earth;
+      group.userData.rings = [];
+      
+      return group;
+    }
+    
+    const earthFrame = createEnhancedEarthFrame();
+    scene.add(earthFrame);
+    
+    // Create advanced spaceship
+    function createAdvancedSpaceship() {
+      const group = new THREE.Group();
+      
+      // Main body
+      const bodyGeometry = new THREE.CylinderGeometry(0.4, 0.6, 2.5, 12);
+      const bodyMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0x9b59b6,
+        emissive: 0x8e44ad,
+        emissiveIntensity: 0.5,
+        shininess: 120,
+        specular: 0xc39bd3
+      });
+      const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+      body.rotation.z = Math.PI / 2;
+      body.position.set(8, 1.5, 0);
+      body.castShadow = true;
+      group.add(body);
+      
+      // Nose cone
+      const coneGeometry = new THREE.ConeGeometry(0.4, 1.5, 12);
+      const cone = new THREE.Mesh(coneGeometry, bodyMaterial);
+      cone.rotation.z = -Math.PI / 2;
+      cone.position.set(10, 1.5, 0);
+      cone.castShadow = true;
+      group.add(cone);
+      
+      // Wings
+      for (let side = -1; side <= 1; side += 2) {
+        const wingGeometry = new THREE.BoxGeometry(0.8, 0.1, 1.5);
+        const wing = new THREE.Mesh(wingGeometry, bodyMaterial);
+        wing.position.set(7.5, 1.5, side * 1);
+        wing.rotation.x = side * 0.2;
+        wing.castShadow = true;
+        group.add(wing);
+      }
+      
+      // Engine glow
+      const engineGeometry = new THREE.CylinderGeometry(0.25, 0.35, 0.5, 12);
+      const engineMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xe74c3c,
+        transparent: true,
+        opacity: 0.9
+      });
+      const engine = new THREE.Mesh(engineGeometry, engineMaterial);
+      engine.rotation.z = Math.PI / 2;
+      engine.position.set(6.2, 1.5, 0);
+      group.add(engine);
+      
+      // Cockpit
+      const cockpitGeometry = new THREE.SphereGeometry(0.35, 16, 16);
+      const cockpitMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0x3498db,
+        emissive: 0x2980b9,
+        emissiveIntensity: 0.6,
+        transparent: true,
+        opacity: 0.7
+      });
+      const cockpit = new THREE.Mesh(cockpitGeometry, cockpitMaterial);
+      cockpit.position.set(8.5, 2, 0);
+      group.add(cockpit);
+      
+      // Outer glow field
+      const glowGeometry = new THREE.SphereGeometry(2, 24, 24);
+      const glowMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xe91e63, 
+        transparent: true, 
+        opacity: 0.12,
+        side: THREE.BackSide
+      });
+      const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+      glow.position.set(8, 1.5, 0);
+      group.add(glow);
+      
+      // Propulsion particles
+      const trailGroup = new THREE.Group();
+      for (let i = 0; i < 20; i++) {
+        const particleGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+        const particleMaterial = new THREE.MeshBasicMaterial({ 
+          color: 0xff6b6b,
+          transparent: true,
+          opacity: 0.6
+        });
+        const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+        particle.position.set(6 - i * 0.3, 1.5, (Math.random() - 0.5) * 0.3);
+        trailGroup.add(particle);
+      }
+      group.add(trailGroup);
+      
+      group.userData.body = body;
+      group.userData.glow = glow;
+      group.userData.trailGroup = trailGroup;
+      
+      return group;
+    }
+    
+    const spaceshipFrame = createAdvancedSpaceship();
+    scene.add(spaceshipFrame);
+    
+    // Create multiple light rays with particle system
+    const lightRaySystems = [];
+    
+    function createLightRaySystem(startX, direction = 1, color = 0xffd700) {
+      const system = { particles: [], glows: [] };
+      const particleCount = 80;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const size = 0.1 + Math.random() * 0.05;
+        const geometry = new THREE.SphereGeometry(size, 12, 12);
+        const material = new THREE.MeshBasicMaterial({ 
+          color: color,
+          transparent: true,
+          opacity: 0.95
+        });
+        const particle = new THREE.Mesh(geometry, material);
+        particle.position.set(startX + (i * 0.25 * direction), 1.5, (Math.random() - 0.5) * 0.1);
+        scene.add(particle);
+        system.particles.push(particle);
+        
+        // Glow
+        const glowSize = size * 2.5;
+        const glowGeometry = new THREE.SphereGeometry(glowSize, 12, 12);
+        const glowMaterial = new THREE.MeshBasicMaterial({ 
+          color: color === 0xffd700 ? 0xffed4e : color, 
+          transparent: true, 
+          opacity: 0.3
+        });
+        const glowSphere = new THREE.Mesh(glowGeometry, glowMaterial);
+        glowSphere.position.copy(particle.position);
+        scene.add(glowSphere);
+        system.glows.push(glowSphere);
+      }
+      
+      return system;
+    }
+    
+    // Create multiple light ray systems
+    const earthLightRay = createLightRaySystem(-8, 1, 0xffd700);
+    const spaceshipLightRay = createLightRaySystem(8, 1, 0xffd700);
+    const crossLightRay1 = createLightRaySystem(-8, 1, 0x4affff);
+    const crossLightRay2 = createLightRaySystem(8, 1, 0xff4aff);
+    
+    lightRaySystems.push(earthLightRay, spaceshipLightRay, crossLightRay1, crossLightRay2);
+    
+    // Create velocity vector arrow
+    function createEnhancedArrow(start, end, color, label) {
+      const direction = new THREE.Vector3().subVectors(end, start);
+      const length = direction.length();
+      
+      const arrowGroup = new THREE.Group();
+      
+      // Shaft
+      const shaftGeometry = new THREE.CylinderGeometry(0.06, 0.06, length - 0.6, 12);
+      const shaftMaterial = new THREE.MeshPhongMaterial({ 
+        color: color,
+        emissive: color,
+        emissiveIntensity: 0.4
+      });
+      const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
+      shaft.position.copy(start).add(direction.clone().multiplyScalar(0.5));
+      shaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+      arrowGroup.add(shaft);
+      
+      // Head
+      const headGeometry = new THREE.ConeGeometry(0.15, 0.6, 12);
+      const head = new THREE.Mesh(headGeometry, shaftMaterial);
+      head.position.copy(end);
+      head.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+      arrowGroup.add(head);
+      
+      return arrowGroup;
+    }
+    
+    const velocityArrow = createEnhancedArrow(
+      new THREE.Vector3(8, 4, 0),
+      new THREE.Vector3(11, 4, 0),
+      0xe74c3c,
+      'v'
+    );
+    scene.add(velocityArrow);
+    
+    // Create coordinate axes
+    const axesHelper = new THREE.AxesHelper(15);
+    axesHelper.position.set(0, 0, 0);
+    scene.add(axesHelper);
+    
+    // Add stars with depth
+    function createStarField() {
+      const starGroups = [];
+      
+      for (let layer = 0; layer < 3; layer++) {
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 2000 - layer * 500;
+        const positions = new Float32Array(starCount * 3);
+        const sizes = new Float32Array(starCount);
+        
+        for (let i = 0; i < starCount; i++) {
+          const i3 = i * 3;
+          const radius = 60 + layer * 30;
+          positions[i3] = (Math.random() - 0.5) * radius;
+          positions[i3 + 1] = (Math.random() - 0.5) * radius;
+          positions[i3 + 2] = (Math.random() - 0.5) * radius;
+          sizes[i] = 0.5 + Math.random() * 1.5;
+        }
+        
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        starGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        
+        const starMaterial = new THREE.PointsMaterial({ 
+          color: layer === 0 ? 0xffffff : (layer === 1 ? 0xaaddff : 0xffddaa),
+          size: 0.15 - layer * 0.03,
+          transparent: true,
+          opacity: 0.9 - layer * 0.2,
+          sizeAttenuation: true
+        });
+        
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+        starGroups.push(stars);
+      }
+      
+      return starGroups;
+    }
+    
+    const starField = createStarField();
+    
+    // Animation variables
+    let time = 0;
+    let animationRunning = true;
+    const clock = new THREE.Clock();
+    
+    // Main animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      const delta = clock.getDelta();
+      
+      if (animationRunning) {
+        time += delta;
+        
+        // Animate light rays
+        lightRaySystems.forEach((system, sysIndex) => {
+          system.particles.forEach((particle, i) => {
+            const speed = 6 + (sysIndex % 2) * 2;
+            const offset = (time * speed + i * 0.3) % 25 - 12.5;
+            const startX = sysIndex < 2 ? (sysIndex === 0 ? -8 : 8) : (sysIndex === 2 ? -8 : 8);
+            particle.position.x = startX + offset;
+            
+            // Update glow
+            if (system.glows[i]) {
+              system.glows[i].position.x = particle.position.x;
+            }
+            
+            // Fade at edges
+            const distFromCenter = Math.abs(offset);
+            const opacity = Math.max(0, 0.95 * (1 - distFromCenter / 12.5));
+            particle.material.opacity = opacity;
+            if (system.glows[i]) {
+              system.glows[i].material.opacity = opacity * 0.3;
+            }
+          });
+        });
+        
+        // Animate wave plane
+        if (spacetimeGrid.userData.wavePlane) {
+          const plane = spacetimeGrid.userData.wavePlane;
+          const positions = plane.geometry.attributes.position;
+          for (let i = 0; i < positions.count; i++) {
+            const x = positions.getX(i);
+            const z = positions.getZ(i);
+            const wave = Math.sin(x * 0.2 + time * 2) * Math.cos(z * 0.2 + time * 2) * 0.3;
+            positions.setY(i, wave);
+          }
+          positions.needsUpdate = true;
+        }
+        
+        // Rotate spacetime grid
+        spacetimeGrid.rotation.y = Math.sin(time * 0.2) * 0.15;
+        
+        // Pulse lights
+        pointLight1.intensity = 2 + Math.sin(time * 3) * 0.5;
+        pointLight2.intensity = 1.5 + Math.cos(time * 2.5) * 0.3;
+        pointLight3.intensity = 1.2 + Math.sin(time * 2) * 0.3;
+        
+        // Rotate Earth
+        if (earthFrame.userData.earth) {
+          earthFrame.userData.earth.rotation.y += delta * 0.3;
+        }
+        
+        // Pulse spaceship glow
+        if (spaceshipFrame.userData.glow) {
+          spaceshipFrame.userData.glow.scale.setScalar(1 + Math.sin(time * 4) * 0.1);
+          spaceshipFrame.userData.glow.material.opacity = 0.12 + Math.sin(time * 4) * 0.05;
+        }
+        
+        // Animate spaceship trail
+        if (spaceshipFrame.userData.trailGroup) {
+          spaceshipFrame.userData.trailGroup.children.forEach((particle, i) => {
+            particle.position.x = 6 - i * 0.3 + Math.sin(time * 3 + i) * 0.1;
+            particle.material.opacity = 0.6 * (1 - i / 20);
+          });
+        }
+        
+        // Rotate stars slowly
+        starField.forEach((stars, i) => {
+          stars.rotation.y += delta * 0.01 * (i + 1);
+          stars.rotation.x += delta * 0.005 * (i + 1);
+        });
+        
+        // Gentle camera movement
+        if (!camera.userData.manualControl) {
+          camera.position.x = 10 + Math.sin(time * 0.3) * 1.5;
+          camera.position.y = 7 + Math.cos(time * 0.25) * 0.8;
+          camera.lookAt(0, 0, 0);
+        }
+      }
+      
+      renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    // Control functions
+    function setView(view) {
+      document.querySelectorAll('.control-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      camera.userData.manualControl = true;
+      
+      if (view === 'default') {
+        camera.position.set(10, 7, 14);
+        camera.userData.manualControl = false;
+      } else if (view === 'side') {
+        camera.position.set(18, 3, 0);
+      } else if (view === 'top') {
+        camera.position.set(0, 20, 0);
+      } else if (view === 'close') {
+        camera.position.set(5, 3, 8);
+      }
+      camera.lookAt(0, 0, 0);
+    }
+    
+    function toggleAnimation() {
+      animationRunning = !animationRunning;
+    }
+    
+    function resetScene() {
+      time = 0;
+      camera.position.set(10, 7, 14);
+      camera.lookAt(0, 0, 0);
+      camera.userData.manualControl = false;
+      animationRunning = true;
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    // Mouse interaction for camera control
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+    
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      previousMousePosition = { x: e.clientX, y: e.clientY };
+    });
+    
+    canvas.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const deltaX = e.clientX - previousMousePosition.x;
+        const deltaY = e.clientY - previousMousePosition.y;
+        
+        const rotationSpeed = 0.005;
+        camera.position.x += deltaX * rotationSpeed;
+        camera.position.y -= deltaY * rotationSpeed;
+        camera.lookAt(0, 0, 0);
+        
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+        camera.userData.manualControl = true;
+      }
+    });
+    
+    canvas.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+    
+    // Zoom with mouse wheel
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomSpeed = 0.1;
+      const direction = camera.position.clone().normalize();
+      camera.position.addScaledVector(direction, -e.deltaY * zoomSpeed);
+    });
+  </script>
+</body>
+</html>
