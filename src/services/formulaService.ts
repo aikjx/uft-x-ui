@@ -1,220 +1,287 @@
 import { Formula } from '../types';
 
-// 定义一个空的公式数组，避免TypeScript错误
-const FORMULAS: Formula[] = [];
-
-// 公式服务类
 export class FormulaService {
   private static instance: FormulaService;
-  
-  private constructor() {}
-  
-  /**
-   * 获取FormulaService单例实例
-   */
+  private formulas: Map<number, Formula> = new Map();
+
   public static getInstance(): FormulaService {
     if (!FormulaService.instance) {
       FormulaService.instance = new FormulaService();
     }
     return FormulaService.instance;
   }
-  // 获取所有公式
-  static getAllFormulas(): Formula[] {
-    return [...FORMULAS];
+
+  constructor() {
+    this.initializeFormulas();
   }
 
-  // 根据ID获取公式
-  static getFormulaById(id: string | number): Formula | undefined {
-    const formulaId = typeof id === 'string' ? parseInt(id, 10) : id;
-    return FORMULAS.find(formula => formula.id === formulaId);
+  private initializeFormulas(): void {
+    const formulas: Formula[] = [
+      {
+        id: 1,
+        name: '时空同一化方程',
+        expression: '\\vec{r}(t) = \\vec{C}t = x\\vec{i} + y\\vec{j} + z\\vec{k}',
+        description: '揭示时间和空间的本质联系，时间是空间本身的运动',
+        category: '时空方程',
+        parameters: ['time', 'space_coordinates'],
+        visualizationType: 'spacetime',
+        complexity: 3
+      },
+      {
+        id: 2,
+        name: '三维螺旋时空方程',
+        expression: '\\vec{r}(t) = r\\cos\\omega t \\cdot \\vec{i} + r\\sin\\omega t \\cdot \\vec{j} + ht \\cdot \\vec{k}',
+        description: '描述物质点在三维空间中的螺旋运动轨迹',
+        category: '时空方程',
+        parameters: ['radius', 'angular_velocity', 'height'],
+        visualizationType: 'spiral',
+        complexity: 4
+      },
+      {
+        id: 3,
+        name: '质量定义方程',
+        expression: 'm = k \\cdot \\frac{dn}{d\\Omega}',
+        description: '质量本质是物体周围空间运动的运动量',
+        category: '动力学方程',
+        parameters: ['constant_k', 'space_density'],
+        visualizationType: 'mass',
+        complexity: 2
+      },
+      {
+        id: 4,
+        name: '引力场定义方程',
+        expression: '\\overrightarrow{A} = -Gk\\frac{\\Delta n}{\\Delta s}\\frac{\\overrightarrow{r}}{r}',
+        description: '引力场是空间的加速运动效应',
+        category: '场方程',
+        parameters: ['gravitational_constant', 'mass_density'],
+        visualizationType: 'gravity',
+        complexity: 5
+      },
+      {
+        id: 5,
+        name: '静止动量方程',
+        expression: '\\overrightarrow{p}_{0} = m_{0}\\overrightarrow{C}_{0}',
+        description: '静止物体的动量与静止质量和光速有关',
+        category: '动力学方程',
+        parameters: ['rest_mass', 'lightspeed'],
+        visualizationType: 'momentum',
+        complexity: 3
+      },
+      {
+        id: 6,
+        name: '运动动量方程',
+        expression: '\\overrightarrow{P} = m(\\overrightarrow{C} - \\overrightarrow{V})',
+        description: '运动物体的动量表达式，包含了相对论效应',
+        category: '动力学方程',
+        parameters: ['mass', 'velocity', 'lightspeed'],
+        visualizationType: 'momentum',
+        complexity: 4
+      },
+      {
+        id: 7,
+        name: '宇宙大统一方程（力方程）',
+        expression: 'F = \\frac{d\\vec{P}}{dt} = \\vec{C}\\frac{dm}{dt} - \\vec{V}\\frac{dm}{dt} + m\\frac{d\\vec{C}}{dt} - m\\frac{d\\vec{V}}{dt}',
+        description: '统一四种基本力的核心方程，揭示力的本质',
+        category: '统一方程',
+        parameters: ['mass_change', 'velocity_change'],
+        visualizationType: 'unified',
+        complexity: 5
+      },
+      {
+        id: 8,
+        name: '空间波动方程',
+        expression: '\\frac{\\partial^2 L}{\\partial x^2} + \\frac{\\partial^2 L}{\\partial y^2} + \\frac{\\partial^2 L}{\\partial z^2} = \\frac{1}{c^2} \\frac{\\partial^2 L}{\\partial t^2}',
+        description: '描述空间波动的传播规律',
+        category: '场方程',
+        parameters: ['wave_amplitude', 'frequency'],
+        visualizationType: 'wave',
+        complexity: 4
+      },
+      {
+        id: 9,
+        name: '电荷定义方程',
+        expression: 'q = k^{\\prime}k\\frac{1}{\\Omega^{2}}\\frac{d\\Omega}{dt}',
+        description: '电荷本质是空间角动量的变化率',
+        category: '场方程',
+        parameters: ['constants', 'angular_momentum_change'],
+        visualizationType: 'charge',
+        complexity: 4
+      },
+      {
+        id: 10,
+        name: '电场定义方程',
+        expression: '\\vec{E} = -\\frac{kk^{\\prime}}{4\\pi\\epsilon_0\\Omega^2}\\frac{d\\Omega}{dt}\\frac{\\vec{r}}{r^3}',
+        description: '电场是空间角动量变化产生的效应',
+        category: '场方程',
+        parameters: ['charge', 'distance'],
+        visualizationType: 'electric',
+        complexity: 5
+      },
+      {
+        id: 11,
+        name: '磁场定义方程',
+        expression: '\\vec{B} = \\frac{\\mu_{0} \\gamma k k^{\\prime}}{4 \\pi \\Omega^{2}} \\frac{d \\Omega}{d t} \\frac{[(x-v t) \\vec{i}+y \\vec{j}+z \\vec{k}]}{[\\gamma^{2}(x-v t)^{2}+y^{2}+z^{2}]^{\\frac{3}{2}}}',
+        description: '磁场是运动电荷产生的相对论效应',
+        category: '场方程',
+        parameters: ['moving_charge', 'velocity'],
+        visualizationType: 'magnetic',
+        complexity: 5
+      },
+      {
+        id: 12,
+        name: '变化的引力场产生电磁场',
+        expression: '\\frac{\\partial^{2}\\overline{A}}{\\partial t^{2}} = \\frac{\\overline{V}}{f}(\\overline{\\nabla}\\cdot\\overline{E}) - \\frac{C^{2}}{f}(\\overline{\\nabla}\\times\\overline{B})',
+        description: '引力场与电磁场的相互转化关系',
+        category: '统一方程',
+        parameters: ['gravitational_field_change'],
+        visualizationType: 'unified',
+        complexity: 5
+      },
+      {
+        id: 13,
+        name: '磁矢势方程',
+        expression: '\\vec{\\nabla} \\times \\vec{A} = \\frac{\\vec{B}}{f}',
+        description: '磁矢势与磁场的关系',
+        category: '场方程',
+        parameters: ['magnetic_potential'],
+        visualizationType: 'magnetic',
+        complexity: 3
+      },
+      {
+        id: 14,
+        name: '变化的引力场产生电场',
+        expression: '\\vec{E} = -f\\frac{d\\vec{A}}{dt}',
+        description: '引力场变化如何产生电场',
+        category: '统一方程',
+        parameters: ['gravitational_potential_change'],
+        visualizationType: 'unified',
+        complexity: 4
+      },
+      {
+        id: 15,
+        name: '变化的磁场产生引力场和电场',
+        expression: '\\frac{d\\overrightarrow{B}}{dt} = \\frac{-\\overrightarrow{A}\\times\\overrightarrow{E}}{c^2} - \\frac{\\overrightarrow{V}}{c^{2}}\\times\\frac{d\\overrightarrow{E}}{dt}',
+        description: '磁场变化如何影响引力场和电场',
+        category: '统一方程',
+        parameters: ['magnetic_field_change'],
+        visualizationType: 'unified',
+        complexity: 5
+      },
+      {
+        id: 16,
+        name: '统一场论能量方程',
+        expression: 'e = m_0 c^2 = mc^2\\sqrt{1 - \\frac{v^2}{c^2}}',
+        description: '能量与质量的等价关系，扩展了爱因斯坦质能方程',
+        category: '统一方程',
+        parameters: ['mass', 'velocity'],
+        visualizationType: 'energy',
+        complexity: 3
+      },
+      {
+        id: 17,
+        name: '光速飞行器动力学方程',
+        expression: '\\vec{F} = (\\vec{C} - \\vec{V})\\frac{dm}{dt}',
+        description: '基于统一场论的光速飞行器原理',
+        category: '应用方程',
+        parameters: ['mass_change_rate'],
+        visualizationType: 'spaceship',
+        complexity: 4
+      },
+      {
+        id: 18,
+        name: '核力场定义方程',
+        expression: '\\mathbf{D} = - G m \\frac{ \\mathbf{C} - 3 \\frac{\\mathbf{R}}{r} \\dot{r} }{r^3}',
+        description: '核力场的数学表达式',
+        category: '场方程',
+        parameters: ['nuclear_constant', 'distance'],
+        visualizationType: 'nuclear',
+        complexity: 5
+      },
+      {
+        id: 19,
+        name: '引力光速统一方程',
+        expression: 'Z = Gc/2',
+        description: '揭示引力常数与光速的内在联系',
+        category: '统一方程',
+        parameters: ['gravitational_constant', 'lightspeed'],
+        visualizationType: 'fundamental',
+        complexity: 2
+      }
+    ];
+
+    formulas.forEach(formula => {
+      this.formulas.set(formula.id, formula);
+    });
   }
 
-  // 根据类别获取公式
-  static getFormulasByCategory(category: string): Formula[] {
-    return FORMULAS.filter((formula: Formula) => formula.category === category);
+  public getAllFormulas(): Formula[] {
+    return Array.from(this.formulas.values());
   }
 
-  // 获取所有类别
-  static getAllCategories(): string[] {
-    const categories = new Set<string>();
-    FORMULAS.forEach((formula: Formula) => categories.add(formula.category));
-    return Array.from(categories).sort();
+  public getFormulaById(id: number): Formula | undefined {
+    return this.formulas.get(id);
   }
 
-  // 搜索公式
-  static searchFormulas(query: string): Formula[] {
-    const lowercaseQuery = query.toLowerCase();
-    return FORMULAS.filter((formula: Formula) => 
-      formula.name.toLowerCase().includes(lowercaseQuery) ||
-      formula.description.toLowerCase().includes(lowercaseQuery) ||
-      formula.category.toLowerCase().includes(lowercaseQuery)
+  public getFormulasByCategory(category: string): Formula[] {
+    return this.getAllFormulas().filter(formula => formula.category === category);
+  }
+
+  public getFormulasByVisualizationType(type: string): Formula[] {
+    return this.getAllFormulas().filter(formula => formula.visualizationType === type);
+  }
+
+  public getCategories(): string[] {
+    const categories = new Set(this.getAllFormulas().map(formula => formula.category));
+    return Array.from(categories);
+  }
+
+  public searchFormulas(query: string): Formula[] {
+    const lowerQuery = query.toLowerCase();
+    return this.getAllFormulas().filter(formula => 
+      formula.name.toLowerCase().includes(lowerQuery) ||
+      formula.description.toLowerCase().includes(lowerQuery) ||
+      formula.expression.toLowerCase().includes(lowerQuery)
     );
   }
 
-  // 获取相关公式（基于类别）
-  static getRelatedFormulas(formula: Formula, limit: number = 3): Formula[] {
-    return FORMULAS
-      .filter((f: Formula) => f.category === formula.category && f.id !== formula.id)
+  public getRelatedFormulas(formulaId: number, limit: number = 3): Formula[] {
+    const currentFormula = this.getFormulaById(formulaId);
+    if (!currentFormula) return [];
+
+    return this.getAllFormulas()
+      .filter(formula => 
+        formula.id !== formulaId && 
+        (formula.category === currentFormula.category || 
+         formula.visualizationType === currentFormula.visualizationType)
+      )
       .slice(0, limit);
   }
 
-  // 格式化公式表达式用于显示
-  static formatFormulaExpression(expression: string): string {
-    // 这里可以添加更复杂的公式格式化逻辑
-    return expression
-      .replace(/\\/g, '\\')
-      .trim();
-  }
-  
-  /**
-   * 格式化LaTeX公式
-   * @param formula LaTeX公式字符串
-   * @returns 格式化后的公式字符串
-   */
-  public formatFormula(formula: string): string {
-    if (!formula || typeof formula !== 'string') {
-      return '';
-    }
-    
-    // 移除首尾空白字符
-    let formatted = formula.trim();
-    
-    // 移除公式环境标记
-    formatted = formatted.replace(/^\\\(/, '').replace(/\\\)$/, '');
-    formatted = formatted.replace(/^\\\[/, '').replace(/\\\]$/, '');
-    formatted = formatted.replace(/^\$/, '').replace(/\$$/, '');
-    formatted = formatted.replace(/^\$\$/, '').replace(/\$\$$/, '');
-    
-    // 规范化空格
-    formatted = formatted.replace(/\s+/g, ' ').trim();
-    
-    return formatted;
-  }
-  
-  /**
-   * 验证LaTeX公式是否有效
-   * @param formula LaTeX公式字符串
-   * @returns 是否为有效公式
-   */
-  public validateFormula(formula: string): boolean {
-    if (!formula || typeof formula !== 'string') {
-      return false;
-    }
-    
-    const trimmed = formula.trim();
-    if (trimmed === '') {
-      return false;
-    }
-    
-    // 检查括号匹配
-    const bracketPairs: { [key: string]: string } = {
-      '(': ')',
-      '[': ']',
-      '{': '}',
-      '\\left': '\\right',
-      '\\begin': '\\end'
-    };
-    
-    const stack: string[] = [];
-    const words = trimmed.split(/(\\[a-zA-Z]+|[\(\)\[\]\{\}])/).filter(w => w !== '');
-    
-    for (const word of words) {
-      if (bracketPairs[word]) {
-        stack.push(bracketPairs[word]);
-      } else if (Object.values(bracketPairs).includes(word)) {
-        if (stack.pop() !== word) {
-          return false;
-        }
-      }
-    }
-    
-    return stack.length === 0;
-  }
-  
-  /**
-   * 获取公式的简化版本
-   * @param formula LaTeX公式字符串
-   * @returns 简化后的公式字符串
-   */
-  public simplifyFormula(formula: string): string {
-    let simplified = this.formatFormula(formula);
-    
-    // 移除不必要的空格
-    simplified = simplified.replace(/\s+/g, '');
-    
-    // 简化常见表达式
-    simplified = simplified.replace(/\\cdot/g, '');
-    simplified = simplified.replace(/\\times/g, '\\times');
-    simplified = simplified.replace(/\\div/g, '/');
-    
-    return simplified;
-  }
-  
-  /**
-   * 提取公式中的变量名
-   * @param formula LaTeX公式字符串
-   * @returns 变量名数组
-   */
-  public extractVariables(formula: string): string[] {
-    const formatted = this.formatFormula(formula);
-    const variables = new Set<string>();
-    
-    // 匹配单个字母变量（不包括命令和数字）
-    const variableRegex = /(?![\\a-zA-Z]+)([a-zA-Z])(?![a-zA-Z]|_)/g;
-    let match;
-    
-    while ((match = variableRegex.exec(formatted)) !== null) {
-      variables.add(match[1]);
-    }
-    
-    // 匹配带下标的变量
-    const subscriptRegex = /([a-zA-Z])_(\{[^{}]+\}|[a-zA-Z0-9])/g;
-    
-    while ((match = subscriptRegex.exec(formatted)) !== null) {
-      variables.add(match[0]);
-    }
-    
-    return Array.from(variables).sort();
-  }
-  
-  /**
-   * 获取常用物理公式库
-   * @returns 公式库对象
-   */
-  public getFormulaLibrary(): { [key: string]: string } {
-    return {
-      // 运动学公式
-      velocity: 'v = \\frac{\\Delta x}{\\Delta t}',
-      acceleration: 'a = \\frac{\\Delta v}{\\Delta t}',
-      position: 'x = x_0 + v_0t + \\frac{1}{2}at^2',
-      
-      // 统一场论相关公式
-      unified_field: 'F = \\frac{dP}{dt} = C \\cdot \\frac{dm}{dt} - V \\cdot \\frac{dm}{dt} + m \\cdot \\frac{dC}{dt} - m \\cdot \\frac{dV}{dt}',
-      space_time_unity: '\\vec{r}(t) = \\vec{C}t',
-      energy_equation: 'e = m_0c^2 = mc^2\\sqrt{1 - \\frac{v^2}{c^2}}'
-    };
+  public validateFormulaParameters(formulaId: number, parameters: Record<string, any>): boolean {
+    const formula = this.getFormulaById(formulaId);
+    if (!formula || !formula.parameters) return false;
+
+    return formula.parameters.every(param => parameters.hasOwnProperty(param));
   }
 
-  // 解析公式中的符号
-  static parseFormulaSymbols(expression: string): string[] {
-    // 简单的符号提取逻辑，可以根据需要扩展
-    const symbols = new Set<string>();
-    const symbolRegex = /[a-zA-Z_][a-zA-Z0-9_]*/g;
-    let match;
-    
-    while ((match = symbolRegex.exec(expression)) !== null) {
-      // 过滤掉常见的LaTeX命令
-      if (!match[0].startsWith('\\')) {
-        symbols.add(match[0]);
-      }
+  public calculateFormula(formulaId: number, parameters: Record<string, number>): number {
+    // 简化的公式计算实现
+    // 在实际应用中，这里应该实现具体的数学计算逻辑
+    const formula = this.getFormulaById(formulaId);
+    if (!formula) return 0;
+
+    // 基础计算示例
+    switch (formulaId) {
+      case 1: // 时空同一化方程
+        return parameters.time || 0;
+      case 2: // 三维螺旋时空方程
+        return (parameters.radius || 1) * (parameters.angular_velocity || 1);
+      case 16: // 质能方程
+        return (parameters.mass || 0) * Math.pow(299792458, 2);
+      default:
+        return Math.random() * 100;
     }
-    
-    return Array.from(symbols).sort();
   }
 }
 
-// 创建并导出单例实例
 export const formulaService = FormulaService.getInstance();
-
-// 默认导出
-export default FormulaService;

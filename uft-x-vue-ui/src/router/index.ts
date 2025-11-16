@@ -54,7 +54,7 @@ const routes: RouteRecordRaw[] = [
 
 // 创建路由实例
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL || '/'),
+  history: createWebHistory((import.meta as any).env?.BASE_URL || '/'),
   routes,
   scrollBehavior(_to, _from, savedPosition) {
     // 保存滚动位置

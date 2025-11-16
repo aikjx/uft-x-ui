@@ -1,247 +1,140 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { cn } from '../utils';
 
 const Navbar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // 使用useRef存储timeoutId
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // 优化的滚动监听函数 - 使用防抖
-  const handleScroll = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    timeoutRef.current = setTimeout(() => {
-      setIsScrolled(window.scrollY > 30);
-    }, 16); // 约60fps
-  }, []);
-
-  useEffect(() => {
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // 初始检查
-    handleScroll();
-    
-    // 关闭菜单时重置为false
-    const closeMenuOnScroll = () => {
-      if (isOpen) setIsOpen(false);
-    };
-    
-    window.addEventListener('scroll', closeMenuOnScroll, { passive: true });
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('scroll', closeMenuOnScroll);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [isOpen, handleScroll]);
-
-  // 导航项配置
   const navItems = [
-    { path: '/', label: '首页', icon: '🏠', key: 'home' },
-    { path: '/formulas', label: '公式可视化', icon: '📐', key: 'formulas' },
-    { path: '/artificial-field', label: '人工场技术', icon: '⚡', key: 'artificial-field' },
-    { path: '/interactive', label: '交互探索', icon: '🔭', key: 'interactive' },
-    { path: '/knowledge', label: '知识学习', icon: '📚', key: 'knowledge' }
+    { path: '/', label: '🏠 首页', icon: '🏠' },
+    { path: '/formulas', label: '📐 公式可视化', icon: '📐' },
+    { path: '/artificial-field', label: '⚡ 人工场技术', icon: '⚡' },
+    { path: '/interactive', label: '🔭 交互探索', icon: '🔭' },
+    { path: '/knowledge', label: '📚 知识学习', icon: '📚' }
   ];
 
-  // 检查当前路径是否匹配导航项（支持带参数的路由）
-  const isActivePath = (path: string) => {
-    if (path === '/') return location.pathname === '/';
-    return location.pathname.startsWith(path);
-  };
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
 
-  // 导航处理
-  const handleNavigation = (path: string) => {
-    setIsOpen(false);
-    navigate(path);
-  };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <motion.header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled 
-        ? 'bg-[#0a0a14]/95 backdrop-blur-md border-b border-blue-900/30 shadow-lg shadow-blue-900/10 py-2' 
-        : 'bg-transparent py-3'}`}
+    <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+      className={cn(
+        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+        isScrolled
+          ? 'bg-gray-900/80 backdrop-blur-xl border-b border-gray-700/50 shadow-xl'
+          : 'bg-transparent'
+      )}
     >
-      <div className="container px-4 mx-auto">
-        <div className="flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <motion.div
-            className="flex gap-2 items-center"
             whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+            className="flex items-center space-x-3"
           >
-            <Link 
-              to="/" 
-              className="flex gap-2 items-center text-decoration-none"
-              onClick={() => setIsOpen(false)}
-            >
-              <motion.div 
-                className="text-2xl"
-                animate={{ rotate: [0, 10, -10, 10, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                🌌
-              </motion.div>
-              <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-                统一场论探索
-              </span>
-            </Link>
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">🌌</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white">统一场论探索</h1>
+              <p className="text-xs text-gray-400">Unified Field Theory</p>
+            </div>
           </motion.div>
 
-          {/* 桌面端导航 */}
-          <nav className="hidden gap-6 items-center md:flex">
-            {navItems.map((item) => (
-              <motion.div 
-                key={item.key}
-                className="relative"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
                 <Link
+                  key={item.path}
                   to={item.path}
-                  onClick={() => handleNavigation(item.path)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all duration-300 ${isActivePath(item.path) 
-                    ? 'bg-blue-900/30 text-blue-300' 
-                    : 'text-blue-100/70 hover:text-blue-300 hover:bg-blue-900/20'}`}
+                  className={cn(
+                    'relative px-3 py-2 text-sm font-medium transition-all duration-300',
+                    isActive
+                      ? 'text-blue-400'
+                      : 'text-gray-300 hover:text-white'
+                  )}
                 >
-                  <span>{item.icon}</span>
-                  <span>{item.label}</span>
+                  <span className="flex items-center space-x-2">
+                    <span>{item.icon}</span>
+                    <span>{item.label.replace(/^[^\s]+\s/, '')}</span>
+                  </span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="navbar-indicator"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500"
+                    />
+                  )}
                 </Link>
-                {isActivePath(item.path) && (
-                  <motion.div 
-                    className="absolute -bottom-1 left-0 right-0 h-0.5 bg-blue-400"
-                    layoutId="activeNavIndicator"
-                  />
-                )}
-              </motion.div>
-            ))}
-          </nav>
+              );
+            })}
+          </div>
 
-          {/* 移动端菜单按钮 */}
+          {/* Mobile menu button */}
           <motion.button
-            className="p-2 text-blue-200 rounded-full transition-colors md:hidden hover:bg-blue-900/20"
-            onClick={() => setIsOpen(!isOpen)}
-            whileTap={{ scale: 0.9 }}
-            aria-label={isOpen ? '关闭菜单' : '打开菜单'}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/50 transition-colors"
           >
-            <motion.svg 
-              className="w-6 h-6" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-              initial={false}
-              animate={{
-                rotate: isOpen ? 90 : 0
-              }}
-            >
-              {isOpen ? (
-                <motion.path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M6 18L18 6M6 6l12 12"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.3 }}
-                />
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {isMobileMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               ) : (
-                <>
-                  <motion.path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M4 6h16"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.3 }}
-                  />
-                  <motion.path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M4 12h16"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.3, delay: 0.1 }}
-                  />
-                  <motion.path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M4 18h16"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
-                  />
-                </>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               )}
-            </motion.svg>
+            </svg>
           </motion.button>
         </div>
-      </div>
 
-      {/* 移动端导航菜单 */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* 背景遮罩 */}
-            <motion.div 
-              className="fixed inset-0 z-40 backdrop-blur-sm bg-black/50 md:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setIsOpen(false)}
-            />
-            
-            {/* 菜单内容 */}
+        {/* Mobile Navigation */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
             <motion.div
-              className="md:hidden bg-[#0a0a14] border-t border-blue-900/30 shadow-xl shadow-blue-900/20 z-50"
-              initial={{ opacity: 0, height: 0, y: -20 }}
-              animate={{ opacity: 1, height: 'auto', y: 0 }}
-              exit={{ opacity: 0, height: 0, y: -20 }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden border-t border-gray-700/50"
             >
-              <div className="container px-4 py-4 mx-auto space-y-2">
-                {navItems.map((item, index) => (
-                  <motion.div 
-                    key={item.key} 
-                    whileTap={{ scale: 0.98 }}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
+              <div className="py-4 space-y-2">
+                {navItems.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  return (
                     <Link
+                      key={item.path}
                       to={item.path}
-                      onClick={() => handleNavigation(item.path)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${isActivePath(item.path) 
-                        ? 'bg-blue-900/30 text-blue-300 font-medium' 
-                        : 'text-blue-100/70 hover:bg-blue-900/20'}`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={cn(
+                        'block px-4 py-3 rounded-lg text-base font-medium transition-all duration-300',
+                        isActive
+                          ? 'bg-blue-500/20 text-blue-400 border-l-4 border-blue-500'
+                          : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                      )}
                     >
-                      <span className="text-lg">{item.icon}</span>
-                      <span>{item.label}</span>
+                      <span className="flex items-center space-x-3">
+                        <span className="text-lg">{item.icon}</span>
+                        <span>{item.label}</span>
+                      </span>
                     </Link>
-                  </motion.div>
-                ))}
+                  );
+                })}
               </div>
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </motion.header>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.nav>
   );
 };
 

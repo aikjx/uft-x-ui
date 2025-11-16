@@ -3,36 +3,36 @@
     <div class="not-found-content">
       <motion.div 
         class="error-number"
-        initial={{ opacity: 0, scale: 0.5 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, type: "spring" }}
+        :initial="{ opacity: 0, scale: 0.5 }"
+        :animate="{ opacity: 1, scale: 1 }"
+        :transition="{ duration: 0.6, type: 'spring' }"
       >
         404
       </motion.div>
       
       <motion.h1 
         class="error-title"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
+        :initial="{ opacity: 0, y: 20 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :transition="{ delay: 0.3, duration: 0.5 }"
       >
         页面未找到
       </motion.h1>
       
       <motion.p 
         class="error-description"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
+        :initial="{ opacity: 0, y: 20 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :transition="{ delay: 0.4, duration: 0.5 }"
       >
         您访问的页面不存在或已被移除。请检查URL是否正确，或返回首页继续浏览。
       </motion.p>
       
       <motion.div 
         class="action-buttons"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
+        :initial="{ opacity: 0, y: 20 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :transition="{ delay: 0.5, duration: 0.5 }"
       >
         <router-link to="/" class="btn btn-primary">
           返回首页
@@ -44,9 +44,9 @@
       
       <motion.div 
         class="search-suggestion"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.7, duration: 0.5 }}
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :transition="{ delay: 0.7, duration: 0.5 }"
       >
         <p class="suggestion-text">或者尝试搜索相关内容：</p>
         <div class="search-bar">
@@ -71,30 +71,30 @@
     <div class="decorative-elements">
       <motion.div 
         class="element element-1"
-        animate={{ 
+        :animate="{ 
           x: [0, 10, 0], 
           y: [0, -10, 0],
           rotate: [0, 5, 0]
-        }}
-        transition={{ repeat: Infinity, duration: 10, ease: "easeInOut" }}
+        }"
+        :transition="{ repeat: Infinity, duration: 10, ease: 'easeInOut' }"
       ></motion.div>
       <motion.div 
         class="element element-2"
-        animate={{ 
+        :animate="{ 
           x: [0, -15, 0], 
           y: [0, 15, 0],
           rotate: [0, -10, 0]
-        }}
-        transition={{ repeat: Infinity, duration: 15, ease: "easeInOut" }}
+        }"
+        :transition="{ repeat: Infinity, duration: 15, ease: 'easeInOut' }"
       ></motion.div>
       <motion.div 
         class="element element-3"
-        animate={{ 
+        :animate="{ 
           x: [0, 20, 0], 
           y: [0, 20, 0],
           rotate: [0, 15, 0]
-        }}
-        transition={{ repeat: Infinity, duration: 12, ease: "easeInOut" }}
+        }"
+        :transition="{ repeat: Infinity, duration: 12, ease: 'easeInOut' }"
       ></motion.div>
     </div>
   </div>
@@ -102,10 +102,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+// import { useRouter } from 'vue-router' // 注释掉未使用的导入
 import { motion } from 'framer-motion'
 
-const router = useRouter()
+// const router = useRouter() // 暂时注释未使用的router
 const searchQuery = ref('')
 
 function handleSearch() {

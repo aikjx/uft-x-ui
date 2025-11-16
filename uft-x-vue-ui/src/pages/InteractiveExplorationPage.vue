@@ -304,7 +304,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useVisualizationStore } from '../stores/visualization'
-import MathJax from '../components/MathJax.vue'
+// import MathJax from '../components/MathJax.vue'
 import ThreeJSFieldVisualization from '../components/ThreeJSFieldVisualization.vue'
 
 // 状态管理
@@ -413,15 +413,13 @@ function resetParameters() {
 }
 
 function saveConfiguration() {
-  const config = {
-    fieldType: selectedFieldType.value,
-    gravityParams: { ...gravityParams },
-    electroParams: { ...electroParams },
-    unifiedParams: { ...unifiedParams },
-    visualOptions: { ...visualOptions }
-  }
+  // 更新模拟参数到store
+  visualizationStore.updateSimulationParam('fieldType', selectedFieldType.value)
+  visualizationStore.updateSimulationParam('gravityParams', { ...gravityParams })
+  visualizationStore.updateSimulationParam('electroParams', { ...electroParams })
+  visualizationStore.updateSimulationParam('unifiedParams', { ...unifiedParams })
+  visualizationStore.updateSimulationParam('visualOptions', { ...visualOptions })
   
-  visualizationStore.updateConfig(config)
   alert('配置已保存！')
 }
 
@@ -458,15 +456,11 @@ function applyPreset(preset: any) {
 
 function updateVisualizationConfig() {
   // 更新store中的配置
-  visualizationStore.updateConfig({
-    fieldType: selectedFieldType.value,
-    parameters: {
-      gravity: { ...gravityParams },
-      electromagnetic: { ...electroParams },
-      unified: { ...unifiedParams }
-    },
-    visualOptions: { ...visualOptions }
-  })
+  visualizationStore.updateSimulationParam('fieldType', selectedFieldType.value)
+  visualizationStore.updateSimulationParam('gravityParams', { ...gravityParams })
+  visualizationStore.updateSimulationParam('electroParams', { ...electroParams })
+  visualizationStore.updateSimulationParam('unifiedParams', { ...unifiedParams })
+  visualizationStore.updateSimulationParam('visualOptions', { ...visualOptions })
 }
 
 function startSimulation() {

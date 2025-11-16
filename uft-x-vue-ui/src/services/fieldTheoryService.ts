@@ -34,6 +34,17 @@ export interface FieldParams {
   quantumWaveVectorY: number;
   quantumWaveVectorZ: number;
   wavePacketWidth: number;
+  
+  // 量子隧穿效应参数
+  tunnelingEffect: boolean;
+  potentialBarrierHeight: number;
+  potentialBarrierWidth: number;
+  barrierPositionX: number;
+  barrierPositionY: number;
+  barrierPositionZ: number;
+  quantumState: number; // 量子态 (n=1,2,3...)
+  energyLevel: number;
+  tunnelingProbability: number;
 }
 
 // 粒子接口
@@ -41,7 +52,7 @@ export interface Particle {
   position: Vector3;
   velocity: Vector3;
   acceleration: Vector3;
-  color: Vector3;
+  color: Color;
   mass: number;
 }
 
@@ -49,8 +60,8 @@ export interface Particle {
  * 场论计算服务
  */
 export class FieldTheoryService {
+  private static instance: FieldTheoryService | null = null;
   private currentTime: number = 0;
-  private timeDelta: number = 0.016; // 60fps的时间步长
   private particleCache: Map<string, Particle[]> = new Map();
   private colorCache: Map<FieldType, { r: number; g: number; b: number }> = new Map();
   private boundsCache: Map<string, Vector3> = new Map();
@@ -71,6 +82,16 @@ export class FieldTheoryService {
   
   constructor() {
     this.initializeColorCache();
+  }
+  
+  /**
+   * 获取单例实例
+   */
+  static getInstance(): FieldTheoryService {
+    if (!FieldTheoryService.instance) {
+      FieldTheoryService.instance = new FieldTheoryService();
+    }
+    return FieldTheoryService.instance;
   }
   
   /**
@@ -170,6 +191,13 @@ export class FieldTheoryService {
         // 随机量子效应
         const quantumPhase = Math.sin(phase * SQRT_2);
         force.addScaledVector(pos, fluctuation * 0.01 * quantumPhase);
+        
+        // 添加量子隧穿效应
+        if (params.tunnelingEffect) {
+          const tunnelingForce = this.calculateTunnelingForce(particle, params);
+          force.add(tunnelingForce);
+        }
+        
         break;
       }
     }
@@ -187,7 +215,6 @@ export class FieldTheoryService {
    * 优化的颜色获取
    */
   private getParticleColor(fieldType: FieldType, particleIndex: number, velocity?: Vector3): Color {
-    const cacheKey = `${fieldType}_${particleIndex}`;
     const cached = this.colorCache.get(fieldType);
     
     if (!cached) {
@@ -427,7 +454,6 @@ export class FieldTheoryService {
    /**
     * 生成量子波包
     */
-   // @ts-ignore - 暂时移除未使用的方法
   private generateWavePacket(position: Vector3, time: number, params: FieldParams): Vector3 {
      // 高斯波包的简化模型
      const sigma = params.wavePacketWidth; // 波包宽度
@@ -449,6 +475,160 @@ export class FieldTheoryService {
        Math.sin(phase) * envelope,
        Math.cos(phase + Math.PI/4) * envelope
      );
+  }
+
+   /**
+    * 量子隧穿概率计算 (WKB近似)
+    */
+   calculateTunnelingProbability(
+     energy: number,
+     barrierHeight: number,
+     barrierWidth: number,
+     mass: number = 1
+   ): number {
+     if (energy <= 0) return 0;
+     
+     const { TWO_PI, SQRT_2 } = FieldTheoryService.MATH_CONSTANTS;
+     
+     if (energy >= barrierHeight) {
+       // 能量大于势垒，直接穿越
+       return 1.0;
+     }
+     
+     // WKB近似的隧穿概率
+     const kappa = SQRT_2 * Math.sqrt(barrierHeight - energy) * Math.sqrt(mass);
+     const exponent = -2 * kappa * barrierWidth;
+     
+     // 防止指数溢出
+     const minExponent = -50; // 对应概率 ~ 10^-22
+     const clampedExponent = Math.max(exponent, minExponent);
+     
+     return Math.exp(clampedExponent);
+   }
+   
+   /**
+    * 计算势垒电势
+    */
+   calculateBarrierPotential(
+     position: Vector3,
+     params: FieldParams
+   ): number {
+     const barrierCenter = new Vector3(
+       params.barrierPositionX,
+       params.barrierPositionY,
+       params.barrierPositionZ
+     );
+     
+     const distance = position.distanceTo(barrierCenter);
+     const halfWidth = params.potentialBarrierWidth / 2;
+     
+     if (Math.abs(distance) <= halfWidth) {
+       // 在势垒内部，返回势垒高度
+       return params.potentialBarrierHeight;
+     } else {
+       // 在势垒外部，返回零势
+       return 0;
+     }
+   }
+   
+   /**
+    * 计算量子粒子在势垒附近的波函数
+    */
+   calculateQuantumWaveFunction(
+     position: Vector3,
+     time: number,
+     params: FieldParams
+   ): Vector3 {
+     const { TWO_PI, SQRT_2 } = FieldTheoryService.MATH_CONSTANTS;
+     const barrierCenter = new Vector3(
+       params.barrierPositionX,
+       params.barrierPositionY,
+       params.barrierPositionZ
+     );
+     
+     const distance = position.distanceTo(barrierCenter);
+     const energy = params.energyLevel;
+     const mass = 1; // 归一化质量
+     
+     // 计算波矢
+     const k = SQRT_2 * Math.sqrt(energy) * Math.sqrt(mass);
+     
+     // 计算波函数的相位
+     const phase = k * distance - TWO_PI * params.quantumFrequency * time;
+     
+     // 如果启用了隧穿效应，计算隧穿概率
+     let tunnelingFactor = 1.0;
+     if (params.tunnelingEffect && distance <= params.potentialBarrierWidth) {
+       const probability = this.calculateTunnelingProbability(
+         energy,
+         params.potentialBarrierHeight,
+         params.potentialBarrierWidth,
+         mass
+       );
+       tunnelingFactor = Math.sqrt(probability); // 波函数幅度与概率的平方根成正比
+     }
+     
+     // 高斯包络
+     const envelope = Math.exp(-distance * distance / (2 * params.wavePacketWidth * params.wavePacketWidth));
+     
+     // 计算波函数的三个分量
+     const psi_x = Math.cos(phase) * envelope * tunnelingFactor;
+     const psi_y = Math.sin(phase) * envelope * tunnelingFactor;
+     const psi_z = Math.cos(phase + Math.PI/4) * envelope * tunnelingFactor;
+     
+     return new Vector3(psi_x, psi_y, psi_z);
+   }
+   
+   /**
+    * 量子隧穿力计算
+    */
+   private calculateTunnelingForce(
+     particle: Particle,
+     params: FieldParams
+   ): Vector3 {
+     const { TWO_PI, SQRT_2 } = FieldTheoryService.MATH_CONSTANTS;
+     const force = new Vector3(0, 0, 0);
+     
+     if (!params.tunnelingEffect) return force;
+     
+     const barrierCenter = new Vector3(
+       params.barrierPositionX,
+       params.barrierPositionY,
+       params.barrierPositionZ
+     );
+     
+     const position = particle.position;
+     const distance = position.distanceTo(barrierCenter);
+     const energy = params.energyLevel;
+     const mass = particle.mass;
+     
+     // 计算隧穿概率
+     const tunnelingProbability = this.calculateTunnelingProbability(
+       energy,
+       params.potentialBarrierHeight,
+       params.potentialBarrierWidth,
+       mass
+     );
+     
+     // 隧穿效应力的大小与隧穿概率和势垒梯度成正比
+     if (distance < params.potentialBarrierWidth * 2) {
+       const barrierGradient = params.potentialBarrierHeight / params.potentialBarrierWidth;
+       const forceMagnitude = tunnelingProbability * barrierGradient * 0.1;
+       
+       // 力的方向指向势垒中心
+       const direction = new Vector3().subVectors(barrierCenter, position).normalize();
+       force.addScaledVector(direction, forceMagnitude);
+       
+       // 添加量子涨落效应
+       const fluctuationPhase = TWO_PI * params.quantumFrequency * this.currentTime + distance;
+       const fluctuationMagnitude = params.quantumFluctuation * tunnelingProbability * 0.05;
+       
+       force.x += Math.sin(fluctuationPhase) * fluctuationMagnitude;
+       force.y += Math.cos(fluctuationPhase) * fluctuationMagnitude;
+       force.z += Math.sin(fluctuationPhase + Math.PI/3) * fluctuationMagnitude;
+     }
+     
+     return force;
    }
    
    /**
@@ -484,7 +664,7 @@ export class FieldTheoryService {
        
        // 批量更新颜色
        if (i % 2 === 0) { // 隔帧更新颜色，减少计算量
-         particle.color.copy(this.getParticleColor(fieldType, i, particle.velocity));
+         particle.color.copy(this.getParticleColor(fieldType, i) as any);
        }
      }
    }
@@ -507,7 +687,18 @@ export class FieldTheoryService {
        quantumWaveVectorX: 1.0,
        quantumWaveVectorY: 1.0,
        quantumWaveVectorZ: 0.5,
-       wavePacketWidth: 2.0
+       wavePacketWidth: 2.0,
+       
+       // 量子隧穿效应默认参数
+       tunnelingEffect: false,
+       potentialBarrierHeight: 15,
+       potentialBarrierWidth: 3,
+       barrierPositionX: 5,
+       barrierPositionY: 0,
+       barrierPositionZ: 0,
+       quantumState: 1,
+       energyLevel: 10,
+       tunnelingProbability: 0.5
      };
      
      // 根据场类型调整默认值
@@ -530,6 +721,9 @@ export class FieldTheoryService {
          defaultParams.quantumFluctuation = 3.0;
          defaultParams.quantumFrequency = 4.0;
          defaultParams.wavePacketWidth = 1.5;
+         defaultParams.tunnelingEffect = true; // 量子场默认启用隧穿效应
+         defaultParams.energyLevel = 12;
+         defaultParams.potentialBarrierHeight = 15;
          break;
      }
      
@@ -565,12 +759,12 @@ export class FieldTheoryService {
     this.boundsCache.clear();
     
     // 定期清理颜色缓存
-    for (const [key, value] of this.colorCache) {
-      value.r = 0;
-      value.g = 0;
-      value.b = 0;
-    }
+  for (const [, value] of this.colorCache) {
+    value.r = 0;
+    value.g = 0;
+    value.b = 0;
   }
+}
   
   /**
    * 性能监控接口

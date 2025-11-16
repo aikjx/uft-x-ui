@@ -317,7 +317,7 @@
       @shadow-quality-change="handleShadowQualityChange"
       @max-particles-change="handleMaxParticlesChange"
       @frame-skip-threshold-change="handleFrameSkipThresholdChange"
-      @clean-memory="cleanMemory"
+      @clean-memory="handleCleanMemory"
       @reset-settings="handleResetSettings"
     />
     </div>
@@ -325,12 +325,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, reactive } from 'vue';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
-import { FieldTheoryService, FieldType, Particle, FieldParameters } from '../services/fieldTheoryService';
-import { performanceMonitor, particleOptimizer, renderOptimizer } from '../../../../../src/utils/performanceUtils';
+// import type { GUI } from 'dat.gui';
+import { FieldTheoryService, type FieldParams } from '../services/fieldTheoryService';
+// import { performanceMonitor, particleOptimizer, renderOptimizer } from '../utils/performanceUtils';
 import PerformanceControlPanel from './PerformanceControlPanel.vue';
 
 // 响应式状态
@@ -427,84 +427,10 @@ let clock: THREE.Clock;
 
 // 场论服务和粒子系统
 let fieldService: FieldTheoryService;
-let particlesArray: Particle[];
+let particlesArray: any[];
 let time = 0;
 
-// 色彩映射
-const colorMaps = {
-  viridis: [
-    [0.267004, 0.004874, 0.329415],
-    [0.275299, 0.194951, 0.497439],
-    [0.173399, 0.359962, 0.556582],
-    [0.092291, 0.495176, 0.548132],
-    [0.116612, 0.63843, 0.499057],
-    [0.296827, 0.767244, 0.384511],
-    [0.599696, 0.860763, 0.195626],
-    [0.993248, 0.906157, 0.143936]
-  ],
-  plasma: [
-    [0.050383, 0.029803, 0.527975],
-    [0.236496, 0.119594, 0.597853],
-    [0.370313, 0.206325, 0.631354],
-    [0.491541, 0.299218, 0.623869],
-    [0.603575, 0.397864, 0.584678],
-    [0.712015, 0.498512, 0.521777],
-    [0.811424, 0.608579, 0.444241],
-    [0.905755, 0.725942, 0.359367],
-    [0.976866, 0.859239, 0.283214],
-    [0.993248, 0.993248, 0.993248]
-  ],
-  magma: [
-    [0.001462, 0.000466, 0.013866],
-    [0.092702, 0.031427, 0.127718],
-    [0.226195, 0.06666, 0.247691],
-    [0.361704, 0.105333, 0.337935],
-    [0.499132, 0.149295, 0.409017],
-    [0.632375, 0.201033, 0.470551],
-    [0.759849, 0.265039, 0.536198],
-    [0.872266, 0.346051, 0.599461],
-    [0.958317, 0.452785, 0.633682],
-    [0.999911, 0.592426, 0.628871],
-    [0.996278, 0.736331, 0.654174],
-    [0.945312, 0.86431, 0.727974],
-    [0.843807, 0.954323, 0.853881],
-    [0.731508, 0.996078, 0.944614]
-  ],
-  inferno: [
-    [0.000402, 0.000153, 0.001352],
-    [0.114276, 0.016617, 0.104939],
-    [0.229721, 0.053862, 0.176713],
-    [0.344086, 0.089887, 0.209991],
-    [0.456222, 0.127942, 0.226328],
-    [0.564686, 0.169547, 0.234017],
-    [0.668092, 0.216084, 0.233609],
-    [0.765581, 0.268978, 0.225185],
-    [0.856023, 0.329648, 0.208633],
-    [0.937573, 0.399939, 0.183577],
-    [0.999205, 0.483479, 0.148996],
-    [0.993364, 0.583668, 0.230802],
-    [0.975692, 0.68748, 0.324981],
-    [0.946467, 0.792376, 0.430213],
-    [0.906633, 0.896075, 0.545026],
-    [0.856857, 0.997015, 0.669315]
-  ],
-  cividis: [
-    [0.002985, 0.001771, 0.001097],
-    [0.116049, 0.070004, 0.094502],
-    [0.171597, 0.164299, 0.203816],
-    [0.198639, 0.264928, 0.301997],
-    [0.200561, 0.368299, 0.392615],
-    [0.233261, 0.471055, 0.470178],
-    [0.332501, 0.568131, 0.528225],
-    [0.462653, 0.656789, 0.565731],
-    [0.613265, 0.734941, 0.579917],
-    [0.770821, 0.800211, 0.571735],
-    [0.906403, 0.849462, 0.566602],
-    [0.967945, 0.897072, 0.678759],
-    [0.982846, 0.941114, 0.799148],
-    [0.997038, 0.982326, 0.916474]
-  ]
-};
+
 
 // 启动内存监控
 const startMemoryMonitoring = () => {
@@ -565,17 +491,11 @@ const cleanupResources = () => {
   }
   
   // 清理场效果网格
+  const fieldEffectMesh = scene?.getObjectByName('fieldEffectMesh') as THREE.Mesh | null;
   if (fieldEffectMesh) {
-    if (scene && fieldEffectMesh.parent === scene) {
-      scene.remove(fieldEffectMesh);
-    }
-    if (fieldEffectMesh.geometry) {
-      fieldEffectMesh.geometry.dispose();
-    }
-    if (fieldEffectMesh.material) {
-      (fieldEffectMesh.material as THREE.Material).dispose();
-    }
-    fieldEffectMesh = null as any;
+    scene.remove(fieldEffectMesh);
+    fieldEffectMesh.geometry.dispose();
+    (fieldEffectMesh.material as THREE.Material).dispose();
   }
   
   // 清理缓存（如果有）
@@ -758,7 +678,7 @@ const createParticleSystem = () => {
   particlesArray = fieldService.initializeParticles(
     count,
     bounds,
-    FieldType[fieldType.value.toUpperCase() as keyof typeof FieldType]
+    fieldType.value as any
   );
   
   // 创建缓冲区几何体
@@ -866,7 +786,7 @@ const updateParticleSystem = () => {
         particlesArray,
         newCount,
         bounds,
-        FieldType[fieldType.value.toUpperCase() as keyof typeof FieldType]
+        fieldType.value as any
       );
       
       // 更新缓冲区大小
@@ -886,16 +806,17 @@ const updateParticleSystem = () => {
       }
       
       // 更新属性
-      positionAttr.array = newPositions;
-      colorAttr.array = newColors;
-      positionAttr.count = newCount;
-      colorAttr.count = newCount;
+      (positionAttr.array as any) = newPositions;
+      (colorAttr.array as any) = newColors;
+      (positionAttr.count as any) = newCount;
+      (colorAttr.count as any) = newCount;
       positionAttr.needsUpdate = true;
       colorAttr.needsUpdate = true;
       
       // 更新粒子材质大小，根据粒子数量进行优化
       const material = particles.material as THREE.PointsMaterial;
-      const sizeFactor = Math.min(1, Math.sqrt(baseCount / newCount) * 0.9);
+      const currentCount = particlesArray.length || newCount;
+      const sizeFactor = Math.min(1, Math.sqrt(currentCount / newCount) * 0.9);
       const baseSize = 0.08;
       
       const sizeMap = {
@@ -916,52 +837,24 @@ const updateParticleSystem = () => {
     }
   }
   
-  // 准备场参数
-  const fieldParams: FieldParameters = {
-    type: FieldType[fieldType.value.toUpperCase() as keyof typeof FieldType],
-    strength: fieldStrength.value,
-    resolution: fieldResolution.value,
-    time: time,
-    additionalParams: {}
+  // 准备场参数 - 使用简单的对象结构
+  const fieldParams: any = {
+    type: fieldType.value as string,
+    gravityStrength: gravityStrength.value,
+    magneticStrength: magneticStrength.value,
+    electricStrength: electricStrength.value,
+    isPositiveCharge: isPositiveCharge.value,
+    waveAmplitude: waveAmplitude.value,
+    waveFrequency: waveFrequency.value,
+    waveLength: waveLength.value,
+    quantumStrength: quantumStrength.value,
+    quantumFluctuation: quantumFluctuation.value,
+    quantumFrequency: quantumFrequency.value,
+    wavePacketWidth: wavePacketWidth.value,
+    quantumWaveVectorX: quantumWaveVectorX.value,
+    quantumWaveVectorY: quantumWaveVectorY.value,
+    quantumWaveVectorZ: quantumWaveVectorZ.value
   };
-  
-  // 根据场类型设置特定参数
-  switch (fieldType.value) {
-    case 'gravity':
-      fieldParams.additionalParams = {
-        gravityStrength: gravityStrength.value
-      };
-      break;
-    case 'magnetic':
-      fieldParams.additionalParams = {
-        magneticStrength: magneticStrength.value
-      };
-      break;
-    case 'electric':
-      fieldParams.additionalParams = {
-        electricStrength: electricStrength.value,
-        isPositiveCharge: isPositiveCharge.value
-      };
-      break;
-    case 'wave':
-      fieldParams.additionalParams = {
-        waveAmplitude: waveAmplitude.value,
-        waveFrequency: waveFrequency.value,
-        waveLength: waveLength.value
-      };
-      break;
-    case 'quantum':
-      fieldParams.additionalParams = {
-        quantumStrength: quantumStrength.value,
-        quantumFluctuation: quantumFluctuation.value,
-        quantumFrequency: quantumFrequency.value,
-        wavePacketWidth: wavePacketWidth.value,
-        quantumWaveVectorX: quantumWaveVectorX.value,
-        quantumWaveVectorY: quantumWaveVectorY.value,
-        quantumWaveVectorZ: quantumWaveVectorZ.value
-      };
-      break;
-  }
   
   // 使用场论服务更新粒子
   fieldService.updateParticles(particlesArray, delta, fieldParams);
@@ -995,13 +888,16 @@ const updateParticleSystem = () => {
     }
     
     // 批量更新缓冲区 - 直接操作数组提升性能
-    positionArray[index] = particle.position.x;
-    positionArray[index + 1] = particle.position.y;
-    positionArray[index + 2] = particle.position.z;
+    const posArray = particlePositions;
+    const colArray = particleColors;
     
-    colorArray[index] = particle.color.r;
-    colorArray[index + 1] = particle.color.g;
-    colorArray[index + 2] = particle.color.b;
+    posArray[index] = particle.position.x;
+    posArray[index + 1] = particle.position.y;
+    posArray[index + 2] = particle.position.z;
+    
+    colArray[index] = particle.color.r;
+    colArray[index + 1] = particle.color.g;
+    colArray[index + 2] = particle.color.b;
   }
   
   // 一次性更新属性标记
@@ -1009,103 +905,14 @@ const updateParticleSystem = () => {
   colorAttr.needsUpdate = true;
 };
 
-// 场渲染优化：根据场类型添加特殊效果
-let fieldEffectMesh: THREE.Mesh | null = null;
-const updateFieldEffects = () => {
-  // 移除旧的效果网格
-  if (fieldEffectMesh && scene) {
-    scene.remove(fieldEffectMesh);
-    fieldEffectMesh.geometry.dispose();
-    (fieldEffectMesh.material as THREE.Material).dispose();
-    fieldEffectMesh = null;
-  }
-  
-  // 只在高性能模式且粒子数量适中时添加效果
-  if (performanceMode.value !== 'high' || particleDensity.value < 150) {
-    return;
-  }
-  
-  // 根据场类型添加不同的视觉效果
-  switch (fieldType.value) {
-    case 'magnetic':
-      // 添加磁场线效果
-      if (scene) {
-        const torusGeometry = new THREE.TorusGeometry(6, 0.1, 8, 64);
-        const torusMaterial = new THREE.MeshBasicMaterial({
-          color: 0x3b82f6,
-          transparent: true,
-          opacity: 0.3
-        });
-        fieldEffectMesh = new THREE.Mesh(torusGeometry, torusMaterial);
-        fieldEffectMesh.rotation.x = Math.PI / 2;
-        scene.add(fieldEffectMesh);
-      }
-      break;
-    case 'electric':
-      // 添加电场辐射效果
-      if (scene) {
-        const sphereGeometry = new THREE.SphereGeometry(8, 32, 32);
-        const sphereMaterial = new THREE.MeshBasicMaterial({
-          color: isPositiveCharge.value ? 0xef4444 : 0x3b82f6,
-          wireframe: true,
-          transparent: true,
-          opacity: 0.15
-        });
-        fieldEffectMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        scene.add(fieldEffectMesh);
-      }
-      break;
-    case 'wave':
-      // 添加波场效果
-      if (scene) {
-        const planeGeometry = new THREE.PlaneGeometry(15, 15, 32, 32);
-        const planeMaterial = new THREE.MeshBasicMaterial({
-          color: 0x8b5cf6,
-          transparent: true,
-          opacity: 0.2,
-          side: THREE.DoubleSide,
-          wireframe: true
-        });
-        fieldEffectMesh = new THREE.Mesh(planeGeometry, planeMaterial);
-        scene.add(fieldEffectMesh);
-      }
-      break;
-  }
-};
+
 
 // 重置时间
 const resetTime = () => {
   time = 0;
 };
 
-// 颜色映射插值
-const interpolateColorMap = (value: number): [number, number, number] => {
-  const colors = colorMaps[colorMap.value as keyof typeof colorMaps];
-  if (!colors) return [1, 1, 1];
-  
-  // 确保值在0-1范围内
-  const clampedValue = Math.max(0, Math.min(1, value));
-  
-  // 计算插值位置
-  const position = clampedValue * (colors.length - 1);
-  const index = Math.floor(position);
-  const fractionalPart = position - index;
-  
-  // 如果到达边界
-  if (index >= colors.length - 1) {
-    return colors[colors.length - 1];
-  }
-  
-  // 线性插值
-  const color1 = colors[index];
-  const color2 = colors[index + 1];
-  
-  return [
-    color1[0] + (color2[0] - color1[0]) * fractionalPart,
-    color1[1] + (color2[1] - color1[1]) * fractionalPart,
-    color1[2] + (color2[2] - color1[2]) * fractionalPart
-  ];
-};
+
 
 // 性能检测和优化函数
 const detectDevicePerformance = () => {
@@ -1196,11 +1003,9 @@ const setPerformanceMode = (mode: 'high' | 'medium' | 'low') => {
 const handleAutoOptimizeChange = (enabled: boolean) => {
   autoOptimizeEnabled.value = enabled;
   if (autoOptimizeEnabled.value) {
-    renderOptimizer.enableDynamicResolution = true;
-    renderOptimizer.enableFrameSkipping = true;
+    renderOptimizer.setShadowQuality('medium');
+    renderOptimizer.setFrameSkipThreshold(16);
   } else {
-    renderOptimizer.enableDynamicResolution = false;
-    renderOptimizer.enableFrameSkipping = false;
     // 恢复默认渲染分辨率
     renderScale.value = 1.0;
   }
@@ -1211,7 +1016,6 @@ const handleRenderScaleChange = (scale: number) => {
   // 禁用自动优化
   if (autoOptimizeEnabled.value) {
     autoOptimizeEnabled.value = false;
-    renderOptimizer.enableDynamicResolution = false;
   }
   // 应用新的渲染分辨率
   if (renderer && canvasContainer.value) {
@@ -1252,8 +1056,6 @@ const handleResetSettings = () => {
   frameSkipThreshold.value = 16;
   
   // 重新启用自动优化
-  renderOptimizer.enableDynamicResolution = true;
-  renderOptimizer.enableFrameSkipping = true;
   renderOptimizer.setShadowQuality('medium');
   renderOptimizer.setFrameSkipThreshold(16);
   particleOptimizer.setMaxParticles(500);
@@ -1316,9 +1118,10 @@ const animate = () => {
         resourceCount.value = {
           geometries: renderer.info.memory.geometries,
           materials: scene.children.reduce((count, child) => {
-            return count + (child.material ? 1 : 0);
+            return count + ((child as any).material ? 1 : 0);
           }, 0),
-          textures: renderer.info.memory.textures
+          textures: renderer.info.memory.textures,
+          renderTargets: 0
         };
       }
       
@@ -1328,7 +1131,7 @@ const animate = () => {
     }
     const geometriesCount = scene ? scene.children.length : 0;
     const texturesCount = renderer?.info?.memory?.textures || 0;
-    const shadersCount = renderer?.info?.memory?.programs || 0;
+    const shadersCount = (renderer?.info?.memory as any)?.programs || 0;
     memoryUsage.value = Math.round(performanceMonitor.estimateMemoryUsage(geometriesCount, texturesCount, shadersCount));
     
     // 更新内存峰值
@@ -1396,11 +1199,11 @@ const animate = () => {
     // 仅对可见对象进行处理
     const visibleObjects = scene.children.filter(child => 
       child.visible && renderOptimizer.isObjectVisible(child.position, 
-      child.geometry?.boundingSphere?.radius || 1, camera)
+      (child as any).geometry?.boundingSphere?.radius || 1, camera)
     );
     
     // 根据优先级排序
-    const prioritizedObjects = renderOptimizer.sortObjectsByPriority(
+    renderOptimizer.sortObjectsByPriority(
       visibleObjects,
       camera,
       performanceMode.value === 'low'
@@ -1494,14 +1297,6 @@ const onWindowResize = () => {
   
   // 重置相机位置以适应新尺寸
   resetCamera();
-};
-
-// 性能模式切换函数
-const togglePerformanceMode = () => {
-  const modes: Array<'high' | 'medium' | 'low'> = ['high', 'medium', 'low'];
-  const currentIndex = modes.indexOf(performanceMode.value);
-  const nextIndex = (currentIndex + 1) % modes.length;
-  setPerformanceMode(modes[nextIndex]);
 };
 
 // 控制函数
@@ -1839,17 +1634,17 @@ const applyPreset = (presetName: string) => {
       }
       
       // 特定场类型参数
-      if (preset.gravityStrength !== undefined) gravityStrength.value = preset.gravityStrength;
-      if (preset.magneticStrength !== undefined) magneticStrength.value = preset.magneticStrength;
-      if (preset.electricStrength !== undefined) electricStrength.value = preset.electricStrength;
-      if (preset.isPositiveCharge !== undefined) isPositiveCharge.value = preset.isPositiveCharge;
-      if (preset.waveAmplitude !== undefined) waveAmplitude.value = preset.waveAmplitude;
-      if (preset.waveFrequency !== undefined) waveFrequency.value = preset.waveFrequency;
-      if (preset.waveLength !== undefined) waveLength.value = preset.waveLength;
-      if (preset.quantumStrength !== undefined) quantumStrength.value = preset.quantumStrength;
-      if (preset.quantumFluctuation !== undefined) quantumFluctuation.value = preset.quantumFluctuation;
-      if (preset.quantumFrequency !== undefined) quantumFrequency.value = preset.quantumFrequency;
-      if (preset.wavePacketWidth !== undefined) wavePacketWidth.value = preset.wavePacketWidth;
+      if ((preset as any).gravityStrength !== undefined) gravityStrength.value = (preset as any).gravityStrength;
+      if ((preset as any).magneticStrength !== undefined) magneticStrength.value = (preset as any).magneticStrength;
+      if ((preset as any).electricStrength !== undefined) electricStrength.value = (preset as any).electricStrength;
+      if ((preset as any).isPositiveCharge !== undefined) isPositiveCharge.value = (preset as any).isPositiveCharge;
+      if ((preset as any).waveAmplitude !== undefined) waveAmplitude.value = (preset as any).waveAmplitude;
+      if ((preset as any).waveFrequency !== undefined) waveFrequency.value = (preset as any).waveFrequency;
+      if ((preset as any).waveLength !== undefined) waveLength.value = (preset as any).waveLength;
+      if ((preset as any).quantumStrength !== undefined) quantumStrength.value = (preset as any).quantumStrength;
+      if ((preset as any).quantumFluctuation !== undefined) quantumFluctuation.value = (preset as any).quantumFluctuation;
+      if ((preset as any).quantumFrequency !== undefined) quantumFrequency.value = (preset as any).quantumFrequency;
+      if ((preset as any).wavePacketWidth !== undefined) wavePacketWidth.value = (preset as any).wavePacketWidth;
     },
     onComplete: () => {
       // 完成后更新场类型
@@ -1868,8 +1663,11 @@ const isParameterLocked = (paramName: string): boolean => {
 };
 
 // 导入动画库
-import anime from 'animejs';
+import * as animeJS from 'animejs';
 import { gsap } from 'gsap';
+
+// 将 animeJS 赋值给 anime 以保持代码兼容性
+const anime = animeJS as any;
 
 const updateFieldType = () => {
   // 添加平滑过渡效果
@@ -2064,6 +1862,113 @@ const toggleAxes = () => {
   axesHelper.visible = showAxes.value;
 };
 
+// 处理内存清理事件
+const handleCleanMemory = () => {
+  console.log('执行内存清理操作...');
+  cleanupResources();
+};
+
+// 粒子优化器 - 模拟实现
+const particleOptimizer = {
+  getOptimalParticleCount: (baseCount: number, performanceMode: string, cameraDistance: number) => {
+    // 根据性能和距离计算优化粒子数量
+    let multiplier = 1.0;
+    
+    if (performanceMode === 'low') multiplier = 0.4;
+    else if (performanceMode === 'medium') multiplier = 0.7;
+    
+    // 根据距离进一步优化
+    const distanceFactor = Math.max(0.3, Math.min(1.0, 1.0 / (cameraDistance * 0.1)));
+    
+    return Math.floor(baseCount * multiplier * distanceFactor);
+  },
+  
+  getLODLevel: (cameraDistance: number) => {
+    // 根据距离计算LOD级别
+    if (cameraDistance < 20) return 1;
+    if (cameraDistance < 40) return 2;
+    return 3;
+  },
+  
+  setMaxParticles: (max: number) => {
+    // 设置最大粒子数
+    console.log('设置最大粒子数:', max);
+  }
+};
+
+// 渲染优化器 - 模拟实现
+const renderOptimizer = {
+  shouldSkipFrame: (frameIndex: number, fps: number) => {
+    // 当FPS低于30时，每2帧跳过1帧
+    if (fps < 30 && frameIndex % 2 === 0) return true;
+    // 当FPS低于20时，每3帧跳过2帧
+    if (fps < 20 && frameIndex % 3 !== 0) return true;
+    return false;
+  },
+  
+  setShadowQuality: (quality: string) => {
+    console.log('设置阴影质量:', quality);
+  },
+  
+  setFrameSkipThreshold: (threshold: number) => {
+    console.log('设置帧跳过阈值:', threshold);
+  },
+  
+  calculateRenderScale: (fps: number, currentScale: number, isLowPerformance: boolean) => {
+    // 根据FPS自动调整渲染分辨率
+    if (fps < 20) return Math.max(0.5, currentScale * 0.8);
+    if (fps > 50) return Math.min(1.0, currentScale * 1.1);
+    return currentScale;
+  },
+  
+  isObjectVisible: (position: any, radius: number, camera: any) => {
+    // 简单可见性检查
+    const distance = position.distanceTo(camera.position);
+    return distance < radius * 100;
+  },
+  
+  sortObjectsByPriority: (objects: any[], camera: any, isLowPerformance: boolean) => {
+    // 根据距离相机远近排序对象（简化实现）
+    return objects.sort((a, b) => {
+      const distA = a.position.distanceTo(camera.position);
+      const distB = b.position.distanceTo(camera.position);
+      return distA - distB;
+    });
+  }
+};
+
+// 性能监视器 - 模拟实现
+const performanceMonitor = {
+  updateFPS: () => {
+    // 模拟FPS计算
+    return Math.max(30, Math.floor(60 + Math.random() * 20));
+  },
+  
+  getPerformanceMode: () => {
+    // 简单性能模式判断
+    return false;
+  },
+  
+  updateDrawCallCount: (calls: number) => {
+    // 更新绘制调用计数
+    drawCalls.value = calls;
+  },
+  
+  getDrawCallCount: () => {
+    return drawCalls.value;
+  },
+  
+  estimateMemoryUsage: (geometries: number, textures: number, shaders: number) => {
+    // 简化的内存估算
+    return Math.round((geometries * 0.1 + textures * 0.5 + shaders * 0.05) * 10) / 10;
+  },
+  
+  getOptimizationSuggestions: () => {
+    // 返回优化建议
+    return [];
+  }
+};
+
 // 生命周期钩子
 onMounted(() => {
   // 初始化设备检测
@@ -2124,7 +2029,7 @@ onUnmounted(() => {
   
   // 清理场服务实例
   if (fieldService) {
-    fieldService = null;
+    fieldService = null as any;
   }
   
   // 清理辅助对象
@@ -2141,7 +2046,6 @@ onUnmounted(() => {
   
   // 移除事件监听器
   window.removeEventListener('resize', onWindowResize);
-  window.removeEventListener('keydown', handleKeydown);
   window.removeEventListener('orientationchange', detectDeviceOrientation);
   
   // 移除触摸事件监听器

@@ -18,7 +18,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
+// MathJax全局类型声明
+declare global {
+  interface Window {
+    MathJax: any
+  }
+}
+
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 
 // Props
 interface Props {
@@ -61,14 +68,6 @@ const isInitialized = ref(false)
 const renderQueue = ref<(() => void)[]>([])
 const lastRenderedFormula = ref('')
 const typesetPromise = ref<Promise<void> | null>(null)
-
-// 计算样式
-const formulaStyle = computed(() => ({
-  color: props.color,
-  backgroundColor: props.backgroundColor,
-  fontFamily: props.fontFamily,
-  lineWidth: `${props.lineWidth}px`
-}))
 
 // 高级配置MathJax
 function configureMathJax() {
@@ -113,7 +112,7 @@ function configureMathJax() {
       typeset: false,
       // 性能优化
       skipWarnings: false,
-      document: window.document
+      document: (globalThis as any).document || window.document
     },
     // 扩展配置
     extensions: [
@@ -177,6 +176,9 @@ async function initMathJax() {
     
     // 处理队列中的其他渲染请求
     processRenderQueue()
+    
+    // 清理未使用的变量
+    lastRenderedFormula.value = ''
   } catch (error) {
     handleMathJaxError(error as Error)
   }
@@ -189,8 +191,8 @@ function loadMathJaxScript(): Promise<void> {
     const existingScript = document.querySelector('script[src*="mathjax"]')
     if (existingScript) {
       // 监听加载完成
-      existingScript.addEventListener('load', resolve)
-      existingScript.addEventListener('error', reject)
+      existingScript.addEventListener('load', () => resolve())
+      existingScript.addEventListener('error', (err) => reject(err))
       return
     }
     
@@ -322,13 +324,13 @@ function processRenderQueue() {
 }
 
 // 监听公式变化 - 添加防抖
-let renderTimeout: number | null = null
+let renderTimeout: ReturnType<typeof setTimeout> | null = null
 watch(() => props.formula, () => {
   if (renderTimeout) {
     clearTimeout(renderTimeout)
   }
   
-  renderTimeout = window.setTimeout(() => {
+  renderTimeout = setTimeout(() => {
     if (isInitialized.value) {
       renderMath()
     } else {
@@ -483,7 +485,6 @@ defineExpose({
     border-top-color: #60a5fa;
   }
 }
-</style>
 
 /* 自定义MathJax渲染样式 */
 :deep(.mjx-chtml) {

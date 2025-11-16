@@ -104,7 +104,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useFormulaStore } from '@/stores/formula'
 import { motion } from 'framer-motion'
-import MathJax from '@/components/MathJax.vue'
+// import MathJax from '@/components/MathJax.vue'
 
 // 使用Store
 const formulaStore = useFormulaStore()

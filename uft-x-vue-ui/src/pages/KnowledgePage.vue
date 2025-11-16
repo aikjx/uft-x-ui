@@ -449,8 +449,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import MathJax from '../components/MathJax.vue'
+import { ref, onMounted } from 'vue'
+// import MathJax from '../components/MathJax.vue'
 
 // 响应式数据
 const searchQuery = ref('')
@@ -567,14 +567,6 @@ const recentDiscussions = [
     comments: 32
   }
 ]
-
-// 计算属性
-const filteredItems = computed(() => {
-  // 根据搜索和筛选条件过滤内容
-  return navigationItems.filter(item => 
-    item.title.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
-})
 
 // 方法
 function scrollToSection(sectionId: string) {

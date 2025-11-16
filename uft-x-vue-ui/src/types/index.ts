@@ -1,4 +1,5 @@
 // 统一场论应用的类型定义
+import { Vector3, Color } from 'three';
 
 // 公式类型
 export interface Formula {
@@ -185,4 +186,13 @@ export interface Notification {
     label: string;
     handler: () => void;
   };
+}
+
+// 粒子类型定义
+export interface Particle {
+  position: Vector3;
+  velocity: Vector3;
+  color: Color;
+  mass?: number;
+  charge?: number;
 }
