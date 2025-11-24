@@ -1,0 +1,482 @@
+<template>
+  <div class="code-optimizer-container">
+    <!-- 顶部导航栏 -->
+    <t-navbar>
+      <t-breadcrumb>
+        <t-breadcrumb-item>主页</t-breadcrumb-item>
+        <t-breadcrumb-item>代码优化</t-breadcrumb-item>
+      </t-breadcrumb>
+      
+      <div class="navbar-actions">
+        <t-button variant="outline" @click="showSettings">
+          <t-icon name="setting" /> 设置
+        </t-button>
+        <t-button variant="outline" @click="showRules">
+          <t-icon name="rule" /> 规则管理
+        </t-button>
+      </div>
+    </t-navbar>
+
+    <!-- 主要内容区域 -->
+    <div class="optimizer-content">
+      <!-- 代码输入区域 -->
+      <t-card title="代码输入" class="input-section">
+        <div class="input-header">
+          <t-select v-model="selectedLanguage" placeholder="选择编程语言" class="language-select">
+            <t-option v-for="lang in languages" :key="lang.value" :value="lang.value" :label="lang.label" />
+          </t-select>
+          
+          <t-select v-model="optimizationLevel" placeholder="选择优化级别" class="level-select">
+            <t-option value="safe" label="安全优化" />
+            <t-option value="moderate" label="中等优化" />
+            <t-option value="aggressive" label="激进优化" />
+          </t-select>
+          
+          <t-button @click="optimizeCode" :loading="optimizing" class="optimize-btn">
+            <t-icon name="rocket" /> 开始优化
+          </t-button>
+        </div>
+
+        <div class="code-editor-area">
+          <t-textarea
+            v-model="inputCode"
+            placeholder="粘贴或输入需要优化的代码..."
+            :rows="15"
+            resize="both"
+            class="code-input"
+          />
+        </div>
+      </t-card>
+
+      <!-- 优化结果区域 -->
+      <div v-if="optimizationResult" class="result-section">
+        <!-- 优化概览 -->
+        <t-card title="优化概览" class="overview-card">
+          <div class="overview-stats">
+            <t-statistic
+              title="性能提升"
+              :value="optimizationResult.optimizationSummary.performanceImprovement"
+              suffix="%"
+              class="stat-item"
+            />
+            <t-statistic
+              title="修复问题"
+              :value="optimizationResult.optimizationSummary.fixedIssues"
+              class="stat-item"
+            />
+            <t-statistic
+              title="可读性评分"
+              :value="optimizationResult.optimizationSummary.readabilityScore"
+              suffix="分"
+              class="stat-item"
+            />
+          </div>
+        </t-card>
+
+        <!-- 代码对比 -->
+        <t-card title="代码对比" class="comparison-card">
+          <t-tabs v-model="activeTab">
+            <t-tab-panel value="side-by-side" label="左右对比">
+              <div class="code-comparison">
+                <div class="code-panel">
+                  <h4>原始代码</h4>
+                  <pre class="code-block original-code">{{ optimizationResult.originalCode }}</pre>
+                </div>
+                <div class="code-panel">
+                  <h4>优化后代码</h4>
+                  <pre class="code-block optimized-code">{{ optimizationResult.optimizedCode }}</pre>
+                </div>
+              </div>
+            </t-tab-panel>
+            
+            <t-tab-panel value="unified" label="统一视图">
+              <div class="unified-view">
+                <pre class="code-block unified-code">{{ getUnifiedDiff() }}</pre>
+              </div>
+            </t-tab-panel>
+          </t-tabs>
+        </t-card>
+
+        <!-- 问题列表 -->
+        <t-card title="检测到的问题" class="issues-card">
+          <t-table :data="optimizationResult.issues" :columns="issueColumns" row-key="id" hover>
+            <template #severity="{ row }">
+              <t-tag :theme="getSeverityTheme(row.severity)" variant="light">
+                {{ getSeverityText(row.severity) }}
+              </t-tag>
+            </template>
+            
+            <template #category="{ row }">
+              <t-tag theme="primary" variant="light">
+                {{ getCategoryText(row.category) }}
+              </t-tag>
+            </template>
+            
+            <template #position="{ row }">
+              L{{ row.position.line }}:{{ row.position.column }}
+            </template>
+          </t-table>
+        </t-card>
+
+        <!-- 性能指标 -->
+        <t-card title="性能指标" class="metrics-card">
+          <div class="metrics-chart">
+            <div class="metric-item">
+              <t-progress
+                :percentage="optimizationResult.performanceMetrics.estimatedExecutionTime * 100"
+                :color="getProgressColor(optimizationResult.performanceMetrics.estimatedExecutionTime)"
+                :label="`执行时间: ${(optimizationResult.performanceMetrics.estimatedExecutionTime * 100).toFixed(1)}%`"
+              />
+            </div>
+            <div class="metric-item">
+              <t-progress
+                :percentage="optimizationResult.performanceMetrics.memoryUsage * 100"
+                :color="getProgressColor(optimizationResult.performanceMetrics.memoryUsage)"
+                :label="`内存使用: ${(optimizationResult.performanceMetrics.memoryUsage * 100).toFixed(1)}%`"
+              />
+            </div>
+          </div>
+        </t-card>
+      </div>
+    </div>
+
+    <!-- 设置对话框 -->
+    <t-dialog
+      v-model:visible="settingsVisible"
+      header="优化设置"
+      :on-confirm="saveSettings"
+      :on-close="closeSettings"
+    >
+      <settings-panel v-model="currentSettings" />
+    </t-dialog>
+
+    <!-- 规则管理对话框 -->
+    <t-dialog
+      v-model:visible="rulesVisible"
+      header="规则管理"
+      width="800px"
+      :on-close="closeRules"
+    >
+      <rules-manager />
+    </t-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, computed } from 'vue'
+import { CodeOptimizerFactory } from '../utils/codeOptimizer'
+import { RuleManager } from '../utils/ruleManager'
+import { ProgrammingLanguage, OptimizationLevel } from '../types/code-optimization'
+
+// 组件状态
+const inputCode = ref('')
+const selectedLanguage = ref<ProgrammingLanguage>(ProgrammingLanguage.JAVASCRIPT)
+const optimizationLevel = ref<OptimizationLevel>(OptimizationLevel.MODERATE)
+const optimizing = ref(false)
+const optimizationResult = ref<any>(null)
+const activeTab = ref('side-by-side')
+const settingsVisible = ref(false)
+const rulesVisible = ref(false)
+
+// 语言选项
+const languages = [
+  { value: ProgrammingLanguage.JAVASCRIPT, label: 'JavaScript' },
+  { value: ProgrammingLanguage.TYPESCRIPT, label: 'TypeScript' },
+  { value: ProgrammingLanguage.PYTHON, label: 'Python' },
+  { value: ProgrammingLanguage.JAVA, label: 'Java' },
+  { value: ProgrammingLanguage.CPP, label: 'C++' },
+  { value: ProgrammingLanguage.GO, label: 'Go' },
+  { value: ProgrammingLanguage.RUST, label: 'Rust' }
+]
+
+// 问题列表列配置
+const issueColumns = [
+  { colKey: 'id', title: 'ID', width: 80 },
+  { colKey: 'message', title: '问题描述', width: 200 },
+  { colKey: 'severity', title: '严重程度', width: 100 },
+  { colKey: 'category', title: '类别', width: 100 },
+  { colKey: 'position', title: '位置', width: 100 },
+  { colKey: 'suggestion', title: '建议', width: 150 }
+]
+
+// 用户设置
+const currentSettings = reactive({
+  autoApplyFixes: true,
+  enableExperimentalRules: false,
+  maxFileSize: 100000,
+  includeComments: true
+})
+
+// 优化代码
+const optimizeCode = async () => {
+  if (!inputCode.value.trim()) {
+    alert('请输入要优化的代码')
+    return
+  }
+
+  optimizing.value = true
+  
+  try {
+    const ruleManager = new RuleManager()
+    const rules = ruleManager.getRulesByLanguage(selectedLanguage.value)
+    
+    const optimizer = CodeOptimizerFactory.createOptimizer(
+      selectedLanguage.value,
+      {
+        optimizationLevel: optimizationLevel.value,
+        ...currentSettings
+      },
+      rules
+    )
+    
+    optimizationResult.value = await optimizer.optimize(inputCode.value)
+  } catch (error) {
+    console.error('优化失败:', error)
+    alert(`优化失败: ${error instanceof Error ? error.message : '未知错误'}`)
+  } finally {
+    optimizing.value = false
+  }
+}
+
+// 获取严重程度主题色
+const getSeverityTheme = (severity: string) => {
+  switch (severity) {
+    case 'error': return 'danger'
+    case 'warning': return 'warning'
+    case 'info': return 'info'
+    default: return 'default'
+  }
+}
+
+// 获取严重程度文本
+const getSeverityText = (severity: string) => {
+  switch (severity) {
+    case 'error': return '错误'
+    case 'warning': return '警告'
+    case 'info': return '信息'
+    default: return '未知'
+  }
+}
+
+// 获取类别文本
+const getCategoryText = (category: string) => {
+  switch (category) {
+    case 'performance': return '性能'
+    case 'memory': return '内存'
+    case 'best_practice': return '最佳实践'
+    case 'code_style': return '代码风格'
+    case 'bug': return '错误'
+    case 'security': return '安全'
+    default: return '其他'
+  }
+}
+
+// 获取进度条颜色
+const getProgressColor = (value: number) => {
+  if (value > 0.8) return 'var(--td-error-color)'
+  if (value > 0.6) return 'var(--td-warning-color)'
+  return 'var(--td-success-color)'
+}
+
+// 获取统一差异视图
+const getUnifiedDiff = () => {
+  if (!optimizationResult.value) return ''
+  
+  const original = optimizationResult.value.originalCode.split('\n')
+  const optimized = optimizationResult.value.optimizedCode.split('\n')
+  
+  let diff = ''
+  
+  for (let i = 0; i < Math.max(original.length, optimized.length); i++) {
+    const origLine = original[i] || ''
+    const optLine = optimized[i] || ''
+    
+    if (origLine !== optLine) {
+      diff += `- ${origLine}\n`
+      diff += `+ ${optLine}\n`
+    } else {
+      diff += `  ${origLine}\n`
+    }
+  }
+  
+  return diff
+}
+
+// 对话框控制
+const showSettings = () => { settingsVisible.value = true }
+const showRules = () => { rulesVisible.value = true }
+const closeSettings = () => { settingsVisible.value = false }
+const closeRules = () => { rulesVisible.value = false }
+const saveSettings = () => { 
+  console.log('保存设置:', currentSettings)
+  settingsVisible.value = false 
+}
+</script>
+
+<style scoped>
+.code-optimizer-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.navbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.optimizer-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.input-section {
+  margin-bottom: 20px;
+}
+
+.input-header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.language-select,
+.level-select {
+  width: 150px;
+}
+
+.optimize-btn {
+  margin-left: auto;
+}
+
+.code-input {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.result-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 20px;
+}
+
+.overview-card {
+  grid-column: 1 / 3;
+}
+
+.overview-stats {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.comparison-card {
+  grid-column: 1 / 3;
+}
+
+.code-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  height: 400px;
+}
+
+.code-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.code-panel h4 {
+  margin: 0 0 8px 0;
+  color: var(--td-text-color-primary);
+}
+
+.code-block {
+  flex: 1;
+  background: var(--td-bg-color-container);
+  border: 1px solid var(--td-border-level-1-color);
+  border-radius: 4px;
+  padding: 12px;
+  overflow: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.original-code {
+  border-left: 4px solid var(--td-error-color);
+}
+
+.optimized-code {
+  border-left: 4px solid var(--td-success-color);
+}
+
+.unified-view {
+  height: 400px;
+}
+
+.unified-code {
+  height: 100%;
+  background: var(--td-bg-color-container);
+  border: 1px solid var(--td-border-level-1-color);
+  border-radius: 4px;
+  padding: 12px;
+  overflow: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.issues-card {
+  grid-column: 1 / 2;
+}
+
+.metrics-card {
+  grid-column: 2 / 3;
+}
+
+.metrics-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.metric-item {
+  margin-bottom: 12px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .result-section {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+  
+  .overview-card,
+  .comparison-card,
+  .issues-card,
+  .metrics-card {
+    grid-column: 1;
+  }
+  
+  .code-comparison {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  
+  .overview-stats {
+    flex-direction: column;
+    gap: 20px;
+  }
+}
+</style>

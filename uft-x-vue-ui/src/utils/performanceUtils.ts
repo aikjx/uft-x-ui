@@ -129,9 +129,10 @@ export class RenderOptimizer {
 
   // 设置阴影质量
   setShadowQuality(quality: 'high' | 'medium' | 'low') {
-    // 简化实现，目前没有实际功能
     // 在实际应用中，这里会根据质量等级调整渲染器设置
-    console.log(`设置阴影质量: ${quality}`);
+    // 生产环境下移除调试日志
+    if (import.meta.env.DEV) {
+      console.log(`设置阴影质量: ${quality}`);
   }
 
   // 设置跳帧阈值

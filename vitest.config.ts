@@ -17,14 +17,33 @@ export default defineConfig({
     
     // 测试执行优化
     threads: true, // 启用并行测试
-    maxThreads: 4, // 最大线程数
-    minThreads: 2, // 最小线程数
+    maxThreads: 4, // 根据 CPU 核心数动态调整
+    minThreads: 1, // 最小线程数
     isolate: true, // 隔离测试环境
     pool: 'threads', // 使用线程池执行测试
     
+    // 序列化配置（优化大型测试文件）
+    sequence: {
+      hooks: 'stack' // 堆栈式钩子执行
+    },
+    
     // 测试文件匹配
-    include: ['tests/**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
+    include: [
+      'tests/unit/**/*.{test,spec}.{ts,tsx}',
+      'tests/components/**/*.{test,spec}.{ts,tsx}',
+      'tests/integration/**/*.{test,spec}.{ts,tsx}',
+      'tests/services/**/*.{test,spec}.{ts}',
+      'tests/utils/**/*.{test,spec}.{ts}'
+    ],
+    exclude: [
+      'node_modules', 
+      'dist', 
+      '.idea', 
+      '.git', 
+      '.cache',
+      'tests/e2e/**', // E2E 测试单独运行
+      'tests/benchmark/**' // 性能测试单独运行
+    ],
     
     // 覆盖率高级配置
     coverage: {
@@ -50,13 +69,28 @@ export default defineConfig({
     },
     
     // 超时配置优化
-    testTimeout: 8000, // 减少超时时间以提高效率
-    hookTimeout: 5000, // 钩子函数超时时间
+    testTimeout: 6000, // 减少超时时间以提高效率
+    hookTimeout: 3000, // 钩子函数超时时间
     
     // 缓存优化
     cache: {
       dir: '.vitest/cache', // 自定义缓存目录
-      enabled: true // 启用测试缓存
+      enabled: true, // 启用测试缓存
+      include: ['tests/**/*.{ts,tsx}', 'src/**/*.{ts,tsx}'] // 只缓存测试和源码文件
+    },
+    
+    // 依赖优化
+    server: {
+      deps: {
+        inline: [
+          '@testing-library/react',
+          '@testing-library/jest-dom',
+          '@testing-library/user-event',
+          'three',
+          'recharts',
+          'framer-motion'
+        ]
+      }
     },
     
     // 依赖预加载

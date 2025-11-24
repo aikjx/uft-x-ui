@@ -1,24 +1,25 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import AutoImport from 'unplugin-auto-import/vite'
-import Components from 'unplugin-vue-components/vite'
+import { resolve } from 'path'
 import { fileURLToPath, URL } from 'node:url'
+import Components from 'unplugin-vue-components/vite'
+import { TDesignResolver } from 'unplugin-vue-components/resolvers'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    vue(),
-    // 自动导入Vue组合式API
-    AutoImport({
-      imports: ['vue', 'vue-router', 'pinia'],
-      dts: 'src/auto-imports.d.ts',
-      eslintrc: {
-        enabled: true
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => tag.includes('-')
+        }
       }
     }),
-    // 自动注册组件
     Components({
-      dts: 'src/components.d.ts'
+      resolvers: [
+        TDesignResolver({
+          library: 'vue-next'
+        })
+      ]
     })
   ],
   resolve: {
@@ -26,33 +27,49 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
-  // 构建优化
+  server: {
+    port: 3000,
+    host: true,
+    open: true
+  },
   build: {
-    target: 'es2020',
+    target: 'esnext',
     minify: 'terser',
     terserOptions: {
       compress: {
         drop_console: true,
-        drop_debugger: true
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug']
       }
     },
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['vue', 'vue-router', 'pinia']
+        manualChunks: (id) => {
+          // 更精细的代码分割策略
+          if (id.includes('node_modules')) {
+            if (id.includes('vue')) {
+              return 'vue-vendor'
+            } else if (id.includes('three')) {
+              return 'three-vendor'
+            } else if (id.includes('gsap') || id.includes('anime')) {
+              return 'animation-vendor'
+            } else if (id.includes('babel')) {
+              return 'parser-vendor'
+            } else {
+              return 'vendor'
+            }
+          }
         }
       }
-    }
+    },
+    chunkSizeWarningLimit: 1000
   },
-  // 开发服务器配置
-  server: {
-    port: 3002,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      }
-    }
-  }
+  optimizeDeps: {
+    include: ['three', 'gsap', 'animejs']
+  },
+  define: {
+    // 为 Babel types 提供基础 process 环境变量
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+    global: 'globalThis'
+  },
 })

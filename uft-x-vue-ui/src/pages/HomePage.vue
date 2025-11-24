@@ -12,6 +12,7 @@
           <router-link to="/formula-visualization" class="nav-link">公式可视化</router-link>
           <router-link to="/interactive-exploration" class="nav-link">交互式探索</router-link>
           <router-link to="/knowledge" class="nav-link">知识库</router-link>
+          <router-link to="/code-optimizer" class="nav-link">代码优化器</router-link>
         </nav>
         <button class="theme-toggle" @click="toggleTheme">
           {{ isDark ? '🌙' : '☀️' }}
@@ -62,6 +63,12 @@
             <h3 class="feature-title">{{ feature.title }}</h3>
             <p class="feature-description">{{ feature.description }}</p>
           </div>
+          <!-- 代码优化器特性 -->
+          <div class="feature-card" @click="$router.push('/code-optimizer')" style="cursor: pointer;">
+            <div class="feature-icon">⚡</div>
+            <h3 class="feature-title">智能代码优化</h3>
+            <p class="feature-description">全自动代码分析、优化和重构，支持多种编程语言，提升代码质量和性能</p>
+          </div>
         </div>
       </div>
     </section>
@@ -101,6 +108,7 @@
             <router-link to="/formula-visualization" class="footer-link">公式可视化</router-link>
             <router-link to="/interactive-exploration" class="footer-link">交互式探索</router-link>
             <router-link to="/knowledge" class="footer-link">知识库</router-link>
+            <router-link to="/code-optimizer" class="footer-link">代码优化器</router-link>
           </div>
           <div class="footer-contact">
             <h4>联系我们</h4>
@@ -117,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, shallowRef } from 'vue'
 import { useCounterStore } from '@/stores/counter'
 import { useVisualizationStore } from '@/stores/visualization'
 
@@ -125,11 +133,11 @@ import { useVisualizationStore } from '@/stores/visualization'
 const counterStore = useCounterStore()
 const visualizationStore = useVisualizationStore()
 
-// 响应式数据
-const isDark = ref(true)
+// 响应式数据 - 使用shallowRef优化性能
+const isDark = shallowRef(true)
 
-// 特性数据
-const features = [
+// 特性数据 - 使用shallowRef避免深度响应式
+const features = shallowRef([
   {
     id: 1,
     icon: '📊',
@@ -154,10 +162,10 @@ const features = [
     title: '高性能渲染',
     description: '采用先进的WebGL技术，保证复杂模型的流畅渲染'
   }
-]
+])
 
-// 步骤数据
-const steps = [
+// 步骤数据 - 使用shallowRef优化性能
+const steps = shallowRef([
   {
     id: 1,
     title: '浏览公式库',
@@ -179,7 +187,7 @@ const steps = [
     link: '/knowledge',
     linkText: '学习更多'
   }
-]
+])
 
 // 方法
 function toggleTheme() {

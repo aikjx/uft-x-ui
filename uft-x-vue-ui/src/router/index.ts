@@ -1,12 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
-// 路由懒加载
-const HomePage = () => import('@/pages/HomePage.vue')
-const FormulaVisualizationPage = () => import('@/pages/FormulaVisualizationPage.vue')
-const InteractiveExplorationPage = () => import('@/pages/InteractiveExplorationPage.vue')
-const KnowledgePage = () => import('@/pages/KnowledgePage.vue')
-const NotFoundPage = () => import('@/pages/NotFound.vue')
+// 路由懒加载 - 添加魔法注释优化预加载
+const HomePage = () => import(/* webpackChunkName: "home" */ '@/pages/HomePage.vue')
+const UnifiedFieldVisualization = () => import(/* webpackChunkName: "unified-field" */ '@/pages/UnifiedFieldVisualization.vue')
+const FormulaVisualizationPage = () => import(/* webpackChunkName: "formula" */ '@/pages/FormulaVisualizationPage.vue')
+const InteractiveExplorationPage = () => import(/* webpackChunkName: "interactive" */ '@/pages/InteractiveExplorationPage.vue')
+const KnowledgePage = () => import(/* webpackChunkName: "knowledge" */ '@/pages/KnowledgePage.vue')
+const CodeOptimizerPage = () => import(/* webpackChunkName: "optimizer" */ '@/pages/CodeOptimizerPage.vue')
+const NotFoundPage = () => import(/* webpackChunkName: "404" */ '@/pages/NotFound.vue')
 
 // 路由配置
 const routes: RouteRecordRaw[] = [
@@ -16,6 +18,15 @@ const routes: RouteRecordRaw[] = [
     component: HomePage,
     meta: {
       title: '首页 - 统一场论可视化'
+    }
+  },
+  {
+    path: '/unified-field',
+    name: 'unifiedField',
+    component: UnifiedFieldVisualization,
+    meta: {
+      title: '统一场论3D可视化 - 量子级渲染引擎',
+      description: '探索宇宙的本质规律，体验革命性的物理可视化'
     }
   },
   {
@@ -40,6 +51,14 @@ const routes: RouteRecordRaw[] = [
     component: KnowledgePage,
     meta: {
       title: '知识库 - 统一场论'
+    }
+  },
+  {
+    path: '/code-optimizer',
+    name: 'codeOptimizer',
+    component: CodeOptimizerPage,
+    meta: {
+      title: '代码优化器 - UFT-X'
     }
   },
   {
