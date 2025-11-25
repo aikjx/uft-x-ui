@@ -5,6 +5,9 @@ export interface Formula {
   expression: string;
   description: string;
   category: string;
+  parameters?: string[]; // 添加parameters属性
+  visualizationType?: string; // 添加可视化类型属性
+  complexity?: number; // 添加复杂度属性
 }
 
 export interface SimulationParameters {

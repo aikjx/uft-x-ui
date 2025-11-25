@@ -6,17 +6,17 @@ import { useThreeScene } from '../hooks/useThreeScene';
 import { visualizationService, createGridHelper, createAxesHelper } from '../services/visualizationService';
 import { cn } from '../utils';
 import { VISUALIZATION_CONFIG } from '../constants';
-import { 
-  performanceOptimizationManager 
+import {
+  performanceOptimizationManager
 } from '../utils/performanceOptimizationManager';
-import { 
-  devicePerformanceAnalyzer 
+import {
+  devicePerformanceAnalyzer
 } from '../utils/devicePerformanceAnalyzer';
-import { 
-  performanceDataCollector 
+import {
+  performanceDataCollector
 } from '../utils/performanceDataCollector';
-import { 
-  sceneComplexityAnalyzer 
+import {
+  sceneComplexityAnalyzer
 } from '../utils/sceneComplexityAnalyzer';
 
 // 配置选项接口
@@ -28,10 +28,10 @@ export interface ThreeJSVisualizationProps {
     renderer: THREE.WebGLRenderer;
     controls: OrbitControls;
   }) => void;
-  
+
   // CSS类名
   className?: string;
-  
+
   // 初始化回调
   onInit?: (props: {
     scene: THREE.Scene;
@@ -39,10 +39,10 @@ export interface ThreeJSVisualizationProps {
     renderer: THREE.WebGLRenderer;
     controls: OrbitControls;
   }) => void;
-  
+
   // 动画帧回调
   onAnimationFrame?: (deltaTime: number) => void;
-  
+
   // 相机配置
   cameraConfig?: {
     fov?: number;
@@ -50,7 +50,7 @@ export interface ThreeJSVisualizationProps {
     far?: number;
     position?: { x: number; y: number; z: number };
   };
-  
+
   // 控制器配置
   controlsConfig?: {
     enableDamping?: boolean;
@@ -61,7 +61,7 @@ export interface ThreeJSVisualizationProps {
     autoRotate?: boolean;
     autoRotateSpeed?: number;
   };
-  
+
   // 渲染器配置
   rendererConfig?: {
     antialias?: boolean;
@@ -69,7 +69,7 @@ export interface ThreeJSVisualizationProps {
     physicallyCorrectLights?: boolean;
     shadowMapEnabled?: boolean;
   };
-  
+
   // 场景配置
   sceneConfig?: {
     backgroundColor?: number | string;
@@ -81,16 +81,24 @@ export interface ThreeJSVisualizationProps {
       density?: number;
     };
   };
-  
+
   // 自动适应容器大小
   autoFit?: boolean;
-  
+
   // 暂停/恢复控制
   paused?: boolean;
-  
+
   // 最小尺寸
   minWidth?: number;
   minHeight?: number;
+
+  // 性能优化选项
+  performanceOptions?: {
+    enableBatchRendering?: boolean;
+    dynamicPixelRatio?: boolean;
+    usePerformanceMonitoring?: boolean;
+    maxObjects?: number;
+  };
 }
 
 const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
@@ -106,56 +114,62 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
   paused = false,
   minWidth = 0,
   minHeight = 300,
+  performanceOptions = {}
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isInitialized, setIsInitialized] = useState(false);
   const [hasError, setHasError] = useState<Error | null>(null);
   const [webglSupported, setWebglSupported] = useState<boolean>(true);
-  
+
   // 使用useThreeScene返回的实例引用
-  const { 
-    scene, 
-    camera, 
-    renderer, 
-    controls, 
-    isSceneReady, 
+  const {
+    scene,
+    camera,
+    renderer,
+    controls,
+    isSceneReady,
     error: sceneError,
-    currentFPS, 
+    currentFPS,
     isPerformanceMode,
     performanceMonitor,
     renderOptimizer,
     particleOptimizer,
-    createScene, 
-    getScene, 
+    createScene,
+    getScene,
     addToScene,
     removeFromScene,
-    clearScene, 
+    clearScene,
     setUpdateFunction,
     updateScene
-  } = useThreeScene({ 
+  } = useThreeScene({
     containerRef,
     autoUpdate: true,
-    enablePerformanceMonitoring: true,
-    maxObjects: VISUALIZATION_CONFIG.maxObjects || 1000
+    enablePerformanceMonitoring: performanceOptions.usePerformanceMonitoring ?? true,
+    maxObjects: performanceOptions.maxObjects ?? VISUALIZATION_CONFIG.maxObjects || 1000,
+    useBatchRendering: performanceOptions.enableBatchRendering ?? true,
+    dynamicPixelRatio: performanceOptions.dynamicPixelRatio ?? true
   });
-  
+
   // 性能面板状态
   const [showPerformancePanel, setShowPerformancePanel] = useState(false);
   const [currentMemory, setCurrentMemory] = useState(0);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [autoModeEnabled, setAutoModeEnabled] = useState(false);
-  
+
   // 动画帧引用和时间跟踪
   const animationFrameRef = useRef<number | null>(null);
   const lastFrameTimeRef = useRef<number>(0);
+
+  // 全屏状态
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // 检查WebGL支持
   const checkWebGLSupport = useCallback(() => {
     try {
       const canvas = document.createElement('canvas');
-      return !!(window.WebGLRenderingContext && 
-                (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+      return !!(window.WebGLRenderingContext &&
+        (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
     } catch (e) {
       return false;
     }
@@ -178,7 +192,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
 
       // 使用useThreeScene中的场景，避免重复创建
       const currentScene = getScene() || createScene();
-      
+
       // 应用场景配置到现有的场景
       if (memoizedSceneConfig.backgroundColor && currentScene) {
         currentScene.background = new THREE.Color(memoizedSceneConfig.backgroundColor);
@@ -186,16 +200,16 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
 
       // 应用自定义配置到控制器
       if (controls) {
-        const { 
-          enableDamping = true, 
-          dampingFactor = 0.05, 
-          rotateSpeed = 0.5, 
+        const {
+          enableDamping = true,
+          dampingFactor = 0.05,
+          rotateSpeed = 0.5,
           zoomSpeed = 0.8,
           enablePan = true,
           autoRotate = false,
           autoRotateSpeed = 2.0
         } = memoizedControlsConfig;
-        
+
         controls.enableDamping = enableDamping;
         controls.dampingFactor = dampingFactor;
         controls.rotateSpeed = rotateSpeed;
@@ -225,27 +239,27 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       setHasError(error instanceof Error ? error : new Error('Three.js initialization failed'));
     }
   }, [onInit, minWidth, minHeight, webglSupported, memoizedControlsConfig, memoizedSceneConfig, getScene, createScene, camera, renderer, controls]);
-  
+
   // 初始化性能优化系统
   const initializePerformanceSystem = useCallback((currentScene: THREE.Scene) => {
     if (!performanceMonitor || !renderOptimizer || !particleOptimizer) return;
-    
+
     // 初始化所有性能组件
     performanceDataCollector.setPerformanceMonitor(performanceMonitor);
     performanceDataCollector.setRenderOptimizer(renderOptimizer);
     performanceDataCollector.setParticleOptimizer(particleOptimizer);
-    
+
     // 将性能工具传递给管理器
     performanceOptimizationManager.setPerformanceTools({
       performanceMonitor,
       renderOptimizer,
       particleOptimizer
     });
-    
+
     // 设置场景复杂度分析器
     sceneComplexityAnalyzer.setScene(currentScene);
     sceneComplexityAnalyzer.setCamera(camera);
-    
+
     // 启动自动性能检测
     devicePerformanceAnalyzer.detectPerformanceTier().then(tier => {
       console.log('检测到设备性能级别:', tier);
@@ -258,42 +272,42 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
         performanceOptimizationManager.setPerformanceMode('high');
       }
     });
-    
+
     // 订阅性能数据更新
     performanceMonitor.on('memoryUpdated', (memory: number) => {
       setCurrentMemory(memory);
     });
   }, [performanceMonitor, renderOptimizer, particleOptimizer, camera]);
-  
+
   // 性能设置变更处理
   const handleSettingsChanged = useCallback((settings: Record<string, any>) => {
     console.log('性能设置已更新:', settings);
     setAutoModeEnabled(settings.autoMode || false);
-    
+
     // 确保场景已初始化
     const currentScene = getScene();
     if (!currentScene) return;
-    
+
     // 更新渲染器设置
     if (renderer && settings.pixelRatio !== undefined) {
       renderer.setPixelRatio(settings.pixelRatio === 'auto' ? window.devicePixelRatio : settings.pixelRatio);
     }
   }, [getScene, renderer]);
-  
+
   // 一键优化
   const runOneClickOptimization = useCallback(async () => {
     setIsOptimizing(true);
-    
+
     try {
       // 运行性能测试
       const result = await devicePerformanceAnalyzer.runPerformanceTest();
-      
+
       // 应用最佳设置
       devicePerformanceAnalyzer.applyOptimalSettings(performanceOptimizationManager);
-      
+
       // 分析场景复杂度并调整
       const complexityAnalysis = sceneComplexityAnalyzer.analyzeScene();
-      
+
       console.log('一键优化完成:', { result, complexityAnalysis });
     } catch (error) {
       console.error('一键优化失败:', error);
@@ -327,9 +341,9 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     const container = containerRef.current;
     if (container) {
       const rect = container.getBoundingClientRect();
-      const isVisible = rect.top < window.innerHeight && rect.bottom >= 0 && 
-                       rect.left < window.innerWidth && rect.right >= 0;
-      
+      const isVisible = rect.top < window.innerHeight && rect.bottom >= 0 &&
+        rect.left < window.innerWidth && rect.right >= 0;
+
       if (!isVisible) {
         // 元素不可见时，降低更新频率
         animationFrameRef.current = setTimeout(() => {
@@ -340,7 +354,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     }
 
     animationFrameRef.current = requestAnimationFrame(animate);
-    
+
     // 计算时间差
     const currentTime = performance.now();
     const deltaTime = lastFrameTimeRef.current ? (currentTime - lastFrameTimeRef.current) / 1000 : 0;
@@ -351,15 +365,15 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     if (controls) {
       controls.update();
     }
-    
+
     // 应用性能优化
     if (autoModeEnabled && performanceOptimizationManager.isAutoModeEnabled()) {
       // 使用性能优化管理器进行自动优化
       performanceOptimizationManager.update();
-      
+
       // 分析场景复杂度
       const complexity = sceneComplexityAnalyzer.analyzeScene();
-      
+
       // 如果场景复杂度过高，应用额外优化
       if (complexity.level === 'high' || complexity.level === 'very_high') {
         performanceOptimizationManager.applyComplexityOptimization(complexity);
@@ -380,7 +394,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     if (currentScene) {
       updateScene(currentScene, deltaTime);
     }
-    
+
     // 收集性能数据
     performanceDataCollector.recordFrameData({
       fps: currentFPS || 0,
@@ -397,7 +411,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
         if (renderOptimizer?.shouldSkipFrame()) {
           return;
         }
-        
+
         renderer.render(currentScene, camera);
       } catch (error) {
         console.error('Render error:', error);
@@ -422,17 +436,17 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       }
       animationFrameRef.current = null;
     }
-    
+
     // 重置时间引用
     lastFrameTimeRef.current = 0;
-    
+
     // 停止性能监控和收集
     performanceDataCollector.stopCollection();
     sceneComplexityAnalyzer.stopAnalysis();
-    
+
     // 清理场景资源 - useThreeScene已经处理了控制器、渲染器和相机的清理
     clearScene();
-    
+
     setIsInitialized(false);
   }, [clearScene]);
 
@@ -440,29 +454,29 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
   useEffect(() => {
     const isSupported = checkWebGLSupport();
     setWebglSupported(isSupported);
-    
+
     // 设置用户更新函数到场景
     if (onAnimationFrame) {
       setUpdateFunction(onAnimationFrame);
     }
-    
+
     if (isSupported) {
       initialize();
-      
+
       // 添加窗口调整大小监听
       if (autoFit) {
         window.addEventListener('resize', handleResize);
       }
-      
+
       // 开始动画循环
       if (!paused) {
         animate();
       }
-      
+
       // 开始性能数据收集
       performanceDataCollector.startCollection();
     }
-    
+
     // 组件卸载时清理资源
     return () => {
       if (autoFit) {
@@ -479,7 +493,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       animate();
     }
   }, [isInitialized, paused, animate]);
-  
+
   // 监听场景错误
   useEffect(() => {
     if (sceneError) {
@@ -504,10 +518,65 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
     }
   }, [isInitialized, children, scene, camera, renderer, controls]);
 
+  // 全屏切换函数
+  const toggleFullscreen = useCallback(() => {
+    if (!containerRef.current) return;
+
+    try {
+      if (!isFullscreen) {
+        if (containerRef.current.requestFullscreen) {
+          containerRef.current.requestFullscreen();
+        } else if ((containerRef.current as any).webkitRequestFullscreen) {
+          // Safari
+          (containerRef.current as any).webkitRequestFullscreen();
+        } else if ((containerRef.current as any).msRequestFullscreen) {
+          // IE11
+          (containerRef.current as any).msRequestFullscreen();
+        }
+        setIsFullscreen(true);
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          // Safari
+          (document as any).webkitExitFullscreen();
+        } else if ((document as any).msExitFullscreen) {
+          // IE11
+          (document as any).msExitFullscreen();
+        }
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      console.error('全屏切换失败:', error);
+    }
+  }, [isFullscreen]);
+
+  // 监听全屏状态变化
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const fullscreenElement =
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).msFullscreenElement;
+
+      setIsFullscreen(!!fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   // 错误渲染
   if (hasError) {
     return (
-      <div 
+      <div
         ref={containerRef}
         className={cn(
           'flex overflow-hidden relative flex-col justify-center items-center w-full rounded-lg border bg-red-900/10 border-red-500/30',
@@ -517,7 +586,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       >
         <h3 className="mb-2 font-medium text-red-400">Three.js 渲染错误</h3>
         <p className="px-4 text-sm text-center text-red-300/80">{hasError.message}</p>
-        <button 
+        <button
           onClick={initialize}
           className="px-4 py-2 mt-4 text-red-300 rounded-md border transition-colors bg-red-600/20 border-red-500/50 hover:bg-red-600/30"
         >
@@ -530,7 +599,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
   // WebGL不支持
   if (!webglSupported) {
     return (
-      <div 
+      <div
         ref={containerRef}
         className={cn(
           'flex overflow-hidden relative flex-col justify-center items-center w-full rounded-lg border bg-blue-900/10 border-blue-500/30',
@@ -549,7 +618,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
   // 加载状态
   if (!isInitialized) {
     return (
-      <div 
+      <div
         ref={containerRef}
         className={cn(
           'flex overflow-hidden relative justify-center items-center w-full bg-gray-900/50',
@@ -577,22 +646,30 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        style={{ 
+        style={{
           minHeight: `${minHeight}px`,
           width: minWidth > 0 ? `${minWidth}px` : '100%'
         }}
       />
-      
+
       {/* FPS 指示器 */}
       <div className="absolute top-2 left-2 px-2 py-1 text-xs font-medium text-white bg-black/70 rounded backdrop-blur-sm">
         {currentFPS?.toFixed(1) || '--'} FPS
       </div>
-      
+
       {/* 内存使用指示器 */}
       <div className="absolute top-2 left-20 px-2 py-1 text-xs font-medium text-white bg-black/70 rounded backdrop-blur-sm">
         {currentMemory?.toFixed(0) || '--'} MB
       </div>
-      
+
+      {/* 全屏按钮 */}
+      <button
+        onClick={toggleFullscreen}
+        className="absolute top-2 right-40 px-3 py-1 text-xs font-medium text-white bg-purple-600/80 hover:bg-purple-700/90 rounded transition-colors backdrop-blur-sm"
+      >
+        {isFullscreen ? '退出全屏' : '全屏显示'}
+      </button>
+
       {/* 性能控制面板按钮 */}
       <button
         onClick={() => setShowPerformancePanel(true)}
@@ -600,7 +677,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       >
         性能优化
       </button>
-      
+
       {/* 一键优化按钮 */}
       <button
         onClick={runOneClickOptimization}
@@ -609,14 +686,14 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
       >
         {isOptimizing ? '优化中...' : '一键优化'}
       </button>
-      
+
       {/* 高级性能控制面板 */}
       {showPerformancePanel && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
           onClick={() => setShowPerformancePanel(false)}
         >
-          <div 
+          <div
             className="relative w-full max-w-md mx-4 bg-gray-900 rounded-lg shadow-xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
@@ -632,8 +709,8 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = ({
 };
 
 // 重新导出VisualizationService中的方法，保持向后兼容性
-export { 
-  createGridHelper, 
+export {
+  createGridHelper,
   createAxesHelper
 } from '../services/visualizationService';
 

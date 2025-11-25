@@ -282,6 +282,35 @@ export class FormulaService {
         return Math.random() * 100;
     }
   }
+
+  public static formatFormulaExpression(expression: string): string {
+    // 格式化公式表达式以便于显示
+    return expression
+      .replace(/\*/g, ' \\cdot ')
+      .replace(/\$/g, '')
+      .trim();
+  }
+
+  // 新增公式求导方法
+  public deriveFormula(formulaId: number): string | null {
+    // 返回公式的导数表达式（简化实现）
+    switch (formulaId) {
+      case 1: // 时空同一化方程
+        return '\\frac{d\\vec{r}(t)}{dt} = \\vec{C}';
+      case 2: // 三维螺旋时空方程
+        return '\\frac{d\\vec{r}(t)}{dt} = -r\\omega\\sin(\\omega t) \\vec{i} + r\\omega\\cos(\\omega t) \\vec{j} + h \\vec{k}';
+      case 3: // 质量定义方程
+        return '\\frac{dm}{dt} = k \\cdot \\frac{d^2n}{d\\Omega dt}';
+      case 5: // 静止动量方程
+        return '\\frac{d\\vec{p}_0}{dt} = \\frac{d m_0}{dt} \\vec{C}_0'; // 如果m0是常数，则为0
+      case 6: // 运动动量方程
+        return '\\frac{d\\vec{P}}{dt} = \\frac{dm}{dt}(\\vec{C} - \\vec{V}) - m\\frac{d\\vec{V}}{dt}';
+      case 16: // 统一场论能量方程
+        return '\\frac{de}{dt} = \\frac{d}{dt}(m_0 c^2) = 0'; // m0和c是常数
+      default:
+        return null; // 不支持求导的公式
+    }
+  }
 }
 
 export const formulaService = FormulaService.getInstance();
