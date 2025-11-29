@@ -25,17 +25,40 @@ export default defineConfig({
   build: {
     outDir: 'dist/static',
     target: 'esnext',
-    minify: 'esbuild',
-    sourcemap: true,
+    minify: 'terser',
+    sourcemap: false,
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug']
+      },
+      format: {
+        comments: false
+      }
+    },
     rollupOptions: {
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'three-vendor': ['three'],
           'animation-vendor': ['framer-motion'],
-          'charts-vendor': ['recharts']
-        }
+          'charts-vendor': ['recharts'],
+          'mathjax-vendor': ['mathjax']
+        },
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]'
       }
-    }
+    },
+    brotliSize: false,
+    chunkSizeWarningLimit: 1500
+  },
+  // 添加缓存策略配置
+  cacheDir: 'node_modules/.vite',
+  // 预构建配置
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'three', 'framer-motion', 'recharts', 'mathjax'],
+    exclude: []
   }
 });

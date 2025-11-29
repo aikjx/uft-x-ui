@@ -9,6 +9,10 @@ const { containerVariants, itemVariants, fadeInUpVariants } = ANIMATION_VARIANTS
 const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen">
+      {/* 测试元素 */}
+      <div className="fixed top-20 left-20 bg-red-500 text-white p-4 z-50">
+        测试元素 - 正常显示
+      </div>
       {/* 英雄区域 */}
       <section className="relative py-20 md:py-32 text-center overflow-hidden">
         <motion.div

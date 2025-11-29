@@ -32,8 +32,8 @@ const Navbar: React.FC = () => {
       className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
         isScrolled
-          ? 'bg-gray-900/80 backdrop-blur-xl border-b border-gray-700/50 shadow-xl'
-          : 'bg-transparent'
+          ? 'bg-gray-900/90 backdrop-blur-xl border-b border-gray-700/50 shadow-xl'
+          : 'bg-gray-900/60 backdrop-blur-lg border-b border-gray-700/30'
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -64,7 +64,7 @@ const Navbar: React.FC = () => {
                     'relative px-3 py-2 text-sm font-medium transition-all duration-300',
                     isActive
                       ? 'text-blue-400'
-                      : 'text-gray-300 hover:text-white'
+                      : 'text-white hover:text-blue-300'
                   )}
                 >
                   <span className="flex items-center space-x-2">

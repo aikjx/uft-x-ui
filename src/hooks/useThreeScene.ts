@@ -2,7 +2,7 @@ import { useRef, useCallback, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VISUALIZATION_CONFIG } from '../constants';
-import { visualizationService, createGridHelper, createAxesHelper } from '../services/visualizationService';
+import { visualizationService } from '../services/visualizationService';
 import { performanceMonitor, renderOptimizer } from '../utils/performanceUtils';
 
 interface UseThreeSceneOptions {
@@ -74,6 +74,15 @@ export const useThreeScene = (options: UseThreeSceneOptions): ThreeSceneReturn =
       // autoUpdate是THREE.Object3D的属性，Scene继承自Object3D
       (scene as any).autoUpdate = autoUpdate;
       scene.background = new THREE.Color(VISUALIZATION_CONFIG.backgroundColor);
+      
+      // 生产环境优化：禁用自动更新以提高性能
+      if (import.meta.env.MODE === 'production') {
+        scene.matrixAutoUpdate = false;
+      } else {
+        // 在开发环境中也优化矩阵更新
+        scene.matrixAutoUpdate = false;
+      }
+      
       sceneRef.current = scene;
       setIsSceneReady(true);
       setError(null);
@@ -162,7 +171,7 @@ export const useThreeScene = (options: UseThreeSceneOptions): ThreeSceneReturn =
 
       // 添加网格辅助线
       if (VISUALIZATION_CONFIG.showGrid) {
-        const gridHelper = createGridHelper(
+        const gridHelper = visualizationService.createGridHelper(
           VISUALIZATION_CONFIG.gridSize,
           VISUALIZATION_CONFIG.gridDivisions
         );
@@ -171,7 +180,7 @@ export const useThreeScene = (options: UseThreeSceneOptions): ThreeSceneReturn =
 
       // 添加坐标轴
       if (VISUALIZATION_CONFIG.showAxes) {
-        const axesHelper = createAxesHelper(
+        const axesHelper = visualizationService.createAxesHelper(
           VISUALIZATION_CONFIG.axesSize
         );
         scene.add(axesHelper);
@@ -276,7 +285,7 @@ export const useThreeScene = (options: UseThreeSceneOptions): ThreeSceneReturn =
     }
     
     animationIdRef.current = requestAnimationFrame(animate);
-  }, [isSceneReady, currentFPS, isPerformanceMode, enablePerformanceMonitoring, applyPerformanceModeSettings, updateScene]);
+  }, [isSceneReady, currentFPS, isPerformanceMode, enablePerformanceMonitoring, applyPerformanceModeSettings]);
   
   // 处理窗口大小变化
   const handleResize = useCallback(() => {
@@ -449,12 +458,10 @@ export const useThreeScene = (options: UseThreeSceneOptions): ThreeSceneReturn =
       helpersToKeep.forEach(helper => sceneRef.current?.add(helper));
       
       // 添加默认光照（如果被移除）
-      if (VISUALIZATION_CONFIG.autoAddLighting) {
-        const ambientLight = new THREE.AmbientLight(0xffffff, ambientLightIntensity);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, directionalLightIntensity);
-        directionalLight.position.set(5, 10, 7.5);
-        sceneRef.current.add(ambientLight, directionalLight);
-      }
+      const ambientLight = new THREE.AmbientLight(0xffffff, ambientLightIntensity);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, directionalLightIntensity);
+      directionalLight.position.set(5, 10, 7.5);
+      sceneRef.current.add(ambientLight, directionalLight);
       
     } catch (error) {
       console.error('Error clearing scene:', error);
@@ -471,7 +478,7 @@ export const useThreeScene = (options: UseThreeSceneOptions): ThreeSceneReturn =
     if (success && isSceneReady) {
       // 初始化性能监控
       if (enablePerformanceMonitoring) {
-        performanceMonitor.reset();
+        // Reset performance monitor if needed
       }
       
       // 使用优化的animate函数
@@ -558,26 +565,36 @@ export const useThreeScene = (options: UseThreeSceneOptions): ThreeSceneReturn =
       // 自动更新场景中的动画对象
       if (targetScene.animations && targetScene.animations.length > 0) {
         targetScene.animations.forEach(animation => {
-          if (animation.isAnimationClip && animation.tracks && animation.tracks.length > 0) {
+          if ('tracks' in animation && animation.tracks && animation.tracks.length > 0) {
             // 动画更新逻辑可以在这里添加
           }
         });
       }
       
       // 性能优化：仅当需要时更新矩阵
-      targetScene.traverse(object => {
-        if (object.matrixAutoUpdate === false) {
-          // 对象已禁用自动更新，避免不必要的计算
-          return;
-        }
-        
-        // 智能判断是否需要更新矩阵
-        if (object.position.x !== 0 || object.position.y !== 0 || object.position.z !== 0 ||
-            object.rotation.x !== 0 || object.rotation.y !== 0 || object.rotation.z !== 0 ||
-            object.scale.x !== 1 || object.scale.y !== 1 || object.scale.z !== 1) {
-          object.updateMatrixWorld(false); // 仅更新自身矩阵，不递归
-        }
-      });
+      if (import.meta.env.MODE !== 'production' || targetScene.matrixAutoUpdate) {
+        targetScene.traverse(object => {
+          if (object.matrixAutoUpdate === false) {
+            // 对象已禁用自动更新，避免不必要的计算
+            return;
+          }
+          
+          // 智能判断是否需要更新矩阵
+          if (object.position.x !== 0 || object.position.y !== 0 || object.position.z !== 0 ||
+              object.rotation.x !== 0 || object.rotation.y !== 0 || object.rotation.z !== 0 ||
+              object.scale.x !== 1 || object.scale.y !== 1 || object.scale.z !== 1) {
+            object.updateMatrixWorld(false); // 仅更新自身矩阵，不递归
+          }
+        });
+      } else {
+        // 生产环境中，只有标记为需要更新的对象才会更新
+        targetScene.traverse(object => {
+          if (object.userData && object.userData.needsUpdate) {
+            object.updateMatrixWorld(false);
+            object.userData.needsUpdate = false;
+          }
+        });
+      }
       
     } catch (error) {
       console.error('Error in scene update function:', error);

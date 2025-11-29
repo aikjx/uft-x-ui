@@ -726,6 +726,20 @@ export class SciFiPerformanceController {
   private handleOptimizationError(error: any): void {
     console.error('性能优化错误:', error);
     
+    // 生产环境中的错误处理
+    if (import.meta.env.MODE === 'production') {
+      // 在生产环境中记录错误但不中断系统运行
+      // 可以集成错误监控服务如Sentry等
+      console.error('系统错误已记录:', {
+        message: error.message || '未知错误',
+        stack: error.stack || '无堆栈信息',
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      // 开发环境中显示详细错误信息
+      console.error('性能优化错误详情:', error);
+    }
+    
     // 错误恢复策略
     if (this.systemStatus.overallHealth < 0.5) {
       console.log('🛠️ 检测到系统异常，启动自动修复');

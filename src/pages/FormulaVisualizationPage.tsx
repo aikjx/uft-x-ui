@@ -25,7 +25,7 @@ const FormulaVisualizationPage: React.FC = () => {
     selectFormula(formula);
     navigate(`/formulas/${formula.id}`);
     showNotification.success(`已选择公式：${formula.name}`);
-  }, [navigate, selectFormula]);
+  }, [navigate, selectFormula, showNotification]);
 
   // ThreeJSVisualization组件会自动处理场景清理，不需要额外的清理逻辑
 
@@ -41,20 +41,42 @@ const FormulaVisualizationPage: React.FC = () => {
 
     if (!selectedFormula) return;
 
-    // 添加坐标轴和网格
-    const axesHelper = visualizationService.createAxesHelper(5);
-    scene.add(axesHelper);
+    // 清理场景中除了基础元素外的所有对象
+    scene.children.forEach(child => {
+      if (!(child instanceof THREE.AmbientLight || 
+            child instanceof THREE.DirectionalLight || 
+            child instanceof THREE.GridHelper || 
+            child instanceof THREE.AxesHelper)) {
+        scene.remove(child);
+      }
+    });
 
-    const gridHelper = visualizationService.createGridHelper(10, 10);
-    scene.add(gridHelper);
+    // 只在场景中没有坐标轴和网格时添加
+    const hasAxesHelper = scene.children.some(child => child instanceof THREE.AxesHelper);
+    if (!hasAxesHelper) {
+      const axesHelper = visualizationService.createAxesHelper(5);
+      scene.add(axesHelper);
+    }
 
-    // 添加基础光照
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
+    const hasGridHelper = scene.children.some(child => child instanceof THREE.GridHelper);
+    if (!hasGridHelper) {
+      const gridHelper = visualizationService.createGridHelper(10, 10);
+      scene.add(gridHelper);
+    }
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 10, 7.5);
-    scene.add(directionalLight);
+    // 只在场景中没有光照时添加
+    const hasAmbientLight = scene.children.some(child => child instanceof THREE.AmbientLight);
+    if (!hasAmbientLight) {
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+    }
+
+    const hasDirectionalLight = scene.children.some(child => child instanceof THREE.DirectionalLight);
+    if (!hasDirectionalLight) {
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(5, 10, 7.5);
+      scene.add(directionalLight);
+    }
 
     // 根据公式ID创建不同的可视化
     switch (selectedFormula.id) {
@@ -1491,7 +1513,8 @@ const FormulaVisualizationPage: React.FC = () => {
           </motion.div>
         </div>
       </motion.div>
-      );
+    </PageContainer>
+  );
 };
 
-      export default FormulaVisualizationPage;
+export default FormulaVisualizationPage;

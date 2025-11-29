@@ -11,6 +11,11 @@
   color: rgba(255, 255, 255, 0.87);
   background-color: #0a0a14;
 
+  /* Tailwind CSS变量定义 */
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

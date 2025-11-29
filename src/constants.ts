@@ -328,6 +328,39 @@ export const PARTICLE_CONFIG = {
 };
 
 /**
+ * 首页特性数据
+ */
+export const FEATURES = [
+  {
+    icon: '📐',
+    title: '核心公式3D可视化',
+    description: '将19个核心公式转化为直观的3D交互模型，让抽象的物理概念变得清晰可见',
+    link: '/formulas',
+    color: 'from-blue-500 to-cyan-500',
+    gradientFrom: 'rgb(59, 130, 246)',
+    gradientTo: 'rgb(34, 211, 238)'
+  },
+  {
+    icon: '🛸',
+    title: '人工场技术模拟',
+    description: '可视化展示人工场技术原理及其应用场景，探索未来科技的无限可能',
+    link: '/artificial-field',
+    color: 'from-purple-500 to-indigo-500',
+    gradientFrom: 'rgb(168, 85, 247)',
+    gradientTo: 'rgb(99, 102, 241)'
+  },
+  {
+    icon: '🔍',
+    title: '交互式探索系统',
+    description: '通过直观的交互界面，调整参数，实时观察物理现象的变化',
+    link: '/interactive',
+    color: 'from-blue-600 to-blue-400',
+    gradientFrom: 'rgb(37, 99, 235)',
+    gradientTo: 'rgb(96, 165, 250)'
+  }
+];
+
+/**
  * 3D可视化配置
  */
 export const VISUALIZATION_CONFIG = {
@@ -383,6 +416,7 @@ export const VISUALIZATION_CONFIG = {
     maxFPS: 60,
     // 新增性能优化配置
     adaptiveQuality: true,
+    defaultParticleCount: 200,
     minParticles: 500,
     maxParticles: 2000,
     qualityThresholdFPS: 30,

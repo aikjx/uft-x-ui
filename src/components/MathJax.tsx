@@ -8,7 +8,7 @@ interface MathJaxProps {
   inline?: boolean;
 }
 
-export const MathJax: React.FC<MathJaxProps> = ({ formula, className = '', inline = false }) => {
+export const MathJax: React.FC<MathJaxProps> = React.memo(({ formula, className = '', inline = false }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
 
@@ -17,14 +17,14 @@ export const MathJax: React.FC<MathJaxProps> = ({ formula, className = '', inlin
     // 确保在客户端环境中初始化
     if (typeof window !== 'undefined') {
       MathJaxService.initialize();
-      
+
       // 监听MathJax就绪状态
       const handleReady = () => {
         setIsReady(true);
       };
-      
+
       MathJaxService.onReady(handleReady);
-      
+
       return () => {
         MathJaxService.offReady(handleReady);
       };
@@ -36,7 +36,7 @@ export const MathJax: React.FC<MathJaxProps> = ({ formula, className = '', inlin
     if (isReady && wrapperRef.current) {
       // 清空容器
       wrapperRef.current.innerHTML = inline ? `$${formula}$` : `$$${formula}$$`;
-      
+
       // 使用MathJaxService进行渲染
       try {
         MathJaxService.queueTypeset(wrapperRef.current);
@@ -47,8 +47,8 @@ export const MathJax: React.FC<MathJaxProps> = ({ formula, className = '', inlin
   }, [formula, isReady, inline]);
 
   return (
-    <div 
-      ref={wrapperRef} 
+    <div
+      ref={wrapperRef}
       className={cn(
         'mathjax-wrapper',
         'font-math',
@@ -65,6 +65,13 @@ export const MathJax: React.FC<MathJaxProps> = ({ formula, className = '', inlin
       )}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for React.memo
+  return (
+    prevProps.formula === nextProps.formula &&
+    prevProps.className === nextProps.className &&
+    prevProps.inline === nextProps.inline
+  );
+});
 
 export default MathJax;

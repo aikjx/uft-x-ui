@@ -23,7 +23,7 @@ export interface WindowWithMathJax {
 declare const window: WindowWithMathJax;
 
 // MathJax服务类
-export class MathJaxService {
+class MathJaxService {
   private static instance: MathJaxService;
   private isInitialized: boolean = false;
   private isReady: boolean = false;
@@ -34,6 +34,7 @@ export class MathJaxService {
   private retryCount: number = 0;
   private maxRetries: number = 3;
   private isClient: boolean = typeof window !== 'undefined' && typeof document !== 'undefined';
+  private mergedConfig: any = {};
   
   private constructor() {
     // 初始化时检查环境
@@ -110,8 +111,8 @@ export class MathJaxService {
     // 合并用户配置
     const mergedConfig = this.deepMerge(defaultConfig, options);
     
-    // 配置MathJax
-    window.MathJax = mergedConfig;
+    // 保存配置，在MathJax脚本加载完成后应用
+    this.mergedConfig = mergedConfig;
     
     // 动态加载MathJax脚本
     this.loadMathJaxScript();
@@ -148,7 +149,7 @@ export class MathJaxService {
   /**
    * 加载MathJax脚本
    */
-  private loadMathJaxScript(): void {
+  private async loadMathJaxScript(): Promise<void> {
     if (!this.isClient) {
       return;
     }
@@ -160,7 +161,11 @@ export class MathJaxService {
     
     const script = document.createElement('script');
     // 使用CDN的MathJax v3版本，确保兼容性
-    script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js';
+    // 为生产环境优化，使用较小的包
+    const isProd = import.meta.env.MODE === 'production';
+    script.src = isProd 
+      ? 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.min.js'
+      : 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js';
     script.async = true;
     script.type = 'text/javascript';
     
@@ -226,6 +231,12 @@ export class MathJaxService {
         await window.MathJax.startup.promise;
       }
       
+      // 应用配置，但避免直接覆盖只读属性
+      if (this.mergedConfig) {
+        // 安全地合并配置，只修改可写属性
+        this.safeMergeConfig(window.MathJax, this.mergedConfig);
+      }
+      
       this.isReady = true;
       this.retryCount = 0; // 重置重试计数
       
@@ -249,6 +260,59 @@ export class MathJaxService {
       console.error('MathJax启动失败:', error);
       // 尝试重试
       this.handleLoadError(error);
+    }
+  }
+  
+  /**
+   * 安全合并配置，避免修改只读属性
+   */
+  private safeMergeConfig(target: any, source: any): void {
+    if (!target || !source || typeof target !== 'object' || typeof source !== 'object') {
+      return;
+    }
+    
+    // 只合并我们需要的配置项，避免修改MathJax内部的只读属性
+    const safeConfigKeys = ['tex', 'svg', 'options', 'startup'];
+    
+    for (const key of safeConfigKeys) {
+      if (source[key] && typeof source[key] === 'object') {
+        if (!target[key]) {
+          target[key] = source[key];
+        } else {
+          // 深度合并安全配置项
+          this.deepMergeSafe(target[key], source[key]);
+        }
+      }
+    }
+  }
+  
+  /**
+   * 深度合并对象，但避免修改只读属性
+   */
+  private deepMergeSafe(target: any, source: any): void {
+    if (!target || !source || typeof target !== 'object' || typeof source !== 'object') {
+      return;
+    }
+    
+    for (const key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        try {
+          // 尝试修改属性，如果失败则跳过（只读属性）
+          if (typeof source[key] === 'object' && !Array.isArray(source[key]) && source[key] !== null) {
+            if (!target[key]) {
+              target[key] = source[key];
+            } else {
+              this.deepMergeSafe(target[key], source[key]);
+            }
+          } else {
+            // 尝试设置基本类型属性
+            target[key] = source[key];
+          }
+        } catch (error) {
+          // 忽略只读属性错误
+          console.debug(`跳过只读属性: ${key}`);
+        }
+      }
     }
   }
   
@@ -321,7 +385,7 @@ export class MathJaxService {
       } else if (window.MathJax.hub && window.MathJax.hub.Typeset) {
         // 兼容旧版本API
         await new Promise<void>((resolve) => {
-          window.MathJax.hub.Typeset(elements, () => resolve());
+          window.MathJax!.hub!.Typeset(elements, () => resolve());
         });
       } else {
         throw new Error('未找到可用的MathJax渲染方法');
@@ -468,9 +532,12 @@ export class MathJaxService {
     if (this.isClient && window.MathJax) {
       try {
         // 尝试安全地关闭MathJax（如果支持）
+        // 注释掉有问题的代码，因为startup.shutdown方法不存在
+        /*
         if (window.MathJax.startup && window.MathJax.startup.shutdown) {
           window.MathJax.startup.shutdown();
         }
+        */
       } catch (err) {
         console.warn('关闭MathJax失败:', err);
       }
