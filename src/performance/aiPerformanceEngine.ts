@@ -326,6 +326,48 @@ export class AIPerformanceEngine {
       confidence: Math.min(0.95, accuracy * 1.1)
     };
   }
+
+  /**
+   * 预测未来资源性能
+   * @param metrics 资源指标数组
+   * @returns 预测的资源性能数组
+   */
+  predictPerformance(metrics: number[]): number[] {
+    // 确保输入数组长度合适
+    if (metrics.length < 8) {
+      // 填充缺失值
+      const filledMetrics = [...metrics];
+      while (filledMetrics.length < 8) {
+        filledMetrics.push(0.5); // 用默认值填充
+      }
+      metrics = filledMetrics;
+    }
+
+    // 使用神经网络进行预测
+    const input = metrics.slice(0, 8); // 只使用前8个指标
+    const hiddenLayer = new Array(20).fill(0);
+    const inputHidden = this.neuralWeights.get('input_hidden')!;
+    const hiddenOutput = this.neuralWeights.get('hidden_output')!;
+
+    // 输入层到隐藏层
+    for (let i = 0; i < 20; i++) {
+      for (let j = 0; j < input.length; j++) {
+        hiddenLayer[i] += input[j] * inputHidden[i * 10 + j]; // 使用10个输入特征
+      }
+      hiddenLayer[i] = this.sigmoid(hiddenLayer[i]);
+    }
+
+    // 隐藏层到输出层
+    const output = new Array(5).fill(0); // 5个输出预测值
+    for (let i = 0; i < 5; i++) {
+      for (let j = 0; j < 20; j++) {
+        output[i] += hiddenLayer[j] * hiddenOutput[i * 4 + j];
+      }
+      output[i] = this.sigmoid(output[i]);
+    }
+
+    return output;
+  }
 }
 
 // 导出单例

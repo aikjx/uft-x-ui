@@ -171,7 +171,7 @@ export const generateSimulationData = (count: number, amplitude: number = 1, fre
 };
 
 // 科幻性能优化系统导入
-import SciFiPerformanceSystem from './sciFiPerformanceController';
+import SciFiPerformanceSystem from '../performance/sciFiPerformanceController';
 
 // 🚀 科幻性能优化系统 - 快速启用函数
 
@@ -231,9 +231,9 @@ export const enablePresentationMode = (container?: HTMLElement) =>
 export { SciFiPerformanceSystem };
 
 // 高级功能导出
-export * from './aiPerformanceEngine';
-export * from './quantumRenderOptimizer';
-export * from './neuralResourceScheduler';
+export * from '../performance/aiPerformanceEngine';
+export * from '../performance/quantumRenderOptimizer';
+export * from '../performance/neuralResourceScheduler';
 export { default as HolographicPerformanceUI } from '../components/HolographicPerformanceUI';
 
 // 显示启动通知
@@ -242,4 +242,39 @@ if (typeof window !== 'undefined') {
   console.log('💡 使用方法:');
   console.log('  import { startSciFiPerformance } from "@/utils"');
   console.log('  await startSciFiPerformance();');
+}
+
+// 生成唯一ID
+export function generateId(): string {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
+// 延迟函数
+export function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// 格式化数字显示
+export function formatNumber(num: number, decimals: number = 2): string {
+  if (Math.abs(num) >= 1000000) {
+    return (num / 1000000).toFixed(decimals) + 'M';
+  } else if (Math.abs(num) >= 1000) {
+    return (num / 1000).toFixed(decimals) + 'K';
+  }
+  return num.toFixed(decimals);
+}
+
+// 安全地解析JSON
+export function safeJsonParse<T>(str: string, fallback: T): T {
+  try {
+    return JSON.parse(str) as T;
+  } catch (error) {
+    console.error('JSON解析错误:', error);
+    return fallback;
+  }
+}
+
+// 检查是否在浏览器环境中
+export function isBrowser(): boolean {
+  return typeof window !== 'undefined' && typeof document !== 'undefined';
 }

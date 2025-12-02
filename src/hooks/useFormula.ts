@@ -27,17 +27,28 @@ export const useFormula = () => {
   // 初始化选中的公式
   useEffect(() => {
     setIsLoading(true);
+    
+    // 确保FORMULAS有数据
+    if (FORMULAS.length === 0) {
+      setIsLoading(false);
+      return;
+    }
+    
     if (id) {
       const formula = getFormulaById(id);
       if (formula) {
         setSelectedFormula(formula);
-      } else if (FORMULAS.length > 0) {
+      } else {
         setSelectedFormula(FORMULAS[0]);
       }
-    } else if (FORMULAS.length > 0) {
+    } else {
       setSelectedFormula(FORMULAS[0]);
     }
-    setIsLoading(false);
+    
+    // 延迟设置isLoading为false，确保组件有足够时间渲染
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
   }, [id, getFormulaById]);
 
   // 根据类别分组公式

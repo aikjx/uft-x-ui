@@ -1,3 +1,4 @@
+import React from 'react'
 import { vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
@@ -390,6 +391,333 @@ function setupAdvancedDomMocks() {
     }
   }
 }
+
+// 模拟three.js模块
+vi.mock('three', () => {
+  // 创建基本的Three.js类模拟
+  class MockVector3 {
+    x: number;
+    y: number;
+    z: number;
+    
+    constructor(x = 0, y = 0, z = 0) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+    
+    set(x: number, y: number, z: number): MockVector3 {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+      return this;
+    }
+    
+    copy(v: MockVector3): MockVector3 {
+      this.x = v.x;
+      this.y = v.y;
+      this.z = v.z;
+      return this;
+    }
+    
+    length(): number {
+      return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    }
+    
+    clone(): MockVector3 {
+      return new MockVector3(this.x, this.y, this.z);
+    }
+    
+    add(v: MockVector3): MockVector3 {
+      this.x += v.x;
+      this.y += v.y;
+      this.z += v.z;
+      return this;
+    }
+    
+    multiplyScalar(s: number): MockVector3 {
+      this.x *= s;
+      this.y *= s;
+      this.z *= s;
+      return this;
+    }
+    
+    divideScalar(s: number): MockVector3 {
+      if (s !== 0) {
+        this.x /= s;
+        this.y /= s;
+        this.z /= s;
+      }
+      return this;
+    }
+    
+    normalize(): MockVector3 {
+      const length = this.length();
+      if (length !== 0) {
+        this.divideScalar(length);
+      }
+      return this;
+    }
+    
+    cross(v: MockVector3): MockVector3 {
+      const x = this.y * v.z - this.z * v.y;
+      const y = this.z * v.x - this.x * v.z;
+      const z = this.x * v.y - this.y * v.x;
+      this.x = x;
+      this.y = y;
+      this.z = z;
+      return this;
+    }
+  }
+  
+  class MockRay {
+    origin: any;
+    direction: any;
+    
+    constructor(origin = new MockVector3(), direction = new MockVector3()) {
+      this.origin = origin;
+      this.direction = direction;
+    }
+  }
+  
+  class MockScene {
+    add = vi.fn();
+    remove = vi.fn();
+    children: any[] = [];
+    background = null;
+  }
+  
+  class MockPerspectiveCamera {
+    position = new MockVector3();
+    lookAt = vi.fn();
+    updateProjectionMatrix = vi.fn();
+    aspect = 1;
+    fov = 75;
+    near = 0.1;
+    far = 1000;
+  }
+  
+  class MockWebGLRenderer {
+    setSize = vi.fn();
+    setPixelRatio = vi.fn();
+    render = vi.fn();
+    dispose = vi.fn();
+    setClearColor = vi.fn();
+    shadowMap = { enabled: false };
+  }
+  
+  class MockPoints {
+    geometry: MockBufferGeometry;
+    material: any;
+    rotation = { x: 0, y: 0, z: 0 };
+    
+    constructor(geometry?: MockBufferGeometry, material?: any) {
+      this.geometry = geometry || new MockBufferGeometry();
+      this.material = material || { dispose: () => {} };
+    }
+  }
+  
+  class MockBufferGeometry {
+    attributes: Record<string, any> = {};
+    
+    setAttribute(name: string, attribute: any): MockBufferGeometry {
+      this.attributes[name] = attribute;
+      return this;
+    }
+    
+    dispose(): void {
+      // 模拟清理
+    }
+  }
+  
+  class MockPointsMaterial {
+    dispose = vi.fn();
+  }
+  
+  class MockBufferAttribute {
+    needsUpdate = false;
+  }
+  
+  return {
+    // 导出模拟的Three.js类
+    Vector3: MockVector3,
+    Ray: MockRay,
+    Scene: MockScene,
+    PerspectiveCamera: MockPerspectiveCamera,
+    WebGLRenderer: MockWebGLRenderer,
+    Points: MockPoints,
+    BufferGeometry: MockBufferGeometry,
+    PointsMaterial: MockPointsMaterial,
+    BufferAttribute: MockBufferAttribute,
+    CatmullRomCurve3: class {
+      getPoints = vi.fn(() => []);
+    },
+    AdditiveBlending: 2,
+    // 添加更多Three.js导出
+    Object3D: class {
+      add = vi.fn();
+      remove = vi.fn();
+      position = new MockVector3();
+      rotation = { x: 0, y: 0, z: 0 };
+      scale = { x: 1, y: 1, z: 1 };
+    },
+    AmbientLight: class {
+      constructor(color = 0xffffff, intensity = 1) {}
+    },
+    DirectionalLight: class {
+      constructor(color = 0xffffff, intensity = 1) {
+        this.position = new MockVector3();
+      }
+      position: any;
+    },
+    Mesh: class {
+      geometry = { dispose: vi.fn() };
+      material = { dispose: vi.fn() };
+      position = new MockVector3();
+      rotation = { x: 0, y: 0, z: 0 };
+    },
+    MeshBasicMaterial: class {
+      dispose = vi.fn();
+    },
+    BoxGeometry: class {
+      dispose = vi.fn();
+    },
+    Line: class {
+      geometry = { dispose: vi.fn() };
+      material = { dispose: vi.fn() };
+      position = new MockVector3();
+      rotation = { x: 0, y: 0, z: 0 };
+    },
+    LineBasicMaterial: class {
+      dispose = vi.fn();
+    },
+    CurvePath: class {
+      getPoints = vi.fn(() => []);
+    },
+    LineCurve3: class {
+      constructor(start = new MockVector3(), end = new MockVector3()) {}
+    },
+    Color: class {
+      r: number;
+      g: number;
+      b: number;
+      
+      constructor(color = 0xffffff) {
+        // 初始化为白色
+        this.r = 1;
+        this.g = 1;
+        this.b = 1;
+        
+        if (color) {
+          this.setHex(color);
+        }
+      }
+      
+      setHex(hex: number): this {
+        // 转换十六进制颜色值为RGB
+        hex = Math.floor(hex);
+        this.r = (hex >> 16 & 255) / 255;
+        this.g = (hex >> 8 & 255) / 255;
+        this.b = (hex & 255) / 255;
+        return this;
+      }
+      
+      setRGB(r: number, g: number, b: number): this {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        return this;
+      }
+    },
+    Vector2: class {
+      constructor(x = 0, y = 0) {}
+    },
+    Vector4: class {
+      constructor(x = 0, y = 0, z = 0, w = 0) {}
+    },
+    Matrix4: class {
+      identity = vi.fn();
+      lookAt = vi.fn();
+      multiply = vi.fn();
+      inverse = vi.fn();
+    },
+    Euler: class {
+      constructor(x = 0, y = 0, z = 0) {}
+    },
+    Quaternion: class {
+      setFromEuler = vi.fn();
+    },
+    Raycaster: class {
+      setFromCamera = vi.fn();
+      intersectObjects = vi.fn(() => []);
+    },
+    Plane: class {
+      setFromNormalAndCoplanarPoint = vi.fn();
+      intersectLine = vi.fn();
+    },
+  };
+});
+
+// 模拟react-router-dom的useLocation钩子
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<any>('react-router-dom');
+  
+  return {
+    ...actual,
+    // 确保useLocation返回正确的location对象
+    useLocation: vi.fn(() => ({ pathname: '/', search: '', hash: '', state: null })),
+  };
+});
+
+// 模拟framer-motion模块，解决motion() is deprecated警告
+vi.mock('framer-motion', () => {
+  // 创建一个基础的motion函数
+  const baseMotion = (Component: any) => {
+    return ({ children, ...props }: any) => {
+      return React.createElement(Component, props, children);
+    };
+  };
+  
+  // 创建motion对象，支持作为函数调用和属性访问
+  const motion = Object.assign(baseMotion, {
+    // 支持HTML元素
+    nav: ({ children, ...props }: any) => React.createElement('nav', props, children),
+    div: ({ children, ...props }: any) => React.createElement('div', props, children),
+    span: ({ children, ...props }: any) => React.createElement('span', props, children),
+    button: ({ children, ...props }: any) => React.createElement('button', props, children),
+    a: ({ children, ...props }: any) => React.createElement('a', props, children),
+    // 支持create方法
+    create: (Component: any) => {
+      return ({ children, ...props }: any) => React.createElement(Component, props, children);
+    }
+  });
+  
+  return {
+    motion,
+    AnimatePresence: ({ children }: any) => {
+      return React.createElement('div', null, children);
+    },
+    useAnimation: () => ({
+      start: vi.fn(),
+      stop: vi.fn(),
+      pause: vi.fn(),
+      play: vi.fn(),
+      set: vi.fn(),
+      animate: vi.fn()
+    }),
+    useInView: () => [true, vi.fn()],
+    useScroll: () => ({ scrollY: 0, scrollX: 0 }),
+    useTransform: () => 0,
+    useMotionValue: () => ({ get: () => 0, set: vi.fn() }),
+    useMotionValueEvent: () => vi.fn(),
+    useSpring: () => ({ get: () => 0, set: vi.fn() }),
+    useTransition: () => [],
+    usePresence: () => [true, vi.fn()],
+    useDragControls: () => ({ start: vi.fn() }),
+    useMotionTemplate: () => '',
+    useReducedMotion: () => false,
+  };
+});
 
 // 全局测试套件钩子
 beforeAll(() => {

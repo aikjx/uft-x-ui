@@ -1,633 +1,281 @@
-# 顶尖架构设计文档
+# 统一场论可视化架构设计
 
-## 🏗️ 系统架构概览
+## 1. 架构概述
 
-本项目采用**现代化微前端架构**，结合**领域驱动设计(DDD)** 和**响应式编程模式**，构建高性能的统一场论可视化平台。
+本架构采用**分层模块化设计**，构建一个高性能、可扩展、易维护的统一场论可视化平台。设计理念参考了D3.js、Three.js等开源项目的优秀实践，结合现代前端技术栈，形成完整的可视化流水线。
 
-### 架构核心原则
+## 2. 核心设计原则
 
-1. **单一职责原则** - 每个模块专注于单一功能
-2. **开放封闭原则** - 扩展开放，修改封闭
-3. **依赖倒置原则** - 高层模块不依赖低层模块
-4. **接口隔离原则** - 使用小而专的接口
-5. **组件化设计** - 高度可复用的组件系统
+| 原则 | 描述 |
+|------|------|
+| **数据驱动** | 所有可视化效果由数据驱动，采用声明式API |
+| **模块化** | 各模块高内聚低耦合，依赖关系清晰 |
+| **可扩展** | 支持插件化扩展，便于添加新功能 |
+| **高性能** | 充分利用GPU加速，支持自适应渲染 |
+| **易维护** | 清晰的代码结构，完善的测试覆盖 |
+| **多端适配** | 支持Web、移动端、VR/AR等多端部署 |
 
-## 📁 项目结构
+## 3. 分层架构
 
-```
-├── src/
-│   ├── components/          # 通用 UI 组件
-│   ├── pages/               # 页面级组件
-│   ├── services/            # 业务服务层
-│   ├── utils/               # 工具函数库
-│   ├── types/               # TypeScript 类型定义
-│   ├── constants/           # 常量定义
-│   ├── hooks/               # React Hooks
-│   └── contexts/            # React Contexts
-├── tests/                   # 测试套件
-│   ├── unit/               # 单元测试
-│   ├── integration/        # 集成测试
-│   ├── e2e/                # 端到端测试
-│   └── benchmark/           # 性能基准测试
-└── config/                 # 配置文件
-```
+### 3.1 数据层 (Data Layer)
 
-## 🚀 核心技术栈
+**核心职责**：数据获取、存储、处理和管理
 
-### 前端框架
-- **React 18** - 现代化 React 框架
-- **TypeScript** - 类型安全的 JavaScript
-- **Vite** - 极速构建工具
+**核心组件**：
+- `DataProvider` - 统一数据访问接口
+- `FormulaDataProvider` - 公式数据管理
+- `DataStore` - 数据存储（本地/远程）
+- `DataProcessor` - 数据处理管道
 
-### 3D 可视化
-- **Three.js** - 3D 图形渲染引擎
-- **MathJax** - 数学公式渲染
-- **Framer Motion** - 动画库
+**关键特性**：
+- 支持多源数据集成
+- 实现数据缓存机制
+- 支持实时数据流处理
+- 提供数据订阅/发布机制
 
-### 性能优化
-- **Web Workers** - 多线程计算
-- **Virtual Scrolling** - 虚拟滚动
-- **Lazy Loading** - 懒加载
-- **Code Splitting** - 代码分割
+### 3.2 核心层 (Core Layer)
 
-### 测试体系
-- **Vitest** - 现代化的测试框架
-- **Testing Library** - React 组件测试
-- **Jest** - JavaScript 测试框架
-- **Cypress** - E2E 测试
+**核心职责**：物理计算、公式解析、模拟引擎
 
-## 🏢 核心架构模式
+**核心组件**：
+- `PhysicsEngine` - 物理计算引擎
+- `UnifiedFieldTheory` - 统一场论核心算法
+- `SimulationEngine` - 模拟引擎
+- `MathLibrary` - 数学库（向量、矩阵计算）
 
-### 1. 分层架构模式
+**关键特性**：
+- 支持多种物理模型
+- 实现Web Workers并行计算
+- 支持WebAssembly加速
+- 提供算法性能监控
 
-```
-┌─────────────────────────────────────────┐
-│              Presentation Layer          │  ← UI 组件层
-├─────────────────────────────────────────┤
-│            Application Layer            │  ← 应用逻辑层
-├─────────────────────────────────────────┤
-│              Domain Layer                │  ← 领域模型层
-├─────────────────────────────────────────┤
-│           Infrastructure Layer           │  ← 基础设施层
-└─────────────────────────────────────────┘
-```
+### 3.3 可视化层 (Visualization Layer)
 
-### 2. 事件驱动架构 (EDA)
+**核心职责**：可视化效果实现
 
-```javascript
-// 事件发布/订阅模式
-class EventBus {
-  private static instance: EventBus;
-  private events: Map<string, Function[]> = new Map();
-  
-  static getInstance() {
-    if (!EventBus.instance) {
-      EventBus.instance = new EventBus();
-    }
-    return EventBus.instance;
-  }
-  
-  subscribe(event: string, callback: Function) {
-    if (!this.events.has(event)) {
-      this.events.set(event, []);
-    }
-    this.events.get(event)!.push(callback);
-  }
-  
-  publish(event: string, data?: any) {
-    const callbacks = this.events.get(event) || [];
-    callbacks.forEach(callback => callback(data));
-  }
-}
-```
+**核心组件**：
+- `ParticleSystem` - 粒子系统
+- `FieldVisualizer` - 场可视化组件
+- `TrajectoryVisualizer` - 轨迹可视化
+- `SurfaceVisualizer` - 表面可视化
+- `VolumeRenderer` - 体渲染
 
-### 3. 响应式状态管理
+**关键特性**：
+- 支持大规模粒子渲染
+- 提供多种场可视化效果
+- 支持自定义可视化效果
+- 实现可视化效果预览
 
-```typescript
-// 基于 Proxy 的响应式状态管理
-class ReactiveStore<T extends object> {
-  private state: T;
-  private subscribers: Set<Function> = new Set();
-  
-  constructor(initialState: T) {
-    this.state = new Proxy(initialState, {
-      set: (target, property, value) => {
-        target[property as keyof T] = value;
-        this.notifySubscribers();
-        return true;
-      }
-    });
-  }
-  
-  subscribe(callback: Function) {
-    this.subscribers.add(callback);
-    return () => this.subscribers.delete(callback);
-  }
-  
-  private notifySubscribers() {
-    this.subscribers.forEach(callback => callback());
-  }
-  
-  getState(): T {
-    return this.state;
-  }
-}
-```
+### 3.4 渲染层 (Rendering Layer)
 
-## 🔧 性能优化策略
+**核心职责**：3D渲染、图形绘制
 
-### 1. 渲染优化
+**核心组件**：
+- `Renderer` - 渲染器抽象层
+- `ThreeJSRenderer` - Three.js渲染器实现
+- `SceneGraph` - 场景图管理
+- `MaterialSystem` - 材质系统
+- `MeshManager` - 网格管理
 
-```typescript
-// 虚拟化列表组件
-class VirtualList {
-  private container: HTMLElement;
-  private items: any[];
-  private visibleRange: [number, number];
-  
-  constructor(container: HTMLElement, items: any[]) {
-    this.container = container;
-    this.items = items;
-    this.visibleRange = [0, 0];
-    this.setupIntersectionObserver();
-  }
-  
-  private setupIntersectionObserver() {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          this.updateVisibleRange();
-        }
-      });
-    });
-    
-    observer.observe(this.container);
-  }
-  
-  private updateVisibleRange() {
-    // 计算可见范围，只渲染可见元素
-    const scrollTop = this.container.scrollTop;
-    const containerHeight = this.container.clientHeight;
-    // 实现虚拟化逻辑...
-  }
-}
-```
+**关键特性**：
+- 支持多种渲染后端
+- 实现渲染流水线优化
+- 支持LOD和视锥体剔除
+- 提供渲染调试工具
 
-### 2. 内存优化
+### 3.5 交互层 (Interaction Layer)
 
-```typescript
-// 对象池模式
-class ObjectPool<T> {
-  private pool: T[] = [];
-  private creator: () => T;
-  private resetter: (obj: T) => void;
-  
-  constructor(creator: () => T, resetter: (obj: T) => void) {
-    this.creator = creator;
-    this.resetter = resetter;
-  }
-  
-  acquire(): T {
-    if (this.pool.length > 0) {
-      return this.pool.pop()!;
-    }
-    return this.creator();
-  }
-  
-  release(obj: T) {
-    this.resetter(obj);
-    this.pool.push(obj);
-  }
-  
-  preallocate(count: number) {
-    for (let i = 0; i < count; i++) {
-      this.pool.push(this.creator());
-    }
-  }
-}
-```
+**核心职责**：用户输入处理、交互响应
 
-### 3. 计算优化
+**核心组件**：
+- `InputManager` - 输入管理
+- `CameraController` - 相机控制
+- `InteractionHandler` - 交互处理
+- `GestureRecognizer` - 手势识别
 
-```typescript
-// Web Workers 并行计算
-class ParallelCalculator {
-  private workers: Worker[] = [];
-  
-  constructor(workerScript: string, workerCount: number = navigator.hardwareConcurrency || 4) {
-    for (let i = 0; i < workerCount; i++) {
-      this.workers.push(new Worker(workerScript));
-    }
-  }
-  
-  async calculate<T>(data: any[], processor: (chunk: any[]) => T): Promise<T[]> {
-    const chunkSize = Math.ceil(data.length / this.workers.length);
-    const promises = this.workers.map((worker, index) => {
-      const chunk = data.slice(index * chunkSize, (index + 1) * chunkSize);
-      
-      return new Promise<T>((resolve) => {
-        worker.onmessage = (event) => resolve(event.data);
-        worker.postMessage(chunk);
-      });
-    });
-    
-    return Promise.all(promises);
-  }
-}
-```
+**关键特性**：
+- 支持多种输入设备
+- 实现平滑相机控制
+- 支持射线检测和物体选择
+- 支持拖拽、缩放、旋转等交互
 
-## 🧪 测试架构
+### 3.6 UI层 (UI Layer)
 
-### 1. 测试金字塔模型
+**核心职责**：用户界面、控制面板
+
+**核心组件**：
+- `ControlPanel` - 参数控制面板
+- `FormulaDisplay` - 公式展示
+- `PerformanceMonitor` - 性能监控
+- `ChatComponent` - 智能助手
+- `Navbar` - 导航栏
+- `Footer` - 页脚
+
+**关键特性**：
+- 响应式设计
+- 支持主题切换
+- 国际化支持
+- 无障碍访问
+
+### 3.7 性能层 (Performance Layer)
+
+**核心职责**：性能优化、资源管理
+
+**核心组件**：
+- `PerformanceOptimizer` - 性能优化器
+- `ResourceManager` - 资源管理
+- `LODSystem` - 细节层次系统
+- `CullingSystem` - 视锥体剔除
+
+**关键特性**：
+- 自适应性能优化
+- 资源预加载和懒加载
+- 内存泄漏检测
+- 性能分析工具
+
+## 4. 技术栈
+
+| 类别 | 技术 |
+|------|------|
+| **前端框架** | React 18 + TypeScript |
+| **3D渲染** | Three.js + WebGL / WebGPU |
+| **状态管理** | Zustand + React Context |
+| **样式框架** | Tailwind CSS |
+| **构建工具** | Vite |
+| **测试框架** | Vitest + Testing Library |
+| **数据处理** | D3.js + Lodash |
+| **性能监控** | Web Vitals |
+
+## 5. 核心数据流
 
 ```
-       E2E Tests (10%)
-    ┌─────────────────┐
-    │ Integration Tests (20%) │
-    └─────────────────┘
-          Unit Tests (70%)
+数据层 → 核心层 → 可视化层 → 渲染层 → 用户界面
+          ↑               ↓
+          └───────────────┘
+                反馈
 ```
 
-### 2. 自动化测试流程
+## 6. 组件关系图
 
-```yaml
-# .github/workflows/test.yml
-name: Test Suite
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Run unit tests
-      run: npm run test:unit
-      
-    - name: Run integration tests
-      run: npm run test:integration
-      
-    - name: Run e2e tests
-      run: npm run test:e2e
-      
-    - name: Generate coverage report
-      run: npm run test:coverage
-      
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+```
+┌───────────────────────────────────────────────────────────┐
+│                       用户界面层 (UI)                    │
+└───────────────────────────────────────────────────────────┘
+                               ↑
+                               │
+┌───────────────────────────────────────────────────────────┐
+│                     交互层 (Interaction)                 │
+└───────────────────────────────────────────────────────────┘
+                               ↑
+                               │
+┌───────────────────────────────────────────────────────────┐
+│                     渲染层 (Rendering)                  │
+└───────────────────────────────────────────────────────────┘
+                               ↑
+                               │
+┌───────────────────────────────────────────────────────────┐
+│                   可视化层 (Visualization)               │
+└───────────────────────────────────────────────────────────┘
+                               ↑
+                               │
+┌───────────────────────────────────────────────────────────┐
+│                      核心层 (Core)                       │
+└───────────────────────────────────────────────────────────┘
+                               ↑
+                               │
+┌───────────────────────────────────────────────────────────┐
+│                      数据层 (Data)                       │
+└───────────────────────────────────────────────────────────┘
+                               ↑
+                               │
+┌───────────────────────────────────────────────────────────┐
+│                    外部数据源                           │
+└───────────────────────────────────────────────────────────┘
 ```
 
-### 3. 性能测试策略
+## 7. 性能优化策略
 
-```typescript
-// 性能基准测试套件
-class PerformanceBenchmark {
-  static async measure<T>(
-    name: string,
-    fn: () => T | Promise<T>,
-    iterations: number = 100
-  ): Promise<BenchmarkResult> {
-    const times: number[] = [];
-    
-    // 预热
-    for (let i = 0; i < 10; i++) {
-      await fn();
-    }
-    
-    // 正式测试
-    for (let i = 0; i < iterations; i++) {
-      const start = performance.now();
-      await fn();
-      const end = performance.now();
-      times.push(end - start);
-    }
-    
-    return {
-      name,
-      averageTime: times.reduce((a, b) => a + b, 0) / times.length,
-      minTime: Math.min(...times),
-      maxTime: Math.max(...times),
-      standardDeviation: this.calculateStdDev(times),
-      opsPerSecond: 1000 / (times.reduce((a, b) => a + b, 0) / times.length)
-    };
-  }
-  
-  private static calculateStdDev(numbers: number[]): number {
-    const mean = numbers.reduce((a, b) => a + b, 0) / numbers.length;
-    const squareDiffs = numbers.map(value => Math.pow(value - mean, 2));
-    return Math.sqrt(squareDiffs.reduce((a, b) => a + b, 0) / numbers.length);
-  }
-}
-```
+### 7.1 渲染优化
+- 批处理渲染，减少draw call
+- 纹理压缩，减少内存占用
+- 实例化渲染，渲染大量相似对象
+- WebGPU加速，利用新特性提升性能
 
-## 🔒 安全架构
+### 7.2 计算优化
+- Web Workers并行计算
+- WebAssembly核心算法优化
+- SIMD指令加速向量计算
+- 算法复杂度优化
 
-### 1. 输入验证
+### 7.3 加载优化
+- 代码分割，按需加载组件
+- 资源预加载，提升首屏加载速度
+- CDN加速，减少网络延迟
+- 懒加载，延迟加载非关键资源
 
-```typescript
-// 严格的输入验证
-class InputValidator {
-  static validateFormula(formula: string): ValidationResult {
-    const errors: string[] = [];
-    
-    // 防止代码注入
-    if (formula.includes('<script>') || formula.includes('javascript:')) {
-      errors.push('检测到潜在的安全风险');
-    }
-    
-    // 验证数学公式语法
-    if (!this.isValidMathSyntax(formula)) {
-      errors.push('公式语法错误');
-    }
-    
-    // 防止过长的输入
-    if (formula.length > 1000) {
-      errors.push('公式过长');
-    }
-    
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
-  }
-  
-  private static isValidMathSyntax(formula: string): boolean {
-    // 实现数学公式语法验证
-    return /^[a-zA-Z0-9\s+\-*/^=()\[\]{}.,]+$/.test(formula);
-  }
-}
-```
+### 7.4 内存优化
+- 对象池机制，减少实例创建
+- 及时释放不再使用的资源
+- 内存监控，防止内存泄漏
+- 垃圾回收优化
 
-### 2. 内容安全策略 (CSP)
+## 8. 测试策略
 
-```html
-<!-- 严格的 CSP 策略 -->
-<meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self'; 
-               script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
-               style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-               img-src 'self' data: https:;
-               connect-src 'self' https://api.example.com;">
-```
+### 8.1 测试分层
+- **单元测试**：测试核心算法和组件
+- **集成测试**：测试组件之间的交互
+- **E2E测试**：测试完整用户流程
+- **性能测试**：测试系统性能和响应时间
 
-## 📊 监控与可观测性
+### 8.2 测试工具
+- Vitest - 单元测试和集成测试
+- Cypress - E2E测试
+- Lighthouse - 性能测试
+- Puppeteer - 自动化视觉测试
 
-### 1. 性能监控
+## 9. 部署架构
 
-```typescript
-// 实时性能监控
-class PerformanceMonitor {
-  private metrics: Map<string, number[]> = new Map();
-  private observers: Set<Function> = new Set();
-  
-  startMonitoring() {
-    // 监控 FPS
-    this.monitorFPS();
-    
-    // 监控内存使用
-    this.monitorMemory();
-    
-    // 监控网络请求
-    this.monitorNetwork();
-  }
-  
-  private monitorFPS() {
-    let frameCount = 0;
-    let lastTime = performance.now();
-    
-    const checkFPS = () => {
-      frameCount++;
-      const currentTime = performance.now();
-      
-      if (currentTime - lastTime >= 1000) {
-        const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
-        this.recordMetric('fps', fps);
-        frameCount = 0;
-        lastTime = currentTime;
-      }
-      
-      requestAnimationFrame(checkFPS);
-    };
-    
-    checkFPS();
-  }
-  
-  recordMetric(name: string, value: number) {
-    if (!this.metrics.has(name)) {
-      this.metrics.set(name, []);
-    }
-    
-    const values = this.metrics.get(name)!;
-    values.push(value);
-    
-    // 保持最近100个数据点
-    if (values.length > 100) {
-      values.shift();
-    }
-    
-    // 通知观察者
-    this.notifyObservers(name, value);
-  }
-  
-  private notifyObservers(metric: string, value: number) {
-    this.observers.forEach(observer => observer(metric, value));
-  }
-  
-  subscribe(observer: Function) {
-    this.observers.add(observer);
-    return () => this.observers.delete(observer);
-  }
-}
-```
+### 9.1 开发环境
+- Vite开发服务器
+- ESLint + Prettier代码检查
+- Hot Module Replacement
 
-## 🚀 部署架构
+### 9.2 生产环境
+- Docker容器化部署
+- Kubernetes容器编排
+- CI/CD持续集成和部署
+- Prometheus + Grafana监控
 
-### 1. 持续集成/持续部署 (CI/CD)
+## 10. 未来扩展
 
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy to Production
-on:
-  push:
-    branches: [main]
+### 10.1 功能扩展
+- AI增强可视化设计
+- VR/AR支持
+- 分布式计算
+- 实时协作编辑
+- 知识图谱集成
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Run tests
-      run: npm test
-    
-    - name: Build project
-      run: npm run build
-    
-    - name: Deploy to Vercel
-      uses: vercel/action@v1
-      with:
-        vercel-token: ${{ secrets.VERCEL_TOKEN }}
-        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-```
+### 10.2 技术扩展
+- WebGPU全面支持
+- 量子计算集成
+- 边缘计算
+- 5G支持
 
-### 2. 渐进式 Web 应用 (PWA)
+## 11. 架构优势
 
-```typescript
-// Service Worker 注册
-class ServiceWorkerManager {
-  static async register() {
-    if ('serviceWorker' in navigator) {
-      try {
-        const registration = await navigator.serviceWorker.register('/sw.js');
-        
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          
-          newWorker?.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // 显示更新提示
-              this.showUpdateNotification();
-            }
-          });
-        });
-        
-        return registration;
-      } catch (error) {
-        console.error('Service Worker 注册失败:', error);
-      }
-    }
-  }
-  
-  private static showUpdateNotification() {
-    // 显示更新通知UI
-    const notification = document.createElement('div');
-    notification.className = 'update-notification';
-    notification.innerHTML = `
-      <p>新版本可用</p>
-      <button onclick="location.reload()">立即更新</button>
-    `;
-    
-    document.body.appendChild(notification);
-  }
-}
-```
+1. **高性能**：优化的渲染流水线，支持大规模数据可视化
+2. **可扩展**：插件化设计，便于添加新功能
+3. **易维护**：清晰的分层结构，完善的文档
+4. **高可用**：完善的错误处理和降级策略
+5. **多端适配**：支持多种设备和平台
+6. **技术栈灵活**：核心逻辑与渲染技术解耦
 
-## 📈 扩展性设计
+## 12. 总结
 
-### 1. 插件架构
+本架构设计采用分层模块化设计，构建了一个高性能、可扩展、易维护的统一场论可视化平台。通过优化渲染、计算和加载策略，确保系统在各种设备上都能提供出色的用户体验。完善的测试和部署架构，确保系统的质量和可靠性。未来扩展支持AI增强、VR/AR和分布式计算，为平台的长期发展奠定了基础。
 
-```typescript
-// 插件系统
-interface Plugin {
-  name: string;
-  version: string;
-  install: (app: App) => void;
-  uninstall?: () => void;
-}
+---
 
-class PluginManager {
-  private plugins: Map<string, Plugin> = new Map();
-  private app: App;
-  
-  constructor(app: App) {
-    this.app = app;
-  }
-  
-  register(plugin: Plugin) {
-    if (this.plugins.has(plugin.name)) {
-      throw new Error(`插件 ${plugin.name} 已注册`);
-    }
-    
-    plugin.install(this.app);
-    this.plugins.set(plugin.name, plugin);
-  }
-  
-  unregister(pluginName: string) {
-    const plugin = this.plugins.get(pluginName);
-    if (plugin?.uninstall) {
-      plugin.uninstall();
-    }
-    this.plugins.delete(pluginName);
-  }
-  
-  getPlugin<T extends Plugin>(name: string): T | undefined {
-    return this.plugins.get(name) as T;
-  }
-  
-  listPlugins(): Plugin[] {
-    return Array.from(this.plugins.values());
-  }
-}
-```
-
-### 2. 微前端架构支持
-
-```typescript
-// 微前端集成
-class MicroFrontendIntegration {
-  private loadedApps: Map<string, HTMLElement> = new Map();
-  
-  async loadApp(appName: string, container: HTMLElement) {
-    if (this.loadedApps.has(appName)) {
-      this.unloadApp(appName);
-    }
-    
-    // 动态加载微前端应用
-    const script = document.createElement('script');
-    script.src = `/micro-frontends/${appName}/bundle.js`;
-    
-    return new Promise((resolve, reject) => {
-      script.onload = () => {
-        // 微前端应用加载完成
-        this.loadedApps.set(appName, container);
-        resolve(true);
-      };
-      
-      script.onerror = reject;
-      container.appendChild(script);
-    });
-  }
-  
-  unloadApp(appName: string) {
-    const container = this.loadedApps.get(appName);
-    if (container) {
-      container.innerHTML = '';
-      this.loadedApps.delete(appName);
-    }
-  }
-}
-```
-
-## 🎯 总结
-
-本项目采用**现代化、可扩展、高性能**的架构设计，具备以下核心优势：
-
-1. **高度模块化** - 清晰的职责分离
-2. **强类型安全** - 完整的 TypeScript 支持
-3. **极致性能** - 多层次性能优化
-4. **全面测试** - 自动化测试体系
-5. **安全可靠** - 严格的安全策略
-6. **易于扩展** - 插件化和微前端支持
-
-通过这套架构，我们能够构建出世界级的统一场论可视化平台，为科学研究和教育提供强大的工具支持。
+**架构版本**：3.0.0
+**设计日期**：2025-12-02
+**设计团队**：全球顶尖级别可视化架构团队

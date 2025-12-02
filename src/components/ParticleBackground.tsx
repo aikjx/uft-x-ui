@@ -16,13 +16,13 @@ interface ParticleBackgroundProps {
 
 const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
   className = '',
-  particleCount = 500, // 进一步减少粒子数量提高性能
-  particleSize = 1.5,
+  particleCount = 200, // 进一步减少粒子数量提高性能
+  particleSize = 1.2,
   particleColor = 0x4a6cf7,
-  particleOpacity = 0.4,
+  particleOpacity = 0.3,
   enableMouseInteraction = true,
   enableAutoRotation = true,
-  autoRotationSpeed = 0.0005,
+  autoRotationSpeed = 0.0003,
   isActive = true
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);

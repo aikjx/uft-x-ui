@@ -475,6 +475,25 @@ export class DevicePerformanceAnalyzer {
     return this.testResult;
   }
   
+  // 检测设备性能级别（公开方法）
+  public async detectPerformanceTier(): Promise<DevicePerformanceTier> {
+    // 直接返回已检测的性能级别
+    return this.deviceInfo.performanceTier;
+  }
+  
+  // 运行完整性能测试
+  public async runFullPerformanceTest(): Promise<PerformanceTestResult> {
+    // 调用现有的性能测试方法
+    return this.runPerformanceTest();
+  }
+  
+  // 获取推荐设置
+  public getRecommendedSettings(results: PerformanceTestResult): { mode: PerformanceMode } {
+    return {
+      mode: results.recommendedMode
+    };
+  }
+  
   // 检查是否支持特定功能
   public isFeatureSupported(feature: string): boolean {
     switch (feature) {

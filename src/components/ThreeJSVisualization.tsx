@@ -8,16 +8,16 @@ import { cn } from '../utils';
 import { VISUALIZATION_CONFIG } from '../constants';
 import {
   performanceOptimizationManager
-} from '../utils/performanceOptimizationManager';
+} from '../performance/performanceOptimizationManager';
 import {
   devicePerformanceAnalyzer
-} from '../utils/devicePerformanceAnalyzer';
+} from '../performance/devicePerformanceAnalyzer';
 import {
   performanceDataCollector
-} from '../utils/performanceDataCollector';
+} from '../performance/performanceDataCollector';
 import {
   sceneComplexityAnalyzer
-} from '../utils/sceneComplexityAnalyzer';
+} from '../performance/sceneComplexityAnalyzer';
 
 // 配置选项接口
 export interface ThreeJSVisualizationProps {
@@ -178,6 +178,34 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
   const memoizedRendererConfig = useMemo(() => rendererConfig, Object.values(rendererConfig || {}));
   const memoizedSceneConfig = useMemo(() => sceneConfig, Object.values(sceneConfig || {}));
 
+  // 初始化性能优化系统
+  const initializePerformanceSystem = useCallback((currentScene: THREE.Scene) => {
+    // 设置场景复杂度分析器
+    sceneComplexityAnalyzer.setScene(currentScene);
+    if (renderer) {
+      sceneComplexityAnalyzer.setRenderer(renderer);
+    }
+    sceneComplexityAnalyzer.setPerformanceOptimizer(performanceOptimizationManager);
+
+    // 启动自动性能检测
+    (devicePerformanceAnalyzer as any).detectPerformanceTier().then((tier: any) => {
+      console.log('检测到设备性能级别:', tier);
+      // 根据设备性能自动选择合适的性能模式
+      if (tier === 'low') {
+        performanceOptimizationManager.setPerformanceMode('low');
+      } else if (tier === 'medium') {
+        performanceOptimizationManager.setPerformanceMode('medium');
+      } else {
+        performanceOptimizationManager.setPerformanceMode('high');
+      }
+    });
+
+    // 清理函数
+    return () => {
+      // 性能数据收集器不需要手动移除事件监听器
+    };
+  }, [renderer]);
+
   // 初始化Three.js场景和性能优化系统
   const initialize = useCallback(() => {
     if (!containerRef.current || !webglSupported) return;
@@ -237,40 +265,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
     }
   }, [onInit, minWidth, minHeight, webglSupported, memoizedControlsConfig, memoizedSceneConfig, getScene, createScene, camera, renderer, controls, initializePerformanceSystem]);
 
-  // 初始化性能优化系统
-  const initializePerformanceSystem = useCallback((currentScene: THREE.Scene) => {
-    // 设置场景复杂度分析器
-    sceneComplexityAnalyzer.setScene(currentScene);
-    if (renderer) {
-      sceneComplexityAnalyzer.setRenderer(renderer);
-    }
-    sceneComplexityAnalyzer.setPerformanceOptimizer(performanceOptimizationManager);
 
-    // 启动自动性能检测
-    (devicePerformanceAnalyzer as any).detectPerformanceTier().then((tier: any) => {
-      console.log('检测到设备性能级别:', tier);
-      // 根据设备性能自动选择合适的性能模式
-      if (tier === 'low') {
-        performanceOptimizationManager.setPerformanceMode('low');
-      } else if (tier === 'medium') {
-        performanceOptimizationManager.setPerformanceMode('medium');
-      } else {
-        performanceOptimizationManager.setPerformanceMode('high');
-      }
-    });
-
-    // 订阅性能数据更新
-    const handleMemoryUpdate = (event: any) => {
-      setCurrentMemory(event.detail.memory);
-    };
-
-    (performanceDataCollector as any).addEventListener('memoryUpdated', handleMemoryUpdate);
-
-    // 清理函数
-    return () => {
-      (performanceDataCollector as any).removeEventListener('memoryUpdated', handleMemoryUpdate);
-    };
-  }, [renderer]);
 
   // 性能设置变更处理
   const handleSettingsChanged = useCallback((settings: Record<string, any>) => {
@@ -388,14 +383,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
       updateScene(currentScene, deltaTime);
     }
 
-    // 收集性能数据
-    (performanceDataCollector as any).recordFrameData({
-      fps: currentFPS || 0,
-      frameTime,
-      memory: currentMemory,
-      drawCalls: 0,
-      sceneComplexity: 0 // sceneComplexityAnalyzer.getCurrentComplexity()
-    });
+    // 性能数据收集由PerformanceDataCollector的内部定时机制处理
 
     // 渲染场景 - 使用useThreeScene提供的实例
     if (renderer && currentScene && camera) {

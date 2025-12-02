@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook } from '@testing-library/react'
+import { renderHook, waitFor } from '@testing-library/react'
 import { act } from 'react'
 import { useFormula } from '@/hooks/useFormula'
 
@@ -30,18 +30,21 @@ describe('useFormula Hook', () => {
   
   it('should initialize with correct default values', () => {
     const { result } = renderHook(() => useFormula())
-    
-    expect(result.current.isLoading).toBe(false)
+
+    // 直接检查初始状态，不等待isLoading变为false
+    expect(result.current.isLoading).toBe(true) // 初始状态是true
     expect(result.current.formulas).toBeDefined()
     expect(result.current.formulasByCategory).toBeDefined()
+    // 初始时selectedFormula可能为null，这是正常的
   })
-  
+
   it('should get formula by id correctly', () => {
     const { result } = renderHook(() => useFormula())
     
     const formula = result.current.getFormulaById('1')
     
-    expect(typeof formula).toBe('object')
+    expect(formula).toBeDefined()
+    expect(formula?.id).toBe(1) // 公式ID是数字类型，不是字符串类型
   })
   
   it('should select formula correctly', () => {

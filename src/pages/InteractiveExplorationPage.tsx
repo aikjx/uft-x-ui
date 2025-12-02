@@ -482,13 +482,12 @@ const InteractiveExplorationPage: React.FC = () => {
   };
 
   return (
-    <PageContainer>
-      <motion.div
-        className="relative w-full min-h-[calc(100vh-8rem)] flex flex-col bg-[#0a0a14] py-8"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
+    <motion.div
+      className="relative w-full min-h-[calc(100vh-8rem)] flex flex-col bg-[#0a0a14] py-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
         <div className="container mx-auto px-4">
           <motion.h1
             className="text-3xl md:text-4xl font-bold text-center mb-8 text-blue-300"
@@ -615,7 +614,6 @@ const InteractiveExplorationPage: React.FC = () => {
           </div>
         </div>
       </motion.div>
-    </PageContainer>
   );
 };
 

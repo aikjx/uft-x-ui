@@ -1390,42 +1390,45 @@ const FormulaVisualizationPage: React.FC = () => {
 
   if (!selectedFormula) {
     return (
-      <PageContainer>
-        <div className="min-h-screen w-full flex items-center justify-center bg-[#0a0a14]">
-          <div className="text-blue-400">加载中...</div>
-        </div>
-      </PageContainer>
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#0a0a14]">
+        <div className="text-blue-400">加载中...</div>
+      </div>
     );
   }
 
   return (
-    <PageContainer>
-      <motion.div
-        className="relative w-full min-h-[calc(100vh-8rem)] flex flex-col bg-[#0a0a14] py-8"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
+    <motion.div
+      className="relative w-full min-h-[calc(100vh-8rem)] flex flex-col bg-[#0a0a14] py-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
         <div className="container flex flex-col gap-6 px-4 mx-auto lg:flex-row lg:gap-8">
           {/* 左侧公式列表 - 改进响应式布局 */}
           <motion.div
-            className="lg:w-1/4 bg-[#121228] rounded-xl p-4 border border-blue-900/30 h-fit sticky top-4 lg:max-h-[80vh] overflow-hidden flex flex-col"
+            className="lg:w-1/4 bg-gradient-to-br from-[#121228] to-[#0f0f20] rounded-2xl p-4 border border-blue-900/30 h-fit sticky top-4 lg:max-h-[80vh] overflow-hidden flex flex-col shadow-xl shadow-blue-900/5"
             variants={formulaVariants}
           >
-            <h2 className="mb-4 text-xl font-bold text-blue-200">统一场论核心公式</h2>
+            <div className="mb-6 text-center">
+              <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">统一场论核心公式</h2>
+              <p className="text-sm text-blue-200/60 mt-1">19个核心公式的3D可视化</p>
+            </div>
             <div className="overflow-y-auto flex-1 pr-2 space-y-2 scrollbar-thin scrollbar-thumb-blue-900/30 scrollbar-track-transparent">
               {formulas.map((formula) => (
                 <motion.button
                   key={formula.id}
-                  className={`w-full text-left p-3 rounded-lg transition-all duration-300 ${selectedFormula.id === formula.id ? 'bg-blue-600/20 border-l-4 border-blue-500 text-blue-300' : 'hover:bg-blue-900/20 text-blue-100/70 hover:shadow-lg hover:shadow-blue-900/10'}`}
+                  className={`w-full text-left p-3 rounded-lg transition-all duration-300 backdrop-blur-sm ${selectedFormula.id === formula.id ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/20 border-l-4 border-blue-500 text-blue-300 shadow-lg shadow-blue-900/10' : 'hover:bg-blue-900/20 text-blue-100/70 hover:shadow-lg hover:shadow-blue-900/10'}`}
                   onClick={() => handleFormulaSelect(formula)}
                   whileHover={{ x: 5, transition: { duration: 0.2 } }}
                   whileTap={{ scale: 0.98 }}
                   aria-label={`选择公式：${formula.name}`}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <div className="mb-1 font-medium">{formula.id}. {formula.name}</div>
-                  <div className="text-xs text-blue-200/60">{formula.category}</div>
+                  <div className="mb-1 font-medium flex items-center gap-2">
+                    <span className="text-xs w-6 h-6 rounded-full bg-blue-600/30 flex items-center justify-center text-blue-400">{formula.id}</span>
+                    {formula.name}
+                  </div>
+                  <div className="text-xs text-blue-200/60 ml-8">{formula.category}</div>
                 </motion.button>
               ))}
             </div>
@@ -1438,64 +1441,80 @@ const FormulaVisualizationPage: React.FC = () => {
           >
             {/* 公式详情 */}
             <motion.div
-              className="bg-[#121228] rounded-xl p-6 border border-blue-900/30 mb-6 shadow-lg shadow-blue-900/10 hover:shadow-blue-900/20 transition-all duration-300"
+              className="bg-gradient-to-br from-[#121228] to-[#0f0f20] rounded-2xl p-6 border border-blue-900/30 mb-6 shadow-xl shadow-blue-900/10 hover:shadow-blue-900/20 transition-all duration-300"
               key={selectedFormula.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="flex gap-2 items-center text-2xl font-bold text-blue-300">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                <h3 className="flex gap-2 items-center text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   <span className="text-blue-500">{selectedFormula.id}.</span>
                   {selectedFormula.name}
                 </h3>
 
                 {/* 求导切换按钮 */}
-                <button
+                <motion.button
                   onClick={() => setShowDerivative(!showDerivative)}
-                  className="px-3 py-1 text-sm font-medium text-white bg-indigo-600/80 hover:bg-indigo-700/90 rounded transition-colors backdrop-blur-sm"
+                  className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-lg transition-all duration-300 shadow-lg shadow-indigo-900/20"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   {showDerivative ? '显示原公式' : '显示求导'}
-                </button>
+                </motion.button>
               </div>
 
-              <div className="mb-4 text-lg leading-relaxed text-blue-100/80">{selectedFormula.description}</div>
+              <div className="mb-6 text-lg leading-relaxed text-blue-100/80 bg-[#0a0a14]/50 p-4 rounded-xl border border-blue-900/20">
+                {selectedFormula.description}
+              </div>
 
-              <div className="bg-[#0a0a14] p-6 rounded-lg border border-blue-800/30 overflow-x-auto shadow-inner shadow-blue-900/10">
+              <div className="bg-[#0a0a14] p-6 rounded-xl border border-blue-800/30 overflow-x-auto shadow-inner shadow-blue-900/10 backdrop-blur-sm">
                 {showDerivative ? (
                   <>
-                    <div className="text-blue-300 mb-2 text-sm">原公式:</div>
-                    <MathJax formula={formatFormula(selectedFormula.expression)} />
-                    <div className="border-t border-blue-800/30 my-4"></div>
-                    <div className="text-blue-300 mb-2 text-sm">求导结果:</div>
+                    <div className="text-blue-300 mb-3 text-sm font-medium">原公式:</div>
+                    <div className="mb-6">
+                      <MathJax formula={formatFormula(selectedFormula.expression)} />
+                    </div>
+                    <div className="border-t border-blue-800/30 my-6"></div>
+                    <div className="text-blue-300 mb-3 text-sm font-medium">求导结果:</div>
                     {formulaService.deriveFormula(selectedFormula.id) ? (
-                      <MathJax formula={formulaService.deriveFormula(selectedFormula.id) || ''} />
+                      <div className="min-h-[100px]">
+                        <MathJax formula={formulaService.deriveFormula(selectedFormula.id) || ''} />
+                      </div>
                     ) : (
-                      <div className="text-blue-200/60 italic">该公式暂不支持求导验证</div>
+                      <div className="text-center py-8 text-blue-200/60 italic bg-blue-900/10 rounded-lg">
+                        <div className="text-4xl mb-2">🔄</div>
+                        该公式暂不支持求导验证
+                      </div>
                     )}
                   </>
                 ) : (
-                  <MathJax formula={formatFormula(selectedFormula.expression)} />
+                  <div className="min-h-[100px]">
+                    <MathJax formula={formatFormula(selectedFormula.expression)} />
+                  </div>
                 )}
               </div>
             </motion.div>
 
             {/* 3D可视化区域 - 使用优化的ThreeJSVisualization组件 */}
-            <div className="flex-1 bg-[#121228] rounded-xl border border-blue-900/30 overflow-hidden relative min-h-[400px] lg:min-h-[500px] shadow-lg shadow-blue-900/10 hover:shadow-blue-900/20 transition-all duration-300">
+            <div className="flex-1 bg-gradient-to-br from-[#121228] to-[#0f0f20] rounded-2xl border border-blue-900/30 overflow-hidden relative min-h-[400px] lg:min-h-[500px] shadow-xl shadow-blue-900/10 hover:shadow-blue-900/20 transition-all duration-300">
               {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-[#121228]/80 z-10">
+                <div className="absolute inset-0 flex items-center justify-center bg-[#121228]/80 backdrop-blur-sm z-10">
                   <motion.div
-                    className="flex flex-col gap-2 items-center text-blue-400"
+                    className="flex flex-col gap-4 items-center text-center"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
                   >
                     <motion.div
-                      className="w-12 h-12 rounded-full border-4 border-blue-400 border-t-transparent"
+                      className="w-16 h-16 rounded-full border-4 border-blue-500 border-t-transparent"
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     ></motion.div>
-                    <span>正在渲染3D可视化...</span>
+                    <div className="text-blue-300 font-medium">正在渲染3D可视化...</div>
+                    <div className="text-sm text-blue-200/60 max-w-xs">
+                      基于统一场论的精确物理模拟
+                    </div>
                   </motion.div>
                 </div>
               )}
@@ -1509,11 +1528,18 @@ const FormulaVisualizationPage: React.FC = () => {
                   dampingFactor: 0.05
                 }}
               />
+              
+              {/* 可视化信息提示 */}
+              <div className="absolute bottom-4 left-4 bg-[#0a0a14]/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-blue-900/30 text-sm text-blue-200/80">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  <span>实时物理模拟中</span>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
       </motion.div>
-    </PageContainer>
   );
 };
 
