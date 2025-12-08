@@ -409,53 +409,55 @@ const ArtificialFieldPage: React.FC = () => {
   return (
     <div className="page-container">
       <motion.div
-        className="relative w-full min-h-[calc(100vh-8rem)] flex flex-col bg-[#0a0a14] py-8"
+        className="relative w-full h-full flex flex-col bg-[#0a0a14] p-0 m-0"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-      <div className="container mx-auto px-4">
-        <motion.h1
-            className="text-3xl md:text-4xl font-bold text-center mb-12 text-blue-300"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-          >
-          人工场技术可视化
-        </motion.h1>
-
-        {/* 标签页切换 - 改进样式和交互 */}
-        <motion.div
-          className="flex justify-center mb-8 border-b border-blue-900/30 overflow-x-auto max-w-3xl mx-auto"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          {tabs.map(tab => (
-            <motion.button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`px-6 py-3 text-lg font-medium whitespace-nowrap transition-all duration-300 ${activeTab === tab.id ? 'text-blue-300 border-b-2 border-blue-500 shadow-lg shadow-blue-900/10' : 'text-blue-100/70 hover:text-blue-200'}`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.98 }}
-              variants={tabVariants}
+      <div className="container mx-auto px-0 h-full">
+        {/* 顶部导航栏 - 固定在顶部，半透明设计 */}
+        <div className="bg-gradient-to-b from-[#0a0a14]/80 to-transparent backdrop-blur-md absolute top-0 left-0 right-0 z-50 p-2">
+          <motion.h1
+              className="text-2xl md:text-3xl font-bold text-center text-blue-300"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
             >
-              {tab.label}
-            </motion.button>
-          ))}
-        </motion.div>
+            人工场技术可视化
+          </motion.h1>
 
-        {/* 3D可视化区域 - 增强视觉效果 */}
+          {/* 标签页切换 - 改进样式和交互 */}
+          <motion.div
+            className="flex justify-center mt-2 border-b border-blue-900/30 overflow-x-auto max-w-3xl mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            {tabs.map(tab => (
+              <motion.button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`px-4 py-2 text-sm md:text-base font-medium whitespace-nowrap transition-all duration-300 ${activeTab === tab.id ? 'text-blue-300 border-b-2 border-blue-500 shadow-lg shadow-blue-900/10' : 'text-blue-100/70 hover:text-blue-200'}`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                variants={tabVariants}
+              >
+                {tab.label}
+              </motion.button>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* 3D可视化区域 - 全屏显示 */}
         <motion.div
-          className="bg-[#121228] rounded-xl border border-blue-900/30 overflow-hidden relative mb-8 shadow-lg shadow-blue-900/5"
+          className="relative h-full w-full overflow-hidden"
           variants={itemVariants}
           initial="hidden"
           animate="visible"
-          whileHover={{ boxShadow: '0 0 30px rgba(59, 130, 246, 0.15)' }}
         >
           {isLoading && (
             <motion.div 
-              className="absolute inset-0 flex items-center justify-center bg-[#121228]/80 z-10"
+              className="absolute inset-0 flex items-center justify-center bg-[#0a0a14]/80 z-10"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
@@ -467,7 +469,7 @@ const ArtificialFieldPage: React.FC = () => {
           )}
           
           <ThreeJSVisualization
-            className={cn("w-full h-[60vh] min-h-[400px] sm:min-h-[500px]")}
+            className={cn("w-full h-full")}
             onInit={createVisualization}
             onAnimationFrame={updateVisualization}
             cameraConfig={{
@@ -484,18 +486,15 @@ const ArtificialFieldPage: React.FC = () => {
           />
         </motion.div>
 
-        {/* 详细说明 - 增强视觉深度和响应式 */}
+        {/* 详细说明面板 - 可折叠设计，默认隐藏 */}
         <motion.div
-          className="bg-[#121228] rounded-xl p-6 md:p-8 border border-blue-900/30 shadow-lg shadow-blue-900/5"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          key={activeTab}
-          layout
-          transition={{ duration: 0.5 }}
+          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0a14]/95 to-transparent backdrop-blur-md z-40 p-2 max-h-1/3 overflow-y-auto"
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
         >
           <motion.h2 
-            className="text-2xl md:text-3xl font-bold text-blue-300 mb-6 border-l-4 border-blue-500 pl-4"
+            className="text-xl md:text-2xl font-bold text-blue-300 mb-2 border-l-4 border-blue-500 pl-2"
             variants={itemVariants}
           >
             {tabs.find(t => t.id === activeTab)?.title}
@@ -504,27 +503,21 @@ const ArtificialFieldPage: React.FC = () => {
           {activeTab === 'principles' && (
             <motion.div variants={containerVariants}>
               <motion.p 
-                className="text-blue-100/80 mb-4 leading-relaxed"
+                className="text-blue-100/80 text-sm leading-relaxed mb-2"
                 variants={itemVariants}
               >
                 根据统一场论，人工场本质上是对空间的扰动和控制。通过改变空间的运动状态，可以产生强大的物理效应，包括质量归零、空间扭曲等。
               </motion.p>
-              <motion.p 
-                className="text-blue-100/80 mb-6 leading-relaxed"
-                variants={itemVariants}
-              >
-                质量归零技术是人工场最核心的应用之一，它通过特定的场配置，使物体周围的空间运动状态发生变化，从而降低或消除物体的质量。
-              </motion.p>
               <motion.div 
-                className={cn("bg-[#0a0a14] p-4 rounded-lg border border-blue-800/30 shadow-inner relative overflow-hidden")}
+                className={cn("bg-[#0a0a14] p-2 rounded-lg border border-blue-800/30 shadow-inner relative overflow-hidden")}
                 variants={formulaVariants}
                 whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)' }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent"></div>
-                <div className="relative z-10 text-blue-300">
+                <div className="relative z-10 text-blue-300 text-sm">
                   质量与空间运动的关系: 
-                  <MathJax formula="m = k \\cdot \\frac{dn}{d\\Omega}" className="inline" />
+                  <MathJax formula="m = k \cdot \frac{dn}{d\Omega}" className="inline" />
                 </div>
               </motion.div>
             </motion.div>
@@ -533,27 +526,21 @@ const ArtificialFieldPage: React.FC = () => {
           {activeTab === 'applications' && (
             <motion.div variants={containerVariants}>
               <motion.p 
-                className="text-blue-100/80 mb-4 leading-relaxed"
+                className="text-blue-100/80 text-sm leading-relaxed mb-2"
                 variants={itemVariants}
               >
                 基于统一场论的光速飞行器利用人工场技术，通过控制质量和利用空间本身的运动来实现超高速飞行。
               </motion.p>
-              <motion.p 
-                className="text-blue-100/80 mb-6 leading-relaxed"
-                variants={itemVariants}
-              >
-                飞行器的动力来自于质量的变化，根据公式 F = (C - V)·dm/dt，当飞行器周围的人工场使质量发生变化时，就会产生巨大的推力。
-              </motion.p>
               <motion.div 
-                className={cn("bg-[#0a0a14] p-4 rounded-lg border border-blue-800/30 shadow-inner relative overflow-hidden")}
+                className={cn("bg-[#0a0a14] p-2 rounded-lg border border-blue-800/30 shadow-inner relative overflow-hidden")}
                 variants={formulaVariants}
                 whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)' }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent"></div>
-                <div className="relative z-10 text-blue-300">
+                <div className="relative z-10 text-blue-300 text-sm">
                   光速飞行器动力学方程: 
-                  <MathJax formula="F = (C - V) \\cdot \\frac{dm}{dt}" className="inline" />
+                  <MathJax formula="F = (C - V) \cdot \frac{dm}{dt}" className="inline" />
                 </div>
               </motion.div>
             </motion.div>
@@ -562,32 +549,27 @@ const ArtificialFieldPage: React.FC = () => {
           {activeTab === 'time' && (
             <motion.div variants={containerVariants}>
               <motion.p 
-                className="text-blue-100/80 mb-4 leading-relaxed"
+                className="text-blue-100/80 text-sm leading-relaxed mb-2"
                 variants={itemVariants}
               >
                 人工场能够产生时间势差，使得不同位置的时间流逝速率不同。这种效应可以用于时间旅行、延长寿命等领域。
               </motion.p>
-              <motion.p 
-                className="text-blue-100/80 mb-6 leading-relaxed"
-                variants={itemVariants}
-              >
-                时间势差的本质是空间运动的不均匀性，通过控制空间的运动状态，可以创造出可控的时间流逝差异。
-              </motion.p>
               <motion.div 
-                className={cn("bg-[#0a0a14] p-4 rounded-lg border border-blue-800/30 shadow-inner relative overflow-hidden")}
+                className={cn("bg-[#0a0a14] p-2 rounded-lg border border-blue-800/30 shadow-inner relative overflow-hidden")}
                 variants={formulaVariants}
                 whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)' }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent"></div>
-                <div className="relative z-10 text-blue-300">
+                <div className="relative z-10 text-blue-300 text-sm">
                   时间膨胀效应: 
-                  <MathJax formula="\\Delta t' = \\frac{\\Delta t}{\\sqrt{1 - \\frac{v^2}{c^2}}}" className="inline" />
+                  <MathJax formula="\Delta t' = \frac{\Delta t}{\sqrt{1 - \frac{v^2}{c^2}}}" className="inline" />
                 </div>
               </motion.div>
             </motion.div>
-          )}</motion.div>
-        </div>
+          )}
+        </motion.div>
+      </div>
       </motion.div>
     </div>
   );

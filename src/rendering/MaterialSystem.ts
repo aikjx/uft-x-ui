@@ -220,7 +220,7 @@ export class MaterialSystem {
    */
   private updateMaterialProperties(material: THREE.Material, config: MaterialConfig): void {
     if ('color' in material && config.color) {
-      material.color.set(config.color);
+      (material as THREE.MeshBasicMaterial | THREE.MeshStandardMaterial | THREE.MeshPhongMaterial).color.set(config.color);
     }
 
     if ('transparent' in material) {

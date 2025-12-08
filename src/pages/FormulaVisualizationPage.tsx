@@ -2,7 +2,6 @@ import React, { useRef, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, easeOut } from 'framer-motion';
 import * as THREE from 'three';
-import { CatmullRomCurve3 } from 'three';
 import ThreeJSVisualization from '../components/ThreeJSVisualization';
 import { MathJax } from '../components/MathJax';
 import { useFormula } from '../hooks/useFormula';
@@ -80,61 +79,61 @@ const FormulaVisualizationPage: React.FC = () => {
 
     // 根据公式ID创建不同的可视化
     switch (selectedFormula.id) {
-      case 1: // 时空同一化方程
+      case 'uf1': // 时空同一化方程
         createSpaceTimeVisualization(scene);
         break;
-      case 2: // 三维螺旋时空方程
+      case 'uf2': // 三维螺旋时空方程
         createHelixVisualization(scene);
         break;
-      case 3: // 质量定义方程
+      case 'uf3': // 质量定义方程
         createMassDefinitionVisualization(scene);
         break;
-      case 4: // 引力场定义方程
+      case 'uf4': // 引力场定义方程
         createGravitationalFieldVisualization(scene);
         break;
-      case 5: // 静止动量方程
+      case 'uf5': // 静止动量方程
         createRestMomentumVisualization(scene);
         break;
-      case 6: // 运动动量方程
+      case 'uf6': // 运动动量方程
         createMovingMomentumVisualization(scene);
         break;
-      case 7: // 宇宙大统一方程
+      case 'uf7': // 宇宙大统一方程
         createUnifiedForceVisualization(scene);
         break;
-      case 8: // 空间波动方程
+      case 'uf8': // 空间波动方程
         createWaveEquationVisualization(scene);
         break;
-      case 9: // 电荷定义方程
+      case 'uf9': // 电荷定义方程
         createChargeDefinitionVisualization(scene);
         break;
-      case 10: // 电场定义方程
+      case 'uf10': // 电场定义方程
         createElectricFieldVisualization(scene);
         break;
-      case 11: // 磁场定义方程
+      case 'uf11': // 磁场定义方程
         createMagneticFieldVisualization(scene);
         break;
-      case 12: // 变化的引力场产生电磁场
+      case 'uf12': // 变化的引力场产生电磁场
         createGravityToElectroVisualization(scene);
         break;
-      case 13: // 磁矢势方程
+      case 'uf13': // 磁矢势方程
         createMagneticVectorPotentialVisualization(scene);
         break;
-      case 14: // 变化的引力场产生电场
+      case 'uf14': // 变化的引力场产生电场
         createGravityToElectricFieldVisualization(scene);
         break;
-      case 15: // 变化的磁场产生引力场和电场
+      case 'uf15': // 变化的磁场产生引力场和电场
         createMagneticToGravityVisualization(scene);
         break;
-      case 16: // 统一场论能量方程
+      case 'uf16': // 统一场论能量方程
         createEnergyEquationVisualization(scene);
         break;
-      case 17: // 光速飞行器动力学方程
+      case 'uf17': // 光速飞行器动力学方程
         createLightSpeedCraftVisualization(scene);
         break;
-      case 18: // 核力场定义方程
+      case 'uf18': // 核力场定义方程
         createNuclearForceVisualization(scene);
         break;
-      case 19: // 引力光速统一方程
+      case 'uf19': // 引力光速统一方程
         createGravityLightSpeedVisualization(scene);
         break;
     }
@@ -1387,6 +1386,28 @@ const FormulaVisualizationPage: React.FC = () => {
 
   // 添加显示求导公式的状态
   const [showDerivative, setShowDerivative] = useState(false);
+  
+  // 添加可视化控制状态
+  const [controls, setControls] = useState({
+    showGrid: true,
+    showAxes: true,
+    showStats: true,
+    autoRotate: false,
+    enableParticleEffects: true,
+    enableFieldLines: true,
+    animationSpeed: 1.0
+  });
+  
+  // 移动端适配状态 - 移到组件顶层，确保每次渲染调用相同数量的钩子
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // 更新可视化控制
+  const updateControls = useCallback((key: string, value: any) => {
+    setControls(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  }, []);
 
   if (!selectedFormula) {
     return (
@@ -1395,20 +1416,32 @@ const FormulaVisualizationPage: React.FC = () => {
       </div>
     );
   }
-
+  
   return (
     <motion.div
-      className="relative w-full min-h-[calc(100vh-8rem)] flex flex-col bg-[#0a0a14] py-8"
+      className="relative w-full h-full flex flex-col bg-[#0a0a14] p-0 m-0 overflow-hidden"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-        <div className="container flex flex-col gap-6 px-4 mx-auto lg:flex-row lg:gap-8">
-          {/* 左侧公式列表 - 改进响应式布局 */}
+        <div className="flex flex-col gap-0 px-0 mx-0 lg:flex-row lg:gap-0 w-full h-full">
+          {/* 左侧公式列表 - 优化响应式布局，最小化占据空间 */}
           <motion.div
-            className="lg:w-1/4 bg-gradient-to-br from-[#121228] to-[#0f0f20] rounded-2xl p-4 border border-blue-900/30 h-fit sticky top-4 lg:max-h-[80vh] overflow-hidden flex flex-col shadow-xl shadow-blue-900/5"
+            className={`${isMobileMenuOpen ? 'fixed inset-0 z-50' : 'lg:w-72'} bg-gradient-to-br from-[#121228] to-[#0f0f20] rounded-r-2xl p-2 border border-blue-900/30 h-fit sticky top-0 lg:max-h-[100vh] overflow-hidden flex flex-col shadow-xl shadow-blue-900/5 transition-all duration-300 z-10 backdrop-blur-sm bg-opacity-95`}
             variants={formulaVariants}
+            animate={isMobileMenuOpen ? { x: 0, opacity: 1, display: 'flex' } : { x: -10, opacity: 0, display: 'none' }}
+            initial={{ display: 'none', opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           >
+            {/* 移动端菜单按钮 */}
+            <div className="lg:hidden flex justify-end mb-2">
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                <span className="text-xl">✕</span>
+              </button>
+            </div>
             <div className="mb-6 text-center">
               <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">统一场论核心公式</h2>
               <p className="text-sm text-blue-200/60 mt-1">19个核心公式的3D可视化</p>
@@ -1434,72 +1467,174 @@ const FormulaVisualizationPage: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* 右侧可视化和详情 - 改进响应式布局 */}
+          {/* 右侧可视化和详情 - 最大化可视化区域，精简详情部分 */}
           <motion.div
-            className="flex flex-col lg:w-3/4"
+            className="flex flex-col flex-1 p-1"
             variants={itemVariants}
           >
-            {/* 公式详情 */}
+            {/* 移动端菜单按钮 */}
+            <div className="lg:hidden flex justify-start mb-2">
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-md transition-all duration-300 shadow-md shadow-blue-900/20"
+              >
+                📋 公式列表
+              </button>
+            </div>
+            
+            {/* 公式详情 - 极度精简，突出核心信息 */}
             <motion.div
-              className="bg-gradient-to-br from-[#121228] to-[#0f0f20] rounded-2xl p-6 border border-blue-900/30 mb-6 shadow-xl shadow-blue-900/10 hover:shadow-blue-900/20 transition-all duration-300"
+              className="bg-gradient-to-br from-[#121228] to-[#0f0f20] rounded-xl p-3 border border-blue-900/30 mb-2 shadow-lg shadow-blue-900/10 transition-all duration-300"
               key={selectedFormula.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-                <h3 className="flex gap-2 items-center text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-3">
+                <h3 className="flex gap-2 items-center text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   <span className="text-blue-500">{selectedFormula.id}.</span>
                   {selectedFormula.name}
                 </h3>
 
-                {/* 求导切换按钮 */}
+                {/* 求导切换按钮 - 精简样式 */}
                 <motion.button
                   onClick={() => setShowDerivative(!showDerivative)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-lg transition-all duration-300 shadow-lg shadow-indigo-900/20"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.98 }}
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-md transition-all duration-300 shadow-md shadow-indigo-900/20"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                 >
                   {showDerivative ? '显示原公式' : '显示求导'}
                 </motion.button>
               </div>
 
-              <div className="mb-6 text-lg leading-relaxed text-blue-100/80 bg-[#0a0a14]/50 p-4 rounded-xl border border-blue-900/20">
+              <div className="mb-3 text-sm leading-relaxed text-blue-100/80 bg-[#0a0a14]/50 p-2 rounded-md border border-blue-900/20">
                 {selectedFormula.description}
               </div>
 
-              <div className="bg-[#0a0a14] p-6 rounded-xl border border-blue-800/30 overflow-x-auto shadow-inner shadow-blue-900/10 backdrop-blur-sm">
+              <div className="bg-[#0a0a14] p-3 rounded-md border border-blue-800/30 overflow-x-auto shadow-inner shadow-blue-900/10 backdrop-blur-sm">
                 {showDerivative ? (
                   <>
-                    <div className="text-blue-300 mb-3 text-sm font-medium">原公式:</div>
-                    <div className="mb-6">
+                    <div className="text-blue-300 mb-2 text-xs font-medium">原公式:</div>
+                    <div className="mb-3">
                       <MathJax formula={formatFormula(selectedFormula.expression)} />
                     </div>
-                    <div className="border-t border-blue-800/30 my-6"></div>
-                    <div className="text-blue-300 mb-3 text-sm font-medium">求导结果:</div>
+                    <div className="border-t border-blue-800/30 my-3"></div>
+                    <div className="text-blue-300 mb-2 text-xs font-medium">求导结果:</div>
                     {formulaService.deriveFormula(selectedFormula.id) ? (
-                      <div className="min-h-[100px]">
+                      <div className="min-h-[50px]">
                         <MathJax formula={formulaService.deriveFormula(selectedFormula.id) || ''} />
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-blue-200/60 italic bg-blue-900/10 rounded-lg">
-                        <div className="text-4xl mb-2">🔄</div>
+                      <div className="text-center py-4 text-blue-200/60 italic bg-blue-900/10 rounded-md text-sm">
+                        <div className="text-2xl mb-1">🔄</div>
                         该公式暂不支持求导验证
                       </div>
                     )}
                   </>
                 ) : (
-                  <div className="min-h-[100px]">
+                  <div className="min-h-[50px]">
                     <MathJax formula={formatFormula(selectedFormula.expression)} />
                   </div>
                 )}
               </div>
             </motion.div>
 
-            {/* 3D可视化区域 - 使用优化的ThreeJSVisualization组件 */}
-            <div className="flex-1 bg-gradient-to-br from-[#121228] to-[#0f0f20] rounded-2xl border border-blue-900/30 overflow-hidden relative min-h-[400px] lg:min-h-[500px] shadow-xl shadow-blue-900/10 hover:shadow-blue-900/20 transition-all duration-300">
+            {/* 可视化控制面板 */}
+            <motion.div
+              className="bg-gradient-to-br from-[#121228] to-[#0f0f20] rounded-xl p-2 border border-blue-900/30 mb-2 shadow-lg shadow-blue-900/10 transition-all duration-300"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <div className="flex flex-wrap gap-2">
+                {/* 显示网格 */}
+                <label className="flex items-center gap-1 text-xs text-blue-100/80 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={controls.showGrid}
+                    onChange={(e) => updateControls('showGrid', e.target.checked)}
+                    className="rounded text-blue-500 focus:ring-blue-500"
+                  />
+                  <span>网格</span>
+                </label>
+                
+                {/* 显示坐标轴 */}
+                <label className="flex items-center gap-1 text-xs text-blue-100/80 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={controls.showAxes}
+                    onChange={(e) => updateControls('showAxes', e.target.checked)}
+                    className="rounded text-blue-500 focus:ring-blue-500"
+                  />
+                  <span>坐标轴</span>
+                </label>
+                
+                {/* 显示统计信息 */}
+                <label className="flex items-center gap-1 text-xs text-blue-100/80 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={controls.showStats}
+                    onChange={(e) => updateControls('showStats', e.target.checked)}
+                    className="rounded text-blue-500 focus:ring-blue-500"
+                  />
+                  <span>统计</span>
+                </label>
+                
+                {/* 自动旋转 */}
+                <label className="flex items-center gap-1 text-xs text-blue-100/80 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={controls.autoRotate}
+                    onChange={(e) => updateControls('autoRotate', e.target.checked)}
+                    className="rounded text-blue-500 focus:ring-blue-500"
+                  />
+                  <span>自动旋转</span>
+                </label>
+                
+                {/* 粒子效果 */}
+                <label className="flex items-center gap-1 text-xs text-blue-100/80 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={controls.enableParticleEffects}
+                    onChange={(e) => updateControls('enableParticleEffects', e.target.checked)}
+                    className="rounded text-blue-500 focus:ring-blue-500"
+                  />
+                  <span>粒子效果</span>
+                </label>
+                
+                {/* 场线效果 */}
+                <label className="flex items-center gap-1 text-xs text-blue-100/80 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={controls.enableFieldLines}
+                    onChange={(e) => updateControls('enableFieldLines', e.target.checked)}
+                    className="rounded text-blue-500 focus:ring-blue-500"
+                  />
+                  <span>场线效果</span>
+                </label>
+                
+                {/* 动画速度 */}
+                <div className="flex items-center gap-1 text-xs text-blue-100/80 ml-2">
+                  <span>速度:</span>
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="2"
+                    step="0.1"
+                    value={controls.animationSpeed}
+                    onChange={(e) => updateControls('animationSpeed', parseFloat(e.target.value))}
+                    className="w-20 h-1 bg-blue-900/50 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  />
+                  <span className="w-8 text-center">{controls.animationSpeed.toFixed(1)}x</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 3D可视化区域 - 全屏显示，突出可视化效果 */}
+            <div className="flex-1 bg-[#0a0a14] overflow-hidden relative h-full w-full shadow-xl shadow-blue-900/10 transition-all duration-300">
+              {/* 加载覆盖层 */}
               {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-[#121228]/80 backdrop-blur-sm z-10">
+                <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a14]/90 backdrop-blur-sm z-10">
                   <motion.div
                     className="flex flex-col gap-4 items-center text-center"
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -1518,24 +1653,46 @@ const FormulaVisualizationPage: React.FC = () => {
                   </motion.div>
                 </div>
               )}
+              
+              {/* 全屏可视化舞台 - 顶级操控效果配置 */}
               <ThreeJSVisualization
                 children={createVisualization}
                 onAnimationFrame={updateVisualization}
-                cameraConfig={{ position: { x: 0, y: 0, z: 5 } }}
-                sceneConfig={{ backgroundColor: 0x0a0a14 }}
+                cameraConfig={{ 
+                  position: { x: 0, y: 0, z: 5 },
+                  fov: 75,
+                  near: 0.1,
+                  far: 1000
+                }}
+                sceneConfig={{ 
+                  backgroundColor: 0x0a0a14,
+                  showGrid: controls.showGrid,
+                  showAxes: controls.showAxes
+                }}
                 controlsConfig={{
                   enableDamping: true,
-                  dampingFactor: 0.05
+                  dampingFactor: 0.05,
+                  rotateSpeed: 1.0,       // 提高旋转速度
+                  zoomSpeed: 1.2,         // 提高缩放速度
+                  panSpeed: 0.8,          // 优化平移速度
+                  enablePan: true,
+                  autoRotate: controls.autoRotate,
+                  autoRotateSpeed: 2.0,
+                  minDistance: 0.5,       // 允许更近的观察
+                  maxDistance: 20.0,      // 允许更远的观察
+                  minPolarAngle: 0,
+                  maxPolarAngle: Math.PI  // 允许全方位观察
                 }}
+                performanceOptions={{
+                  enableBatchRendering: true,
+                  dynamicPixelRatio: true,
+                  usePerformanceMonitoring: controls.showStats,
+                  maxObjects: 2000        // 增加最大对象数
+                }}
+                minHeight={0}
+                autoFit={true}
+                paused={false}
               />
-              
-              {/* 可视化信息提示 */}
-              <div className="absolute bottom-4 left-4 bg-[#0a0a14]/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-blue-900/30 text-sm text-blue-200/80">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  <span>实时物理模拟中</span>
-                </div>
-              </div>
             </div>
           </motion.div>
         </div>

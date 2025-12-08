@@ -58,7 +58,7 @@ export class SceneComplexityAnalyzer {
   private isActive: boolean = false;
   private lastAdjustmentTime: number = 0;
   private lastComplexityLevel: SceneComplexityLevel = 'medium';
-  private adjustmentHistory: { time: number; from: SceneComplexityLevel; to: SceneComplexityLevel }[] = [];
+  private adjustmentHistory: { time: number; from: PerformanceMode; to: PerformanceMode }[] = [];
   
   // 复杂度权重配置
   private weights: ComplexityWeights = {
@@ -536,18 +536,61 @@ export class SceneComplexityAnalyzer {
     let targetStrategy: OptimizationStrategy;
     
     // 获取目标性能模式的策略
+    const baseStrategy = this.performanceOptimizer?.getCurrentStrategy() || {
+      performanceMode: 'auto',
+      particleCount: 200,
+      fieldResolution: 20,
+      renderScale: 1.0,
+      shadowQuality: 'medium',
+      frameSkipThreshold: 16,
+      enableLOD: true,
+      enableCulling: true,
+      enableShadows: false,
+      pixelRatio: 1.0
+    };
+    
     switch (targetMode) {
       case 'high':
-        targetStrategy = VISUALIZATION_CONFIG.performanceModes.high;
+        targetStrategy = {
+          ...baseStrategy,
+          particleCount: 300,
+          fieldResolution: 30,
+          renderScale: 1.0,
+          shadowQuality: 'high',
+          enableShadows: true,
+          frameSkipThreshold: 16,
+          enableLOD: false,
+          enableCulling: true
+        };
         break;
       case 'medium':
-        targetStrategy = VISUALIZATION_CONFIG.performanceModes.medium;
+        targetStrategy = {
+          ...baseStrategy,
+          particleCount: 200,
+          fieldResolution: 20,
+          renderScale: 0.8,
+          shadowQuality: 'medium',
+          enableShadows: true,
+          frameSkipThreshold: 16,
+          enableLOD: true,
+          enableCulling: true
+        };
         break;
       case 'low':
-        targetStrategy = VISUALIZATION_CONFIG.performanceModes.low;
+        targetStrategy = {
+          ...baseStrategy,
+          particleCount: 100,
+          fieldResolution: 15,
+          renderScale: 0.6,
+          shadowQuality: 'low',
+          enableShadows: false,
+          frameSkipThreshold: 20,
+          enableLOD: true,
+          enableCulling: true
+        };
         break;
       default:
-        targetStrategy = VISUALIZATION_CONFIG.performanceModes.medium;
+        targetStrategy = baseStrategy;
     }
     
     // 渐进式调整关键参数

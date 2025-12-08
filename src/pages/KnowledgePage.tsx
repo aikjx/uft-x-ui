@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { MathJax } from '../components/MathJax';
 import { ANIMATION_VARIANTS } from '../constants';
@@ -10,6 +10,7 @@ const { containerVariants, itemVariants, formulaVariants } = ANIMATION_VARIANTS;
 
 const KnowledgePage: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('basics');
+  const [showContent, setShowContent] = useState(true);
   const navigate = useNavigate();
 
   // 使用useMemo缓存数据，避免不必要的重新渲染
@@ -133,198 +134,228 @@ const KnowledgePage: React.FC = () => {
   return (
     <div className="page-container">
       <motion.div
-        className="relative w-full min-h-[calc(100vh-8rem)] flex flex-col bg-[#0a0a14] py-8"
+        className="relative w-full h-full flex flex-col bg-[#0a0a14] p-0 m-0"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        <div className="container px-4 mx-auto">
+        {/* 顶部导航栏 - 固定在顶部，半透明设计 */}
+        <div className="bg-gradient-to-b from-[#0a0a14]/80 to-transparent backdrop-blur-md absolute top-0 left-0 right-0 z-50 p-2">
           <motion.h1
-            className="mb-12 text-3xl font-bold text-center text-blue-300 md:text-4xl"
-            variants={itemVariants}
-          >
+              className="text-2xl md:text-3xl font-bold text-center text-blue-300"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            >
             统一场论知识学习中心
           </motion.h1>
-
-          {/* 理论讲解部分 */}
-          <motion.section
-            className="mb-16"
-            variants={itemVariants}
+        </div>
+        
+        {/* 内容显示控制按钮 */}
+        <div className="absolute top-2 right-2 z-40">
+          <motion.button
+            onClick={() => setShowContent(!showContent)}
+            className="px-3 py-1 bg-blue-900/50 backdrop-blur-sm text-white text-xs rounded-md hover:bg-blue-800/70 transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <h2 className="flex gap-2 items-center mb-6 text-2xl font-bold text-blue-200">
-              <span className="inline-block w-2 h-6 bg-blue-500 rounded-full"></span>
-              理论讲解
-            </h2>
-            
-            {/* 理论讲解标签页 - 改进样式和交互 */}
-            <div className="flex flex-wrap gap-3 mb-8">
-              {Object.keys(theoryContent).map((key) => (
-                <motion.button
-                  key={key}
-                  onClick={() => setActiveSection(key)}
-                  className={cn(`px-5 py-2.5 rounded-full transition-all duration-300 flex items-center gap-2 ${activeSection === key ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'bg-blue-900/30 text-blue-200 hover:bg-blue-800/40 hover:shadow-md hover:shadow-blue-900/20'}`)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <span>{theoryContent[key as keyof typeof theoryContent].content[0].icon}</span>
-                  {theoryContent[key as keyof typeof theoryContent].title}
-                </motion.button>
-              ))}
-            </div>
-
-            {/* 理论讲解内容 - 增强视觉效果 */}
+            {showContent ? '隐藏内容' : '显示内容'}
+          </motion.button>
+        </div>
+        
+        {/* 知识学习内容 - 可折叠设计 */}
+        <AnimatePresence>
+          {showContent && (
             <motion.div
-              className={cn("bg-[#121228] rounded-xl p-6 border border-blue-900/30 shadow-lg shadow-blue-900/5")}
-              key={activeSection}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              whileHover={{ boxShadow: '0 0 30px rgba(59, 130, 246, 0.15)' }}
-            >
-              <h3 className="flex gap-2 items-center pb-3 mb-6 text-xl font-bold text-blue-300 border-b border-blue-800/50">
-                <span className="inline-block w-3 h-3 bg-blue-500 rounded-full"></span>
-                {theoryContent[activeSection as keyof typeof theoryContent].title}
-              </h3>
-              <div className="space-y-8">
-                {theoryContent[activeSection as keyof typeof theoryContent].content.map((item, index) => (
-                  <motion.div 
-                    key={index}
-                    className="flex gap-4"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                  >
-                    <div className="text-2xl mt-1 min-w-[40px]">{item.icon}</div>
-                    <div>
-                      <h4 className="mb-3 text-lg font-semibold text-blue-200">{item.heading}</h4>
-                      {("formula" in item) && item.formula && (
-                        <motion.div 
-                          className={cn("mb-3 p-3 bg-[#0a0a14] rounded-lg border border-blue-800/30")}
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.6 }}
-                        >
-                          <MathJax formula={item.formula} />
-                        </motion.div>
-                      )}
-                      <p className="leading-relaxed text-blue-100/80">{item.text}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          </motion.section>
-
-          {/* 可视化教程部分 - 改进卡片设计和交互 */}
-          <motion.section
-            className="mb-16"
-            variants={itemVariants}
-          >
-            <h2 className="flex gap-2 items-center mb-6 text-2xl font-bold text-blue-200">
-              <span className="inline-block w-2 h-6 bg-blue-500 rounded-full"></span>
-              可视化教程
-            </h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              {tutorials.map((tutorial) => (
-                <motion.div
-                  key={tutorial.id}
-                  className={cn("bg-[#121228] rounded-xl overflow-hidden border border-blue-900/30 hover:border-blue-500/50 transition-all duration-300")}
-                  whileHover={{ y: -8, boxShadow: '0 15px 30px -10px rgba(59, 130, 246, 0.2)' }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className={`h-40 bg-gradient-to-r ${tutorial.gradient} flex items-center justify-center relative overflow-hidden`}>
-                    <div className="z-10 text-5xl">{tutorial.icon}</div>
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.15),transparent_70%)]"></div>
-                  </div>
-                  <div className="p-5">
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="px-2 py-1 text-xs font-medium text-blue-300 rounded bg-blue-900/50">{tutorial.level}</span>
-                      <span className="text-xs text-blue-400">{tutorial.duration}</span>
-                    </div>
-                    <h3 className="mb-2 text-lg font-bold text-blue-200">{tutorial.title}</h3>
-                    <p className="mb-4 text-sm text-blue-100/70">{tutorial.description}</p>
-                    <motion.button
-                      onClick={() => navigate(`/formulas`)}
-                      className={cn("w-full py-2.5 bg-blue-900/30 text-blue-300 rounded-lg hover:bg-blue-800/40 transition-colors duration-300")}
-                      whileHover={{ backgroundColor: 'rgba(37, 99, 235, 0.3)' }}
-                      whileTap={{ scale: 0.97 }}
-                    >
-                      开始学习
-                    </motion.button>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.section>
-
-          {/* 科学实验模拟 - 增强视觉设计 */}
-          <motion.section
-            variants={itemVariants}
-          >
-            <h2 className="flex gap-2 items-center mb-6 text-2xl font-bold text-blue-200">
-              <span className="inline-block w-2 h-6 bg-blue-500 rounded-full"></span>
-              科学实验模拟
-            </h2>
-            <motion.div
-              className={cn("bg-[#121228] rounded-xl p-6 border border-blue-900/30 shadow-lg shadow-blue-900/5")}
-              whileHover={{ boxShadow: '0 0 30px rgba(59, 130, 246, 0.15)' }}
+              className="absolute inset-0 bg-gradient-to-b from-[#0a0a14]/70 to-[#0a0a14]/95 backdrop-blur-sm overflow-y-auto z-30 p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="grid grid-cols-1 gap-8 items-center md:grid-cols-2">
-                <div>
-                  <h3 className="flex gap-2 items-center mb-4 text-xl font-semibold text-blue-200">
-                    <span>🔬</span>
-                    虚拟物理实验
-                  </h3>
-                  <p className="mb-5 leading-relaxed text-blue-100/80">
-                    通过我们的虚拟实验环境，您可以：
-                  </p>
-                  <ul className="mb-6 space-y-3 list-none">
-                    {[
-                      '模拟空间运动对物理现象的影响',
-                      '验证统一场论核心公式',
-                      '探索不同参数下的物理效应',
-                      '记录和分析实验数据'
-                    ].map((item, index) => (
-                      <motion.li 
-                        key={index} 
-                        className="flex gap-3 items-start text-blue-100/70"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
-                      >
-                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-900/50 text-blue-300 text-xs mt-0.5">{index + 1}</span>
-                        <span>{item}</span>
-                      </motion.li>
-                    ))}
-                  </ul>
-                  <motion.button
-                    onClick={() => navigate('/interactive')}
-                    className={cn("flex gap-2 items-center px-6 py-3 text-white bg-blue-600 rounded-lg transition-colors duration-300 hover:bg-blue-700")}
-                    whileHover={{ scale: 1.03, boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
-                    whileTap={{ scale: 0.97 }}
-                  >
-                    <span>🚀</span>
-                    进入实验环境
-                  </motion.button>
-                </div>
-                <motion.div 
-                  className="bg-[#0a0a14] rounded-xl p-8 border border-blue-800/30 flex items-center justify-center relative overflow-hidden"
-                  whileHover={{ borderColor: 'rgba(59, 130, 246, 0.5)' }}
+              <div className="container mx-auto max-w-6xl">
+                {/* 理论讲解部分 */}
+                <motion.section
+                  className="mb-12"
+                  variants={itemVariants}
                 >
-                  <div className="z-10 text-center">
-                    <div className="mb-6 text-7xl">🔬</div>
-                    <h4 className="mb-2 text-xl font-bold text-blue-300">交互式物理实验平台</h4>
-                    <p className="text-sm text-blue-400">实时数据采集与分析</p>
+                  <h2 className="flex gap-2 items-center mb-6 text-2xl font-bold text-blue-200">
+                    <span className="inline-block w-2 h-6 bg-blue-500 rounded-full"></span>
+                    理论讲解
+                  </h2>
+                  
+                  {/* 理论讲解标签页 - 改进样式和交互 */}
+                  <div className="flex flex-wrap gap-3 mb-6">
+                    {Object.keys(theoryContent).map((key) => (
+                      <motion.button
+                        key={key}
+                        onClick={() => setActiveSection(key)}
+                        className={cn(`px-4 py-2 rounded-full transition-all duration-300 flex items-center gap-2 text-sm ${activeSection === key ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'bg-blue-900/30 text-blue-200 hover:bg-blue-800/40 hover:shadow-md hover:shadow-blue-900/20'}`)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span>{theoryContent[key as keyof typeof theoryContent].content[0].icon}</span>
+                        {theoryContent[key as keyof typeof theoryContent].title}
+                      </motion.button>
+                    ))}
                   </div>
-                  {/* 装饰元素 */}
-                  <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl bg-blue-600/10"></div>
-                  <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full blur-3xl bg-purple-600/10"></div>
-                </motion.div>
+
+                  {/* 理论讲解内容 - 增强视觉效果 */}
+                  <motion.div
+                    className={cn("bg-[#121228] rounded-xl p-4 md:p-6 border border-blue-900/30 shadow-lg shadow-blue-900/5")}
+                    key={activeSection}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    whileHover={{ boxShadow: '0 0 30px rgba(59, 130, 246, 0.15)' }}
+                  >
+                    <h3 className="flex gap-2 items-center pb-3 mb-6 text-xl font-bold text-blue-300 border-b border-blue-800/50">
+                      <span className="inline-block w-3 h-3 bg-blue-500 rounded-full"></span>
+                      {theoryContent[activeSection as keyof typeof theoryContent].title}
+                    </h3>
+                    <div className="space-y-6">
+                      {theoryContent[activeSection as keyof typeof theoryContent].content.map((item, index) => (
+                        <motion.div 
+                          key={index}
+                          className="flex gap-3 md:gap-4"
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                        >
+                          <div className="text-xl mt-0.5 min-w-[30px]">{item.icon}</div>
+                          <div>
+                            <h4 className="mb-2 text-base md:text-lg font-semibold text-blue-200">{item.heading}</h4>
+                            {"formula" in item && item.formula && (
+                              <motion.div 
+                                className={cn("mb-3 p-2 md:p-3 bg-[#0a0a14] rounded-lg border border-blue-800/30")}
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.6 }}
+                              >
+                                <MathJax formula={item.formula} />
+                              </motion.div>
+                            )}
+                            <p className="leading-relaxed text-sm md:text-base text-blue-100/80">{item.text}</p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                </motion.section>
+
+                {/* 可视化教程部分 - 改进卡片设计和交互 */}
+                <motion.section
+                  className="mb-12"
+                  variants={itemVariants}
+                >
+                  <h2 className="flex gap-2 items-center mb-6 text-2xl font-bold text-blue-200">
+                    <span className="inline-block w-2 h-6 bg-blue-500 rounded-full"></span>
+                    可视化教程
+                  </h2>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    {tutorials.map((tutorial) => (
+                      <motion.div
+                        key={tutorial.id}
+                        className={cn("bg-[#121228] rounded-xl overflow-hidden border border-blue-900/30 hover:border-blue-500/50 transition-all duration-300")}
+                        whileHover={{ y: -5, boxShadow: '0 15px 30px -10px rgba(59, 130, 246, 0.2)' }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <div className={`h-32 bg-gradient-to-r ${tutorial.gradient} flex items-center justify-center relative overflow-hidden`}>
+                          <div className="z-10 text-4xl">{tutorial.icon}</div>
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.15),transparent_70%)]"></div>
+                        </div>
+                        <div className="p-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="px-2 py-1 text-xs font-medium text-blue-300 rounded bg-blue-900/50">{tutorial.level}</span>
+                            <span className="text-xs text-blue-400">{tutorial.duration}</span>
+                          </div>
+                          <h3 className="mb-2 text-base font-bold text-blue-200">{tutorial.title}</h3>
+                          <p className="mb-4 text-xs text-blue-100/70">{tutorial.description}</p>
+                          <motion.button
+                            onClick={() => navigate(`/formulas`)}
+                            className={cn("w-full py-2 text-xs text-white bg-blue-600 rounded-lg transition-colors duration-300 hover:bg-blue-700")}
+                            whileHover={{ backgroundColor: 'rgba(37, 99, 235, 0.8)' }}
+                            whileTap={{ scale: 0.97 }}
+                          >
+                            开始学习
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.section>
+
+                {/* 科学实验模拟 - 增强视觉设计 */}
+                <motion.section
+                  variants={itemVariants}
+                >
+                  <h2 className="flex gap-2 items-center mb-6 text-2xl font-bold text-blue-200">
+                    <span className="inline-block w-2 h-6 bg-blue-500 rounded-full"></span>
+                    科学实验模拟
+                  </h2>
+                  <motion.div
+                    className={cn("bg-[#121228] rounded-xl p-4 md:p-6 border border-blue-900/30 shadow-lg shadow-blue-900/5")}
+                    whileHover={{ boxShadow: '0 0 30px rgba(59, 130, 246, 0.15)' }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="grid grid-cols-1 gap-6 items-center md:grid-cols-2">
+                      <div>
+                        <h3 className="flex gap-2 items-center mb-4 text-xl font-semibold text-blue-200">
+                          <span>🔬</span>
+                          虚拟物理实验
+                        </h3>
+                        <p className="mb-4 leading-relaxed text-blue-100/80">
+                          通过我们的虚拟实验环境，您可以：
+                        </p>
+                        <ul className="mb-5 space-y-2 list-none">
+                          {[
+                            '模拟空间运动对物理现象的影响',
+                            '验证统一场论核心公式',
+                            '探索不同参数下的物理效应',
+                            '记录和分析实验数据'
+                          ].map((item, index) => (
+                            <motion.li 
+                              key={index} 
+                              className="flex gap-2 items-start text-blue-100/70"
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.3, delay: index * 0.1 }}
+                            >
+                              <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-900/50 text-blue-300 text-xs mt-0.5">{index + 1}</span>
+                              <span className="text-sm">{item}</span>
+                            </motion.li>
+                          ))}
+                        </ul>
+                        <motion.button
+                          onClick={() => navigate('/interactive')}
+                          className={cn("flex gap-2 items-center px-4 py-2 text-sm text-white bg-blue-600 rounded-lg transition-colors duration-300 hover:bg-blue-700")}
+                          whileHover={{ scale: 1.03, boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
+                          whileTap={{ scale: 0.97 }}
+                        >
+                          <span>🚀</span>
+                          进入实验环境
+                        </motion.button>
+                      </div>
+                      <motion.div 
+                        className="bg-[#0a0a14] rounded-xl p-6 border border-blue-800/30 flex items-center justify-center relative overflow-hidden"
+                        whileHover={{ borderColor: 'rgba(59, 130, 246, 0.5)' }}
+                      >
+                        <div className="z-10 text-center">
+                          <div className="mb-4 text-5xl">🔬</div>
+                          <h4 className="mb-2 text-xl font-bold text-blue-300">交互式物理实验平台</h4>
+                          <p className="text-xs text-blue-400">实时数据采集与分析</p>
+                        </div>
+                        {/* 装饰元素 */}
+                        <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl bg-blue-600/10"></div>
+                        <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full blur-3xl bg-purple-600/10"></div>
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                </motion.section>
               </div>
             </motion.div>
-          </motion.section>
-        </div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );

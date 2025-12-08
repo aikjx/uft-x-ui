@@ -13,53 +13,11 @@
   <link rel="manifest" href="/manifest.json" />
 
   <!-- iOS Meta Tags -->
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="UTF Star" />
-  <link rel="apple-touch-icon" href="/icon-192.png" />
-
-  <!-- Preload critical resources -->
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" as="style">
-  <link rel="preload" href="/src/main.tsx" as="script">
-
-  <!-- MathJax 全局配置 -->
-  <script>
-    window.MathJax = {
-      tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        processEscapes: true,
-        processEnvironments: true,
-        macros: {
-          vec: ['\\overrightarrow{#1}', 1],
-          R: '\\mathbb{R}',
-          C: '\\mathbb{C}',
-          N: '\\mathbb{N}',
-          Z: '\\mathbb{Z}',
-          Q: '\\mathbb{Q}'
-        }
-      },
-      svg: {
-        fontCache: 'global',
-        scale: 1.1,
-        minScale: 0.5,
-        displayAlign: 'center'
-      },
-      startup: {
-        pageReady: () => {
-          return MathJax.startup.defaultPageReady().then(() => {
-            console.log('✅ MathJax 已成功加载');
-            window.dispatchEvent(new Event('mathjax-ready'));
-          }).catch((err) => {
-            console.error('❌ MathJax 加载失败:', err);
-          });
-        }
-      },
-      options: {
-        enableMenu: true
-      }
-    };
-  </script>
+  <link rel="apple-touch-icon" href="/vite.svg" />
 
   <!-- 字体 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -75,8 +33,7 @@
   <div id="app"></div>
   <script type="module" src="/src/main.tsx"></script>
 
-  <!-- 引入 MathJax -->
-  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
 </body>
 
 </html>

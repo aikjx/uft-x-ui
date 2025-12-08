@@ -170,8 +170,8 @@ export const generateSimulationData = (count: number, amplitude: number = 1, fre
   }));
 };
 
-// 科幻性能优化系统导入
-import SciFiPerformanceSystem from '../performance/sciFiPerformanceController';
+// 科幻性能优化系统导入 - 暂时禁用，待修复后启用
+// import SciFiPerformanceSystem from '../performance/sciFiPerformanceController';
 
 // 🚀 科幻性能优化系统 - 快速启用函数
 
@@ -179,61 +179,64 @@ import SciFiPerformanceSystem from '../performance/sciFiPerformanceController';
  * 快速启动科幻级性能优化系统
  * 一行代码启用AI+量子+神经网络三重性能优化
  */
-export const startSciFiPerformance = SciFiPerformanceSystem.quickStart;
+export const startSciFiPerformance = async () => {
+  console.warn('SciFiPerformanceSystem is temporarily disabled due to configuration issues.');
+  return Promise.resolve();
+};
 
 /**
  * 启用量子超神模式 - 最强性能
  */
-export const enableQuantumMode = (container?: HTMLElement) => 
-  SciFiPerformanceSystem.quickStart(container, { 
-    quantumMode: true, 
-    enableHologram: true,
-    autoMode: true,
-    neuralOptimization: true 
-  });
+export const enableQuantumMode = (container?: HTMLElement) => {
+  console.warn('SciFiPerformanceSystem is temporarily disabled due to configuration issues.');
+  return Promise.resolve();
+};
 
 /**
  * 启用极简模式 - 最快启动
  */
-export const enableMinimalMode = () => SciFiPerformanceSystem.minimal();
+export const enableMinimalMode = () => {
+  console.warn('SciFiPerformanceSystem is temporarily disabled due to configuration issues.');
+  return Promise.resolve();
+};
 
 /**
  * 启用游戏模式 - 平衡性能
  */
-export const enableGamingMode = (container?: HTMLElement) => 
-  SciFiPerformanceSystem.quickStart(container, { 
-    quantumMode: true,
-    enableHologram: false,
-    autoMode: true 
-  });
+export const enableGamingMode = (container?: HTMLElement) => {
+  console.warn('SciFiPerformanceSystem is temporarily disabled due to configuration issues.');
+  return Promise.resolve();
+};
 
 /**
  * 启用节能模式 - 绿色计算
  */
-export const enableEnergyMode = () => 
-  SciFiPerformanceSystem.quickStart(undefined, { 
-    energySaving: true,
-    autoMode: true 
-  });
+export const enableEnergyMode = () => {
+  console.warn('SciFiPerformanceSystem is temporarily disabled due to configuration issues.');
+  return Promise.resolve();
+};
 
 /**
  * 启用演示模式 - 视觉效果优先
  */
-export const enablePresentationMode = (container?: HTMLElement) => 
-  SciFiPerformanceSystem.quickStart(container, { 
-    quantumMode: true,
-    enableHologram: true,
-    autoMode: true,
-    neuralOptimization: true
-  });
+export const enablePresentationMode = (container?: HTMLElement) => {
+  console.warn('SciFiPerformanceSystem is temporarily disabled due to configuration issues.');
+  return Promise.resolve();
+};
 
-// 导出科幻性能系统主类
-export { SciFiPerformanceSystem };
+// 导出科幻性能系统主类（暂时导出模拟类）
+export class SciFiPerformanceSystem {
+  static async quickStart() {
+    console.warn('SciFiPerformanceSystem is temporarily disabled due to configuration issues.');
+    return Promise.resolve();
+  }
+  static minimal() {
+    console.warn('SciFiPerformanceSystem is temporarily disabled due to configuration issues.');
+    return Promise.resolve();
+  }
+};
 
 // 高级功能导出
-export * from '../performance/aiPerformanceEngine';
-export * from '../performance/quantumRenderOptimizer';
-export * from '../performance/neuralResourceScheduler';
 export { default as HolographicPerformanceUI } from '../components/HolographicPerformanceUI';
 
 // 显示启动通知
@@ -278,3 +281,44 @@ export function safeJsonParse<T>(str: string, fallback: T): T {
 export function isBrowser(): boolean {
   return typeof window !== 'undefined' && typeof document !== 'undefined';
 }
+
+// 资源管理系统
+import { ResourceManager as ResourceManagerClass } from './ResourceManager';
+export * from './ResourceManager';
+export { 
+  ResourceManager 
+} from './ResourceManager';
+
+// 惰性加载资源管理器实例
+let _resourceManager: ResourceManagerClass | null = null;
+const getResourceManager = () => {
+  if (!_resourceManager) {
+    _resourceManager = ResourceManagerClass.getInstance();
+  }
+  return _resourceManager;
+};
+
+export const resourceManager = {
+  loadResource: (id: string, url: string, type: string, options?: any) => getResourceManager().loadResource(id, url, type, options),
+  preloadResources: (resources: any) => getResourceManager().preloadResources(resources),
+  releaseResource: (id: string) => getResourceManager().releaseResource(id),
+  loadBatchResources: (resources: any) => getResourceManager().loadBatchResources(resources),
+  dispose: () => {
+    if (_resourceManager) {
+      _resourceManager.dispose();
+      _resourceManager = null;
+    }
+  }
+};
+
+// 导出方便使用的函数
+export const preloadResources = (resources: any) => resourceManager.preloadResources(resources);
+export const loadResource = (id: string, url: string, type: string, options?: any) => resourceManager.loadResource(id, url, type, options);
+
+// 性能监控系统
+export * from './PerformanceMonitor';
+export { 
+  PerformanceMonitor, 
+  createPerformanceMonitor, 
+  performanceMonitor 
+} from './PerformanceMonitor';

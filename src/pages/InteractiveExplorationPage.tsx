@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { motion, easeOut } from 'framer-motion';
+import { motion, easeOut, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { toast } from 'sonner';
@@ -60,6 +60,8 @@ const InteractiveExplorationPage: React.FC = () => {
   const [activeSimulation, setActiveSimulation] = useState<string>('spacetime');
   const [parameters, setParameters] = useState<any>(DEFAULT_PARAMETERS);
   const [isLoading, setIsLoading] = useState(true);
+  const [showControls, setShowControls] = useState(true);
+  const [showDescription, setShowDescription] = useState(true);
   const sceneRef = useRef<THREE.Scene | null>(null);
   
   // 使用useCallback优化事件处理函数
@@ -99,12 +101,20 @@ const InteractiveExplorationPage: React.FC = () => {
     // 添加光源
     const ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
-
+    
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(5, 5, 5);
     scene.add(directionalLight);
-
-    // 根据当前模拟类型创建可视化
+    
+    // 添加坐标系
+    const axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+    
+    // 添加网格
+    const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+    scene.add(gridHelper);
+    
+    // 根据当前选择的模拟类型创建不同的可视化
     switch (activeSimulation) {
       case 'spacetime':
         createSpacetimeSimulation(scene);
@@ -119,81 +129,47 @@ const InteractiveExplorationPage: React.FC = () => {
         createSpacetimeSimulation(scene);
     }
     
+    // 初始化完成，隐藏加载指示器
     setIsLoading(false);
-  }, [activeSimulation]);
+  }, [activeSimulation, parameters]);
   
-  // 更新可视化的动画函数
-  const updateVisualization = useCallback((deltaTime: number) => {
-    if (sceneRef.current?.userData.update) {
-      sceneRef.current.userData.update();
-    }
-  }, []);
-  
-  // 使用effect监听参数变化并更新场景
-  useEffect(() => {
-    // 这里依赖ThreeJSVisualization组件内部的场景引用
-    // 当参数变化时，我们需要通过某种方式通知组件更新
-    // 由于我们使用了组件化的方式，参数变化会触发重新渲染
-  }, [parameters]);
-
-  // 时空模拟
+  // 时空运动模拟
   const createSpacetimeSimulation = (scene: THREE.Scene) => {
-    // 创建时空网格
-    const gridHelper = new THREE.GridHelper(10, 10, 0x1a1a3a, 0x333366);
-    scene.add(gridHelper);
-
-    // 创建时间轴
-    const timeAxisGeometry = new THREE.BufferGeometry();
-    const timeAxisPoints = [];
-    for (let i = -5; i <= 5; i += 0.1) {
-      timeAxisPoints.push(new THREE.Vector3(i, 0, 0));
+    // 创建时空轨迹
+    const spacetimeGeometry = new THREE.BufferGeometry();
+    const points: THREE.Vector3[] = [];
+    
+    // 创建螺旋轨迹
+    for (let i = 0; i < 500; i++) {
+      const angle = i * 0.1;
+      const radius = 3 + Math.sin(i * 0.01) * 2;
+      points.push(
+        new THREE.Vector3(
+          radius * Math.cos(angle),
+          radius * Math.sin(angle),
+          i * 0.05
+        )
+      );
     }
-    timeAxisGeometry.setFromPoints(timeAxisPoints);
-    const timeAxisMaterial = new THREE.LineBasicMaterial({ color: 0xff6b6b });
-    const timeAxis = new THREE.Line(timeAxisGeometry, timeAxisMaterial);
-    scene.add(timeAxis);
-
-    // 创建运动点
-    const pointGeometry = new THREE.SphereGeometry(0.1, 16, 16);
-    const pointMaterial = new THREE.MeshBasicMaterial({ color: 0x4ecdc4 });
-    const movingPoint = new THREE.Mesh(pointGeometry, pointMaterial);
-    scene.add(movingPoint);
-
-    // 创建轨迹线
-    const trajectoryGeometry = new THREE.BufferGeometry();
-    const trajectoryPoints: THREE.Vector3[] = [];
-    trajectoryGeometry.setFromPoints(trajectoryPoints);
-    const trajectoryMaterial = new THREE.LineBasicMaterial({ color: 0x45b7d1 });
-    const trajectoryLine = new THREE.Line(trajectoryGeometry, trajectoryMaterial);
-    scene.add(trajectoryLine);
-
+    
+    spacetimeGeometry.setFromPoints(points);
+    const spacetimeMaterial = new THREE.LineBasicMaterial({ color: 0x45b7d1 });
+    const spacetimeLine = new THREE.Line(spacetimeGeometry, spacetimeMaterial);
+    scene.add(spacetimeLine);
+    
+    // 创建运动粒子
+    const particleGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+    const particleMaterial = new THREE.MeshBasicMaterial({ color: 0xff6b6b });
+    const movingParticle = new THREE.Mesh(particleGeometry, particleMaterial);
+    scene.add(movingParticle);
+    
     // 动画更新
-    let time = 0;
+    let index = 0;
     scene.userData.update = () => {
-      time += 0.01 * parameters.spacetime.speed;
-      
-      // 计算点的位置 (x, y, z) = (ct, ct, ct)
-      const c = parameters.spacetime.c;
-      const x = c * time;
-      const y = c * time;
-      const z = c * time;
-      
-      movingPoint.position.set(x, y, z);
-      
-      // 更新轨迹
-      trajectoryPoints.push(new THREE.Vector3(x, y, z));
-      if (trajectoryPoints.length > 100) {
-        trajectoryPoints.shift();
-      }
-      trajectoryGeometry.setFromPoints(trajectoryPoints);
-      
-      // 重置时间循环
-      if (time > 5) {
-        time = -5;
-        trajectoryPoints.length = 0;
-      }
+      index = (index + 0.5 * parameters.spacetime.speed) % points.length;
+      movingParticle.position.copy(points[Math.floor(index)]);
     };
-
+    
     // 参数更新
     scene.userData.updateParameters = (newParams: any) => {
       // 参数已在state中更新，这里可以添加额外的逻辑
@@ -395,7 +371,12 @@ const InteractiveExplorationPage: React.FC = () => {
     };
   };
 
-  // 参数控制函数已通过useCallback定义（第67-84行）
+  // 使用useCallback优化更新函数
+  const updateVisualization = useCallback((deltaTime: number) => {
+    if (sceneRef.current && sceneRef.current.userData.update) {
+      sceneRef.current.userData.update();
+    }
+  }, []);
 
   // 渲染参数控制滑块
   const renderParameterControls = () => {
@@ -465,16 +446,16 @@ const InteractiveExplorationPage: React.FC = () => {
     
     return (
       <div>
-        <h2 className="text-2xl font-bold text-blue-300 mb-4 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-blue-300 mb-2 flex items-center gap-2">
           <span className="inline-block w-2 h-6 bg-blue-500 rounded-full"></span>
           {desc.title}
         </h2>
         {desc.content.map((paragraph, index) => (
-          <p key={index} className="text-blue-100/80 mb-4 leading-relaxed">
+          <p key={index} className="text-blue-100/80 text-sm mb-2 leading-relaxed">
             {paragraph}
           </p>
         ))}
-        <div className="bg-[#0a0a14] p-4 rounded-lg border border-blue-800/30 font-mono text-sm text-blue-300 shadow-inner shadow-blue-900/10">
+        <div className="bg-[#0a0a14] p-2 rounded-lg border border-blue-800/30 font-mono text-xs text-blue-300 shadow-inner shadow-blue-900/10">
           {desc.formula}
         </div>
       </div>
@@ -483,43 +464,103 @@ const InteractiveExplorationPage: React.FC = () => {
 
   return (
     <motion.div
-      className="relative w-full min-h-[calc(100vh-8rem)] flex flex-col bg-[#0a0a14] py-8"
+      className="relative w-full h-full flex flex-col bg-[#0a0a14] p-0 m-0"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-        <div className="container mx-auto px-4">
-          <motion.h1
-            className="text-3xl md:text-4xl font-bold text-center mb-8 text-blue-300"
-            variants={itemVariants}
+      {/* 顶部导航栏 - 固定在顶部，半透明设计 */}
+      <div className="bg-gradient-to-b from-[#0a0a14]/80 to-transparent backdrop-blur-md absolute top-0 left-0 right-0 z-50 p-2">
+        <motion.h1
+            className="text-2xl md:text-3xl font-bold text-center text-blue-300"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
           >
-            交互式探索系统
-          </motion.h1>
-
-          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-            {/* 左侧控制面板 - 改进响应式布局和交互 */}
+          交互式探索系统
+        </motion.h1>
+      </div>
+      
+      {/* 3D可视化区域 - 全屏显示 */}
+      <div className="relative w-full h-full">
+        <ThreeJSVisualization
+          onInit={createVisualization}
+          onAnimationFrame={updateVisualization}
+          cameraConfig={{ position: { x: 0, y: 0, z: 10 } }}
+          sceneConfig={{ backgroundColor: 0x0a0a14 }}
+          controlsConfig={{
+              enableDamping: true,
+              dampingFactor: 0.05
+            }}
+            className="w-full h-full"
+        />
+        
+        {/* 加载指示器 */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a14]/80 z-10">
+            <motion.div 
+            className="text-blue-400 flex flex-col items-center gap-2"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.div 
+              className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            ></motion.div>
+            <span>正在渲染3D可视化...</span>
+          </motion.div>
+          </div>
+        )}
+        
+        {/* 控制面板切换按钮 */}
+        <div className="absolute top-2 left-2 z-40 flex gap-2">
+          <motion.button
+            onClick={() => setShowControls(!showControls)}
+            className="px-3 py-1 bg-blue-900/50 backdrop-blur-sm text-white text-xs rounded-md hover:bg-blue-800/70 transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {showControls ? '隐藏控制面板' : '显示控制面板'}
+          </motion.button>
+          <motion.button
+            onClick={() => setShowDescription(!showDescription)}
+            className="px-3 py-1 bg-blue-900/50 backdrop-blur-sm text-white text-xs rounded-md hover:bg-blue-800/70 transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {showDescription ? '隐藏说明' : '显示说明'}
+          </motion.button>
+        </div>
+        
+        {/* 左侧控制面板 - 可折叠设计 */}
+        <AnimatePresence>
+          {showControls && (
             <motion.div
-              className="lg:w-1/4 bg-[#121228] rounded-xl p-6 border border-blue-900/30 h-fit sticky top-4 lg:max-h-[80vh] overflow-hidden flex flex-col"
-              variants={simulationVariants}
+              className="absolute top-16 left-2 bg-gradient-to-r from-[#0a0a14]/95 to-transparent backdrop-blur-md z-40 p-4 rounded-lg max-w-[300px] max-h-[80vh] overflow-y-auto"
+              initial={{ opacity: 0, x: -100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -100 }}
+              transition={{ duration: 0.3 }}
             >
-              <h2 className="text-xl font-bold text-blue-200 mb-6 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-blue-200 mb-4 flex items-center gap-2">
                 <span className="text-blue-500">⚙️</span>
                 模拟控制面板
               </h2>
               
               {/* 模拟类型选择 */}
-              <div className="mb-6">
-                <h3 className="text-lg font-medium text-blue-300 mb-3">选择模拟类型</h3>
-                <div className="space-y-2">
+              <div className="mb-4">
+                <h3 className="text-base font-medium text-blue-300 mb-2">选择模拟类型</h3>
+                <div className="space-y-1">
                   {SIMULATION_TYPES.map(sim => (
                     <motion.button
                       key={sim.id}
                       onClick={() => handleSimulationChange(sim.id)}
-                      className={`w-full text-left p-3 rounded-lg transition-all duration-300 ${activeSimulation === sim.id ? 'bg-blue-600/20 text-blue-300 border-l-4 border-blue-500' : 'hover:bg-blue-900/20 text-blue-100/70 hover:shadow-lg hover:shadow-blue-900/10'}`}
-                      whileHover={{ x: 5, transition: { duration: 0.2 } }}
+                      className={`w-full text-left p-2 rounded-md transition-all duration-300 ${activeSimulation === sim.id ? 'bg-blue-600/20 text-blue-300 border-l-3 border-blue-500' : 'hover:bg-blue-900/20 text-blue-100/70'}`}
+                      whileHover={{ x: 3, transition: { duration: 0.2 } }}
                       whileTap={{ scale: 0.98 }}
                       aria-label={`选择${sim.label}模拟`}
-                      transition={{ type: "spring", stiffness: 300 }}
                     >
                       {sim.label}
                     </motion.button>
@@ -528,92 +569,56 @@ const InteractiveExplorationPage: React.FC = () => {
               </div>
 
               {/* 参数控制 */}
-              <div className="mb-6 flex-1">
-                <h3 className="text-lg font-medium text-blue-300 mb-3">参数调整</h3>
-                <div className="space-y-5">
+              <div className="mb-4">
+                <h3 className="text-base font-medium text-blue-300 mb-2">参数调整</h3>
+                <div className="space-y-3">
                   {renderParameterControls()}
                 </div>
               </div>
 
               {/* 操作按钮 */}
-              <div className="flex gap-3 mt-auto">
+              <div className="flex gap-2 mt-4">
                 <motion.button
                   onClick={saveScene}
-                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center gap-2"
+                  className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center gap-1"
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   aria-label="保存当前场景"
-                  transition={{ type: "spring", stiffness: 400 }}
                 >
                   <span className="text-blue-100">💾</span>
                   保存场景
                 </motion.button>
                 <motion.button
                   onClick={resetParameters}
-                  className="flex-1 px-4 py-3 bg-transparent border border-blue-600 text-blue-300 rounded-lg hover:bg-blue-900/20 transition-colors duration-300 flex items-center justify-center gap-2"
+                  className="flex-1 px-3 py-2 bg-transparent border border-blue-600 text-blue-300 text-sm rounded-md hover:bg-blue-900/20 transition-colors duration-300 flex items-center justify-center gap-1"
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   aria-label="重置所有参数"
-                  transition={{ type: "spring", stiffness: 400 }}
                 >
                   <span className="text-blue-300">🔄</span>
                   重置参数
                 </motion.button>
               </div>
             </motion.div>
-
-            {/* 右侧可视化区域 - 改进响应式布局 */}
+          )}
+        </AnimatePresence>
+        
+        {/* 底部说明面板 - 可折叠设计 */}
+        <AnimatePresence>
+          {showDescription && (
             <motion.div
-              className="lg:w-3/4 flex flex-col"
-              variants={itemVariants}
+              className="absolute bottom-2 left-0 right-0 bg-gradient-to-t from-[#0a0a14]/95 to-transparent backdrop-blur-md z-40 p-3 max-h-[30vh] overflow-y-auto"
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              transition={{ duration: 0.3 }}
             >
-              {/* 3D可视化 */}
-              <motion.div
-                className="bg-[#121228] rounded-xl border border-blue-900/30 overflow-hidden relative mb-6 shadow-lg shadow-blue-900/10 hover:shadow-blue-900/20 transition-all duration-300">
-                {isLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-[#121228]/80 z-10">
-                    <motion.div 
-                    className="text-blue-400 flex flex-col items-center gap-2"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <motion.div 
-                      className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    ></motion.div>
-                    <span>正在渲染3D可视化...</span>
-                  </motion.div>
-                  </div>
-                )}
-                <ThreeJSVisualization
-                  onInit={createVisualization}
-                  onAnimationFrame={updateVisualization}
-                  cameraConfig={{ position: { x: 0, y: 0, z: 10 } }}
-                  sceneConfig={{ backgroundColor: 0x0a0a14 }}
-                  controlsConfig={{
-                      enableDamping: true,
-                      dampingFactor: 0.05
-                    }}
-                    className="w-full h-[60vh] min-h-[400px]"
-                />
-              </motion.div>
-
-              {/* 说明面板 */}
-              <motion.div
-                className="bg-[#121228] rounded-xl p-6 border border-blue-900/30 shadow-lg shadow-blue-900/10 hover:shadow-blue-900/20 transition-all duration-300"
-                key={activeSimulation}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              >
-                {renderSimulationDescription()}
-              </motion.div>
+              {renderSimulationDescription()}
             </motion.div>
-          </div>
-        </div>
-      </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 };
 

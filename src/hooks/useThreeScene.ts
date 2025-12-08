@@ -2,8 +2,8 @@ import { useRef, useCallback, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VISUALIZATION_CONFIG } from '../constants';
-import { visualizationService } from '../services/visualizationService';
 import { performanceMonitor, renderOptimizer } from '../performance/performanceUtils';
+import { RenderEngine } from '../rendering/RenderEngine';
 
 interface UseThreeSceneOptions {
   containerRef: React.RefObject<HTMLDivElement>;
@@ -54,45 +54,32 @@ export const useThreeScene = (options: UseThreeSceneOptions): ThreeSceneReturn =
     dynamicPixelRatio = true // 是否动态调整像素比例
   } = options;
   
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const controlsRef = useRef<OrbitControls | null>(null);
-  const animationIdRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(0);
+  const renderEngineRef = useRef<RenderEngine | null>(null);
   const frameIndexRef = useRef<number>(0);
   const [isSceneReady, setIsSceneReady] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [currentFPS, setCurrentFPS] = useState<number>(60);
   const [isPerformanceMode, setIsPerformanceMode] = useState<boolean>(false);
-  // 使用状态变量存储相机、渲染器和控制器，以便组件重新渲染
+  
+  // 状态变量
+  const [scene, setScene] = useState<THREE.Scene | null>(null);
   const [camera, setCamera] = useState<THREE.PerspectiveCamera | null>(null);
   const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null);
   const [controls, setControls] = useState<OrbitControls | null>(null);
-  const [scene, setScene] = useState<THREE.Scene | null>(null);
 
-  // 创建新场景
+  // 创建新场景 - 保留兼容性
   const createScene = useCallback(() => {
     try {
-      // 使用静态方法创建场景
-      const scene = new THREE.Scene();
-      // autoUpdate是THREE.Object3D的属性，Scene继承自Object3D
-      (scene as any).autoUpdate = autoUpdate;
-      scene.background = new THREE.Color(VISUALIZATION_CONFIG.backgroundColor);
-      
-      // 统一优化：禁用自动矩阵更新以提高性能
-      scene.matrixAutoUpdate = false;
-      
-      sceneRef.current = scene;
-      setScene(scene); // 更新状态变量
-      setError(null);
-      return scene;
+      if (!renderEngineRef.current) {
+        throw new Error('Render engine not initialized');
+      }
+      return renderEngineRef.current.getScene();
     } catch (err) {
       console.error('Failed to create scene:', err);
       setError(err instanceof Error ? err : new Error('Unknown scene creation error'));
       return new THREE.Scene();
     }
-  }, [autoUpdate]);
+  }, []);
   
   // 初始化完整场景（包含相机、渲染器等）
   const initializeFullScene = useCallback(() => {
@@ -101,99 +88,26 @@ export const useThreeScene = (options: UseThreeSceneOptions): ThreeSceneReturn =
         throw new Error('Container element is null');
       }
 
-      const container = containerRef.current;
-      const { width, height } = container.getBoundingClientRect();
-
-      // 创建场景
-      const scene = createScene();
-      
-      // 创建相机
-      const camera = new THREE.PerspectiveCamera(
-        VISUALIZATION_CONFIG.fov,
-        width / height,
-        VISUALIZATION_CONFIG.near,
-        VISUALIZATION_CONFIG.far
-      );
-      camera.position.copy(cameraPosition);
-      camera.lookAt(0, 0, 0);
-      cameraRef.current = camera;
-      setCamera(camera); // 更新状态变量
-
-      // 创建渲染器
-      const renderer = new THREE.WebGLRenderer({
-        antialias: VISUALIZATION_CONFIG.performance.antialiasing,
-        alpha: true,
-        // 性能优化选项
-        powerPreference: 'high-performance',
-        premultipliedAlpha: false
+      // 初始化渲染引擎
+      const renderEngine = new RenderEngine({
+        container: containerRef.current,
+        cameraPosition,
+        enableControls,
+        ambientLightIntensity,
+        directionalLightIntensity,
+        autoUpdate
       });
-      
-      // 应用渲染优化
-      const optimalPixelRatio = renderOptimizer.calculateOptimalPixelRatio(false);
-      renderer.setSize(width, height);
-      renderer.setPixelRatio(optimalPixelRatio);
-      renderer.setClearColor(VISUALIZATION_CONFIG.clearColor, VISUALIZATION_CONFIG.clearAlpha);
-      
-      // 性能优化设置
-      renderer.autoClear = true;
-      renderer.localClippingEnabled = false; // 禁用局部裁剪以提高性能
-      
-      // 阴影优化
-      if (VISUALIZATION_CONFIG.performance.enableShadowMap) {
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.shadowMap.autoUpdate = false;
-      }
-      container.appendChild(renderer.domElement);
-      rendererRef.current = renderer;
-      setRenderer(renderer); // 更新状态变量
 
-      // 创建控制器
-      if (enableControls) {
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.maxDistance = VISUALIZATION_CONFIG.maxCameraDistance;
-        controls.minDistance = VISUALIZATION_CONFIG.minCameraDistance;
-        controlsRef.current = controls;
-        setControls(controls); // 更新状态变量
-      } else {
-        setControls(null); // 确保控制器状态为null
-      }
+      renderEngineRef.current = renderEngine;
 
-      // 设置灯光 - 直接创建光照
-      const ambientLight = new THREE.AmbientLight(0xffffff, ambientLightIntensity);
-      const directionalLight = new THREE.DirectionalLight(0xffffff, directionalLightIntensity);
-      directionalLight.position.set(5, 10, 7.5);
-      
-      if (VISUALIZATION_CONFIG.performance.enableShadowMap) {
-        directionalLight.castShadow = true;
-        directionalLight.shadow.mapSize.width = 2048;
-        directionalLight.shadow.mapSize.height = 2048;
-      }
-      
-      scene.add(ambientLight, directionalLight);
-
-      // 添加网格辅助线
-      if (VISUALIZATION_CONFIG.showGrid) {
-        const gridHelper = visualizationService.createGridHelper(
-          VISUALIZATION_CONFIG.gridSize,
-          VISUALIZATION_CONFIG.gridDivisions
-        );
-        scene.add(gridHelper);
-      }
-
-      // 添加坐标轴
-      if (VISUALIZATION_CONFIG.showAxes) {
-        const axesHelper = visualizationService.createAxesHelper(
-          VISUALIZATION_CONFIG.axesSize
-        );
-        scene.add(axesHelper);
-      }
-
-      // 所有组件都准备好后，才设置场景为就绪状态
+      // 更新状态变量
+      setScene(renderEngine.getScene());
+      setCamera(renderEngine.getCamera());
+      setRenderer(renderEngine.getRenderer());
+      setControls(renderEngine.getControls());
       setIsSceneReady(true);
       setError(null);
+
       return true;
     } catch (err) {
       console.error('Failed to initialize full scene:', err);
@@ -201,52 +115,36 @@ export const useThreeScene = (options: UseThreeSceneOptions): ThreeSceneReturn =
       setIsSceneReady(false);
       return false;
     }
-  }, [containerRef, cameraPosition, enableControls, ambientLightIntensity, directionalLightIntensity, createScene]);
+  }, [containerRef, cameraPosition, enableControls, ambientLightIntensity, directionalLightIntensity, autoUpdate]);
   
   // 应用性能模式设置的函数
   const applyPerformanceModeSettings = useCallback((performanceMode: boolean) => {
-    const renderer = rendererRef.current;
-    if (!renderer) return;
+    if (!renderEngineRef.current) return;
     
-    // 应用性能优化设置
-    const optimalPixelRatio = renderOptimizer.calculateOptimalPixelRatio(performanceMode);
-    renderer.setPixelRatio(optimalPixelRatio);
-    
-    // 阴影控制
-    if (renderer.shadowMap) {
-      const shouldEnableShadows = !performanceMode && VISUALIZATION_CONFIG.performance.enableShadowMap;
-      if (renderer.shadowMap.enabled !== shouldEnableShadows) {
-        renderer.shadowMap.enabled = shouldEnableShadows;
-        if (shouldEnableShadows) {
-          renderer.shadowMap.needsUpdate = true;
-        }
-      }
-    }
+    // 使用新的渲染引擎的性能模式设置
+    renderEngineRef.current.applyPerformanceMode(performanceMode);
   }, []);
   
-  // 单一优化的动画循环
+  // 高度优化的动画循环
   const animate = useCallback(() => {
-    // 确保所有必要组件都已准备就绪
-    if (!isSceneReady || !sceneRef.current || !cameraRef.current || !rendererRef.current) {
+    // 确保渲染引擎已准备就绪
+    if (!isSceneReady || !renderEngineRef.current) {
       // 条件不满足时，延迟重试，避免高频率检查
-      animationIdRef.current = setTimeout(() => {
+      setTimeout(() => {
         requestAnimationFrame(animate);
       }, 100);
       return;
     }
 
     const now = performance.now();
-    const deltaTime = (now - lastTimeRef.current) / 1000;
-    lastTimeRef.current = now;
-    frameIndexRef.current++;
 
-    // 性能监控和优化
+    // 性能监控和优化 - 只在必要时执行
     if (enablePerformanceMonitoring) {
-      // 大幅降低性能监控更新频率，每30帧更新一次
-      if (frameIndexRef.current % 30 === 0) {
+      // 大幅降低性能监控更新频率，每60帧更新一次
+      if (frameIndexRef.current % 60 === 0) {
         const fps = performanceMonitor.updateFPS();
         // 仅当FPS变化超过阈值时才更新状态
-        if (Math.abs(fps - currentFPS) > 1) {
+        if (Math.abs(fps - currentFPS) > 2) {
           setCurrentFPS(fps);
         }
         
@@ -257,134 +155,49 @@ export const useThreeScene = (options: UseThreeSceneOptions): ThreeSceneReturn =
           applyPerformanceModeSettings(performanceMode);
         }
       }
-      
-      // 帧率控制 - 更智能的帧跳过策略
-      if (renderOptimizer.shouldSkipFrame(frameIndexRef.current, currentFPS)) {
-        animationIdRef.current = requestAnimationFrame(animate);
-        return;
-      }
     }
 
-    // 更新控制器
-    if (controlsRef.current && controlsRef.current.enabled) {
-      controlsRef.current.update();
-    }
-
-    // 执行场景更新
-    updateScene(sceneRef.current, deltaTime);
-
-    // 渲染场景
-    try {
-      rendererRef.current.render(sceneRef.current, cameraRef.current);
-    } catch (error) {
-      console.error('Rendering error:', error);
-      setError(error instanceof Error ? error : new Error('Rendering failed'));
-    }
-    
-    // 更新绘制调用计数用于性能监控
-    if (enablePerformanceMonitoring && 
-        rendererRef.current.info && 
-        rendererRef.current.info.render) {
-      performanceMonitor.updateDrawCallCount(rendererRef.current.info.render.calls);
-    }
-    
-    animationIdRef.current = requestAnimationFrame(animate);
+    // 继续动画循环
+    requestAnimationFrame(animate);
   }, [isSceneReady, currentFPS, isPerformanceMode, enablePerformanceMonitoring, applyPerformanceModeSettings]);
   
   // 处理窗口大小变化
   const handleResize = useCallback(() => {
-    if (!containerRef.current || !cameraRef.current || !rendererRef.current) return;
-
-    const { width, height } = containerRef.current.getBoundingClientRect();
+    if (!renderEngineRef.current) return;
     
-    // 更新相机
-    cameraRef.current.aspect = width / height;
-    cameraRef.current.updateProjectionMatrix();
-
-    // 更新渲染器 - 应用自适应像素比率
-    const optimalPixelRatio = renderOptimizer.calculateOptimalPixelRatio(isPerformanceMode);
-    rendererRef.current.setPixelRatio(optimalPixelRatio);
-    rendererRef.current.setSize(width, height);
-  }, [containerRef, isPerformanceMode]);
+    renderEngineRef.current.handleResize();
+    
+    // 更新状态变量
+    setScene(renderEngineRef.current.getScene());
+    setCamera(renderEngineRef.current.getCamera());
+    setRenderer(renderEngineRef.current.getRenderer());
+  }, []);
 
   // 获取当前场景
   const getScene = useCallback((): THREE.Scene | null => {
-    return sceneRef.current;
+    return renderEngineRef.current ? renderEngineRef.current.getScene() : null;
   }, []);
 
   // 添加对象到场景 - 优化版本
   const addToScene = useCallback((object: THREE.Object3D) => {
-    if (!sceneRef.current) return false;
+    if (!renderEngineRef.current) return false;
     
     try {
-      // 检查对象是否已在场景中
-      if (sceneRef.current.children.includes(object)) {
-        console.warn('Object already in scene');
-        return true;
-      }
-      
-      // 检查对象数量限制
-      if (maxObjects > 0 && sceneRef.current.children.length >= maxObjects) {
-        console.warn(`Maximum object limit of ${maxObjects} reached`);
-        return false;
-      }
-      
-      // 性能优化：预加载纹理和几何体
-      if (object instanceof THREE.Mesh && object.material) {
-        if (Array.isArray(object.material)) {
-          object.material.forEach(mat => {
-            if (mat && mat.map && typeof mat.map.load === 'function') {
-              mat.map.load();
-            }
-          });
-        } else if (object.material.map && typeof object.material.map.load === 'function') {
-          object.material.map.load();
-        }
-      }
-      
-      sceneRef.current.add(object);
+      renderEngineRef.current.addObject(object);
       return true;
     } catch (error) {
       console.error('Error adding object to scene:', error);
       setError(error instanceof Error ? error : new Error('Failed to add object'));
       return false;
     }
-  }, [maxObjects]);
+  }, []);
 
   // 从场景中移除对象 - 优化版本
   const removeFromScene = useCallback((object: THREE.Object3D) => {
-    if (!sceneRef.current) return false;
+    if (!renderEngineRef.current) return false;
     
     try {
-      // 检查对象是否在场景中
-      if (!sceneRef.current.children.includes(object)) {
-        console.warn('Object not found in scene');
-        return true; // 视为成功，因为对象不在场景中
-      }
-      
-      // 从场景中移除
-      sceneRef.current.remove(object);
-      
-      // 释放对象资源
-      const disposeObject = (obj: THREE.Object3D) => {
-        if (obj instanceof THREE.Mesh) {
-          if (obj.geometry) obj.geometry.dispose();
-          if (Array.isArray(obj.material)) {
-            obj.material.forEach(material => material.dispose());
-          } else if (obj.material) {
-            obj.material.dispose();
-          }
-        } else if (obj instanceof THREE.Line || obj instanceof THREE.Points) {
-          if (obj.geometry) obj.geometry.dispose();
-          if (obj.material) obj.material.dispose();
-        } else if (obj instanceof THREE.Group) {
-          obj.children.forEach(child => disposeObject(child));
-        }
-      };
-      
-      // 递归释放对象
-      disposeObject(object);
-      
+      renderEngineRef.current.removeObject(object);
       return true;
     } catch (error) {
       console.error('Error removing object from scene:', error);
@@ -393,94 +206,20 @@ export const useThreeScene = (options: UseThreeSceneOptions): ThreeSceneReturn =
     }
   }, []);
 
-  // 清理场景 - 修复版本
+  // 清理场景 - 使用新的渲染引擎
   const clearScene = useCallback(() => {
-    if (!sceneRef.current) return;
+    if (!renderEngineRef.current) return;
     
     try {
-      // 递归释放对象资源
-      const disposeRecursive = (object: THREE.Object3D) => {
-        if (object instanceof THREE.Mesh) {
-          if (object.geometry) {
-            object.geometry.dispose();
-          }
-          if (Array.isArray(object.material)) {
-            object.material.forEach(material => {
-              if (material.map) material.map.dispose();
-              if (material.lightMap) material.lightMap.dispose();
-              if (material.normalMap) material.normalMap.dispose();
-              if (material.specularMap) material.specularMap.dispose();
-              if (material.envMap) material.envMap.dispose();
-              material.dispose();
-            });
-          } else if (object.material) {
-            if (object.material.map) object.material.map.dispose();
-            if (object.material.lightMap) object.material.lightMap.dispose();
-            if (object.material.normalMap) object.material.normalMap.dispose();
-            if (object.material.specularMap) object.material.specularMap.dispose();
-            if (object.material.envMap) object.material.envMap.dispose();
-            object.material.dispose();
-          }
-        } else if (object instanceof THREE.Line || object instanceof THREE.Points) {
-          if (object.geometry) object.geometry.dispose();
-          if (object.material) object.material.dispose();
-        } else if (object instanceof THREE.SkinnedMesh) {
-          if (object.geometry) object.geometry.dispose();
-          if (object.material) object.material.dispose();
-          if (object.skeleton) object.skeleton.dispose();
-        } else if (object instanceof THREE.Group || object instanceof THREE.Object3D) {
-          // 递归处理子对象
-          for (let i = object.children.length - 1; i >= 0; i--) {
-            disposeRecursive(object.children[i]);
-          }
-        }
-      };
+      renderEngineRef.current.clearScene();
       
-      // 只清理临时对象和不再需要的对象，保留重要的内容对象
-      // 我们通过检查对象名称来确定哪些对象可以清理
-      const objectsToDispose: THREE.Object3D[] = [];
-      
-      // 遍历所有子对象，找出需要清理的对象
-      sceneRef.current.children.forEach(child => {
-        // 只清理特定类型的临时对象
-        // 例如：粒子系统、临时几何体、临时线条等
-        // 这里我们假设内容对象没有特定的名称，或者有特定的名称标识
-        const isTemporaryObject = 
-          child.name.includes('temp') || 
-          child.name.includes('particle') || 
-          child.name.includes('line') || 
-          child.name.includes('mesh') ||
-          child.name.includes('geometry') ||
-          child.name.includes('object');
-        
-        // 不清理辅助线、灯光和内容对象
-        const isImportantObject = 
-          (VISUALIZATION_CONFIG.showGrid && child.name === 'gridHelper') || 
-          (VISUALIZATION_CONFIG.showAxes && child.name === 'axesHelper') ||
-          child instanceof THREE.Light ||
-          child.name.includes('content') ||
-          child.name.includes('page') ||
-          child.name.includes('main');
-        
-        if (isTemporaryObject && !isImportantObject) {
-          objectsToDispose.push(child);
-        }
-      });
-      
-      // 只清理需要清理的对象
-      objectsToDispose.forEach(object => {
-        sceneRef.current?.remove(object);
-        disposeRecursive(object);
-      });
-      
-      // 重置状态变量
-      setScene(sceneRef.current);
-      
+      // 更新状态变量
+      setScene(renderEngineRef.current.getScene());
     } catch (error) {
       console.error('Error clearing scene:', error);
       setError(error instanceof Error ? error : new Error('Failed to clear scene'));
     }
-  }, [ambientLightIntensity, directionalLightIntensity]);
+  }, []);
   
   // 生命周期管理
   useEffect(() => {
@@ -492,149 +231,63 @@ export const useThreeScene = (options: UseThreeSceneOptions): ThreeSceneReturn =
 
     // 清理函数 - 增强版本
     return () => {
-      // 清理动画帧和定时器
-      if (animationIdRef.current) {
-        // 无论是什么类型的ID，都尝试两种清理方式，确保彻底清理
-        if (typeof animationIdRef.current === 'number') {
-          cancelAnimationFrame(animationIdRef.current);
-          clearTimeout(animationIdRef.current);
-        }
-        animationIdRef.current = null;
+      // 清理渲染引擎
+      if (renderEngineRef.current) {
+        renderEngineRef.current.dispose();
+        renderEngineRef.current = null;
       }
       
       window.removeEventListener('resize', handleResize);
 
       // 重置时间引用
-      lastTimeRef.current = 0;
       frameIndexRef.current = 0;
-      
-      // 安全移除渲染器DOM元素
-      if (rendererRef.current) {
-        try {
-          const canvas = rendererRef.current.domElement;
-          // 确保canvas被正确移除
-          if (canvas.parentNode) {
-            canvas.parentNode.removeChild(canvas);
-          }
-          rendererRef.current.dispose();
-        } catch (error) {
-          console.error('Error disposing renderer:', error);
-        }
-        rendererRef.current = null;
-      }
-
-      // 清理控制器
-      if (controlsRef.current) {
-        try {
-          controlsRef.current.dispose();
-        } catch (error) {
-          console.error('Error disposing controls:', error);
-        }
-        controlsRef.current = null;
-      }
-
-      // 清理场景
-      clearScene();
       
       // 重置状态
       setIsSceneReady(false);
       setError(null);
       setCurrentFPS(60);
       setIsPerformanceMode(false);
-      
-      // 重置引用
-      sceneRef.current = null;
-      cameraRef.current = null;
+      setScene(null);
+      setCamera(null);
+      setRenderer(null);
+      setControls(null);
     };
   }, [initializeFullScene, handleResize, clearScene, containerRef, enablePerformanceMonitoring]);
 
   // 监听isSceneReady状态变化，开始动画循环
   useEffect(() => {
     // 开始动画循环
-    if (isSceneReady && sceneRef.current && cameraRef.current && rendererRef.current) {
+    if (isSceneReady && renderEngineRef.current) {
       // 初始化性能监控
       if (enablePerformanceMonitoring) {
         // 重置性能监控器
         performanceMonitor.updateFPS();
       }
       
-      // 使用优化的animate函数
+      // 启动渲染引擎
+      renderEngineRef.current.start();
+      
+      // 使用优化的animate函数进行性能监控
       animate();
     }
   }, [isSceneReady, animate, enablePerformanceMonitoring]);
 
   // 设置场景更新函数
   const setUpdateFunction = useCallback((updateFn: (deltaTime: number) => void) => {
-    if (sceneRef.current) {
-      sceneRef.current.userData.update = updateFn;
+    if (renderEngineRef.current) {
+      renderEngineRef.current.setUpdateFunction(updateFn);
     }
   }, []);
 
-  // 执行场景更新 - 增强版本
+  // 执行场景更新 - 使用新的渲染引擎
   const updateScene = useCallback((scene: THREE.Scene | null, deltaTime: number) => {
-    const targetScene = scene || sceneRef.current;
-    try {
-      if (!targetScene) return;
-      
-      // 安全调用用户定义的更新函数
-      if (targetScene.userData && typeof targetScene.userData.update === 'function') {
-        targetScene.userData.update(deltaTime);
+    // 新的渲染引擎已经内置了场景更新逻辑
+    // 这个方法主要用于向后兼容
+    if (renderEngineRef.current) {
+      const currentScene = renderEngineRef.current.getScene();
+      if (currentScene.userData && typeof currentScene.userData.update === 'function') {
+        currentScene.userData.update(deltaTime);
       }
-      
-      // 自动更新场景中的动画对象
-      if (targetScene.animations && targetScene.animations.length > 0) {
-        targetScene.animations.forEach(animation => {
-          if ('tracks' in animation && animation.tracks && animation.tracks.length > 0) {
-            // 动画更新逻辑可以在这里添加
-          }
-        });
-      }
-      
-      // 性能优化：仅当需要时更新矩阵
-      // 为每个对象添加lastTransform属性，用于跟踪变换是否发生变化
-      targetScene.traverse(object => {
-        // 跳过已禁用自动更新的对象
-        if (object.matrixAutoUpdate === false && !(object.userData && object.userData.needsUpdate)) {
-          return;
-        }
-        
-        // 检查对象是否需要更新
-        const needsUpdate = object.userData && object.userData.needsUpdate;
-        
-        // 初始化lastTransform属性
-        if (!object.userData.lastTransform) {
-          object.userData.lastTransform = {
-            position: object.position.clone(),
-            rotation: object.rotation.clone(),
-            scale: object.scale.clone()
-          };
-        }
-        
-        // 检查变换是否发生变化
-        const transformChanged = 
-          !object.position.equals(object.userData.lastTransform.position) ||
-          !object.rotation.equals(object.userData.lastTransform.rotation) ||
-          !object.scale.equals(object.userData.lastTransform.scale);
-        
-        // 只有当变换发生变化或标记为需要更新时，才更新矩阵
-        if (transformChanged || needsUpdate) {
-          object.updateMatrixWorld(false); // 仅更新自身矩阵，不递归
-          
-          // 更新lastTransform
-          object.userData.lastTransform.position.copy(object.position);
-          object.userData.lastTransform.rotation.copy(object.rotation);
-          object.userData.lastTransform.scale.copy(object.scale);
-          
-          // 重置needsUpdate标志
-          if (object.userData) {
-            object.userData.needsUpdate = false;
-          }
-        }
-      });
-      
-    } catch (error) {
-      console.error('Error in scene update function:', error);
-      // 错误不会导致整个应用崩溃
     }
   }, []);
 

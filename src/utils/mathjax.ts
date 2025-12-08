@@ -65,46 +65,64 @@ class MathJaxService {
     // 合并默认配置和用户配置
     const defaultConfig: any = {
       tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
         packages: ['base', 'ams', 'noerrors', 'noundefined'],
         // physics包可能不是核心包，移除以避免加载问题
         macros: {
-          '\\RR': '{\\mathbb{R}}',
-          '\\ZZ': '{\\mathbb{Z}}',
-          '\\NN': '{\\mathbb{N}}',
-          '\\CC': '{\\mathbb{C}}',
-          '\\degree': '{\\circ}',
-          '\\abs': ['{|#1|}', 1],
-          '\\norm': ['{\\lVert#1\\rVert}', 1],
-          '\\vector': ['{\\vec{#1}}', 1],
-          '\\gradient': '{\\nabla}',
-          '\\laplacian': '{\\nabla^2}',
-          '\\operator': ['{\\operatorname{#1}}', 1]
-        }
+          '\RR': '{\mathbb{R}}',
+          '\ZZ': '{\mathbb{Z}}',
+          '\NN': '{\mathbb{N}}',
+          '\CC': '{\mathbb{C}}',
+          '\degree': '{\circ}',
+          '\abs': ['{|#1|}', 1],
+          '\norm': ['{\lVert#1\rVert}', 1],
+          '\vector': ['{\vec{#1}}', 1],
+          '\gradient': '{\nabla}',
+          '\laplacian': '{\nabla^2}',
+          '\operator': ['{\operatorname{#1}}', 1]
+        },
+        // 性能优化：禁用自动行内数学检测
+        processEnvironments: true,
+        processRefs: true
       },
       svg: {
-        fontCache: 'global',
+        fontCache: 'local', // 本地字体缓存更快
         scale: 1.05, // 略微调整以提高可读性
         exFactor: 0.5,
         displayAlign: 'center',
         displayIndent: '0',
-        internalSpeechTitles: true,
-        assistiveMml: false,
-        merrorInheritFont: true
+        internalSpeechTitles: false, // 禁用无障碍语音标题以提高性能
+        assistiveMml: false, // 禁用辅助MML以提高性能
+        merrorInheritFont: true,
+        // 性能优化：启用字体缓存和简化渲染
+        useFontCache: true,
+        useGlobalCache: true
       },
       startup: {
         typeset: false,
         // 添加启动配置以确保正确初始化
         ready: () => {
           console.debug('MathJax启动就绪');
+        },
+        // 性能优化：减少启动时的自动操作
+        pageReady: () => {
+          console.debug('MathJax页面就绪');
         }
       },
       options: {
-        enableMenu: true,
+        enableMenu: false, // 禁用菜单以提高性能
         enableAssistiveMml: false,
         ignoreHtmlClass: 'tex2jax_ignore',
-        processHtmlClass: 'tex2jax_process'
+        processHtmlClass: 'tex2jax_process',
+        // 性能优化：禁用不必要的功能
+        renderActions: {
+          find: [10, () => {}, ''],
+          prepare: [15, () => {}, ''],
+          process: [20, () => {}, ''],
+          typeset: [30, () => {}, ''],
+          update: [40, () => {}, '']
+        }
       }
     };
     
@@ -163,17 +181,23 @@ class MathJaxService {
     // 使用CDN的MathJax v3版本，确保兼容性
     // 为生产环境优化，使用较小的包
     const isProd = import.meta.env.MODE === 'production';
+    // 性能优化：使用最小化版本和适当的CDN
     script.src = isProd 
-      ? 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.min.js'
-      : 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js';
+      ? 'https://cdn.jsdelivr.net/npm/mathjax@3/esm/tex-svg.js?config=TeX-AMS_SVG'
+      : 'https://cdn.jsdelivr.net/npm/mathjax@3/esm/tex-svg.js?config=TeX-AMS_SVG';
     script.async = true;
     script.type = 'text/javascript';
+    script.crossOrigin = 'anonymous'; // 添加crossorigin属性，解决credentials mode不匹配问题
+    script.referrerPolicy = 'no-referrer-when-downgrade'; // 添加referrer policy
+    
+    // 性能优化：添加加载优先级
+    script.setAttribute('fetchpriority', 'high');
     
     // 增加超时处理
     const timeoutId = setTimeout(() => {
       console.error('MathJax加载超时');
       this.handleLoadError(new Error('加载超时'));
-    }, 10000);
+    }, 15000);
     
     script.onload = () => {
       clearTimeout(timeoutId);
@@ -367,15 +391,26 @@ class MathJaxService {
       throw new Error('MathJax未就绪或环境不支持');
     }
     
+    // 元素有效性检查
+    if (elements) {
+      elements = elements.filter(el => el && el.isConnected);
+      if (elements.length === 0) {
+        return; // 没有有效元素，直接返回
+      }
+    }
+    
     try {
-      // 安全地清除之前的渲染
-      if (window.MathJax.typesetClear) {
+      // 性能优化：只在必要时清除渲染
+      if (window.MathJax.typesetClear && elements) {
         try {
           window.MathJax.typesetClear();
         } catch (err) {
           console.warn('MathJax清除渲染失败:', err);
         }
       }
+      
+      // 性能优化：避免在渲染前重新布局
+      const startTime = performance.now();
       
       // 优先使用typesetPromise，降级到typeset
       if (window.MathJax.typesetPromise) {
@@ -390,6 +425,9 @@ class MathJaxService {
       } else {
         throw new Error('未找到可用的MathJax渲染方法');
       }
+      
+      const endTime = performance.now();
+      console.debug(`MathJax渲染完成，耗时: ${(endTime - startTime).toFixed(2)}ms`);
     } catch (error) {
       console.error('MathJax渲染失败:', error);
       throw error;
@@ -400,8 +438,9 @@ class MathJaxService {
    * 将元素加入渲染队列（防抖处理）
    * @param element 要渲染的元素
    * @param immediate 是否立即渲染，不加入队列
+   * @param priority 是否高优先级渲染
    */
-  public queueTypeset(element: HTMLElement, immediate: boolean = false): void {
+  public queueTypeset(element: HTMLElement, immediate: boolean = false, priority: boolean = false): void {
     if (!element || !element.isConnected) {
       console.warn('尝试渲染不存在或已断开连接的DOM元素');
       return;
@@ -420,17 +459,24 @@ class MathJaxService {
       return;
     }
     
-    this.renderQueue.push(element);
+    // 优先队列处理
+    if (priority) {
+      this.renderQueue.unshift(element); // 高优先级元素插入队列头部
+    } else {
+      this.renderQueue.push(element); // 普通元素插入队列尾部
+    }
     
     // 清除之前的定时器
     if (this.renderTimeout) {
       clearTimeout(this.renderTimeout);
     }
     
-    // 设置新的定时器，使用更短的延迟以提高响应速度
+    // 动态调整防抖延迟：如果队列中有高优先级元素，使用更短的延迟
+    const debounceDelay = this.renderQueue.length > 5 ? 100 : (priority ? 50 : 150);
+    
     this.renderTimeout = setTimeout(() => {
       this.processRenderQueue();
-    }, 150);
+    }, debounceDelay);
   }
   
   /**
@@ -443,29 +489,41 @@ class MathJaxService {
     
     // 过滤掉无效的元素
     const validElements = this.renderQueue.filter(el => el && el.isConnected);
-    const elements = [...validElements];
     this.renderQueue = [];
     
-    if (elements.length === 0) {
+    if (validElements.length === 0) {
       return;
     }
     
+    // 批量处理：将大量元素分成小批次处理
+    const batchSize = 10; // 每批次处理10个元素
+    const batches = [];
+    
+    for (let i = 0; i < validElements.length; i += batchSize) {
+      batches.push(validElements.slice(i, i + batchSize));
+    }
+    
     try {
-      await this.typeset(elements);
+      // 按批次处理渲染请求
+      for (const batch of batches) {
+        await this.typeset(batch);
+        // 给浏览器一点时间处理其他任务
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
     } catch (error) {
       console.error('渲染队列处理失败:', error);
       // 失败后尝试重新加入队列，限制重试次数
-      elements.forEach(element => {
+      validElements.forEach(element => {
         // 避免重复加入
         if (!this.renderQueue.includes(element)) {
           this.renderQueue.push(element);
         }
       });
       
-      // 稍后重试
+      // 稍后重试，使用指数退避
       setTimeout(() => {
         this.processRenderQueue();
-      }, 500);
+      }, 1000);
     }
   }
   

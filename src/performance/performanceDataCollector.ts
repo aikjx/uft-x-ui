@@ -2,7 +2,52 @@ import { PerformanceMode, PerformanceOptimizationManager } from './performanceOp
 import { devicePerformanceAnalyzer, PerformanceTestResult } from './devicePerformanceAnalyzer';
 import { VISUALIZATION_CONFIG } from '../constants';
 
-// 性能数据点接口
+// 渲染阶段性能指标
+export interface RenderPhaseMetrics {
+  shaderCompileTime: number;
+  textureUploadTime: number;
+  geometryBuildTime: number;
+  renderTime: number;
+  postProcessTime: number;
+}
+
+// 资源使用详细信息
+export interface ResourceUsageDetails {
+  textures: number;
+  geometries: number;
+  materials: number;
+  shaders: number;
+  meshes: number;
+  particles: number;
+  lights: number;
+  shadowMapSize: number;
+  textureMemory: number;
+  geometryMemory: number;
+}
+
+// 性能事件类型
+export type PerformanceEventType = 
+  | 'scene_load' 
+  | 'resource_load' 
+  | 'camera_move' 
+  | 'particle_system_update' 
+  | 'field_calculation' 
+  | 'shader_compile' 
+  | 'texture_upload' 
+  | 'geometry_build' 
+  | 'render_phase';
+
+// 性能事件数据
+export interface PerformanceEvent {
+  type: PerformanceEventType;
+  timestamp: number;
+  duration: number;
+  details?: Record<string, any>;
+  resourceId?: string;
+  resourceType?: string;
+}
+
+// 性能数据点接口 - 增强版
 export interface PerformanceDataPoint {
   timestamp: number;
   frameTime: number;
@@ -15,6 +60,12 @@ export interface PerformanceDataPoint {
   performanceMode: PerformanceMode;
   isAutoMode: boolean;
   sceneComplexity: number;
+  renderPhaseMetrics: RenderPhaseMetrics;
+  resourceUsage: ResourceUsageDetails;
+  gpuUsage: number; // GPU使用率估算
+  cpuUsage: number; // CPU使用率估算
+  networkLatency: number; // 网络延迟估算
+  garbageCollectionCount: number; // 垃圾回收次数
 }
 
 // 性能统计摘要
@@ -78,18 +129,22 @@ export interface PerformanceProfile {
   optimalSettings: Record<string, any>;
 }
 
-// 性能数据收集器类
+// 性能数据收集器类 - 增强版
 export class PerformanceDataCollector {
   private dataPoints: PerformanceDataPoint[] = [];
   private warnings: PerformanceWarning[] = [];
+  private performanceEvents: PerformanceEvent[] = [];
   private isCollecting: boolean = false;
   private collectionInterval: number | null = null;
   private sampleRate: number = 1000; // 1秒采样一次
   private maxDataPoints: number = 3600; // 最多保存1小时数据（3600个点）
+  private maxEvents: number = 1000; // 最多保存1000个性能事件
   private startTime: number = 0;
   private lastFrameTime: number = 0;
   private fpsHistory: number[] = [];
   private fpsWindowSize: number = 60; // 60帧窗口计算平均FPS
+  private gcCount: number = 0; // 垃圾回收计数
+  private lastGcCheck: number = 0;
   
   private thresholds: PerformanceWarningThresholds = {
     lowFPSThreshold: 30,
@@ -100,6 +155,10 @@ export class PerformanceDataCollector {
   
   private performanceOptimizer: PerformanceOptimizationManager | null = null;
   private storageKey: string = 'utfx_performance_data';
+  private eventsStorageKey: string = 'utfx_performance_events';
+  
+  // 性能事件计时器映射
+  private eventTimers: Map<string, { type: PerformanceEventType; startTime: number; details?: Record<string, any>; resourceId?: string; resourceType?: string }> = new Map();
   
   // 设置性能优化管理器引用
   public setPerformanceOptimizer(optimizer: PerformanceOptimizationManager): void {
@@ -146,7 +205,179 @@ export class PerformanceDataCollector {
     console.log('性能数据收集已停止，收集了', this.dataPoints.length, '个数据点');
   }
   
-  // 收集单个数据点
+  // 开始性能事件计时
+  public startPerformanceEvent(type: PerformanceEventType, details?: Record<string, any>, resourceId?: string, resourceType?: string): string {
+    const eventId = `${type}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    this.eventTimers.set(eventId, {
+      type,
+      startTime: performance.now(),
+      details,
+      resourceId,
+      resourceType
+    });
+    return eventId;
+  }
+
+  // 结束性能事件计时
+  public endPerformanceEvent(eventId: string): void {
+    const timerInfo = this.eventTimers.get(eventId);
+    if (!timerInfo) {
+      console.warn(`性能事件计时器不存在: ${eventId}`);
+      return;
+    }
+
+    const endTime = performance.now();
+    const duration = endTime - timerInfo.startTime;
+
+    const event: PerformanceEvent = {
+      type: timerInfo.type,
+      timestamp: Date.now(),
+      duration,
+      details: timerInfo.details,
+      resourceId: timerInfo.resourceId,
+      resourceType: timerInfo.resourceType
+    };
+
+    this.performanceEvents.push(event);
+    
+    // 限制事件数量
+    if (this.performanceEvents.length > this.maxEvents) {
+      this.performanceEvents.shift();
+    }
+
+    // 检查是否需要生成警告
+    this.checkEventWarnings(event);
+
+    this.eventTimers.delete(eventId);
+  }
+
+  // 直接记录性能事件
+  public recordPerformanceEvent(type: PerformanceEventType, duration: number, details?: Record<string, any>, resourceId?: string, resourceType?: string): void {
+    const event: PerformanceEvent = {
+      type,
+      timestamp: Date.now(),
+      duration,
+      details,
+      resourceId,
+      resourceType
+    };
+
+    this.performanceEvents.push(event);
+    
+    // 限制事件数量
+    if (this.performanceEvents.length > this.maxEvents) {
+      this.performanceEvents.shift();
+    }
+
+    // 检查是否需要生成警告
+    this.checkEventWarnings(event);
+  }
+
+  // 获取渲染阶段性能指标
+  private getRenderPhaseMetrics(): RenderPhaseMetrics {
+    // 从性能优化管理器获取详细的渲染阶段数据
+    return {
+      shaderCompileTime: this.performanceOptimizer?.getShaderCompileTime() || 0,
+      textureUploadTime: this.performanceOptimizer?.getTextureUploadTime() || 0,
+      geometryBuildTime: this.performanceOptimizer?.getGeometryBuildTime() || 0,
+      renderTime: this.performanceOptimizer?.getRenderTime() || 0,
+      postProcessTime: this.performanceOptimizer?.getPostProcessTime() || 0
+    };
+  }
+
+  // 获取资源使用详细信息
+  private getResourceUsageDetails(): ResourceUsageDetails {
+    // 从性能优化管理器获取详细的资源使用数据
+    return {
+      textures: this.performanceOptimizer?.getResourceCount('textures') || 0,
+      geometries: this.performanceOptimizer?.getResourceCount('geometries') || 0,
+      materials: this.performanceOptimizer?.getResourceCount('materials') || 0,
+      shaders: this.performanceOptimizer?.getResourceCount('shaders') || 0,
+      meshes: this.performanceOptimizer?.getResourceCount('meshes') || 0,
+      particles: this.performanceOptimizer?.getResourceCount('particles') || 0,
+      lights: this.performanceOptimizer?.getResourceCount('lights') || 0,
+      shadowMapSize: this.performanceOptimizer?.getShadowMapSize() || 0,
+      textureMemory: this.performanceOptimizer?.estimateTextureMemory() || 0,
+      geometryMemory: this.performanceOptimizer?.estimateGeometryMemory() || 0
+    };
+  }
+
+  // 检查事件警告
+  private checkEventWarnings(event: PerformanceEvent): void {
+    // 根据事件类型和持续时间生成警告
+    const eventThresholds: Record<PerformanceEventType, number> = {
+      'scene_load': 3000, // 3秒
+      'resource_load': 500, // 500ms
+      'camera_move': 100, // 100ms
+      'particle_system_update': 50, // 50ms
+      'field_calculation': 100, // 100ms
+      'shader_compile': 200, // 200ms
+      'texture_upload': 100, // 100ms
+      'geometry_build': 150, // 150ms
+      'render_phase': 30 // 30ms
+    };
+
+    const threshold = eventThresholds[event.type] || 100;
+    if (event.duration > threshold) {
+      const severity: 'warning' | 'critical' = event.duration > threshold * 2 ? 'critical' : 'warning';
+      const warning: PerformanceWarning = {
+        type: 'highFrameTime',
+        timestamp: event.timestamp,
+        severity,
+        message: `${event.type} 操作耗时过长: ${event.duration.toFixed(1)}ms`,
+        currentValue: event.duration,
+        threshold,
+        recommendedAction: `优化${event.type}操作，减少处理时间`
+      };
+      this.warnings.push(warning);
+      
+      // 限制警告数量
+      if (this.warnings.length > 100) {
+        this.warnings.shift();
+      }
+      
+      console.warn(`[性能警告] ${warning.message} - ${warning.recommendedAction}`);
+    }
+  }
+
+  // 估算GPU使用率（简化版）
+  private estimateGPUUsage(): number {
+    const renderPhase = this.getRenderPhaseMetrics();
+    const totalRenderTime = renderPhase.renderTime + renderPhase.postProcessTime;
+    return Math.min(100, Math.round((totalRenderTime / 16.67) * 100)); // 基于60fps目标
+  }
+
+  // 估算CPU使用率（简化版）
+  private estimateCPUUsage(): number {
+    const frameTime = performance.now() - this.lastFrameTime;
+    return Math.min(100, Math.round((frameTime / 16.67) * 100)); // 基于60fps目标
+  }
+
+  // 估算网络延迟
+  private estimateNetworkLatency(): number {
+    // 这里使用简化的网络延迟估算，实际项目中可以使用Navigation Timing API
+    return 50; // 默认50ms
+  }
+
+  // 检测垃圾回收次数
+  private detectGarbageCollection(): number {
+    // 使用performance.memory检测垃圾回收
+    if (typeof performance !== 'undefined' && (performance as any).memory) {
+      const currentMemory = (performance as any).memory.usedJSHeapSize;
+      const lastMemory = (performance as any).memory.usedJSHeapSize;
+      
+      // 如果内存使用量突然下降超过20%，则认为发生了垃圾回收
+      if (this.lastGcCheck > 0 && lastMemory > currentMemory && (lastMemory - currentMemory) / lastMemory > 0.2) {
+        this.gcCount++;
+      }
+      
+      this.lastGcCheck = Date.now();
+    }
+    
+    return this.gcCount;
+  }
+
+  // 收集单个数据点 - 增强版
   public collectDataPoint(): void {
     const timestamp = Date.now();
     const currentTime = performance.now();
@@ -177,7 +408,23 @@ export class PerformanceDataCollector {
     // 获取场景复杂度
     const sceneComplexity = this.calculateSceneComplexity();
     
-    // 创建数据点
+    // 获取渲染阶段指标
+    const renderPhaseMetrics = this.getRenderPhaseMetrics();
+    
+    // 获取资源使用详情
+    const resourceUsage = this.getResourceUsageDetails();
+    
+    // 估算GPU和CPU使用率
+    const gpuUsage = this.estimateGPUUsage();
+    const cpuUsage = this.estimateCPUUsage();
+    
+    // 估算网络延迟
+    const networkLatency = this.estimateNetworkLatency();
+    
+    // 检测垃圾回收
+    const garbageCollectionCount = this.detectGarbageCollection();
+    
+    // 创建增强版数据点
     const dataPoint: PerformanceDataPoint = {
       timestamp,
       frameTime,
@@ -189,7 +436,13 @@ export class PerformanceDataCollector {
       fieldResolution: renderStats.fieldResolution,
       performanceMode,
       isAutoMode,
-      sceneComplexity
+      sceneComplexity,
+      renderPhaseMetrics,
+      resourceUsage,
+      gpuUsage,
+      cpuUsage,
+      networkLatency,
+      garbageCollectionCount
     };
     
     // 添加到数据点数组
@@ -451,9 +704,13 @@ export class PerformanceDataCollector {
   public clearData(): void {
     this.dataPoints = [];
     this.warnings = [];
+    this.performanceEvents = [];
     this.fpsHistory = [];
+    this.gcCount = 0;
+    this.lastGcCheck = 0;
     this.startTime = 0;
     this.lastFrameTime = 0;
+    this.eventTimers.clear();
     console.log('性能数据已清除');
   }
   
@@ -463,6 +720,7 @@ export class PerformanceDataCollector {
       const dataToSave = {
         dataPoints: this.dataPoints,
         warnings: this.warnings,
+        performanceEvents: this.performanceEvents,
         summary: this.getPerformanceSummary(),
         savedAt: Date.now()
       };
@@ -485,7 +743,8 @@ export class PerformanceDataCollector {
         const parsedData = JSON.parse(savedData);
         this.dataPoints = parsedData.dataPoints || [];
         this.warnings = parsedData.warnings || [];
-        console.log('已从本地存储加载性能数据，包含', this.dataPoints.length, '个数据点');
+        this.performanceEvents = parsedData.performanceEvents || [];
+        console.log('已从本地存储加载性能数据，包含', this.dataPoints.length, '个数据点和', this.performanceEvents.length, '个性能事件');
         return true;
       }
       
@@ -496,7 +755,7 @@ export class PerformanceDataCollector {
     }
   }
   
-  // 导出性能报告
+  // 导出性能报告 - 增强版
   public exportPerformanceReport(): string {
     const report = {
       deviceInfo: devicePerformanceAnalyzer.getDeviceInfo(),
@@ -504,8 +763,12 @@ export class PerformanceDataCollector {
       summary: this.getPerformanceSummary(),
       trend: this.getPerformanceTrend(),
       warnings: this.getWarnings(),
+      performanceEvents: this.performanceEvents,
+      renderPhaseMetrics: this.dataPoints.length > 0 ? this.dataPoints[this.dataPoints.length - 1].renderPhaseMetrics : null,
+      resourceUsage: this.dataPoints.length > 0 ? this.dataPoints[this.dataPoints.length - 1].resourceUsage : null,
       exportTime: new Date().toISOString(),
       totalDataPoints: this.dataPoints.length,
+      totalPerformanceEvents: this.performanceEvents.length,
       recordingDuration: this.dataPoints.length > 0 ? 
         (this.dataPoints[this.dataPoints.length - 1].timestamp - this.dataPoints[0].timestamp) / 1000 : 0
     };

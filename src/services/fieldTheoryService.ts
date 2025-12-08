@@ -2,6 +2,7 @@
  * 场论性能监控器
  * 用于监控场论可视化系统的性能指标
  */
+import { Service } from './ServiceManager';
 
 export interface PerformanceData {
   cpuUsage: number;
@@ -14,7 +15,11 @@ export interface PerformanceData {
   physicsTime: number;
 }
 
-export class FieldTheoristPerformanceMonitor {
+export class FieldTheoristPerformanceMonitor implements Service {
+  /**
+   * 服务名称
+   */
+  public readonly serviceName: string = 'FieldTheoristPerformanceMonitor';
   /**
    * 获取当前性能数据
    */

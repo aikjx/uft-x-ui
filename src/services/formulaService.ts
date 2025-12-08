@@ -1,6 +1,7 @@
 import { Formula } from '../types';
+import { Service } from './ServiceManager';
 
-export class FormulaService {
+export class FormulaService implements Service {
   private static instance: FormulaService;
   private formulas: Map<number, Formula> = new Map();
 
@@ -14,6 +15,11 @@ export class FormulaService {
   constructor() {
     this.initializeFormulas();
   }
+
+  /**
+   * 服务名称
+   */
+  public readonly serviceName: string = 'FormulaService';
 
   private initializeFormulas(): void {
     const formulas: Formula[] = [
@@ -283,8 +289,11 @@ export class FormulaService {
     }
   }
 
-  public static formatFormulaExpression(expression: string): string {
+  public static formatFormulaExpression(expression: string | undefined | null): string {
     // 格式化公式表达式以便于显示
+    if (!expression) {
+      return '';
+    }
     return expression
       .replace(/\*/g, ' \\cdot ')
       .replace(/\$/g, '')

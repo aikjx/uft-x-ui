@@ -144,7 +144,7 @@ describe('Navbar - 导航菜单组件', () => {
     renderWithRouter()
     
     const nav = screen.getByRole('navigation')
-    const logo = screen.getByRole('heading', { name: /统一场论探索/ })
+    const logo = screen.getByRole('heading', { name: /统一场论/ })
     
     // 检查导航角色
     expect(nav).toHaveRole('navigation')

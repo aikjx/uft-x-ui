@@ -1,7 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  // 启用JIT模式，提高构建速度和减少CSS体积
-  mode: 'jit',
   content: [
     "./index.html",
     "./src/**/*.{vue,js,ts,jsx,tsx}",
@@ -45,24 +43,13 @@ export default {
     },
   },
   plugins: [],
-  // 性能优化配置
-  optimize: {
-    // 移除未使用的CSS
-    unused: true,
-    // 合并重复的CSS规则
-    merge: true,
-    // 压缩CSS
-    minify: true,
-  },
-  // 减少生成的CSS体积
   corePlugins: {
-    // 移除不需要的核心插件
+    // 保留必要的核心插件
     preflight: true,
     container: true,
     accessibility: true,
-    // 保留必要的核心插件
     flexbox: true,
     grid: true,
-    backgroundImage: false,
+    backgroundImage: true,
   }
 }

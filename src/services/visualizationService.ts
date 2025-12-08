@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { Formula } from '../types';
+import { Service } from './ServiceManager';
 
-export class VisualizationService {
+export class VisualizationService implements Service {
   private static instance: VisualizationService;
 
   public static getInstance(): VisualizationService {
@@ -10,6 +11,11 @@ export class VisualizationService {
     }
     return VisualizationService.instance;
   }
+
+  /**
+   * 服务名称
+   */
+  public readonly serviceName: string = 'VisualizationService';
 
   public createGridHelper(size: number = 10, divisions: number = 10): THREE.GridHelper {
     const gridHelper = new THREE.GridHelper(size, divisions, 0x444444, 0x222222);
@@ -70,9 +76,7 @@ export class VisualizationService {
     // 创建引力中心
     const centerGeometry = new THREE.SphereGeometry(0.5, 32, 32);
     const centerMaterial = new THREE.MeshBasicMaterial({ 
-      color: 0xff6b6b,
-      emissive: 0xff4444,
-      emissiveIntensity: 0.5
+      color: 0xff6b6b
     });
     const center = new THREE.Mesh(centerGeometry, centerMaterial);
     scene.add(center);

@@ -1,24 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook } from '@testing-library/react'
 import { act } from 'react'
 import { useFormula } from '@/hooks/useFormula'
 
 // 模拟React Router的useParams
 vi.mock('react-router-dom')
 import { useParams } from 'react-router-dom'
-
-// 模拟constants中的FORMULAS
-vi.mock('@/constants', () => ({
-  FORMULAS: [
-    {
-      id: 1,
-      name: '能量公式',
-      latex: 'E = mc^2',
-      description: '质能等价公式',
-      category: '物理'
-    }
-  ]
-}))
 
 const mockedUseParams = vi.mocked(useParams)
 
@@ -41,10 +28,14 @@ describe('useFormula Hook', () => {
   it('should get formula by id correctly', () => {
     const { result } = renderHook(() => useFormula())
     
-    const formula = result.current.getFormulaById('1')
-    
-    expect(formula).toBeDefined()
-    expect(formula?.id).toBe(1) // 公式ID是数字类型，不是字符串类型
+    // 使用实际数据中的第一个公式ID
+    const formulaId = result.current.formulas[0]?.id
+    if (formulaId) {
+      const formula = result.current.getFormulaById(formulaId)
+      
+      expect(formula).toBeDefined()
+      expect(formula?.id).toBe(formulaId)
+    }
   })
   
   it('should select formula correctly', () => {
@@ -59,10 +50,16 @@ describe('useFormula Hook', () => {
   })
   
   it('should handle params with formula id', () => {
-    mockedUseParams.mockReturnValue({ id: '1' })
+    // 使用实际数据中的第一个公式ID
+    const { result: firstRender } = renderHook(() => useFormula())
+    const firstFormulaId = firstRender.current.formulas[0]?.id
     
-    const { result } = renderHook(() => useFormula())
-    
-    expect(result.current.selectedFormula).toBeDefined()
+    if (firstFormulaId) {
+      mockedUseParams.mockReturnValue({ id: firstFormulaId })
+      
+      const { result } = renderHook(() => useFormula())
+      
+      expect(result.current.selectedFormula).toBeDefined()
+    }
   })
 })

@@ -424,6 +424,10 @@ vi.mock('three', () => {
       return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
     }
     
+    lengthSq(): number {
+      return this.x * this.x + this.y * this.y + this.z * this.z;
+    }
+    
     clone(): MockVector3 {
       return new MockVector3(this.x, this.y, this.z);
     }
@@ -536,12 +540,20 @@ vi.mock('three', () => {
   
   class MockBufferAttribute {
     needsUpdate = false;
+    
+    setUsage(usage: number): this {
+      return this;
+    }
   }
   
   return {
     // 导出模拟的Three.js类
     Vector3: MockVector3,
     Ray: MockRay,
+    Raycaster: class {
+      setFromCamera = vi.fn();
+      intersectObjects = vi.fn(() => []);
+    },
     Scene: MockScene,
     PerspectiveCamera: MockPerspectiveCamera,
     WebGLRenderer: MockWebGLRenderer,
@@ -553,6 +565,9 @@ vi.mock('three', () => {
       getPoints = vi.fn(() => []);
     },
     AdditiveBlending: 2,
+    DynamicDrawUsage: 1,
+    StaticDrawUsage: 0,
+    StreamDrawUsage: 2,
     // 添加更多Three.js导出
     Object3D: class {
       add = vi.fn();
@@ -658,14 +673,22 @@ vi.mock('three', () => {
   };
 });
 
-// 模拟react-router-dom的useLocation钩子
+// 模拟react-router-dom的所有常用钩子
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<any>('react-router-dom');
   
   return {
     ...actual,
-    // 确保useLocation返回正确的location对象
+    // 确保所有常用钩子返回正确的对象
     useLocation: vi.fn(() => ({ pathname: '/', search: '', hash: '', state: null })),
+    useParams: vi.fn(() => ({ id: '1' })),
+    useNavigate: vi.fn(),
+    useMatch: vi.fn(() => null),
+    useRoutes: vi.fn(() => null),
+    useOutlet: vi.fn(() => null),
+    useOutletContext: vi.fn(() => null),
+    useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
+    useInRouterContext: vi.fn(() => true),
   };
 });
 

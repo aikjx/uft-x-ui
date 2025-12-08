@@ -273,80 +273,125 @@ export class PerformanceOptimizer {
     // 根据实时性能动态调整优化强度
     const fpsRatio = this.metrics.fps / this.config.targetFPS;
     
+    // 只在必要时应用优化，避免频繁切换状态
     if (fpsRatio < 0.5) {
       // 性能严重不足，应用最大优化
       this.enablePerformanceMode();
     } else if (fpsRatio < 0.8) {
       // 性能不足，应用平衡优化
       this.enableBalancedOptimization();
-    } else if (fpsRatio < 1.2) {
-      // 性能良好，保持当前设置
-      return;
-    } else {
+    } else if (fpsRatio > 1.5) {
       // 性能优秀，可以提升质量
       this.restoreQuality();
     }
+    // 性能良好，保持当前设置
   }
+
+  // 存储当前优化状态，避免不必要的状态切换
+  private currentOptimizationLevel: 'high' | 'medium' | 'low' = 'high';
+  private lastViewOffset: { scale: number } | null = null;
+  private lastPixelRatio: number = window.devicePixelRatio;
+  private lastShadowEnabled: boolean = true;
 
   /**
    * 启用性能模式
    */
   private enablePerformanceMode(): void {
-    // 设置低分辨率
-    this.camera.setViewOffset(
-      window.innerWidth,
-      window.innerHeight,
-      0,
-      0,
-      Math.floor(window.innerWidth * 0.6),
-      Math.floor(window.innerHeight * 0.6)
-    );
-    
-    // 禁用阴影
-    this.renderer.shadowMap.enabled = false;
-    
-    // 降低抗锯齿
-    this.renderer.setPixelRatio(Math.min(1.0, window.devicePixelRatio));
+    // 只在当前不是低性能模式时应用更改
+    if (this.currentOptimizationLevel !== 'low') {
+      // 设置低分辨率
+      const scale = 0.6;
+      this.camera.setViewOffset(
+        window.innerWidth,
+        window.innerHeight,
+        0,
+        0,
+        Math.floor(window.innerWidth * scale),
+        Math.floor(window.innerHeight * scale)
+      );
+      this.lastViewOffset = { scale };
+      
+      // 禁用阴影
+      if (this.renderer.shadowMap.enabled) {
+        this.renderer.shadowMap.enabled = false;
+        this.lastShadowEnabled = false;
+      }
+      
+      // 降低抗锯齿
+      const newPixelRatio = Math.min(1.0, window.devicePixelRatio);
+      if (this.renderer.getPixelRatio() !== newPixelRatio) {
+        this.renderer.setPixelRatio(newPixelRatio);
+        this.lastPixelRatio = newPixelRatio;
+      }
+      
+      this.currentOptimizationLevel = 'low';
+    }
   }
 
   /**
    * 启用平衡优化
    */
   private enableBalancedOptimization(): void {
-    // 适度降低分辨率
-    const scale = Math.max(0.7, this.calculateRenderScale());
-    this.camera.setViewOffset(
-      window.innerWidth,
-      window.innerHeight,
-      0,
-      0,
-      Math.floor(window.innerWidth * scale),
-      Math.floor(window.innerHeight * scale)
-    );
-    
-    // 根据性能调整阴影
-    const isPerformanceMode = this.metrics.fps < this.config.targetFPS * 0.8;
-    this.renderer.shadowMap.enabled = this.renderOptimizer.shouldEnableShadows(
-      isPerformanceMode,
-      this.metrics.activeObjects
-    );
-    
-    // 调整像素比率
-    this.renderer.setPixelRatio(this.calculateOptimalPixelRatio());
+    // 只在当前不是中性能模式时应用更改
+    if (this.currentOptimizationLevel !== 'medium') {
+      // 适度降低分辨率
+      const scale = Math.max(0.7, this.calculateRenderScale());
+      this.camera.setViewOffset(
+        window.innerWidth,
+        window.innerHeight,
+        0,
+        0,
+        Math.floor(window.innerWidth * scale),
+        Math.floor(window.innerHeight * scale)
+      );
+      this.lastViewOffset = { scale };
+      
+      // 根据性能调整阴影
+      const isPerformanceMode = this.metrics.fps < this.config.targetFPS * 0.8;
+      const shouldEnableShadows = this.renderOptimizer.shouldEnableShadows(
+        isPerformanceMode,
+        this.metrics.activeObjects
+      );
+      if (this.renderer.shadowMap.enabled !== shouldEnableShadows) {
+        this.renderer.shadowMap.enabled = shouldEnableShadows;
+        this.lastShadowEnabled = shouldEnableShadows;
+      }
+      
+      // 调整像素比率
+      const newPixelRatio = this.calculateOptimalPixelRatio();
+      if (this.renderer.getPixelRatio() !== newPixelRatio) {
+        this.renderer.setPixelRatio(newPixelRatio);
+        this.lastPixelRatio = newPixelRatio;
+      }
+      
+      this.currentOptimizationLevel = 'medium';
+    }
   }
 
   /**
    * 恢复质量
    */
   private restoreQuality(): void {
-    // 恢复原始分辨率
-    this.camera.clearViewOffset();
-    
-    // 启用阴影
-    this.renderer.shadowMap.enabled = true;
-    
-    // 恢复高像素比率
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    // 只在当前不是高性能模式时应用更改
+    if (this.currentOptimizationLevel !== 'high') {
+      // 恢复原始分辨率
+      this.camera.clearViewOffset();
+      this.lastViewOffset = null;
+      
+      // 启用阴影
+      if (!this.renderer.shadowMap.enabled) {
+        this.renderer.shadowMap.enabled = true;
+        this.lastShadowEnabled = true;
+      }
+      
+      // 恢复高像素比率
+      if (this.renderer.getPixelRatio() !== window.devicePixelRatio) {
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.lastPixelRatio = window.devicePixelRatio;
+      }
+      
+      this.currentOptimizationLevel = 'high';
+    }
   }
 
   /**
@@ -363,10 +408,12 @@ export class PerformanceOptimizer {
       Math.floor(window.innerWidth * scale),
       Math.floor(window.innerHeight * scale)
     );
+    this.lastViewOffset = { scale };
     
     // 可以选择性启用阴影
-    if (this.metrics.activeObjects < 30) {
+    if (this.metrics.activeObjects < 30 && !this.renderer.shadowMap.enabled) {
       this.renderer.shadowMap.enabled = true;
+      this.lastShadowEnabled = true;
     }
   }
 
@@ -378,11 +425,8 @@ export class PerformanceOptimizer {
     const isPerformanceMode = this.metrics.fps < this.config.targetFPS * 0.8;
     const shadowResolution = this.renderOptimizer.getOptimalShadowMapResolution(isPerformanceMode);
     
-    // 更新阴影贴图分辨率
-    if (this.renderer.shadowMap.enabled) {
-      this.renderer.shadowMap.mapSize.width = shadowResolution;
-      this.renderer.shadowMap.mapSize.height = shadowResolution;
-    }
+    // 更新阴影贴图分辨率 - 注意：在新版本Three.js中，shadowMap.mapSize已移除，阴影分辨率需在每个灯光上单独设置
+    // 这里我们只更新优化器内部状态，具体灯光的阴影分辨率调整需要在场景中遍历灯光进行设置
   }
 
   /**

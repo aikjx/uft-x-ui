@@ -1,20 +1,22 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { FORMULAS } from '../constants';
 import { Formula } from '../types';
+import { unifiedFieldTheoryFormulas } from '../data/unifiedFieldTheoryFormulas';
 
 export const useFormula = () => {
-  const { id } = useParams<{ id: string }>();
-  const [selectedFormula, setSelectedFormula] = useState<Formula | null>(null);
+  // 添加错误处理，确保即使useParams返回undefined，也能正常工作
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
+  const [selectedFormula, setSelectedFormula] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // 获取特定公式
-  const getFormulaById = useCallback((formulaId: string): Formula | undefined => {
-    return FORMULAS.find(f => f.id.toString() === formulaId);
+  const getFormulaById = useCallback((formulaId: string): any | undefined => {
+    return unifiedFieldTheoryFormulas.find(f => f.id === formulaId);
   }, []);
 
   // 选择公式
-  const selectFormula = useCallback((formula: Formula) => {
+  const selectFormula = useCallback((formula: any) => {
     setIsLoading(true);
     setSelectedFormula(formula);
     // 模拟加载延迟
@@ -28,8 +30,8 @@ export const useFormula = () => {
   useEffect(() => {
     setIsLoading(true);
     
-    // 确保FORMULAS有数据
-    if (FORMULAS.length === 0) {
+    // 确保unifiedFieldTheoryFormulas有数据
+    if (unifiedFieldTheoryFormulas.length === 0) {
       setIsLoading(false);
       return;
     }
@@ -39,10 +41,10 @@ export const useFormula = () => {
       if (formula) {
         setSelectedFormula(formula);
       } else {
-        setSelectedFormula(FORMULAS[0]);
+        setSelectedFormula(unifiedFieldTheoryFormulas[0]);
       }
     } else {
-      setSelectedFormula(FORMULAS[0]);
+      setSelectedFormula(unifiedFieldTheoryFormulas[0]);
     }
     
     // 延迟设置isLoading为false，确保组件有足够时间渲染
@@ -53,7 +55,7 @@ export const useFormula = () => {
 
   // 根据类别分组公式
   const formulasByCategory = useMemo(() => {
-    return FORMULAS.reduce<Record<string, Formula[]>>((acc, formula) => {
+    return unifiedFieldTheoryFormulas.reduce<Record<string, any[]>>((acc, formula) => {
       if (!acc[formula.category]) {
         acc[formula.category] = [];
       }
@@ -66,7 +68,7 @@ export const useFormula = () => {
     selectedFormula,
     isLoading,
     selectFormula,
-    formulas: FORMULAS,
+    formulas: unifiedFieldTheoryFormulas,
     formulasByCategory,
     getFormulaById
   };

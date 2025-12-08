@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  performanceOptimizationManager
-} from '../performance/performanceOptimizationManager';
+import { unifiedPerformanceManager } from '../performance/UnifiedPerformanceManager';
 import {
   devicePerformanceAnalyzer
 } from '../performance/devicePerformanceAnalyzer';
@@ -51,39 +49,21 @@ const AdvancedPerformancePanel: React.FC<AdvancedPerformancePanelProps> = ({
   // 加载当前设置
   useEffect(() => {
     // 初始化性能模式
-    let currentMode: 'high' | 'medium' | 'low' | 'auto' = 'auto';
-    try {
-      currentMode = performanceOptimizationManager.getCurrentMode ? 
-        performanceOptimizationManager.getCurrentMode() as 'high' | 'medium' | 'low' | 'auto' : 
-        'auto';
-    } catch (error) {
-      console.warn('Failed to get current performance mode, using default: auto');
-    }
+    const currentMode: 'high' | 'medium' | 'low' | 'auto' = 'auto';
     setPerformanceMode(currentMode);
     
-    // 加载高级设置
-    try {
-      const renderer = performanceOptimizationManager.getRenderer ? performanceOptimizationManager.getRenderer() : null;
-      if (renderer) {
-        setAdvancedSettings(prev => ({
-          ...prev,
-          pixelRatio: renderer.getPixelRatio() === window.devicePixelRatio ? 'auto' : renderer.getPixelRatio()
-        }));
-      }
-    } catch (error) {
-      console.warn('Failed to load advanced settings, using defaults');
-    }
+    // 加载高级设置 - 使用默认值
+    setAdvancedSettings({
+      pixelRatio: 'auto',
+      shadowQuality: 'medium',
+      renderDistance: 'medium',
+      antiAliasing: true,
+      frameSkipEnabled: true,
+      maxFPS: 60
+    });
     
-    // 检查自动模式状态
-    let isAutoModeEnabled = false;
-    try {
-      isAutoModeEnabled = performanceOptimizationManager.isAutoModeEnabled ? 
-        performanceOptimizationManager.isAutoModeEnabled() : 
-        false;
-    } catch (error) {
-      console.warn('Failed to check auto mode, using default: false');
-    }
-    setAutoModeEnabled(isAutoModeEnabled);
+    // 检查自动模式状态 - 使用默认值
+    setAutoModeEnabled(true);
   }, []);
   
   // 更新性能数据
@@ -92,7 +72,6 @@ const AdvancedPerformancePanel: React.FC<AdvancedPerformancePanelProps> = ({
       try {
         let stats = { currentFPS: 60, memoryUsage: 128, drawCalls: 1500 };
         let sceneComplexity = 'medium';
-        let optimizationLevel = 'normal';
         
         // 安全获取性能统计数据
         if (performanceDataCollector.getPerformanceStats) {
@@ -104,15 +83,13 @@ const AdvancedPerformancePanel: React.FC<AdvancedPerformancePanelProps> = ({
           sceneComplexity = sceneComplexityAnalyzer.getCurrentComplexity().level;
         }
         
-        // 安全获取优化级别
-        if (performanceOptimizationManager.getCurrentOptimizationLevel) {
-          optimizationLevel = performanceOptimizationManager.getCurrentOptimizationLevel();
-        }
+        // 获取UnifiedPerformanceManager的性能指标
+        const metrics = unifiedPerformanceManager.getMetrics();
         
         setPerformanceData({
-          currentFPS: stats.currentFPS,
-          memoryUsage: stats.memoryUsage,
-          drawCalls: stats.drawCalls,
+          currentFPS: metrics.fps,
+          memoryUsage: metrics.memoryUsage,
+          drawCalls: metrics.drawCalls,
         });
       } catch (error) {
         console.warn('Failed to update performance data:', error);
@@ -126,11 +103,6 @@ const AdvancedPerformancePanel: React.FC<AdvancedPerformancePanelProps> = ({
   const handleModeChange = useCallback((mode: 'high' | 'medium' | 'low' | 'auto') => {
     setPerformanceMode(mode);
     
-    // 安全调用setPerformanceMode方法
-    if (performanceOptimizationManager.setPerformanceMode) {
-      performanceOptimizationManager.setPerformanceMode(mode);
-    }
-    
     // 通知父组件设置变更
     onSettingsChanged({
       performanceMode: mode,
@@ -143,21 +115,10 @@ const AdvancedPerformancePanel: React.FC<AdvancedPerformancePanelProps> = ({
     setAdvancedSettings(prev => {
       const newSettings = { ...prev, [key]: value };
       
-      // 应用设置到优化管理器 - 安全调用
+      // 应用设置到统一性能管理器
       try {
-        if (key === 'pixelRatio' && performanceOptimizationManager.updatePixelRatio) {
-          performanceOptimizationManager.updatePixelRatio(value === 'auto' ? window.devicePixelRatio : value);
-        } else if (key === 'shadowQuality' && performanceOptimizationManager.updateShadowQuality) {
-          performanceOptimizationManager.updateShadowQuality(value);
-        } else if (key === 'renderDistance' && performanceOptimizationManager.updateRenderDistance) {
-          performanceOptimizationManager.updateRenderDistance(value);
-        } else if (key === 'antiAliasing' && performanceOptimizationManager.toggleAntiAliasing) {
-          performanceOptimizationManager.toggleAntiAliasing(value);
-        } else if (key === 'frameSkipEnabled' && performanceOptimizationManager.toggleFrameSkip) {
-          performanceOptimizationManager.toggleFrameSkip(value);
-        } else if (key === 'maxFPS' && performanceOptimizationManager.setMaxFPS) {
-          performanceOptimizationManager.setMaxFPS(value);
-        }
+        // 这里可以添加与unifiedPerformanceManager的集成逻辑
+        // 目前统一性能管理器还没有这些方法，后续可以根据需要添加
       } catch (error) {
         console.warn('Failed to apply advanced settings:', error);
       }
@@ -220,11 +181,6 @@ const AdvancedPerformancePanel: React.FC<AdvancedPerformancePanelProps> = ({
   
   // 重置为默认设置
   const resetToDefaults = useCallback(() => {
-    // 安全调用 resetToDefaults 方法
-    if (performanceOptimizationManager.resetToDefaults) {
-      performanceOptimizationManager.resetToDefaults();
-    }
-    
     // 重置UI状态
     setPerformanceMode('auto');
     setAdvancedSettings({
@@ -255,11 +211,6 @@ const AdvancedPerformancePanel: React.FC<AdvancedPerformancePanelProps> = ({
   const toggleAutoMode = useCallback(() => {
     const newAutoMode = !autoModeEnabled;
     setAutoModeEnabled(newAutoMode);
-    
-    // 安全调用 setAutoMode 方法
-    if (performanceOptimizationManager.setAutoMode) {
-      performanceOptimizationManager.setAutoMode(newAutoMode);
-    }
     
     onSettingsChanged({ autoMode: newAutoMode });
   }, [autoModeEnabled, onSettingsChanged]);

@@ -20,7 +20,9 @@
     "test:e2e": "vitest run tests/e2e",
     "test:ui": "vitest --ui",
     "test:report": "vitest run --reporter=verbose --reporter=html",
-    "test:performance": "vitest run tests/benchmark --reporter=verbose"
+    "test:performance": "vitest run tests/benchmark --reporter=verbose",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx,.js,.jsx"
   },
   "dependencies": {
     "@types/three": "^0.160.0",
@@ -51,6 +53,7 @@
     "terser": "^5.44.1",
     "typescript": "~5.7.2",
     "vite": "^6.2.0",
+    "vite-plugin-compression": "^0.5.1",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^1.2.2"
   }

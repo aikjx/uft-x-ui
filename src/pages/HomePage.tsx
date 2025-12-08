@@ -5,7 +5,7 @@ import { cn } from '../utils';
 
 const HomePage: React.FC = () => {
   return (
-    <div className="min-h-screen">
+    <div className="w-full">
       {/* 英雄区域 */}
       <section className="overflow-hidden relative py-20 text-center md:py-32">
         {/* 动态背景网格 */}

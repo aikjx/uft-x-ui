@@ -7,7 +7,10 @@ import Footer from './components/Footer';
 import ParticleBackground from './components/ParticleBackground';
 import { MathJax } from './components/MathJax';
 import ChatComponent from './components/ChatComponent';
+import ErrorBoundary from './components/ErrorBoundary';
 import { showNotification } from './utils';
+import { startAutomatedOptimization } from './performance/AutomatedPerformanceOptimizer';
+import { registerAllServices, initializeAllServices, disposeAllServices } from './services';
 import './index.css';
 
 // 使用React.lazy进行代码分割，并添加预加载注释以优化加载
@@ -41,7 +44,7 @@ export const PageContainer: React.FC<{
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent z-10" />
       
       {shouldShowBackground && <ParticleBackground />}
-      <main className="flex-1 container mx-auto px-4 py-8 md:py-16 relative z-10 pt-24">
+      <main className="flex-1 container mx-auto px-0 py-0 md:py-0 relative z-10 pt-20 overflow-x-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -83,69 +86,30 @@ export const PageContainer: React.FC<{
   );
 };
 
-// 加载组件
+// 加载组件 - 优化性能，减少不必要的动画
 const LoadingFallback: React.FC = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 px-4 text-center">
-    <motion.div
-      className="relative"
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-    >
-      {/* 旋转动画 */}
-      <motion.div
-        className="w-20 h-20 border-4 border-blue-500 border-t-transparent rounded-full"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-      />
-      {/* 脉冲效果 */}
-      <motion.div
-        className="absolute inset-0 border-4 border-blue-500 rounded-full"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.5, 0, 0.5]
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-    </motion.div>
+    <div className="relative">
+      {/* 旋转动画 - 使用CSS动画替代motion组件 */}
+      <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+    </div>
     
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3, duration: 0.5 }}
-    >
+    <div className="opacity-100">
       <h2 className="text-2xl font-bold text-blue-300 mb-2">统一场论3D可视化平台</h2>
       <p className="text-blue-200/80 max-w-md mx-auto">
         正在加载宇宙奥秘的可视化系统...
       </p>
-    </motion.div>
+    </div>
     
-    <motion.div
-      className="w-full max-w-md bg-gray-800/50 rounded-full h-2 overflow-hidden"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.5 }}
-    >
-      <motion.div
-        className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500"
-        animate={{ x: [0, "100%"] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-      />
-    </motion.div>
+    <div className="w-full max-w-md bg-gray-800/50 rounded-full h-2 overflow-hidden">
+      {/* 进度条 - 使用CSS动画替代motion组件 */}
+      <div className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 animate-pulse" />
+    </div>
     
-    <motion.div
-      className="flex items-center space-x-2 text-sm text-blue-400/70"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.8 }}
-    >
+    <div className="flex items-center space-x-2 text-sm text-blue-400/70 opacity-100">
       <span>🔬</span>
       <span>正在初始化3D渲染引擎</span>
-    </motion.div>
+    </div>
   </div>
 );
 
@@ -264,6 +228,25 @@ function App() {
       console.log('🚀 统一场论可视化平台启动成功');
     }
 
+    // 注册和初始化所有服务
+    registerAllServices();
+    initializeAllServices().catch(error => {
+      console.error('❌ 服务初始化失败:', error);
+      showNotification.error('服务初始化失败，请刷新页面重试');
+    });
+
+    // 启动自动化性能优化
+    startAutomatedOptimization({
+      mode: 'auto',
+      targetFPS: 60,
+      maxMemoryUsageMB: 512,
+      enableAIOptimization: true,
+      autoAdjustParticleCount: true,
+      autoAdjustRenderScale: true,
+      autoAdjustShadowQuality: true,
+      autoAdjustPostProcessing: true
+    });
+
     // 显示欢迎通知
     setTimeout(() => {
       showNotification.success('欢迎探索统一场论的奥秘！');
@@ -271,19 +254,49 @@ function App() {
 
     return () => {
       // 清理资源
+      disposeAllServices();
     };
   }, []);
 
-  // 预加载关键页面组件，提高用户体验
+  // 智能预加载策略 - 只在空闲时间预加载关键页面组件
   useEffect(() => {
-    // 预加载导航菜单中的关键页面
-    import('./pages/FormulaVisualizationPage');
-    import('./pages/ArtificialFieldPage');
-    import('./pages/InteractiveExplorationPage');
-    import('./pages/KnowledgePage');
+    // 检查浏览器是否支持requestIdleCallback
+    if ('requestIdleCallback' in window) {
+      // 使用requestIdleCallback在浏览器空闲时预加载组件
+      const preloadPages = () => {
+        // 预加载导航菜单中的关键页面
+        import('./pages/FormulaVisualizationPage');
+        import('./pages/ArtificialFieldPage');
+        import('./pages/InteractiveExplorationPage');
+        import('./pages/KnowledgePage');
+      };
+
+      // 在浏览器空闲时执行预加载
+      const idleCallbackId = (window as any).requestIdleCallback(preloadPages, { timeout: 2000 });
+
+      return () => {
+        (window as any).cancelIdleCallback(idleCallbackId);
+      };
+    } else {
+      // 降级方案：使用setTimeout延迟预加载
+      const timeoutId = setTimeout(() => {
+        import('./pages/FormulaVisualizationPage');
+        import('./pages/ArtificialFieldPage');
+        import('./pages/InteractiveExplorationPage');
+        import('./pages/KnowledgePage');
+      }, 1000);
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    }
   }, []);
 
-  return <RouterProvider router={router} />;
+  return (
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
+  );
 }
 
 export default App;

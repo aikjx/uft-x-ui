@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { VISUALIZATION_CONFIG } from '../constants';
 
 /**
@@ -215,6 +216,7 @@ export class RenderOptimizer {
   private adaptiveTargetFPS: number = 60;
   private lastResolutionUpdate: number = 0;
   private readonly resolutionUpdateInterval: number = 3000; // 3秒更新一次分辨率
+  private lastSkipFactor: number = 1; // 用于平滑跳帧因子
 
   /**
    * 计算应该使用的像素比率
@@ -284,21 +286,68 @@ export class RenderOptimizer {
   /**
    * 计算是否应该跳过当前动画帧（用于帧率控制）
    */
-  shouldSkipFrame(frameIndex: number, fps: number): boolean {
+  shouldSkipFrame(frameIndex: number, fps: number, additionalFactors?: {
+    sceneComplexity?: number;
+    hasUserInteraction?: boolean;
+    isImportantFrame?: boolean;
+    frameTimeHistory?: number[];
+  }): boolean {
     // 更新自适应目标FPS
     this.updateAdaptiveTargetFPS(fps);
     
+    // 如果FPS足够高，不需要跳帧
     if (fps > this.adaptiveTargetFPS) {
       return false;
     }
     
-    // 根据当前FPS和目标FPS计算应该跳过的帧数
-    const skipFactor = Math.max(1, Math.floor(this.adaptiveTargetFPS / fps));
+    // 如果是重要帧（如用户交互后的第一帧），不跳帧
+    if (additionalFactors?.isImportantFrame) {
+      return false;
+    }
+    
+    // 如果最近有用户交互，不跳帧
+    if (additionalFactors?.hasUserInteraction) {
+      return false;
+    }
+    
+    // 计算基础跳过因子
+    let skipFactor = Math.max(1, Math.floor(this.adaptiveTargetFPS / fps));
+    
+    // 根据场景复杂度调整跳过因子
+    if (additionalFactors?.sceneComplexity) {
+      const complexityFactor = Math.min(2, Math.ceil(additionalFactors.sceneComplexity / 1000));
+      skipFactor *= complexityFactor;
+    }
+    
+    // 分析帧时间历史，判断是否需要更积极地跳帧
+    if (additionalFactors?.frameTimeHistory && additionalFactors.frameTimeHistory.length > 10) {
+      const recentFrameTimes = additionalFactors.frameTimeHistory.slice(-10);
+      const avgRecentFrameTime = recentFrameTimes.reduce((sum, time) => sum + time, 0) / recentFrameTimes.length;
+      
+      // 如果最近10帧的平均时间超过目标时间的150%，增加跳过因子
+      const targetFrameTime = 1000 / this.adaptiveTargetFPS;
+      if (avgRecentFrameTime > targetFrameTime * 1.5) {
+        skipFactor = Math.min(5, skipFactor * 1.5);
+      }
+    }
     
     // 平滑过渡：避免跳跃式帧率变化
-    const currentSkipFactor = Math.min(3, skipFactor); // 最多跳过2帧
+    // 使用指数移动平均来平滑跳过因子
+    if (!this.lastSkipFactor) {
+      this.lastSkipFactor = 1;
+    }
     
-    return currentSkipFactor > 1 && frameIndex % currentSkipFactor !== 0;
+    const smoothedSkipFactor = this.lastSkipFactor * 0.7 + Math.min(5, skipFactor) * 0.3;
+    this.lastSkipFactor = smoothedSkipFactor;
+    
+    // 转换为整数跳过因子
+    const currentSkipFactor = Math.round(smoothedSkipFactor);
+    
+    // 最多跳过4帧，避免画面过于卡顿
+    const finalSkipFactor = Math.min(5, currentSkipFactor);
+    
+    // 使用帧索引的模运算来决定是否跳过当前帧
+    return finalSkipFactor > 1 && frameIndex % finalSkipFactor !== 0;
   }
 
   /**

@@ -126,15 +126,16 @@ export class SceneNode {
     this.children = [];
 
     // 清理Three.js对象
-    if (this.object.geometry) {
-      (this.object.geometry as THREE.BufferGeometry).dispose();
+    const mesh = this.object as THREE.Mesh;
+    if (mesh.geometry) {
+      mesh.geometry.dispose();
     }
 
-    if (this.object.material) {
-      if (Array.isArray(this.object.material)) {
-        this.object.material.forEach(material => material.dispose());
+    if (mesh.material) {
+      if (Array.isArray(mesh.material)) {
+        mesh.material.forEach(material => material.dispose());
       } else {
-        this.object.material.dispose();
+        mesh.material.dispose();
       }
     }
   }

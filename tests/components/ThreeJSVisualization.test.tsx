@@ -28,6 +28,59 @@ vi.mock('three', () => ({
   DirectionalLight: vi.fn(() => ({
     position: { set: vi.fn() },
     intensity: 1
+  })),
+  Vector3: vi.fn(() => ({
+    set: vi.fn(),
+    add: vi.fn(),
+    subtract: vi.fn(),
+    multiply: vi.fn(),
+    divide: vi.fn(),
+    length: 0,
+    toArray: vi.fn(() => [0, 0, 0]),
+    clone: vi.fn(() => ({
+      set: vi.fn(),
+      add: vi.fn(),
+      subtract: vi.fn(),
+      multiply: vi.fn(),
+      divide: vi.fn(),
+      length: 0,
+      toArray: vi.fn(() => [0, 0, 0])
+    }))
+  })),
+  Matrix4: vi.fn(() => ({
+    set: vi.fn(),
+    multiply: vi.fn(),
+    multiplyMatrices: vi.fn()
+  })),
+  MeshStandardMaterial: vi.fn(() => ({
+    dispose: vi.fn()
+  })),
+  BufferGeometry: vi.fn(() => ({
+    computeBoundingSphere: vi.fn(),
+    dispose: vi.fn()
+  })),
+  Mesh: vi.fn(() => ({
+    geometry: {
+      computeBoundingSphere: vi.fn(),
+      dispose: vi.fn()
+    },
+    material: {
+      dispose: vi.fn()
+    }
+  })),
+  Color: vi.fn(() => ({
+    set: vi.fn(),
+    toArray: vi.fn(() => [0, 0, 0]),
+    r: 0,
+    g: 0,
+    b: 0
+  })),
+  Sphere: vi.fn(() => ({
+    center: { x: 0, y: 0, z: 0 },
+    radius: 1
+  })),
+  Frustum: vi.fn(() => ({
+    intersectsSphere: vi.fn(() => true)
   }))
 }))
 
