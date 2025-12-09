@@ -537,37 +537,90 @@ export class ResourceManager {
   }
 
   /**
-   * 预加载资源
+   * 预加载资源 - 增强版
    * @param resources 资源列表
    */
-  public preloadResources(resources?: { id: string; url: string; type: ResourceType; options?: ResourceLoadOptions }[]): Promise<void> {
+  public preloadResources(resources?: Array<{ 
+    id: string; 
+    url: string; 
+    type: ResourceType; 
+    options?: ResourceLoadOptions;
+    viewDistance?: number;
+    predictedUsage?: number;
+  }>): Promise<void> {
     if (!resources || resources.length === 0) {
       return Promise.resolve();
     }
     
-    const promises = resources.map(resource => 
-      this.loadResource(resource.id, resource.url, resource.type, {
+    // 对资源进行智能排序，优先加载：
+    // 1. 预测使用概率高的资源
+    // 2. 距离视图近的资源
+    // 3. 优先级高的资源
+    const sortedResources = [...resources].sort((a, b) => {
+      // 预测使用概率比较
+      const usageDiff = (b.predictedUsage || 0) - (a.predictedUsage || 0);
+      if (usageDiff !== 0) return usageDiff;
+      
+      // 视图距离比较
+      const distanceDiff = (a.viewDistance || Infinity) - (b.viewDistance || Infinity);
+      if (distanceDiff !== 0) return distanceDiff;
+      
+      // 优先级比较
+      const priorityDiff = (b.options?.priority || 1) - (a.options?.priority || 1);
+      return priorityDiff;
+    });
+
+    const promises = sortedResources.map((resource, index) => {
+      // 根据排序位置动态调整优先级
+      const dynamicPriority = Math.max(1, resources.length - index);
+      
+      return this.loadResource(resource.id, resource.url, resource.type, {
         ...resource.options,
-        preload: true
-      })
-    );
+        preload: true,
+        priority: dynamicPriority,
+        isInView: resource.viewDistance !== undefined && resource.viewDistance < 100
+      });
+    });
     
     return Promise.all(promises).then(() => {});
   }
 
   /**
-   * 批量加载资源
+   * 批量加载资源 - 增强版
    * @param resources 资源列表
    */
-  public loadBatchResources(resources: { id: string; url: string; type: ResourceType; options?: ResourceLoadOptions }[]): Promise<Map<string, any>> {
+  public loadBatchResources(resources: Array<{ 
+    id: string; 
+    url: string; 
+    type: ResourceType; 
+    options?: ResourceLoadOptions;
+    group?: string; // 资源组，用于批量管理
+    priority?: number; // 组优先级
+  }>): Promise<Map<string, any>> {
     if (!resources || resources.length === 0) {
       return Promise.resolve(new Map());
-    }
+      }
     
-    const promises = resources.map(resource => 
-      this.loadResource(resource.id, resource.url, resource.type, resource.options)
-        .then(data => ({ id: resource.id, data }))
-    );
+    // 按组分组资源
+    const groupedResources = new Map<string, typeof resources>();
+    resources.forEach(resource => {
+      const group = resource.group || 'default';
+      if (!groupedResources.has(group)) {
+        groupedResources.set(group, []);
+      }
+      groupedResources.get(group)?.push(resource);
+    });
+    
+    // 收集所有加载Promise
+    const promises: Promise<{ id: string; data: any }>[] = [];
+    
+    // 按组加载资源，提高并行加载效率
+    groupedResources.forEach((groupedResourceList) => {
+      groupedResourceList.forEach(resource => {
+        promises.push(this.loadResource(resource.id, resource.url, resource.type, resource.options)
+          .then(data => ({ id: resource.id, data })));
+      });
+    });
     
     return Promise.all(promises)
       .then(results => {
@@ -577,6 +630,143 @@ export class ResourceManager {
         });
         return loadedResources;
       });
+  }
+
+  /**
+   * 基于视图的资源加载
+   * @param visibleResources 可见资源列表
+   */
+  public loadResourcesInView(visibleResources: Array<{ 
+    id: string; 
+    url: string; 
+    type: ResourceType; 
+    distance: number; 
+    options?: ResourceLoadOptions;
+  }>): Promise<void> {
+    if (!visibleResources || visibleResources.length === 0) {
+      return Promise.resolve();
+    }
+    
+    const promises: Promise<any>[] = [];
+    
+    // 加载在视图中的资源
+    visibleResources.forEach(resource => {
+      // 根据距离动态调整加载优先级和加载质量
+      const priority = Math.max(1, Math.floor(100 / (resource.distance + 1)));
+      const isClose = resource.distance < 50;
+      
+      promises.push(this.loadResource(resource.id, resource.url, resource.type, {
+        priority,
+        isInView: true,
+        viewDistance: resource.distance,
+        // 近距离资源使用高质量，远距离资源使用低质量
+        compressionLevel: isClose ? 0 : 2, // 0=无压缩，1=中等压缩，2=高压缩
+        ...resource.options
+      }));
+    });
+    
+    return Promise.all(promises).then(() => {});
+  }
+
+  /**
+   * 预测性资源加载
+   * @param predictedResources 预测资源列表
+   */
+  public predictAndPreloadResources(predictedResources: Array<{
+    id: string;
+    url: string;
+    type: ResourceType;
+    predictedUsage: number; // 预测的使用概率（0-1）
+    predictedTime: number; // 预测的使用时间（毫秒）
+    options?: ResourceLoadOptions;
+  }>): Promise<void> {
+    if (!predictedResources || predictedResources.length === 0) {
+      return Promise.resolve();
+    }
+    
+    // 只预加载预测使用概率较高的资源
+    const resourcesToPreload = predictedResources.filter(res => res.predictedUsage > 0.5);
+    
+    // 根据预测使用时间排序，优先加载即将使用的资源
+    const sortedResources = [...resourcesToPreload].sort((a, b) => a.predictedTime - b.predictedTime);
+    
+    const promises = sortedResources.map(resource => {
+      return this.loadResource(resource.id, resource.url, resource.type, {
+        preload: true,
+        priority: Math.round(resource.predictedUsage * 10),
+        predictedUsage: resource.predictedUsage,
+        ...resource.options
+      });
+    });
+    
+    return Promise.all(promises).then(() => {});
+  }
+
+  /**
+   * 资源预热 - 加载并立即释放，触发浏览器缓存
+   * @param resourceUrls 资源URL列表
+   */
+  public warmupResources(resourceUrls: string[]): Promise<void> {
+    if (!resourceUrls || resourceUrls.length === 0) {
+      return Promise.resolve();
+    }
+    
+    const promises: Promise<any>[] = [];
+    
+    resourceUrls.forEach((url, index) => {
+      // 创建临时ID
+      const tempId = `warmup_${index}_${Date.now()}`;
+      
+      // 加载资源
+      const promise = this.loadResource(tempId, url, 'custom', {
+        priority: 0, // 低优先级
+        preload: true
+      }).then(() => {
+        // 立即释放资源，只保留在浏览器缓存中
+        this.releaseResource(tempId);
+      }).catch(error => {
+        console.warn('Failed to warmup resource:', url, error);
+      });
+      
+      promises.push(promise);
+    });
+    
+    return Promise.all(promises).then(() => {});
+  }
+
+  /**
+   * 获取资源使用统计
+   */
+  public getResourceStats(): {
+    totalResources: number;
+    loadedResources: number;
+    loadingResources: number;
+    errorResources: number;
+    totalCachedSize: number;
+    totalLoadedSize: number;
+    cacheHitRate: number;
+  } {
+    const stats = {
+      totalResources: this.resources.size,
+      loadedResources: 0,
+      loadingResources: 0,
+      errorResources: 0,
+      totalCachedSize: this.totalCachedSize,
+      totalLoadedSize: this.totalLoadedSize,
+      cacheHitRate: this.performanceMetrics.cacheHitRate
+    };
+    
+    this.resources.forEach(({ metadata }) => {
+      if (metadata.status === ResourceStatus.LOADED) {
+        stats.loadedResources++;
+      } else if (metadata.status === ResourceStatus.LOADING) {
+        stats.loadingResources++;
+      } else if (metadata.status === ResourceStatus.ERROR) {
+        stats.errorResources++;
+      }
+    });
+    
+    return stats;
   }
 
   /**

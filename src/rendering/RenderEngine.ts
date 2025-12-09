@@ -4,6 +4,7 @@ import { VISUALIZATION_CONFIG } from '../constants';
 import { SceneManager } from './SceneManager';
 import { CameraManager } from './CameraManager';
 import { renderOptimizer } from '../performance/performanceUtils';
+import { eventSystem, APP_EVENTS } from '../utils/eventSystem';
 
 interface RenderEngineConfig {
   container: HTMLElement;
@@ -157,6 +158,72 @@ export class RenderEngine {
   }
 
   /**
+   * 性能监控数据
+   */
+  private performanceData = {
+    frameCount: 0,
+    startTime: performance.now(),
+    lastMetricsUpdate: 0,
+    renderTimeHistory: [] as number[],
+    frameTimeHistory: [] as number[]
+  };
+
+  /**
+   * 收集性能指标
+   */
+  private collectPerformanceMetrics(): void {
+    const now = performance.now();
+    const renderer = this.renderer;
+    
+    // 计算FPS
+    const elapsed = now - this.performanceData.startTime;
+    const fps = (this.performanceData.frameCount / elapsed) * 1000;
+    
+    // 计算平均渲染时间
+    const avgRenderTime = this.performanceData.renderTimeHistory.length > 0
+      ? this.performanceData.renderTimeHistory.reduce((a, b) => a + b, 0) / this.performanceData.renderTimeHistory.length
+      : 0;
+    
+    // 计算平均帧时间
+    const avgFrameTime = this.performanceData.frameTimeHistory.length > 0
+      ? this.performanceData.frameTimeHistory.reduce((a, b) => a + b, 0) / this.performanceData.frameTimeHistory.length
+      : 0;
+    
+    // 内存使用情况（使用performance API，如果可用）
+    let memoryUsageMB = 0;
+    if (performance.memory) {
+      memoryUsageMB = performance.memory.usedJSHeapSize / (1024 * 1024);
+    }
+    
+    // 发送性能指标事件
+    const metrics = {
+      fps: Math.round(fps),
+      renderTime: avgRenderTime,
+      frameTime: avgFrameTime,
+      memoryUsageMB: Math.round(memoryUsageMB),
+      drawCalls: renderer.info.render.calls,
+      triangles: renderer.info.render.triangles,
+      vertices: renderer.info.render.vertices,
+      optimizationLevel: this.config.dynamicPixelRatio ? 2 : 1,
+      pixelRatio: renderer.getPixelRatio()
+    };
+    
+    // 触发性能指标更新事件
+    // @ts-ignore - 假设eventSystem存在
+    if (typeof eventSystem !== 'undefined') {
+      eventSystem.emit(APP_EVENTS.PERFORMANCE_METRICS_UPDATED, metrics);
+    }
+    
+    // 限制历史数据长度，避免内存泄漏
+    if (this.performanceData.renderTimeHistory.length > 100) {
+      this.performanceData.renderTimeHistory.shift();
+    }
+    if (this.performanceData.frameTimeHistory.length > 100) {
+      this.performanceData.frameTimeHistory.shift();
+    }
+  }
+
+  /**
    * 动画循环
    */
   private animate = (): void => {
@@ -167,6 +234,9 @@ export class RenderEngine {
     const deltaTime = Math.min((now - this.lastTime) / 1000, 1/30);
     this.lastTime = now;
 
+    // 记录帧开始时间
+    const frameStartTime = now;
+    
     // 优化：只在必要时更新控制器（当启用阻尼时）
     if (this.controls && this.controls.enableDamping) {
       this.controls.update();
@@ -175,11 +245,30 @@ export class RenderEngine {
     // 更新场景
     this.sceneManager.update(deltaTime);
 
+    // 记录渲染开始时间
+    const renderStartTime = performance.now();
+    
     // 渲染场景
     this.renderer.render(
       this.sceneManager.getScene(),
       this.cameraManager.getCamera()
     );
+    
+    // 记录渲染结束时间
+    const renderEndTime = performance.now();
+    const renderTime = renderEndTime - renderStartTime;
+    const frameTime = renderEndTime - frameStartTime;
+    
+    // 更新性能数据
+    this.performanceData.frameCount++;
+    this.performanceData.renderTimeHistory.push(renderTime);
+    this.performanceData.frameTimeHistory.push(frameTime);
+    
+    // 定期收集和发送性能指标（每500ms）
+    if (now - this.performanceData.lastMetricsUpdate > 500) {
+      this.collectPerformanceMetrics();
+      this.performanceData.lastMetricsUpdate = now;
+    }
 
     // 继续动画循环
     this.animationId = requestAnimationFrame(this.animate);
@@ -314,14 +403,118 @@ export class RenderEngine {
     
     if (this.controls) {
       this.controls.dispose();
+      this.controls = null;
     }
     
+    // 清理性能监控数据
+    this.performanceData = {
+      frameCount: 0,
+      startTime: performance.now(),
+      lastMetricsUpdate: 0,
+      renderTimeHistory: [],
+      frameTimeHistory: []
+    };
+    
+    // 释放渲染器资源
     this.renderer.dispose();
     
     // 移除渲染器DOM元素
     if (this.renderer.domElement.parentNode) {
       this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
     }
+    
+    // 触发销毁事件
+    eventSystem.emit(APP_EVENTS.RENDER_ENGINE_DISPOSED, {
+      container: this.container
+    });
+  }
+
+  /**
+   * 获取当前性能数据
+   */
+  getPerformanceData(): {
+    fps: number;
+    renderTime: number;
+    frameTime: number;
+    drawCalls: number;
+    triangles: number;
+    vertices: number;
+  } {
+    const now = performance.now();
+    const elapsed = now - this.performanceData.startTime;
+    const fps = (this.performanceData.frameCount / elapsed) * 1000;
+    
+    const avgRenderTime = this.performanceData.renderTimeHistory.length > 0
+      ? this.performanceData.renderTimeHistory.reduce((a, b) => a + b, 0) / this.performanceData.renderTimeHistory.length
+      : 0;
+    
+    const avgFrameTime = this.performanceData.frameTimeHistory.length > 0
+      ? this.performanceData.frameTimeHistory.reduce((a, b) => a + b, 0) / this.performanceData.frameTimeHistory.length
+      : 0;
+    
+    return {
+      fps: Math.round(fps),
+      renderTime: avgRenderTime,
+      frameTime: avgFrameTime,
+      drawCalls: this.renderer.info.render.calls,
+      triangles: this.renderer.info.render.triangles,
+      vertices: this.renderer.info.render.vertices
+    };
+  }
+
+  /**
+   * 动态调整渲染质量
+   * @param qualityLevel 质量级别 (1-5, 1最低, 5最高)
+   */
+  setRenderQuality(qualityLevel: number): void {
+    const clampedQuality = Math.max(1, Math.min(5, qualityLevel));
+    
+    // 调整像素比
+    const basePixelRatio = window.devicePixelRatio;
+    const pixelRatioMap = [0.5, 0.75, 1, 1.5, 2];
+    const optimalPixelRatio = pixelRatioMap[clampedQuality - 1];
+    this.renderer.setPixelRatio(optimalPixelRatio);
+    
+    // 调整阴影质量
+    const shadowMapSizeMap = [512, 1024, 2048, 4096, 8192];
+    const shadowMapSize = shadowMapSizeMap[clampedQuality - 1];
+    
+    // 调整场景中的灯光阴影
+    const scene = this.sceneManager.getScene();
+    scene.traverse((object) => {
+      if (object instanceof THREE.Light && 'shadow' in object && object.shadow) {
+        object.shadow.mapSize.width = shadowMapSize;
+        object.shadow.mapSize.height = shadowMapSize;
+        
+        // 调整阴影相机参数
+        if (object.shadow.camera) {
+          const shadowCamera = object.shadow.camera as THREE.PerspectiveCamera | THREE.OrthographicCamera;
+          if (shadowCamera instanceof THREE.PerspectiveCamera) {
+            shadowCamera.near = 0.1;
+            shadowCamera.far = 100;
+          }
+        }
+      }
+    });
+    
+    // 触发渲染质量更新事件
+    eventSystem.emit(APP_EVENTS.RENDER_QUALITY_UPDATED, {
+      qualityLevel: clampedQuality,
+      pixelRatio: optimalPixelRatio,
+      shadowMapSize: shadowMapSize
+    });
+  }
+
+  /**
+   * 启用/禁用自动性能优化
+   * @param enabled 是否启用
+   */
+  setAutoPerformanceOptimization(enabled: boolean): void {
+    this.config.dynamicPixelRatio = enabled;
+    // 触发自动优化状态变更事件
+    eventSystem.emit(APP_EVENTS.AUTO_OPTIMIZATION_STATE_CHANGED, {
+      enabled: enabled
+    });
   }
 
   /**

@@ -48,9 +48,12 @@ export const useFormula = () => {
     }
     
     // 延迟设置isLoading为false，确保组件有足够时间渲染
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setIsLoading(false);
     }, 100);
+    
+    // 添加清除函数，避免测试环境错误
+    return () => clearTimeout(timer);
   }, [id, getFormulaById]);
 
   // 根据类别分组公式

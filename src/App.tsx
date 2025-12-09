@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useEffect } from 'react';
+import { NotificationProvider } from './components/Notification';
 import { createBrowserRouter, RouterProvider, useLocation, Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -134,86 +135,117 @@ const RootLayout: React.FC = () => {
       {/* Footer也移到Routes外部 */}
       <Footer />
       
-      {/* 聊天组件 */}
+      {/* 聊天组件 - 使用fixed定位，避免影响布局 */}
       <ChatComponent />
     </div>
   );
 };
 
-// 创建路由配置
+// 路由配置项接口
+type RouteConfig = {
+  path: string;
+  element: React.ReactNode;
+  name: string;
+  priority?: number; // 预加载优先级：1-最高，5-最低
+  layout?: typeof PageContainer;
+  requiresAuth?: boolean;
+};
+
+// 路由配置 - 模块化结构
+const routes: RouteConfig[] = [
+  {
+    path: "/",
+    element: <HomePage />,
+    name: "首页",
+    priority: 1
+  },
+  {
+    path: "formulas",
+    element: <FormulaVisualizationPage />,
+    name: "公式可视化",
+    priority: 2
+  },
+  {
+    path: "artificial-field",
+    element: <ArtificialFieldPage />,
+    name: "人工场",
+    priority: 2
+  },
+  {
+    path: "interactive",
+    element: <InteractiveExplorationPage />,
+    name: "交互式探索",
+    priority: 3
+  },
+  {
+    path: "knowledge",
+    element: <KnowledgePage />,
+    name: "知识库",
+    priority: 3
+  }
+];
+
+// 404页面组件
+const NotFoundPage: React.FC = () => (
+  <PageContainer hideBackground>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="mb-6"
+      >
+        <h1 className="text-6xl font-bold text-gray-600">404</h1>
+      </motion.div>
+      <motion.p
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+        className="text-xl text-gray-400 mb-8 max-w-md"
+      >
+        抱歉，您访问的页面不存在
+      </motion.p>
+      <motion.button
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.5 }}
+        whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.3)" }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => window.location.href = '/'} 
+        className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300"
+      >
+        返回首页
+      </motion.button>
+    </div>
+  </PageContainer>
+);
+
+// 创建路由配置 - 自动生成嵌套路由
 const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
     children: [
-      {
-        index: true,
-        element: (
-          <PageContainer>
-            <Suspense fallback={<LoadingFallback />}>
-              <HomePage />
-            </Suspense>
-          </PageContainer>
-        )
-      },
-      {
-        path: "formulas",
-        element: (
-          <PageContainer>
-            <Suspense fallback={<LoadingFallback />}>
-              <FormulaVisualizationPage />
-            </Suspense>
-          </PageContainer>
-        )
-      },
-      {
-        path: "artificial-field",
-        element: (
-          <PageContainer>
-            <Suspense fallback={<LoadingFallback />}>
-              <ArtificialFieldPage />
-            </Suspense>
-          </PageContainer>
-        )
-      },
-      {
-        path: "interactive",
-        element: (
-          <PageContainer>
-            <Suspense fallback={<LoadingFallback />}>
-              <InteractiveExplorationPage />
-            </Suspense>
-          </PageContainer>
-        )
-      },
-      {
-        path: "knowledge",
-        element: (
-          <PageContainer>
-            <Suspense fallback={<LoadingFallback />}>
-              <KnowledgePage />
-            </Suspense>
-          </PageContainer>
-        )
-      },
+      // 自动生成路由配置
+      ...routes.map((route) => {
+        // 创建路由元素，根据是否有自定义布局选择容器
+        const RouteElement = route.layout || PageContainer;
+        
+        return {
+          path: route.path === "/" ? "" : route.path,
+          element: (
+            <RouteElement>
+              <Suspense fallback={<LoadingFallback />}>
+                <route.element />
+              </Suspense>
+            </RouteElement>
+          )
+        };
+      }),
+      // 404页面
       {
         path: "*",
-        element: (
-          <PageContainer hideBackground>
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-              <h1 className="text-6xl font-bold text-gray-600 mb-4">404</h1>
-              <p className="text-xl text-gray-400 mb-8">页面未找到</p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => window.location.href = '/'} 
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                返回首页
-              </motion.button>
-            </div>
-          </PageContainer>
-        )
+        element: <NotFoundPage />
       }
     ]
   }
@@ -258,33 +290,88 @@ function App() {
     };
   }, []);
 
-  // 智能预加载策略 - 只在空闲时间预加载关键页面组件
+  // 智能预加载策略 - 基于优先级和用户行为的动态预加载
   useEffect(() => {
-    // 检查浏览器是否支持requestIdleCallback
-    if ('requestIdleCallback' in window) {
-      // 使用requestIdleCallback在浏览器空闲时预加载组件
-      const preloadPages = () => {
-        // 预加载导航菜单中的关键页面
-        import('./pages/FormulaVisualizationPage');
-        import('./pages/ArtificialFieldPage');
-        import('./pages/InteractiveExplorationPage');
-        import('./pages/KnowledgePage');
+    // 预加载优先级映射：根据优先级决定预加载顺序和时机
+    const priorityPreloadMap: Record<number, () => Promise<void>[]> = {
+      1: () => [
+        import('./pages/FormulaVisualizationPage'),
+        import('./pages/ArtificialFieldPage')
+      ],
+      2: () => [
+        import('./pages/InteractiveExplorationPage'),
+        import('./pages/KnowledgePage')
+      ]
+    };
+
+    // 预加载函数
+    const preload = async (priority: number) => {
+      try {
+        if (priorityPreloadMap[priority]) {
+          const promises = priorityPreloadMap[priority]();
+          await Promise.allSettled(promises);
+        }
+      } catch (error) {
+        console.warn(`预加载优先级 ${priority} 失败:`, error);
+      }
+    };
+
+    // 智能预加载调度器
+    const schedulePreloading = () => {
+      // 立即预加载最高优先级（1级）的组件
+      preload(1);
+      
+      // 延迟预加载次级优先级（2级）的组件
+      const level2Timeout = setTimeout(() => {
+        preload(2);
+      }, 2000);
+
+      // 监听用户交互，提前触发预加载
+      const handleMouseEnter = (event: MouseEvent) => {
+        const target = event.target as HTMLElement;
+        const link = target.closest('a');
+        if (link && link.href) {
+          // 解析链接，预加载对应的页面组件
+          const url = new URL(link.href);
+          const pathname = url.pathname.replace(/^\//, '');
+          
+          switch (pathname) {
+            case 'formulas':
+              import('./pages/FormulaVisualizationPage');
+              break;
+            case 'artificial-field':
+              import('./pages/ArtificialFieldPage');
+              break;
+            case 'interactive':
+              import('./pages/InteractiveExplorationPage');
+              break;
+            case 'knowledge':
+              import('./pages/KnowledgePage');
+              break;
+          }
+        }
       };
 
-      // 在浏览器空闲时执行预加载
-      const idleCallbackId = (window as any).requestIdleCallback(preloadPages, { timeout: 2000 });
+      // 添加鼠标悬停事件监听
+      document.addEventListener('mouseenter', handleMouseEnter);
+
+      return () => {
+        clearTimeout(level2Timeout);
+        document.removeEventListener('mouseenter', handleMouseEnter);
+      };
+    };
+
+    // 检查浏览器是否支持requestIdleCallback
+    if ('requestIdleCallback' in window) {
+      // 使用requestIdleCallback在浏览器空闲时启动预加载调度
+      const idleCallbackId = (window as any).requestIdleCallback(schedulePreloading, { timeout: 1000 });
 
       return () => {
         (window as any).cancelIdleCallback(idleCallbackId);
       };
     } else {
-      // 降级方案：使用setTimeout延迟预加载
-      const timeoutId = setTimeout(() => {
-        import('./pages/FormulaVisualizationPage');
-        import('./pages/ArtificialFieldPage');
-        import('./pages/InteractiveExplorationPage');
-        import('./pages/KnowledgePage');
-      }, 1000);
+      // 降级方案：使用setTimeout延迟启动预加载调度
+      const timeoutId = setTimeout(schedulePreloading, 500);
 
       return () => {
         clearTimeout(timeoutId);
@@ -293,9 +380,18 @@ function App() {
   }, []);
 
   return (
-    <ErrorBoundary>
-      <RouterProvider router={router} />
-    </ErrorBoundary>
+    <NotificationProvider maxVisible={5} position="top-right">
+      <ErrorBoundary>
+        <Toaster
+          position="top-right"
+          theme="dark"
+          richColors
+          closeButton
+          duration={4000}
+        />
+        <RouterProvider router={router} />
+      </ErrorBoundary>
+    </NotificationProvider>
   );
 }
 

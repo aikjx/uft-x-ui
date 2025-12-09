@@ -91,8 +91,6 @@ export default defineConfig({
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
         assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
-        // 优化代码分割策略
-        codeSplit: true,
         // 优化tree shaking
         manualChunks: {
           // 自定义chunk分割逻辑

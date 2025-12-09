@@ -318,6 +318,12 @@ export const APP_EVENTS = {
   APP_ERROR: 'app:error',
   APP_SHUTDOWN: 'app:shutdown',
   
+  // 错误处理相关事件
+  ERROR_OCCURRED: 'error:occurred',
+  ERROR_REPORTED: 'error:reported',
+  USER_FEEDBACK_SUBMITTED: 'user:feedback:submitted',
+  SHOW_NOTIFICATION: 'notification:show',
+  
   // 性能相关事件
   PERFORMANCE_DROP: 'performance:drop',
   PERFORMANCE_RECOVER: 'performance:recover',
@@ -341,6 +347,8 @@ export const APP_EVENTS = {
   RENDER_START: 'render:start',
   RENDER_END: 'render:end',
   RENDER_ERROR: 'render:error',
+  RENDER_ENGINE_DISPOSED: 'render:engine:disposed',
+  RENDER_QUALITY_UPDATED: 'render:quality:updated',
   
   // 交互相关事件
   USER_INTERACTION: 'user:interaction',
@@ -377,7 +385,15 @@ export const APP_EVENTS = {
   MEMORY_LIMIT_CHANGE: 'memory:limit:change',
   
   // AI优化相关事件
-  AI_OPTIMIZATION_APPLIED: 'ai:optimization:applied'
+  AI_OPTIMIZATION_APPLIED: 'ai:optimization:applied',
+  
+  // 自动优化相关事件
+  AUTO_OPTIMIZATION_STATE_CHANGED: 'auto:optimization:state:changed',
+  
+  // 路由相关事件
+  ROUTE_CHANGE_START: 'route:change:start',
+  ROUTE_CHANGE_COMPLETE: 'route:change:complete',
+  ROUTE_CHANGE_ERROR: 'route:change:error'
 } as const;
 
 // 导出类型

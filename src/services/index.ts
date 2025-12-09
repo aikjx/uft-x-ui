@@ -7,6 +7,7 @@ import { serviceManager } from './ServiceManager';
 import { FormulaService, formulaService } from './formulaService';
 import { VisualizationService, visualizationService } from './visualizationService';
 import { FieldTheoristPerformanceMonitor } from './fieldTheoryService';
+import { ErrorMonitoringService, errorMonitoringService } from './ErrorMonitoringService';
 
 /**
  * 注册所有服务
@@ -19,6 +20,7 @@ export const registerAllServices = (): void => {
   serviceManager.register(formulaService);
   serviceManager.register(visualizationService, ['FormulaService']);
   serviceManager.register(performanceMonitor, ['FormulaService']);
+  serviceManager.register(errorMonitoringService); // 错误监控服务，无需依赖
   
   console.log('📋 All services registered successfully');
 };
@@ -51,4 +53,5 @@ export { serviceManager };
 export { formulaService };
 export { visualizationService };
 export { FieldTheoristPerformanceMonitor };
+export { errorMonitoringService };
 export type { PerformanceData } from './fieldTheoryService';
