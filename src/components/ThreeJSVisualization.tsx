@@ -103,33 +103,39 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
   const animationFrameRef = useRef<number | null>(null);
   const lastFrameTimeRef = useRef<number>(0);
   
-  // 状态管理
+  // 核心状态
   const [isSceneReady, setIsSceneReady] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [currentFPS, setCurrentFPS] = useState(60);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [webglSupported, setWebglSupported] = useState(true);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   
-  // 增强的性能状态
+  // 性能监控状态
   const [performanceMetrics, setPerformanceMetrics] = useState({
-    renderTime: 0,        // 渲染时间（毫秒）
-    frameTime: 0,         // 每帧时间（毫秒）
-    memoryUsage: 0,       // 内存使用情况（MB）
-    drawCalls: 0,         // 绘制调用次数
-    triangles: 0,         // 三角形数量
-    vertices: 0           // 顶点数量
+    fps: 60,               // 帧率
+    renderTime: 0,         // 渲染时间（毫秒）
+    frameTime: 0,          // 每帧时间（毫秒）
+    memoryUsage: 0,        // 内存使用情况（MB）
+    drawCalls: 0,          // 绘制调用次数
+    triangles: 0,          // 三角形数量
+    vertices: 0,           // 顶点数量
+    gpuMemory: 0           // GPU内存使用情况（MB）
   });
   
-  // 渲染状态
+  // 渲染控制状态
   const [renderState, setRenderState] = useState({
-    isRendering: false,   // 是否正在渲染
-    isPaused: paused,     // 暂停状态
-    isOptimizing: false,  // 是否正在进行性能优化
-    optimizationLevel: 0  // 优化级别
+    isRendering: false,    // 是否正在渲染
+    isPaused: paused,      // 暂停状态
+    isOptimizing: false,   // 是否正在进行性能优化
+    optimizationLevel: 0,  // 优化级别（0-5）
+    isInitializing: false  // 是否正在初始化
   });
   
-  // 性能设置状态
-  const [autoModeEnabled, setAutoModeEnabled] = useState(true);
+  // UI控制状态
+  const [uiState, setUiState] = useState({
+    showPerformancePanel: true,  // 是否显示性能监控面板
+    showStats: true,             // 是否显示统计信息
+    autoModeEnabled: true        // 是否启用自动优化模式
+  });
 
   // 检查WebGL支持
   const checkWebGLSupport = useCallback(() => {
@@ -147,11 +153,18 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
     if (!containerRef.current || !webglSupported) return;
 
     try {
-      // 更新渲染状态
-      setRenderState(prev => ({ ...prev, isOptimizing: true, optimizationLevel: 1 }));
+      // 开始初始化，更新状态
+      setRenderState(prev => ({ 
+        ...prev, 
+        isInitializing: true,
+        isOptimizing: true, 
+        optimizationLevel: 1 
+      }));
       
-      const width = Math.max(minWidth, containerRef.current.clientWidth || 0);
-      const height = Math.max(minHeight, containerRef.current.clientHeight || 0);
+      // 计算容器尺寸
+      const container = containerRef.current;
+      const width = Math.max(minWidth, container.clientWidth || 0);
+      const height = Math.max(minHeight, container.clientHeight || 0);
       setDimensions({ width, height });
 
       // 初始化渲染引擎
@@ -164,9 +177,9 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
         throw new Error('RenderEngine is not available');
       }
 
-      // 增强的渲染引擎配置，支持动态性能优化
+      // 配置渲染引擎
       const renderEngine = new RenderEngine({
-        container: containerRef.current,
+        container,
         cameraPosition,
         enableControls: true,
         autoUpdate: true,
@@ -191,19 +204,20 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
         Object.assign(controls, controlsConfig);
       }
 
-      // 启动自动性能优化
+      // 配置自动性能优化
       try {
         automatedPerformanceOptimizer.updateConfig({
-          mode: 'auto',
+          mode: uiState.autoModeEnabled ? 'auto' : 'off',
           targetFPS: 60,
           enableAIOptimization: true,
           optimizationInterval: 1000
         });
         
-        // 监听性能优化事件
+        // 监听性能指标更新事件
         eventSystem.on(APP_EVENTS.PERFORMANCE_METRICS_UPDATED, (metrics) => {
           setPerformanceMetrics(prev => ({
             ...prev,
+            fps: metrics.fps ?? prev.fps,
             renderTime: metrics.renderTime ?? prev.renderTime,
             frameTime: metrics.frameTime ?? prev.frameTime,
             memoryUsage: metrics.memoryUsageMB ?? prev.memoryUsage,
@@ -221,7 +235,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
         console.warn('Performance optimizer initialization failed:', perfError);
       }
 
-      // 调用用户初始化函数
+      // 调用用户初始化回调
       if (onInit) {
         const scene = renderEngine.getScene?.();
         const camera = renderEngine.getCamera?.();
@@ -237,18 +251,28 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
               controls: engineControls
             });
           } catch (initError) {
-            console.error('User initialization failed:', initError);
-            setError(initError instanceof Error ? initError : new Error('User initialization failed'));
-            setRenderState(prev => ({ ...prev, isOptimizing: false }));
+            console.error('User initialization callback failed:', initError);
+            const wrappedError = initError instanceof Error ? initError : new Error('User initialization failed');
+            setError(wrappedError);
+            setRenderState(prev => ({ ...prev, isOptimizing: false, isInitializing: false }));
+            
+            // 发送错误事件
+            eventSystem.emit(APP_EVENTS.ERROR_OCCURRED, {
+              component: 'ThreeJSVisualization',
+              error: wrappedError,
+              context: 'user_initialization'
+            });
             return;
           }
         }
       }
 
+      // 初始化完成，更新状态
       setIsSceneReady(true);
       setError(null);
       setRenderState(prev => ({ 
         ...prev, 
+        isInitializing: false,
         isOptimizing: false, 
         optimizationLevel: 2,
         isRendering: true
@@ -258,7 +282,11 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
       const initError = err instanceof Error ? err : new Error('Three.js initialization failed');
       setError(initError);
       setIsSceneReady(false);
-      setRenderState(prev => ({ ...prev, isOptimizing: false }));
+      setRenderState(prev => ({ 
+        ...prev, 
+        isOptimizing: false, 
+        isInitializing: false 
+      }));
       
       // 发送错误事件
       eventSystem.emit(APP_EVENTS.ERROR_OCCURRED, {
@@ -267,7 +295,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
         context: 'initialization'
       });
     }
-  }, [onInit, minWidth, minHeight, webglSupported, cameraConfig, controlsConfig, sceneConfig, performanceOptions]);
+  }, [onInit, minWidth, minHeight, webglSupported, cameraConfig, controlsConfig, sceneConfig, performanceOptions, uiState.autoModeEnabled]);
 
   // 动画循环
   const animate = useCallback(() => {
@@ -279,13 +307,16 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
     setRenderState(prev => ({ ...prev, isRendering: true, isPaused: false }));
     
     const currentTime = performance.now();
-    const deltaTime = lastFrameTimeRef.current ? (currentTime - lastFrameTimeRef.current) / 1000 : 0;
+    // 限制最大deltaTime为1/30秒，防止帧率骤降时的异常行为
+    const deltaTime = Math.min(
+      lastFrameTimeRef.current ? (currentTime - lastFrameTimeRef.current) / 1000 : 0,
+      1/30
+    );
     lastFrameTimeRef.current = currentTime;
     
-    // 计算FPS，确保deltaTime有效
-    const fps = deltaTime > 0 && deltaTime < 1 ? 1 / deltaTime : 60;
-    setCurrentFPS(Math.round(fps));
-
+    // 记录渲染开始时间
+    const renderStartTime = performance.now();
+    
     // 调用用户动画帧回调，增加错误捕获
     if (onAnimationFrame) {
       try {
@@ -302,12 +333,21 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
       }
     }
 
-    // 更新渲染器性能指标
+    // 更新性能指标
     const renderer = renderEngineRef.current.getRenderer();
     if (renderer && renderer.info) {
       const info = renderer.info;
+      const renderEndTime = performance.now();
+      const renderTime = renderEndTime - renderStartTime;
+      
+      // 计算FPS
+      const fps = deltaTime > 0 && deltaTime < 1 ? Math.round(1 / deltaTime) : 60;
+      
       setPerformanceMetrics(prev => ({
         ...prev,
+        fps,
+        renderTime: parseFloat(renderTime.toFixed(2)),
+        frameTime: parseFloat((renderEndTime - currentTime).toFixed(2)),
         drawCalls: info.render.calls,
         triangles: info.render.triangles,
         vertices: info.render.vertices
@@ -446,28 +486,56 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
     }
   }, [paused, isSceneReady, animate]);
 
-  // WebGL不支持时的提示
+  // WebGL不支持时的优雅提示
   if (!webglSupported) {
     return (
-      <div className={cn('flex justify-center items-center w-full h-full text-white bg-gray-900', className)}>
-        <div className="p-8 text-center">
-          <h3 className="mb-4 text-2xl font-bold">WebGL 不支持</h3>
-          <p className="text-gray-300">您的浏览器不支持 WebGL，无法运行 3D 可视化。请使用现代浏览器如 Chrome、Firefox 或 Edge。</p>
+      <motion.div
+        className={cn('flex justify-center items-center w-full h-full text-white bg-gradient-to-br from-gray-900 to-gray-800', className)}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="p-8 max-w-md text-center rounded-lg border backdrop-blur-sm bg-black/50 border-red-500/30">
+          <div className="mb-6 text-6xl">🖥️</div>
+          <h3 className="mb-4 text-2xl font-bold text-red-400">WebGL 不支持</h3>
+          <p className="mb-6 text-gray-300">您的浏览器不支持 WebGL，无法运行 3D 可视化。</p>
+          <div className="text-sm text-gray-400">
+            <p className="mb-2">推荐使用以下现代浏览器：</p>
+            <div className="flex gap-4 justify-center">
+              <span className="px-3 py-1 bg-gray-700 rounded-full">Chrome</span>
+              <span className="px-3 py-1 bg-gray-700 rounded-full">Firefox</span>
+              <span className="px-3 py-1 bg-gray-700 rounded-full">Edge</span>
+            </div>
+          </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
-  // 错误提示
+  // 错误提示 - 优雅的错误处理
   if (error) {
     return (
-      <div className={cn('flex justify-center items-center w-full h-full text-white bg-gray-900', className)}>
-        <div className="p-8 text-center">
-          <h3 className="mb-4 text-2xl font-bold">初始化错误</h3>
-          <p className="mb-4 text-red-400">{error.message}</p>
-          <p className="text-gray-300">请检查控制台获取详细错误信息。</p>
+      <motion.div
+        className={cn('flex justify-center items-center w-full h-full text-white bg-gradient-to-br from-gray-900 to-gray-800', className)}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="p-8 max-w-md text-center rounded-lg border backdrop-blur-sm bg-black/50 border-red-500/30">
+          <div className="mb-6 text-6xl">⚠️</div>
+          <h3 className="mb-4 text-2xl font-bold text-red-400">初始化错误</h3>
+          <p className="mb-6 text-red-300 break-words">{error.message}</p>
+          <div className="text-sm text-gray-400">
+            <p className="mb-4">请检查控制台获取详细错误信息。</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-red-600 rounded-lg transition-colors duration-300 hover:bg-red-700"
+            >
+              刷新页面重试
+            </button>
+          </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -493,34 +561,161 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(({
       />
       
       {/* 性能监控面板 - 增强版 */}
-      {autoModeEnabled && (
-        <div className="absolute top-4 right-4 p-3 text-xs text-white bg-black bg-opacity-80 rounded-lg border backdrop-blur-sm border-blue-500/30">
-          <div className="mb-2 font-semibold text-blue-400">📊 性能监控</div>
-          <div className="grid grid-cols-2 gap-y-1 gap-x-3">
-            <div>FPS: <span className={currentFPS < 30 ? 'text-red-400' : currentFPS < 50 ? 'text-yellow-400' : 'text-green-400'}>{currentFPS}</span></div>
-            <div>优化级别: <span className="text-purple-400">{renderState.optimizationLevel}</span></div>
-            <div>渲染时间: <span className="text-cyan-400">{performanceMetrics.renderTime.toFixed(1)}ms</span></div>
-            <div>内存使用: <span className="text-orange-400">{performanceMetrics.memoryUsage.toFixed(0)}MB</span></div>
-            <div>绘制调用: <span className="text-green-400">{performanceMetrics.drawCalls}</span></div>
-            <div>三角形: <span className="text-yellow-400">{performanceMetrics.triangles}</span></div>
+      {uiState.showPerformancePanel && (
+        <motion.div
+          className="absolute top-4 right-4 p-4 text-xs text-white rounded-xl border shadow-lg backdrop-blur-md bg-black/80 border-blue-500/30 shadow-blue-500/10"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {/* 面板标题和控制 */}
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex gap-2 items-center">
+              <span className="text-blue-400">📊</span>
+              <h4 className="font-semibold text-blue-300">性能监控</h4>
+            </div>
+            <button
+              onClick={() => setUiState(prev => ({ ...prev, showPerformancePanel: false }))}
+              className="text-gray-400 transition-colors hover:text-white"
+              aria-label="关闭性能面板"
+            >
+              ✕
+            </button>
           </div>
-          <div className="mt-2 text-xs">
-            <span className={`mr-2 px-1.5 py-0.5 rounded-full ${renderState.isRendering ? 'bg-green-500/50 text-green-300' : 'bg-gray-500/50 text-gray-300'}`}>
+          
+          {/* 性能指标网格 */}
+          <div className="grid grid-cols-2 gap-y-2 gap-x-4 mb-3">
+            {/* FPS指标 */}
+            <div className="flex flex-col">
+              <span className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">帧率</span>
+              <div className="flex gap-1 items-baseline">
+                <span className={`font-mono ${performanceMetrics.fps < 30 ? 'text-red-400' : performanceMetrics.fps < 50 ? 'text-yellow-400' : 'text-green-400'}`}>
+                  {performanceMetrics.fps}
+                </span>
+                <span className="text-gray-500">FPS</span>
+              </div>
+            </div>
+            
+            {/* 优化级别 */}
+            <div className="flex flex-col">
+              <span className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">优化级别</span>
+              <span className="font-mono text-purple-400">{renderState.optimizationLevel}</span>
+            </div>
+            
+            {/* 渲染时间 */}
+            <div className="flex flex-col">
+              <span className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">渲染时间</span>
+              <div className="flex gap-1 items-baseline">
+                <span className="font-mono text-cyan-400">{performanceMetrics.renderTime}</span>
+                <span className="text-gray-500">ms</span>
+              </div>
+            </div>
+            
+            {/* 内存使用 */}
+            <div className="flex flex-col">
+              <span className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">内存使用</span>
+              <div className="flex gap-1 items-baseline">
+                <span className="font-mono text-orange-400">{performanceMetrics.memoryUsage.toFixed(0)}</span>
+                <span className="text-gray-500">MB</span>
+              </div>
+            </div>
+            
+            {/* 绘制调用 */}
+            <div className="flex flex-col">
+              <span className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">绘制调用</span>
+              <span className="font-mono text-green-400">{performanceMetrics.drawCalls}</span>
+            </div>
+            
+            {/* 三角形数量 */}
+            <div className="flex flex-col">
+              <span className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">三角形</span>
+              <span className="font-mono text-yellow-400">{performanceMetrics.triangles.toLocaleString()}</span>
+            </div>
+          </div>
+          
+          {/* 渲染状态标签 */}
+          <div className="flex flex-wrap gap-2">
+            <span className={`px-2 py-1 rounded-full text-[10px] ${renderState.isRendering ? 'bg-green-500/30 text-green-300' : 'bg-gray-500/30 text-gray-300'}`}>
               {renderState.isRendering ? '渲染中' : '已暂停'}
             </span>
-            <span className={`px-1.5 py-0.5 rounded-full ${renderState.isOptimizing ? 'bg-purple-500/50 text-purple-300' : 'bg-gray-500/50 text-gray-300'}`}>
+            <span className={`px-2 py-1 rounded-full text-[10px] ${renderState.isOptimizing ? 'bg-purple-500/30 text-purple-300' : 'bg-gray-500/30 text-gray-300'}`}>
               {renderState.isOptimizing ? '优化中' : '已优化'}
             </span>
+            <span className={`px-2 py-1 rounded-full text-[10px] ${renderState.isInitializing ? 'bg-blue-500/30 text-blue-300' : 'bg-gray-500/30 text-gray-300'}`}>
+              {renderState.isInitializing ? '初始化' : '就绪'}
+            </span>
           </div>
-        </div>
+        </motion.div>
       )}
       
-      {/* 加载指示器 */}
-      {!isSceneReady && (
-        <div className="flex absolute inset-0 justify-center items-center bg-black bg-opacity-50">
-          <div className="w-12 h-12 rounded-full border-t-2 border-b-2 border-blue-500 animate-spin"></div>
-        </div>
+      {/* 加载指示器 - 优雅的加载状态 */}
+      {!isSceneReady && renderState.isInitializing && (
+        <motion.div
+          className="flex absolute inset-0 justify-center items-center backdrop-blur-sm bg-black/70"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="text-center">
+            <motion.div
+              className="mx-auto mb-6 w-16 h-16 rounded-full border-4 border-blue-500/30 border-t-blue-500"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            />
+            <h3 className="mb-2 text-xl font-semibold text-white">正在初始化 3D 场景</h3>
+            <p className="text-sm text-blue-300">加载渲染引擎和资源...</p>
+            
+            {/* 初始化进度条 */}
+            <div className="w-64 h-1.5 bg-gray-700 rounded-full mt-6 overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                initial={{ width: 0 }}
+                animate={{ width: '75%' }}
+                transition={{ duration: 1, ease: "easeInOut" }}
+              />
+            </div>
+          </div>
+        </motion.div>
       )}
+      
+      {/* UI控制面板 - 可折叠 */}
+      <motion.div
+        className="absolute top-4 left-4 p-3 text-xs text-white rounded-xl border shadow-lg backdrop-blur-md bg-black/80 border-blue-500/30 shadow-blue-500/10"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
+        <div className="flex flex-col gap-2">
+          {/* 性能设置 */}
+          <div className="flex justify-between items-center">
+            <span className="text-blue-300">⚡ 自动优化</span>
+            <label className="inline-flex relative items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={uiState.autoModeEnabled} 
+                onChange={(e) => setUiState(prev => ({ ...prev, autoModeEnabled: e.target.checked }))}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+          
+          {/* 性能面板开关 */}
+          <div className="flex justify-between items-center">
+            <span className="text-blue-300">📊 性能面板</span>
+            <label className="inline-flex relative items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={uiState.showPerformancePanel} 
+                onChange={(e) => setUiState(prev => ({ ...prev, showPerformancePanel: e.target.checked }))}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+        </div>
+      </motion.div>
     </motion.div>
   );
 });

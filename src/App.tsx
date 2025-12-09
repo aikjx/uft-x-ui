@@ -118,14 +118,6 @@ const LoadingFallback: React.FC = () => (
 const RootLayout: React.FC = () => {
   return (
     <div className="App flex flex-col min-h-screen">
-      <Toaster
-        position="top-right"
-        theme="dark"
-        richColors
-        closeButton
-        duration={4000}
-      />
-      
       {/* 将Navbar移到Routes外部，只渲染一次 */}
       <Navbar />
       

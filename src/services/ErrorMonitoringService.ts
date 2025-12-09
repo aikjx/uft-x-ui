@@ -385,15 +385,7 @@ export class ErrorMonitoringService {
     this.processError(errorInfo);
   }
 
-  /**
-   * 销毁错误监控服务
-   */
-  public dispose(): void {
-    window.removeEventListener('error', this.handleGlobalError);
-    window.removeEventListener('unhandledrejection', this.handleUnhandledRejection);
-    eventSystem.off(APP_EVENTS.ERROR_OCCURRED, this.handleAppError);
-    console.log('🔌 Error Monitoring Service disposed');
-  }
+
 }
 
 // 导出单例实例
