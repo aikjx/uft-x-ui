@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { FEATURES } from '../constants';
 import { cn } from '../utils';
 
@@ -7,7 +8,7 @@ const HomePage: React.FC = () => {
   return (
     <div className="w-full">
       {/* 英雄区域 - 增强版响应式设计 */}
-      <section className="overflow-hidden relative py-16 md:py-28 lg:py-36 text-center">
+      <section className="overflow-hidden relative py-16 text-center md:py-28 lg:py-36">
         {/* 动态背景网格 - 增强版 */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.15),transparent_70%)]"></div>
@@ -52,20 +53,20 @@ const HomePage: React.FC = () => {
           </motion.div>
           
           <motion.h1 
-            className="mb-8 text-3xl md:text-5xl lg:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-cyan-400"
+            className="mb-8 text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-cyan-400 md:text-5xl lg:text-7xl"
             initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             🌌 统一场论探索
             <br />
-            <span className="text-xl md:text-3xl lg:text-5xl font-light text-gray-300">
+            <span className="text-xl font-light text-gray-300 md:text-3xl lg:text-5xl">
               Unified Field Theory
             </span>
           </motion.h1>
           
           <motion.p 
-            className="mx-auto mb-12 max-w-3xl text-base md:text-lg lg:text-xl leading-relaxed text-gray-300"
+            className="mx-auto mb-12 max-w-3xl text-base leading-relaxed text-gray-300 md:text-lg lg:text-xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
@@ -74,7 +75,7 @@ const HomePage: React.FC = () => {
           </motion.p>
           
           <motion.div 
-            className="flex flex-col gap-4 sm:gap-6 justify-center items-center sm:flex-row"
+            className="flex flex-col gap-4 justify-center items-center sm:gap-6 sm:flex-row"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
@@ -87,7 +88,7 @@ const HomePage: React.FC = () => {
             >
               <Link
                 to="/formulas"
-                className="inline-block px-8 py-4 sm:px-10 sm:py-5 font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20 hover:from-blue-700 hover:to-purple-700"
+                className="inline-block px-8 py-4 font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl transition-all duration-300 sm:px-10 sm:py-5 hover:shadow-lg hover:shadow-blue-500/20 hover:from-blue-700 hover:to-purple-700"
               >
                 🚀 开始探索
               </Link>
@@ -99,7 +100,7 @@ const HomePage: React.FC = () => {
             >
               <Link
                 to="/knowledge"
-                className="inline-block px-8 py-4 sm:px-10 sm:py-5 font-semibold text-blue-300 bg-gradient-to-r rounded-xl border backdrop-blur-sm transition-all duration-300 from-gray-800/80 to-gray-900/80 border-blue-500/30 hover:bg-blue-500/10 hover:shadow-lg hover:shadow-blue-500/10"
+                className="inline-block px-8 py-4 font-semibold text-blue-300 bg-gradient-to-r rounded-xl border backdrop-blur-sm transition-all duration-300 sm:px-10 sm:py-5 from-gray-800/80 to-gray-900/80 border-blue-500/30 hover:bg-blue-500/10 hover:shadow-lg hover:shadow-blue-500/10"
               >
                 📚 学习理论
               </Link>
@@ -109,7 +110,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* 特性展示 - 增强版 */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-transparent to-blue-950/20">
+      <section className="py-16 bg-gradient-to-b from-transparent md:py-24 to-blue-950/20">
         <div className="px-4 mx-auto max-w-7xl">
           <motion.div 
             className="mb-16 text-center"
@@ -118,11 +119,11 @@ const HomePage: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="mb-4 text-2xl md:text-3xl lg:text-4xl font-bold text-white">
+            <h2 className="mb-4 text-2xl font-bold text-white md:text-3xl lg:text-4xl">
               探索核心公式
               <span className="block text-blue-400">交互式体验</span>
             </h2>
-            <p className="mx-auto max-w-3xl text-base md:text-lg text-gray-400">
+            <p className="mx-auto max-w-3xl text-base text-gray-400 md:text-lg">
               实时物理模拟，革命性的可视化体验，让复杂的物理公式变得直观易懂
             </p>
           </motion.div>
@@ -139,7 +140,7 @@ const HomePage: React.FC = () => {
               >
                 <Link
                   to={feature.link}
-                  className="block p-6 sm:p-8 h-full bg-gradient-to-br rounded-2xl border transition-all duration-300 from-gray-900/50 to-gray-800/30 border-gray-700/50 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 group"
+                  className="block p-6 h-full bg-gradient-to-br rounded-2xl border transition-all duration-300 sm:p-8 from-gray-900/50 to-gray-800/30 border-gray-700/50 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 group"
                 >
                   <motion.div 
                     className="mb-4 text-4xl"
@@ -186,10 +187,10 @@ const HomePage: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="mb-4 text-2xl md:text-3xl lg:text-4xl font-bold text-white">
+            <h2 className="mb-4 text-2xl font-bold text-white md:text-3xl lg:text-4xl">
               实时物理模拟数据
             </h2>
-            <p className="text-base md:text-lg text-gray-400">
+            <p className="text-base text-gray-400 md:text-lg">
               基于统一场论的精确物理模拟
             </p>
           </motion.div>
@@ -235,7 +236,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* 核心公式预览 - 增强版 */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-blue-950/20 to-transparent">
+      <section className="py-16 bg-gradient-to-b to-transparent md:py-24 from-blue-950/20">
         <div className="px-4 mx-auto max-w-7xl">
           <motion.div 
             className="mb-16 text-center"
@@ -244,11 +245,11 @@ const HomePage: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="mb-4 text-2xl md:text-3xl lg:text-4xl font-bold text-white">
+            <h2 className="mb-4 text-2xl font-bold text-white md:text-3xl lg:text-4xl">
               核心公式预览
               <span className="block text-purple-400">统一场论的基石</span>
             </h2>
-            <p className="mx-auto max-w-3xl text-base md:text-lg text-gray-400">
+            <p className="mx-auto max-w-3xl text-base text-gray-400 md:text-lg">
               探索19个核心公式，揭示空间、时间与物理现象的本质联系
             </p>
           </motion.div>
@@ -266,9 +267,9 @@ const HomePage: React.FC = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 whileHover={{ y: -5 }}
-                className="p-5 sm:p-6 bg-gradient-to-br rounded-xl border backdrop-blur-sm from-gray-900/50 to-gray-800/30 border-purple-500/30 hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300"
+                className="p-5 bg-gradient-to-br rounded-xl border backdrop-blur-sm transition-all duration-300 sm:p-6 from-gray-900/50 to-gray-800/30 border-purple-500/30 hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-500/10"
               >
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex gap-3 items-center mb-4">
                   <motion.span 
                     className="text-2xl"
                     whileHover={{ scale: 1.2, rotate: 15 }}
@@ -280,11 +281,11 @@ const HomePage: React.FC = () => {
                 </div>
                 <div className="mb-4 text-center">
                   <motion.div 
-                    className="p-4 bg-gray-900/80 rounded-lg border border-purple-800/30"
+                    className="p-4 rounded-lg border bg-gray-900/80 border-purple-800/30"
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 400, damping: 15 }}
                   >
-                    <p className="text-lg text-white font-mono">{formula.formula}</p>
+                    <p className="font-mono text-lg text-white">{formula.formula}</p>
                   </motion.div>
                 </div>
                 <p className="text-sm text-gray-400">{formula.description}</p>
@@ -307,7 +308,7 @@ const HomePage: React.FC = () => {
             >
               <Link
                 to="/formulas"
-                className="inline-block px-10 py-4 sm:px-12 sm:py-5 font-semibold text-white bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 hover:from-purple-700 hover:to-indigo-700"
+                className="inline-block px-10 py-4 font-semibold text-white bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl transition-all duration-300 sm:px-12 sm:py-5 hover:shadow-lg hover:shadow-purple-500/20 hover:from-purple-700 hover:to-indigo-700"
               >
                 📐 查看所有公式
               </Link>
@@ -326,11 +327,11 @@ const HomePage: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="mb-4 text-2xl md:text-3xl lg:text-4xl font-bold text-white">
+            <h2 className="mb-4 text-2xl font-bold text-white md:text-3xl lg:text-4xl">
               技术亮点
               <span className="block text-cyan-400">革命性的可视化体验</span>
             </h2>
-            <p className="mx-auto max-w-3xl text-base md:text-lg text-gray-400">
+            <p className="mx-auto max-w-3xl text-base text-gray-400 md:text-lg">
               采用最先进的技术，打造沉浸式的统一场论探索平台
             </p>
           </motion.div>
@@ -351,7 +352,7 @@ const HomePage: React.FC = () => {
                 whileHover={{ y: -5 }}
                 className={`p-5 sm:p-6 bg-gradient-to-br rounded-xl border from-gray-900/50 to-gray-800/30 border-${feature.color}-500/30 hover:border-${feature.color}-500/50 hover:shadow-xl hover:shadow-${feature.color}-500/10 transition-all duration-300`}
               >
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex gap-3 items-center mb-4">
                   <motion.span 
                     className="text-3xl"
                     whileHover={{ scale: 1.2, rotate: 15 }}
@@ -369,7 +370,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* CTA区域 - 增强版 */}
-      <section className="overflow-hidden relative py-20 md:py-32 bg-gradient-to-r from-blue-900/30 via-purple-900/30 to-blue-900/30">
+      <section className="overflow-hidden relative py-20 bg-gradient-to-r md:py-32 from-blue-900/30 via-purple-900/30 to-blue-900/30">
         {/* 动态背景装饰 - 增强版 */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.15),transparent_70%)]"></div>
@@ -408,13 +409,13 @@ const HomePage: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="mb-6 text-2xl md:text-4xl lg:text-5xl font-bold text-white">
+            <h2 className="mb-6 text-2xl font-bold text-white md:text-4xl lg:text-5xl">
               开始你的统一场论探索之旅
             </h2>
-            <p className="mb-10 text-base md:text-lg lg:text-xl text-gray-300">
+            <p className="mb-10 text-base text-gray-300 md:text-lg lg:text-xl">
               空间波动模拟 🌌
             </p>
-            <div className="flex flex-col gap-4 sm:flex-row flex-wrap justify-center">
+            <div className="flex flex-col flex-wrap gap-4 justify-center sm:flex-row">
               <motion.div 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
@@ -423,7 +424,7 @@ const HomePage: React.FC = () => {
               >
                 <Link
                   to="/interactive"
-                  className="inline-block px-8 py-4 sm:px-10 sm:py-5 font-semibold text-white bg-gradient-to-r from-green-600 to-cyan-600 rounded-xl transition-all duration-300 hover:from-green-700 hover:to-cyan-700 hover:shadow-lg hover:shadow-green-500/20"
+                  className="inline-block px-8 py-4 font-semibold text-white bg-gradient-to-r from-green-600 to-cyan-600 rounded-xl transition-all duration-300 sm:px-10 sm:py-5 hover:from-green-700 hover:to-cyan-700 hover:shadow-lg hover:shadow-green-500/20"
                 >
                   🔬 立即体验
                 </Link>
@@ -435,7 +436,7 @@ const HomePage: React.FC = () => {
               >
                 <Link
                   to="/artificial-field"
-                  className="inline-block px-8 py-4 sm:px-10 sm:py-5 font-semibold text-green-300 bg-gradient-to-r rounded-xl border backdrop-blur-sm transition-all duration-300 from-gray-800/80 to-gray-900/80 border-green-500/30 hover:bg-green-500/10 hover:shadow-lg hover:shadow-green-500/10"
+                  className="inline-block px-8 py-4 font-semibold text-green-300 bg-gradient-to-r rounded-xl border backdrop-blur-sm transition-all duration-300 sm:px-10 sm:py-5 from-gray-800/80 to-gray-900/80 border-green-500/30 hover:bg-green-500/10 hover:shadow-lg hover:shadow-green-500/10"
                 >
                   🛸 了解人工场
                 </Link>
@@ -448,7 +449,7 @@ const HomePage: React.FC = () => {
               >
                 <Link
                   to="/formulas"
-                  className="inline-block px-8 py-4 sm:px-10 sm:py-5 font-semibold text-purple-300 bg-gradient-to-r rounded-xl border backdrop-blur-sm transition-all duration-300 from-gray-800/80 to-gray-900/80 border-purple-500/30 hover:bg-purple-500/10 hover:shadow-lg hover:shadow-purple-500/10"
+                  className="inline-block px-8 py-4 font-semibold text-purple-300 bg-gradient-to-r rounded-xl border backdrop-blur-sm transition-all duration-300 sm:px-10 sm:py-5 from-gray-800/80 to-gray-900/80 border-purple-500/30 hover:bg-purple-500/10 hover:shadow-lg hover:shadow-purple-500/10"
                 >
                   📐 公式可视化
                 </Link>

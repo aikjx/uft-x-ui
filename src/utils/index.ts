@@ -170,8 +170,7 @@ export const generateSimulationData = (count: number, amplitude: number = 1, fre
   }));
 };
 
-// 高级功能导出 - 移除不必要的HolographicPerformanceUI导出
-export { default as HolographicPerformanceUI } from '../components/HolographicPerformanceUI';
+
 
 // 生成唯一ID
 export function generateId(): string {

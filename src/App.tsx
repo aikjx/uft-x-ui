@@ -1,7 +1,6 @@
 import React, { lazy, Suspense, useEffect } from 'react';
 import { NotificationProvider } from './components/Notification';
 import { createBrowserRouter, RouterProvider, useLocation, Outlet } from 'react-router-dom';
-import { Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -10,7 +9,7 @@ import { MathJax } from './components/MathJax';
 import ChatComponent from './components/ChatComponent';
 import ErrorBoundary from './components/ErrorBoundary';
 import { showNotification } from './utils';
-import { startAutomatedOptimization } from './performance/AutomatedPerformanceOptimizer';
+import { startAutomatedOptimization, AutomatedOptimizationMode } from './performance/AutomatedPerformanceOptimizer';
 import { registerAllServices, initializeAllServices, disposeAllServices } from './services';
 import './index.css';
 
@@ -33,34 +32,34 @@ export const PageContainer: React.FC<{
   }, [location.pathname]);
 
   // 只在首页和知识页面显示粒子背景，减少其他页面的性能消耗
-  const shouldShowBackground = !hideBackground && 
+  const shouldShowBackground = !hideBackground &&
     (location.pathname === '/' || location.pathname === '/knowledge');
 
   return (
     <div className="relative min-h-screen flex flex-col bg-gradient-to-b from-[#050508] via-[#0a0a1a] to-[#151530]">
       {/* 全局背景网格 - 优化密度 */}
       <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,rgba(59,130,246,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(59,130,246,0.015)_1px,transparent_1px)] bg-[size:80px_80px]"></div>
-      
+
       {/* 科技感装饰线条 */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent z-10" />
-      
+      <div className="absolute top-0 right-0 left-0 z-10 h-px bg-gradient-to-r from-transparent to-transparent via-blue-500/30" />
+
       {shouldShowBackground && <ParticleBackground />}
-      <main className="flex-1 container mx-auto px-0 py-0 md:py-0 relative z-10 pt-20 overflow-x-hidden">
+      <main className="container overflow-x-hidden relative z-10 flex-1 px-4 py-4 pt-20 mx-auto md:py-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ 
-              opacity: 0, 
+            initial={{
+              opacity: 0,
               y: 30,
               scale: 0.97
             }}
-            animate={{ 
-              opacity: 1, 
+            animate={{
+              opacity: 1,
               y: 0,
               scale: 1
             }}
-            exit={{ 
-              opacity: 0, 
+            exit={{
+              opacity: 0,
               y: -30,
               scale: 0.97
             }}
@@ -92,22 +91,22 @@ const LoadingFallback: React.FC = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 px-4 text-center">
     <div className="relative">
       {/* 旋转动画 - 使用CSS动画替代motion组件 */}
-      <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="w-16 h-16 rounded-full border-4 border-blue-500 animate-spin border-t-transparent" />
     </div>
-    
+
     <div className="opacity-100">
-      <h2 className="text-2xl font-bold text-blue-300 mb-2">统一场论3D可视化平台</h2>
-      <p className="text-blue-200/80 max-w-md mx-auto">
+      <h2 className="mb-2 text-2xl font-bold text-blue-300">统一场论3D可视化平台</h2>
+      <p className="mx-auto max-w-md text-blue-200/80">
         正在加载宇宙奥秘的可视化系统...
       </p>
     </div>
-    
-    <div className="w-full max-w-md bg-gray-800/50 rounded-full h-2 overflow-hidden">
+
+    <div className="overflow-hidden w-full max-w-md h-2 rounded-full bg-gray-800/50">
       {/* 进度条 - 使用CSS动画替代motion组件 */}
       <div className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 animate-pulse" />
     </div>
-    
-    <div className="flex items-center space-x-2 text-sm text-blue-400/70 opacity-100">
+
+    <div className="flex items-center space-x-2 text-sm opacity-100 text-blue-400/70">
       <span>🔬</span>
       <span>正在初始化3D渲染引擎</span>
     </div>
@@ -117,16 +116,16 @@ const LoadingFallback: React.FC = () => (
 // 根组件，包含Navbar和Footer
 const RootLayout: React.FC = () => {
   return (
-    <div className="App flex flex-col min-h-screen">
+    <div className="flex flex-col App">
       {/* 将Navbar移到Routes外部，只渲染一次 */}
       <Navbar />
-      
+
       {/* 使用Outlet渲染子路由内容 */}
       <Outlet />
-      
+
       {/* Footer也移到Routes外部 */}
       <Footer />
-      
+
       {/* 聊天组件 - 使用fixed定位，避免影响布局 */}
       <ChatComponent />
     </div>
@@ -193,7 +192,7 @@ const NotFoundPage: React.FC = () => (
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.5 }}
-        className="text-xl text-gray-400 mb-8 max-w-md"
+        className="mb-8 max-w-md text-xl text-gray-400"
       >
         抱歉，您访问的页面不存在
       </motion.p>
@@ -203,8 +202,8 @@ const NotFoundPage: React.FC = () => (
         transition={{ delay: 0.4, duration: 0.5 }}
         whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.3)" }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => window.location.href = '/'} 
-        className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300"
+        onClick={() => window.location.href = '/'}
+        className="px-8 py-3 text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg transition-all duration-300 hover:from-blue-700 hover:to-purple-700"
       >
         返回首页
       </motion.button>
@@ -222,13 +221,13 @@ const router = createBrowserRouter([
       ...routes.map((route) => {
         // 创建路由元素，根据是否有自定义布局选择容器
         const RouteElement = route.layout || PageContainer;
-        
+
         return {
           path: route.path === "/" ? "" : route.path,
           element: (
             <RouteElement>
               <Suspense fallback={<LoadingFallback />}>
-                <route.element />
+                {route.element}
               </Suspense>
             </RouteElement>
           )
@@ -261,7 +260,7 @@ function App() {
 
     // 启动自动化性能优化
     startAutomatedOptimization({
-      mode: 'auto',
+      mode: AutomatedOptimizationMode.AUTO,
       targetFPS: 60,
       maxMemoryUsageMB: 512,
       enableAIOptimization: true,
@@ -285,14 +284,14 @@ function App() {
   // 智能预加载策略 - 基于优先级和用户行为的动态预加载
   useEffect(() => {
     // 预加载优先级映射：根据优先级决定预加载顺序和时机
-    const priorityPreloadMap: Record<number, () => Promise<void>[]> = {
+    const priorityPreloadMap: Record<number, () => Promise<unknown>[]> = {
       1: () => [
-        import('./pages/FormulaVisualizationPage'),
-        import('./pages/ArtificialFieldPage')
+        import('./pages/FormulaVisualizationPage').then(() => void 0),
+        import('./pages/ArtificialFieldPage').then(() => void 0)
       ],
       2: () => [
-        import('./pages/InteractiveExplorationPage'),
-        import('./pages/KnowledgePage')
+        import('./pages/InteractiveExplorationPage').then(() => void 0),
+        import('./pages/KnowledgePage').then(() => void 0)
       ]
     };
 
@@ -312,7 +311,7 @@ function App() {
     const schedulePreloading = () => {
       // 立即预加载最高优先级（1级）的组件
       preload(1);
-      
+
       // 延迟预加载次级优先级（2级）的组件
       const level2Timeout = setTimeout(() => {
         preload(2);
@@ -320,36 +319,38 @@ function App() {
 
       // 监听用户交互，提前触发预加载
       const handleMouseEnter = (event: MouseEvent) => {
-        const target = event.target as HTMLElement;
-        const link = target.closest('a');
-        if (link && link.href) {
-          // 解析链接，预加载对应的页面组件
-          const url = new URL(link.href);
-          const pathname = url.pathname.replace(/^\//, '');
-          
-          switch (pathname) {
-            case 'formulas':
-              import('./pages/FormulaVisualizationPage');
-              break;
-            case 'artificial-field':
-              import('./pages/ArtificialFieldPage');
-              break;
-            case 'interactive':
-              import('./pages/InteractiveExplorationPage');
-              break;
-            case 'knowledge':
-              import('./pages/KnowledgePage');
-              break;
+        const target = event.target as Element;
+        if (target instanceof HTMLElement) {
+          const link = target.closest('a');
+          if (link && link.href) {
+            // 解析链接，预加载对应的页面组件
+            const url = new URL(link.href);
+            const pathname = url.pathname.replace(/^\//, '');
+
+            switch (pathname) {
+              case 'formulas':
+                import('./pages/FormulaVisualizationPage').then(() => void 0);
+                break;
+              case 'artificial-field':
+                import('./pages/ArtificialFieldPage').then(() => void 0);
+                break;
+              case 'interactive':
+                import('./pages/InteractiveExplorationPage').then(() => void 0);
+                break;
+              case 'knowledge':
+                import('./pages/KnowledgePage').then(() => void 0);
+                break;
+            }
           }
         }
       };
 
       // 添加鼠标悬停事件监听
-      document.addEventListener('mouseenter', handleMouseEnter);
+      document.addEventListener('mouseover', handleMouseEnter);
 
       return () => {
         clearTimeout(level2Timeout);
-        document.removeEventListener('mouseenter', handleMouseEnter);
+        document.removeEventListener('mouseover', handleMouseEnter);
       };
     };
 
@@ -374,13 +375,6 @@ function App() {
   return (
     <NotificationProvider maxVisible={5} position="top-right">
       <ErrorBoundary>
-        <Toaster
-          position="top-right"
-          theme="dark"
-          richColors
-          closeButton
-          duration={4000}
-        />
         <RouterProvider router={router} />
       </ErrorBoundary>
     </NotificationProvider>

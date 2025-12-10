@@ -230,50 +230,50 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="max-w-2xl w-full bg-gray-900/80 backdrop-blur-lg border border-red-500/30 rounded-2xl shadow-xl overflow-hidden"
+            className="overflow-hidden w-full max-w-2xl rounded-2xl border shadow-xl backdrop-blur-lg bg-gray-900/80 border-red-500/30"
           >
             {/* 错误图标 */}
-            <div className="bg-red-500/20 px-6 py-8 text-center">
+            <div className="px-6 py-8 text-center bg-red-500/20">
               <motion.div
                 animate={{ rotate: [0, 5, -5, 5, 0] }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
                 className="inline-block"
               >
-                <div className="text-6xl mb-4">⚠️</div>
+                <div className="mb-4 text-6xl">⚠️</div>
               </motion.div>
-              <h2 className="text-2xl font-bold text-white mb-2">系统出错了</h2>
+              <h2 className="mb-2 text-2xl font-bold text-white">系统出错了</h2>
               <p className="text-gray-400">抱歉，应用遇到了意外错误。</p>
             </div>
 
             {/* 错误详情 */}
             <div className="p-6 space-y-4">
-              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                <h3 className="text-lg font-semibold text-white mb-2">错误信息</h3>
-                <p className="text-red-400 font-mono text-sm break-all">
+              <div className="p-4 rounded-lg border border-gray-700 bg-gray-800/50">
+                <h3 className="mb-2 text-lg font-semibold text-white">错误信息</h3>
+                <p className="font-mono text-sm text-red-400 break-all">
                   {this.state.error?.message || '未知错误'}
                 </p>
               </div>
 
               {/* 仅在开发环境显示完整堆栈 */}
               {import.meta.env.DEV && this.state.errorInfo && (
-                <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 max-h-60 overflow-auto">
-                  <h3 className="text-lg font-semibold text-white mb-2">错误堆栈</h3>
-                  <pre className="text-gray-400 font-mono text-xs whitespace-pre-wrap">
+                <div className="overflow-auto p-4 max-h-60 rounded-lg border border-gray-700 bg-gray-800/50">
+                  <h3 className="mb-2 text-lg font-semibold text-white">错误堆栈</h3>
+                  <pre className="font-mono text-xs text-gray-400 whitespace-pre-wrap">
                     {this.state.errorInfo.componentStack}
                   </pre>
                 </div>
               )}
 
               {/* 用户反馈 */}
-              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                <h3 className="text-lg font-semibold text-white mb-2">帮助我们改进</h3>
-                <p className="text-sm text-gray-400 mb-3">请告诉我们您遇到的问题，这将帮助我们改进应用。</p>
+              <div className="p-4 rounded-lg border border-gray-700 bg-gray-800/50">
+                <h3 className="mb-2 text-lg font-semibold text-white">帮助我们改进</h3>
+                <p className="mb-3 text-sm text-gray-400">请告诉我们您遇到的问题，这将帮助我们改进应用。</p>
                 <div className="space-y-3">
                   <textarea
                     value={this.state.userFeedback}
                     onChange={this.handleFeedbackChange}
                     placeholder="请描述您遇到的问题..."
-                    className="w-full h-24 p-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="p-3 w-full h-24 text-white rounded-lg border border-gray-700 bg-gray-900/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -288,12 +288,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
               </div>
 
               {/* 操作按钮 */}
-              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 justify-center pt-4">
+              <div className="flex flex-col justify-center pt-4 space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={this.handleReset}
-                  className="flex-1 sm:flex-none sm:px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex-1 py-3 text-white bg-blue-600 rounded-lg transition-colors sm:flex-none sm:px-6 hover:bg-blue-700"
                 >
                   重试
                 </motion.button>
@@ -301,7 +301,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => window.location.href = '/'}
-                  className="flex-1 sm:flex-none sm:px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  className="flex-1 py-3 text-white bg-gray-700 rounded-lg transition-colors sm:flex-none sm:px-6 hover:bg-gray-600"
                 >
                   返回首页
                 </motion.button>
@@ -315,10 +315,10 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.5 }}
-              className="mt-8 text-center text-gray-500 text-sm"
+              className="mt-8 text-sm text-center text-gray-500"
             >
               <p className="mb-2">开发环境：完整错误信息已记录到控制台</p>
-              <div className="bg-gray-900/50 p-3 rounded-lg inline-block">
+              <div className="inline-block p-3 rounded-lg bg-gray-900/50">
                 <code className="text-xs">{this.state.error?.constructor.name || 'Error'}</code>
               </div>
             </motion.div>

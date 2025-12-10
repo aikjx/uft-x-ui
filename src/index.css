@@ -2,118 +2,122 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@layer base {
+  :root {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0a0a14;
+    color-scheme: light dark;
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #0a0a14;
 
-  /* Tailwind CSS变量定义 */
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
+    /* Tailwind CSS变量定义 */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-#root {
-  width: 100%;
-  min-height: 100vh;
-}
-
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #111122;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #333355;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #444466;
-}
-
-/* CSS动画类 */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  /* 滚动条样式 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #111122;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #333355;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #444466;
   }
 }
 
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
+@layer utilities {
+  /* CSS动画类 */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-}
 
-@keyframes pulseShadow {
-  0%, 100% {
-    box-shadow: 0 0 0 rgba(59, 130, 246, 0.2);
+  @keyframes pulseShadow {
+    0%, 100% {
+      box-shadow: 0 0 0 rgba(59, 130, 246, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+    }
   }
-  50% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
   }
-}
 
-.animate-fade-in {
-  animation: fadeIn 0.6s ease-out forwards;
-}
+  .animate-fade-in-down {
+    animation: fadeInDown 0.6s ease-out forwards;
+  }
 
-.animate-fade-in-down {
-  animation: fadeInDown 0.6s ease-out forwards;
-}
+  .animate-pulse-shadow {
+    animation: pulseShadow 3s ease-in-out infinite;
+  }
 
-.animate-pulse-shadow {
-  animation: pulseShadow 3s ease-in-out infinite;
-}
+  /* 延迟动画类 */
+  .delay-100 {
+    animation-delay: 0.1s;
+  }
 
-/* 延迟动画类 */
-.delay-100 {
-  animation-delay: 0.1s;
-}
+  .delay-200 {
+    animation-delay: 0.2s;
+  }
 
-.delay-200 {
-  animation-delay: 0.2s;
-}
+  .delay-300 {
+    animation-delay: 0.3s;
+  }
 
-.delay-300 {
-  animation-delay: 0.3s;
-}
+  .delay-400 {
+    animation-delay: 0.4s;
+  }
 
-.delay-400 {
-  animation-delay: 0.4s;
-}
-
-.delay-500 {
-  animation-delay: 0.5s;
+  .delay-500 {
+    animation-delay: 0.5s;
+  }
 }

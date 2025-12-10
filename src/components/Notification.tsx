@@ -79,7 +79,7 @@ const NOTIFICATION_STYLES = {
 };
 
 // 简单的通知声音系统
-const playNotificationSound = useCallback((soundType: string) => {
+const playNotificationSound = (soundType: string) => {
   try {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
@@ -112,7 +112,7 @@ const playNotificationSound = useCallback((soundType: string) => {
   } catch (error) {
     // 忽略浏览器不支持音频或用户未交互的情况
   }
-}, []);
+};
 
 const Notification: React.FC<NotificationProps> = ({
   message,
@@ -194,7 +194,7 @@ const Notification: React.FC<NotificationProps> = ({
           aria-live="assertive"
           aria-atomic="true"
         >
-          <div className="flex items-start gap-3">
+          <div className="flex gap-3 items-start">
             <motion.div 
               className="text-xl mt-0.5 flex-shrink-0" 
               initial={{ scale: 0 }}
@@ -207,7 +207,7 @@ const Notification: React.FC<NotificationProps> = ({
               <p className={`text-sm ${style.textColor} leading-relaxed break-words`}>{message}</p>
             </div>
             <button
-              className="text-blue-200/50 hover:text-blue-200 transition-colors ml-2 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500/50 p-1 rounded-full"
+              className="flex-shrink-0 p-1 ml-2 rounded-full transition-colors text-blue-200/50 hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
               onClick={(e) => {
                 e.stopPropagation();
                 handleClose();
@@ -348,14 +348,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     <NotificationContext.Provider value={{ showNotification, clearAllNotifications }}>
       {children}
       <div 
-        className={`fixed z-50 max-w-sm w-full pointer-events-none ${NOTIFICATION_POSITIONS[position]}`}
+        className={`fixed z-50 w-full max-w-sm pointer-events-none ${NOTIFICATION_POSITIONS[position]}`}
         role="region"
         aria-live="polite"
       >
         {notifications.map((notification, index) => (
           <div 
             key={notification.id} 
-            className="pointer-events-auto w-full"
+            className="w-full pointer-events-auto"
             style={{
               // 使用类型断言来支持CSS变量
               ['--notification-index' as any]: notifications.length - index

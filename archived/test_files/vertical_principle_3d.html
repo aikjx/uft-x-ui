@@ -1149,9 +1149,9 @@ F = C·dm/dt - V·dm/dt + m·dC/dt - m·dV/dt
                     
                     // 3. 磁场向量 - 垂直于运动平面 (F = -V·dm/dt)
                     if (state.forces.magnetic && forceVectors.magnetic[idx]) {
-                        const tangent = new THREE.Vector3(-Math.sin(angle), 0, Math.cos(angle)).normalize();
                         const radial = new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle)).normalize();
-                        const magDir = new THREE.Vector3().crossVectors(tangent, radial).normalize().multiplyScalar(vecLen);
+                        const tangent = new THREE.Vector3(-Math.sin(angle), 0, Math.cos(angle)).normalize();
+                        const magDir = new THREE.Vector3().crossVectors(radial, tangent).normalize().multiplyScalar(vecLen);
                         const pos = forceVectors.magnetic[idx].geometry.attributes.position.array;
                         pos[0] = x; pos[1] = y; pos[2] = z;
                         pos[3] = x + magDir.x; pos[4] = y + magDir.y; pos[5] = z + magDir.z;

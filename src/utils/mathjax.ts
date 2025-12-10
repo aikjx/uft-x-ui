@@ -183,8 +183,8 @@ class MathJaxService {
     const isProd = import.meta.env.MODE === 'production';
     // 性能优化：使用最小化版本和适当的CDN
     script.src = isProd 
-      ? 'https://cdn.jsdelivr.net/npm/mathjax@3/esm/tex-svg.js?config=TeX-AMS_SVG'
-      : 'https://cdn.jsdelivr.net/npm/mathjax@3/esm/tex-svg.js?config=TeX-AMS_SVG';
+      ? 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js'
+      : 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js';
     script.async = true;
     script.type = 'text/javascript';
     script.crossOrigin = 'anonymous'; // 添加crossorigin属性，解决credentials mode不匹配问题
@@ -246,6 +246,9 @@ class MathJaxService {
   private async onMathJaxLoaded(): Promise<void> {
     if (!this.isClient || !window.MathJax) {
       console.error('MathJax未正确加载或环境不支持');
+      // Even if MathJax failed to load, mark as ready to prevent blocking the UI
+      this.isReady = true;
+      this.executeReadyCallbacks();
       return;
     }
     
@@ -265,16 +268,7 @@ class MathJaxService {
       this.retryCount = 0; // 重置重试计数
       
       // 执行所有等待的回调
-      const callbacks = [...this.readyCallbacks];
-      this.readyCallbacks = []; // 清空队列再执行回调，避免回调中再次添加回调导致的问题
-      
-      callbacks.forEach(callback => {
-        try {
-          callback();
-        } catch (error) {
-          console.error('MathJax就绪回调执行失败:', error);
-        }
-      });
+      this.executeReadyCallbacks();
       
       // 处理渲染队列中的元素
       this.processRenderQueue();
@@ -282,9 +276,29 @@ class MathJaxService {
       console.log('MathJax初始化成功，版本:', window.MathJax.version || '未知');
     } catch (error) {
       console.error('MathJax启动失败:', error);
+      // Even if MathJax failed to initialize properly, mark as ready to prevent blocking the UI
+      this.isReady = true;
+      this.executeReadyCallbacks();
       // 尝试重试
-      this.handleLoadError(error);
+      // this.handleLoadError(error);
     }
+  }
+  
+  /**
+   * Execute all ready callbacks safely
+   */
+  private executeReadyCallbacks(): void {
+    // 执行所有等待的回调
+    const callbacks = [...this.readyCallbacks];
+    this.readyCallbacks = []; // 清空队列再执行回调，避免回调中再次添加回调导致的问题
+    
+    callbacks.forEach(callback => {
+      try {
+        callback();
+      } catch (error) {
+        console.error('MathJax就绪回调执行失败:', error);
+      }
+    });
   }
   
   /**
@@ -388,7 +402,8 @@ class MathJaxService {
    */
   public async typeset(elements?: HTMLElement[]): Promise<void> {
     if (!this.isClient || !this.isReady || !window.MathJax) {
-      throw new Error('MathJax未就绪或环境不支持');
+      // If MathJax is not ready or not available, just return without error
+      return;
     }
     
     // 元素有效性检查
@@ -423,14 +438,15 @@ class MathJaxService {
           window.MathJax!.hub!.Typeset(elements, () => resolve());
         });
       } else {
-        throw new Error('未找到可用的MathJax渲染方法');
+        // If no rendering method is available, just return without error
+        return;
       }
       
       const endTime = performance.now();
       console.debug(`MathJax渲染完成，耗时: ${(endTime - startTime).toFixed(2)}ms`);
     } catch (error) {
       console.error('MathJax渲染失败:', error);
-      throw error;
+      // Don't throw the error to prevent blocking the UI
     }
   }
   
