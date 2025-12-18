@@ -26,17 +26,13 @@ interface ErrorStats {
 }
 
 export class ErrorMonitoringService {
-  private static instance: ErrorMonitoringService;
   private config: ErrorMonitoringConfig;
   private stats: ErrorStats;
   private errorQueue: any[];
   private lastReportTime: number;
   private errorCountInMinute: number;
-  
-  // 实现Service接口
-  readonly serviceName = 'ErrorMonitoringService';
 
-  private constructor() {
+  constructor() {
     this.config = {
       enableConsoleLogging: import.meta.env.DEV,
       enableRemoteReporting: import.meta.env.PROD,
@@ -79,15 +75,15 @@ export class ErrorMonitoringService {
   }
 
   /**
-   * 服务初始化方法 - 实现Service接口
+   * 服务初始化方法
    */
   initialize(): void {
     // 已经在构造函数中初始化
-    console.log('🔍 ErrorMonitoringService initialized via ServiceManager');
+    console.log('🔍 ErrorMonitoringService initialized');
   }
 
   /**
-   * 服务销毁方法 - 实现Service接口
+   * 服务销毁方法
    */
   dispose(): void {
     // 停止所有定时器
@@ -99,13 +95,6 @@ export class ErrorMonitoringService {
     this.errorQueue = [];
     
     console.log('💥 ErrorMonitoringService disposed');
-  }
-
-  public static getInstance(): ErrorMonitoringService {
-    if (!ErrorMonitoringService.instance) {
-      ErrorMonitoringService.instance = new ErrorMonitoringService();
-    }
-    return ErrorMonitoringService.instance;
   }
 
   /**
@@ -384,9 +373,4 @@ export class ErrorMonitoringService {
 
     this.processError(errorInfo);
   }
-
-
 }
-
-// 导出单例实例
-export const errorMonitoringService = ErrorMonitoringService.getInstance();

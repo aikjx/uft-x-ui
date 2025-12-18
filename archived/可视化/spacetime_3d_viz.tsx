@@ -149,7 +149,7 @@ const CylindricalSpiralField = () => {
       const theta_count = Math.ceil(config.spiralCount / phi_count);
       
       for (let i = 0; i < phi_count; i++) {
- (let j = 0; j < theta_count; j++) {
+        for (let j = 0; j < theta_count; j++) {
           if (directions.length >= config.spiralCount) break;
           
           const phi = Math.acos(1 - 2 * (i + 0.5) / phi_count);
@@ -380,13 +380,50 @@ const CylindricalSpiralField = () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
+      
+      // 清理螺旋数据资源
       spiralDataRef.current.forEach(data => {
-        if (data.line) scene.remove(data.line);
-        if (data.tube) scene.remove(data.tube);
-        if (data.particles) scene.remove(data.particles);
-        if (data.ring) scene.remove(data.ring);
+        if (data.line) {
+          scene.remove(data.line);
+          data.line.geometry.dispose();
+          data.line.material.dispose();
+        }
+        if (data.tube) {
+          scene.remove(data.tube);
+          data.tube.geometry.dispose();
+          data.tube.material.dispose();
+        }
+        if (data.particles) {
+          scene.remove(data.particles);
+          data.particles.geometry.dispose();
+          data.particles.material.dispose();
+        }
+        if (data.ring) {
+          scene.remove(data.ring);
+          data.ring.geometry.dispose();
+          data.ring.material.dispose();
+        }
       });
+      
+      // 清理其他场景资源
+      scene.remove(core);
+      scene.remove(ambientLight);
+      scene.remove(pointLight1);
+      scene.remove(pointLight2);
+      scene.remove(pointLight3);
+      scene.remove(axesHelper);
+      scene.remove(gridXZ);
+      
+      // 释放几何体和材质
+      coreGeometry.dispose();
+      coreMaterial.dispose();
+      glowGeometry.dispose();
+      glowMaterial.dispose();
+      
+      // 释放渲染器资源
       renderer.dispose();
+      
+      // 移除 DOM 元素
       if (containerRef.current?.contains(renderer.domElement)) {
         containerRef.current.removeChild(renderer.domElement);
       }
@@ -394,7 +431,7 @@ const CylindricalSpiralField = () => {
   }, [isPlaying, config]);
 
   return (
-    <div className="w-full h-screen bg-gradient-to-b from-black via-slate-950 to-blue-950 flex flex-col relative overflow-hidden">
+    <div className="flex overflow-hidden relative flex-col w-full h-screen bg-gradient-to-b from-black via-slate-950 to-blue-950">
       <div className="absolute inset-0 z-0">
         {[...Array(200)].map((_, i) => (
           <div
@@ -412,21 +449,21 @@ const CylindricalSpiralField = () => {
         ))}
       </div>
 
-      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/95 via-black/70 to-transparent p-6">
-        <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-yellow-300 to-cyan-400 mb-2">
+      <div className="absolute top-0 right-0 left-0 z-10 p-6 bg-gradient-to-b to-transparent from-black/95 via-black/70">
+        <h1 className="mb-2 text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-yellow-300 to-cyan-400">
           统一场论·圆柱螺旋发散
         </h1>
-        <p className="text-cyan-300/90 text-lg mb-1">Unified Field - Cylindrical Spiral Divergence from Origin</p>
-        <p className="text-blue-300/70 text-sm">从原点(0,0,0)向空间四面八方发散，每个方向保持恒定半径的圆柱螺旋运动</p>
+        <p className="mb-1 text-lg text-cyan-300/90">Unified Field - Cylindrical Spiral Divergence from Origin</p>
+        <p className="text-sm text-blue-300/70">从原点(0,0,0)向空间四面八方发散，每个方向保持恒定半径的圆柱螺旋运动</p>
       </div>
 
-      <div ref={containerRef} className="flex-1 relative z-5" />
+      <div ref={containerRef} className="relative flex-1 z-5" />
 
       <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-6 max-h-[45vh] overflow-y-auto">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-4 gap-3 mb-4">
-            <div className="bg-gradient-to-br from-orange-900/60 to-red-900/60 border-2 border-orange-500/70 rounded-lg p-3 backdrop-blur-md">
-              <label className="text-orange-300 font-bold text-xs block mb-2">🌐 发散方向数</label>
+            <div className="p-3 bg-gradient-to-br rounded-lg border-2 backdrop-blur-md from-orange-900/60 to-red-900/60 border-orange-500/70">
+              <label className="block mb-2 text-xs font-bold text-orange-300">🌐 发散方向数</label>
               <input
                 type="range"
                 min="8"
@@ -434,17 +471,17 @@ const CylindricalSpiralField = () => {
                 step="4"
                 value={config.spiralCount}
                 onChange={(e) => updateConfig('spiralCount', e.target.value)}
-                className="w-full h-2 bg-orange-700/50 rounded-lg appearance-none cursor-pointer mb-1"
+                className="mb-1 w-full h-2 rounded-lg appearance-none cursor-pointer bg-orange-700/50"
               />
               <div className="flex justify-between text-xs">
                 <span className="text-orange-200/70">8</span>
-                <span className="text-orange-100 font-bold text-sm">{config.spiralCount}</span>
+                <span className="text-sm font-bold text-orange-100">{config.spiralCount}</span>
                 <span className="text-orange-200/70">64</span>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-cyan-900/60 to-blue-900/60 border-2 border-cyan-500/70 rounded-lg p-3 backdrop-blur-md">
-              <label className="text-cyan-300 font-bold text-xs block mb-2">⭕ 圆柱半径</label>
+            <div className="p-3 bg-gradient-to-br rounded-lg border-2 backdrop-blur-md from-cyan-900/60 to-blue-900/60 border-cyan-500/70">
+              <label className="block mb-2 text-xs font-bold text-cyan-300">⭕ 圆柱半径</label>
               <input
                 type="range"
                 min="1"
@@ -452,17 +489,17 @@ const CylindricalSpiralField = () => {
                 step="0.5"
                 value={config.radius}
                 onChange={(e) => updateConfig('radius', e.target.value)}
-                className="w-full h-2 bg-cyan-700/50 rounded-lg appearance-none cursor-pointer mb-1"
+                className="mb-1 w-full h-2 rounded-lg appearance-none cursor-pointer bg-cyan-700/50"
               />
               <div className="flex justify-between text-xs">
                 <span className="text-cyan-200/70">1</span>
-                <span className="text-cyan-100 font-bold text-sm">{config.radius}</span>
+                <span className="text-sm font-bold text-cyan-100">{config.radius}</span>
                 <span className="text-cyan-200/70">8</span>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-900/60 to-pink-900/60 border-2 border-purple-500/70 rounded-lg p-3 backdrop-blur-md">
-              <label className="text-purple-300 font-bold text-xs block mb-2">📏 发散长度</label>
+            <div className="p-3 bg-gradient-to-br rounded-lg border-2 backdrop-blur-md from-purple-900/60 to-pink-900/60 border-purple-500/70">
+              <label className="block mb-2 text-xs font-bold text-purple-300">📏 发散长度</label>
               <input
                 type="range"
                 min="15"
@@ -470,17 +507,17 @@ const CylindricalSpiralField = () => {
                 step="5"
                 value={config.length}
                 onChange={(e) => updateConfig('length', e.target.value)}
-                className="w-full h-2 bg-purple-700/50 rounded-lg appearance-none cursor-pointer mb-1"
+                className="mb-1 w-full h-2 rounded-lg appearance-none cursor-pointer bg-purple-700/50"
               />
               <div className="flex justify-between text-xs">
                 <span className="text-purple-200/70">15</span>
-                <span className="text-purple-100 font-bold text-sm">{config.length}</span>
+                <span className="text-sm font-bold text-purple-100">{config.length}</span>
                 <span className="text-purple-200/70">50</span>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-yellow-900/60 to-amber-900/60 border-2 border-yellow-500/70 rounded-lg p-3 backdrop-blur-md">
-              <label className="text-yellow-300 font-bold text-xs block mb-2">🌀 旋转圈数</label>
+            <div className="p-3 bg-gradient-to-br rounded-lg border-2 backdrop-blur-md from-yellow-900/60 to-amber-900/60 border-yellow-500/70">
+              <label className="block mb-2 text-xs font-bold text-yellow-300">🌀 旋转圈数</label>
               <input
                 type="range"
                 min="2"
@@ -488,17 +525,17 @@ const CylindricalSpiralField = () => {
                 step="1"
                 value={config.rotations}
                 onChange={(e) => updateConfig('rotations', e.target.value)}
-                className="w-full h-2 bg-yellow-700/50 rounded-lg appearance-none cursor-pointer mb-1"
+                className="mb-1 w-full h-2 rounded-lg appearance-none cursor-pointer bg-yellow-700/50"
               />
               <div className="flex justify-between text-xs">
                 <span className="text-yellow-200/70">2</span>
-                <span className="text-yellow-100 font-bold text-sm">{config.rotations}</span>
+                <span className="text-sm font-bold text-yellow-100">{config.rotations}</span>
                 <span className="text-yellow-200/70">20</span>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-green-900/60 to-emerald-900/60 border-2 border-green-500/70 rounded-lg p-3 backdrop-blur-md">
-              <label className="text-green-300 font-bold text-xs block mb-2">⚡ 角速度 ω</label>
+            <div className="p-3 bg-gradient-to-br rounded-lg border-2 backdrop-blur-md from-green-900/60 to-emerald-900/60 border-green-500/70">
+              <label className="block mb-2 text-xs font-bold text-green-300">⚡ 角速度 ω</label>
               <input
                 type="range"
                 min="0.2"
@@ -506,17 +543,17 @@ const CylindricalSpiralField = () => {
                 step="0.2"
                 value={config.angularSpeed}
                 onChange={(e) => updateConfig('angularSpeed', e.target.value)}
-                className="w-full h-2 bg-green-700/50 rounded-lg appearance-none cursor-pointer mb-1"
+                className="mb-1 w-full h-2 rounded-lg appearance-none cursor-pointer bg-green-700/50"
               />
               <div className="flex justify-between text-xs">
                 <span className="text-green-200/70">0.2</span>
-                <span className="text-green-100 font-bold text-sm">{config.angularSpeed.toFixed(1)}</span>
+                <span className="text-sm font-bold text-green-100">{config.angularSpeed.toFixed(1)}</span>
                 <span className="text-green-200/70">3.0</span>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-teal-900/60 to-cyan-900/60 border-2 border-teal-500/70 rounded-lg p-3 backdrop-blur-md">
-              <label className="text-teal-300 font-bold text-xs block mb-2">🔧 螺旋紧密度</label>
+            <div className="p-3 bg-gradient-to-br rounded-lg border-2 backdrop-blur-md from-teal-900/60 to-cyan-900/60 border-teal-500/70">
+              <label className="block mb-2 text-xs font-bold text-teal-300">🔧 螺旋紧密度</label>
               <input
                 type="range"
                 min="0.5"
@@ -524,17 +561,17 @@ const CylindricalSpiralField = () => {
                 step="0.1"
                 value={config.helixTightness}
                 onChange={(e) => updateConfig('helixTightness', e.target.value)}
-                className="w-full h-2 bg-teal-700/50 rounded-lg appearance-none cursor-pointer mb-1"
+                className="mb-1 w-full h-2 rounded-lg appearance-none cursor-pointer bg-teal-700/50"
               />
               <div className="flex justify-between text-xs">
                 <span className="text-teal-200/70">0.5</span>
-                <span className="text-teal-100 font-bold text-sm">{config.helixTightness.toFixed(1)}</span>
+                <span className="text-sm font-bold text-teal-100">{config.helixTightness.toFixed(1)}</span>
                 <span className="text-teal-200/70">2.0</span>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-900/60 to-indigo-900/60 border-2 border-blue-500/70 rounded-lg p-3 backdrop-blur-md">
-              <label className="text-blue-300 font-bold text-xs block mb-2">✨ 粒子密度</label>
+            <div className="p-3 bg-gradient-to-br rounded-lg border-2 backdrop-blur-md from-blue-900/60 to-indigo-900/60 border-blue-500/70">
+              <label className="block mb-2 text-xs font-bold text-blue-300">✨ 粒子密度</label>
               <input
                 type="range"
                 min="50"
@@ -542,17 +579,17 @@ const CylindricalSpiralField = () => {
                 step="25"
                 value={config.particleDensity}
                 onChange={(e) => updateConfig('particleDensity', e.target.value)}
-                className="w-full h-2 bg-blue-700/50 rounded-lg appearance-none cursor-pointer mb-1"
+                className="mb-1 w-full h-2 rounded-lg appearance-none cursor-pointer bg-blue-700/50"
               />
               <div className="flex justify-between text-xs">
                 <span className="text-blue-200/70">50</span>
-                <span className="text-blue-100 font-bold text-sm">{config.particleDensity}</span>
+                <span className="text-sm font-bold text-blue-100">{config.particleDensity}</span>
                 <span className="text-blue-200/70">250</span>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-red-900/60 to-rose-900/60 border-2 border-red-500/70 rounded-lg p-3 backdrop-blur-md">
-              <label className="text-red-300 font-bold text-xs block mb-2">🔥 场强度</label>
+            <div className="p-3 bg-gradient-to-br rounded-lg border-2 backdrop-blur-md from-red-900/60 to-rose-900/60 border-red-500/70">
+              <label className="block mb-2 text-xs font-bold text-red-300">🔥 场强度</label>
               <input
                 type="range"
                 min="1"
@@ -560,44 +597,44 @@ const CylindricalSpiralField = () => {
                 step="1"
                 value={config.fieldIntensity}
                 onChange={(e) => updateConfig('fieldIntensity', e.target.value)}
-                className="w-full h-2 bg-red-700/50 rounded-lg appearance-none cursor-pointer mb-1"
+                className="mb-1 w-full h-2 rounded-lg appearance-none cursor-pointer bg-red-700/50"
               />
               <div className="flex justify-between text-xs">
                 <span className="text-red-200/70">1</span>
-                <span className="text-red-100 font-bold text-sm">{config.fieldIntensity}</span>
+                <span className="text-sm font-bold text-red-100">{config.fieldIntensity}</span>
                 <span className="text-red-200/70">10</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between bg-black/80 rounded-xl p-4 backdrop-blur-md border-2 border-cyan-500/50">
+          <div className="flex justify-between items-center p-4 rounded-xl border-2 backdrop-blur-md bg-black/80 border-cyan-500/50">
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className="px-10 py-3 bg-gradient-to-r from-orange-500 via-yellow-500 to-cyan-500 rounded-xl font-bold text-white text-lg hover:shadow-2xl hover:shadow-cyan-500/50 transition-all hover:scale-105 border-2 border-white/30"
+              className="px-10 py-3 text-lg font-bold text-white bg-gradient-to-r from-orange-500 via-yellow-500 to-cyan-500 rounded-xl border-2 transition-all hover:shadow-2xl hover:shadow-cyan-500/50 hover:scale-105 border-white/30"
             >
               {isPlaying ? '⏸ 暂停' : '▶ 播放'}
             </button>
 
             <div className="flex gap-6 items-center">
               <div className="text-center">
-                <div className="text-orange-300 font-bold text-lg">{config.spiralCount}</div>
-                <div className="text-white/60 text-xs">螺旋方向</div>
+                <div className="text-lg font-bold text-orange-300">{config.spiralCount}</div>
+                <div className="text-xs text-white/60">螺旋方向</div>
               </div>
               <div className="text-center">
-                <div className="text-cyan-300 font-bold text-lg">r = {config.radius}</div>
-                <div className="text-white/60 text-xs">恒定半径</div>
+                <div className="text-lg font-bold text-cyan-300">r = {config.radius}</div>
+                <div className="text-xs text-white/60">恒定半径</div>
               </div>
               <div className="text-center">
-                <div className="text-yellow-300 font-bold text-lg">{config.rotations}圈</div>
-                <div className="text-white/60 text-xs">螺旋旋转</div>
+                <div className="text-lg font-bold text-yellow-300">{config.rotations}圈</div>
+                <div className="text-xs text-white/60">螺旋旋转</div>
               </div>
             </div>
 
             <div className="text-right">
-              <div className="text-cyan-300/90 text-sm font-mono mb-1">
+              <div className="mb-1 font-mono text-sm text-cyan-300/90">
                 Three.js + WebGL Shaders
               </div>
-              <div className="text-white/50 text-xs">
+              <div className="text-xs text-white/50">
                 从原点(0,0,0)球面发散 | 圆柱螺旋轨迹
               </div>
             </div>

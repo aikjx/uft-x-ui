@@ -19,6 +19,9 @@ const FormulaVisualizationPage = lazy(() => import(/* webpackChunkName: "formula
 const ArtificialFieldPage = lazy(() => import(/* webpackChunkName: "artificial-field" */ './pages/ArtificialFieldPage'));
 const InteractiveExplorationPage = lazy(() => import(/* webpackChunkName: "interactive" */ './pages/InteractiveExplorationPage'));
 const KnowledgePage = lazy(() => import(/* webpackChunkName: "knowledge" */ './pages/KnowledgePage'));
+// 添加新的可视化页面
+const SpiralDivergencePage = lazy(() => import(/* webpackChunkName: "spiral-divergence" */ './pages/SpiralDivergencePage'));
+const CylindricalSpiralFieldPage = lazy(() => import(/* webpackChunkName: "cylindrical-spiral" */ './pages/CylindricalSpiralFieldPage'));
 
 // 页面容器组件
 export const PageContainer: React.FC<{
@@ -36,7 +39,7 @@ export const PageContainer: React.FC<{
     (location.pathname === '/' || location.pathname === '/knowledge');
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-gradient-to-b from-[#050508] via-[#0a0a1a] to-[#151530]">
+    <div className="relative flex flex-col bg-gradient-to-b from-[#050508] via-[#0a0a1a] to-[#151530]">
       {/* 全局背景网格 - 优化密度 */}
       <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,rgba(59,130,246,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(59,130,246,0.015)_1px,transparent_1px)] bg-[size:80px_80px]"></div>
 
@@ -44,7 +47,7 @@ export const PageContainer: React.FC<{
       <div className="absolute top-0 right-0 left-0 z-10 h-px bg-gradient-to-r from-transparent to-transparent via-blue-500/30" />
 
       {shouldShowBackground && <ParticleBackground />}
-      <main className="container overflow-x-hidden relative z-10 flex-1 px-4 py-4 pt-20 mx-auto md:py-6">
+      <main className="container overflow-x-hidden relative z-10 px-4 py-4 mx-auto md:py-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -116,12 +119,14 @@ const LoadingFallback: React.FC = () => (
 // 根组件，包含Navbar和Footer
 const RootLayout: React.FC = () => {
   return (
-    <div className="flex flex-col App">
+    <div className="flex flex-col App min-h-screen">
       {/* 将Navbar移到Routes外部，只渲染一次 */}
       <Navbar />
 
       {/* 使用Outlet渲染子路由内容 */}
-      <Outlet />
+      <div className="flex-grow">
+        <Outlet />
+      </div>
 
       {/* Footer也移到Routes外部 */}
       <Footer />
@@ -172,6 +177,19 @@ const routes: RouteConfig[] = [
     path: "knowledge",
     element: <KnowledgePage />,
     name: "知识库",
+    priority: 3
+  },
+  // 添加新的可视化页面路由
+  {
+    path: "spiral-divergence",
+    element: <SpiralDivergencePage />,
+    name: "螺旋发散可视化",
+    priority: 3
+  },
+  {
+    path: "cylindrical-spiral",
+    element: <CylindricalSpiralFieldPage />,
+    name: "圆柱螺旋场可视化",
     priority: 3
   }
 ];
@@ -251,33 +269,42 @@ function App() {
       console.log('🚀 统一场论可视化平台启动成功');
     }
 
-    // 注册和初始化所有服务
-    registerAllServices();
-    initializeAllServices().catch(error => {
-      console.error('❌ 服务初始化失败:', error);
-      showNotification.error('服务初始化失败，请刷新页面重试');
-    });
+    try {
+      // 注册和初始化所有服务 - 添加try-catch确保即使服务初始化失败，应用也能正常运行
+      registerAllServices();
+      initializeAllServices().catch(error => {
+        console.error('❌ 服务初始化失败:', error);
+        showNotification.error('服务初始化失败，但应用仍可正常使用');
+      });
 
-    // 启动自动化性能优化
-    startAutomatedOptimization({
-      mode: AutomatedOptimizationMode.AUTO,
-      targetFPS: 60,
-      maxMemoryUsageMB: 512,
-      enableAIOptimization: true,
-      autoAdjustParticleCount: true,
-      autoAdjustRenderScale: true,
-      autoAdjustShadowQuality: true,
-      autoAdjustPostProcessing: true
-    });
+      // 启动自动化性能优化
+      startAutomatedOptimization({
+        mode: AutomatedOptimizationMode.AUTO,
+        targetFPS: 60,
+        maxMemoryUsageMB: 512,
+        enableAIOptimization: true,
+        autoAdjustParticleCount: true,
+        autoAdjustRenderScale: true,
+        autoAdjustShadowQuality: true,
+        autoAdjustPostProcessing: true
+      });
 
-    // 显示欢迎通知
-    setTimeout(() => {
-      showNotification.success('欢迎探索统一场论的奥秘！');
-    }, 1000);
+      // 显示欢迎通知
+      setTimeout(() => {
+        showNotification.success('欢迎探索统一场论的奥秘！');
+      }, 1000);
+    } catch (error) {
+      console.error('❌ 应用初始化失败:', error);
+      showNotification.error('应用初始化遇到问题，但导航菜单仍可使用');
+    }
 
     return () => {
-      // 清理资源
-      disposeAllServices();
+      try {
+        // 清理资源
+        disposeAllServices();
+      } catch (error) {
+        console.error('❌ 服务清理失败:', error);
+      }
     };
   }, []);
 
@@ -339,6 +366,12 @@ function App() {
                 break;
               case 'knowledge':
                 import('./pages/KnowledgePage').then(() => void 0);
+                break;
+              case 'spiral-divergence':
+                import('./pages/SpiralDivergencePage').then(() => void 0);
+                break;
+              case 'cylindrical-spiral':
+                import('./pages/CylindricalSpiralFieldPage').then(() => void 0);
                 break;
             }
           }

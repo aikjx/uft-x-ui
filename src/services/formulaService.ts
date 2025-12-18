@@ -1,25 +1,11 @@
 import { Formula } from '../types';
-import { Service } from './ServiceManager';
 
-export class FormulaService implements Service {
-  private static instance: FormulaService;
+export class FormulaService {
   private formulas: Map<number, Formula> = new Map();
-
-  public static getInstance(): FormulaService {
-    if (!FormulaService.instance) {
-      FormulaService.instance = new FormulaService();
-    }
-    return FormulaService.instance;
-  }
 
   constructor() {
     this.initializeFormulas();
   }
-
-  /**
-   * 服务名称
-   */
-  public readonly serviceName: string = 'FormulaService';
 
   private initializeFormulas(): void {
     const formulas: Formula[] = [
@@ -321,5 +307,3 @@ export class FormulaService implements Service {
     }
   }
 }
-
-export const formulaService = FormulaService.getInstance();

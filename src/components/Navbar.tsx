@@ -11,6 +11,7 @@ const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showParticles, setShowParticles] = useState(true);
   const navRef = useRef<HTMLDivElement>(null);
 
   const navItems = [
@@ -55,11 +56,38 @@ const Navbar: React.FC = () => {
           'fixed top-0 right-0 left-0 z-50 transition-all duration-500 ease-out transform translate-y-0',
           isScrolled
             ? 'border-b shadow-xl backdrop-blur-3xl bg-gray-900/95 border-gray-700/50 shadow-blue-500/5'
-            : 'border-b backdrop-blur-lg bg-gray-900/60 border-gray-700/30'
+            : 'border-b backdrop-blur-lg bg-gradient-to-b from-gray-900/80 to-gray-900/30 border-gray-700/30'
         )}
       >
+        {/* 背景粒子效果 */}
+        {showParticles && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
+            {[...Array(20)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1 h-1 rounded-full bg-white"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`
+                }}
+                animate={{
+                  y: [0, -100],
+                  opacity: [0.5, 0.1, 0.5],
+                  scale: [1, 2, 1]
+                }}
+                transition={{
+                  duration: 3 + Math.random() * 2,
+                  repeat: Infinity,
+                  delay: Math.random() * 2,
+                  ease: "linear"
+                }}
+              />
+            ))}
+          </div>
+        )}
+        
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-20 relative z-10">
             {/* Logo */}
             <motion.div
               ref={navRef}
@@ -78,7 +106,8 @@ const Navbar: React.FC = () => {
                   className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20"
                   animate={{
                     scale: [1, 1.2, 1],
-                    opacity: [0.3, 0.6, 0.3]
+                    opacity: [0.3, 0.6, 0.3],
+                    rotate: [0, 180, 360]
                   }}
                   transition={{
                     duration: 3,
@@ -86,11 +115,39 @@ const Navbar: React.FC = () => {
                     ease: "easeInOut"
                   }}
                 />
-                <span className="relative z-10 text-xl font-bold text-white group-hover:animate-pulse">🌌</span>
+                <motion.span 
+                  className="relative z-10 text-xl font-bold text-white group-hover:animate-pulse"
+                  animate={{
+                    rotate: [0, 10, -10, 10, 0]
+                  }}
+                  transition={{
+                    duration: 5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >🌌</motion.span>
               </div>
-              <div>
-              <h1 className="text-xl font-bold text-transparent text-white bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">统一场论</h1>
-            </div>
+              <div className="group">
+                <motion.h1 
+                  className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
+                  whileHover={{
+                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                    backgroundSize: ['200% 200%', '200% 200%', '200% 200%']
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                  style={{ backgroundSize: '200% 200%', backgroundPosition: '0% 50%' }}
+                >统一场论</motion.h1>
+                <motion.p 
+                  className="text-xs text-blue-400/80"
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >Unified Field Theory</motion.p>
+              </div>
             </motion.div>
 
             {/* Desktop Navigation */}

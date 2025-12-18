@@ -1,236 +1,98 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useCallback } from 'react';
+import { motion } from 'framer-motion';
 
-/**
- * 控制面板配置项
- */
-export interface ControlPanelConfig {
-  enabled: boolean;
-  position: 'left' | 'right' | 'top' | 'bottom';
-  width: number;
-  height: number;
-  backgroundColor: string;
-  opacity: number;
-  draggable: boolean;
+// UI状态接口
+export interface UIState {
+  /** 是否显示性能监控面板 */
+  showPerformancePanel: boolean;
+  /** 是否显示统计信息 */
+  showStats: boolean;
+  /** 是否启用自动优化模式 */
+  autoModeEnabled: boolean;
 }
 
-/**
- * 控制面板数据项
- */
-export interface ControlItem {
-  id: string;
-  label: string;
-  type: 'slider' | 'checkbox' | 'select' | 'color' | 'number';
-  value: any;
-  min?: number;
-  max?: number;
-  step?: number;
-  options?: Array<{ value: any; label: string }>;
-  onChange: (value: any) => void;
+// 组件属性接口
+export interface ControlPanelProps {
+  /** UI状态 */
+  uiState: UIState;
+  /** 更新UI状态的回调 */
+  onUpdateUIState: (updates: Partial<UIState>) => void;
+  /** 自定义CSS类名 */
+  className?: string;
 }
 
-/**
- * 控制面板组件
- */
-const ControlPanel: React.FC<{
-  title: string;
-  items: ControlItem[];
-  config?: Partial<ControlPanelConfig>;
-  onClose?: () => void;
-  isOpen?: boolean;
-}> = ({
-  title,
-  items,
-  config = {},
-  onClose,
-  isOpen = true
+const ControlPanel: React.FC<ControlPanelProps> = React.memo(({
+  uiState,
+  onUpdateUIState,
+  className = ''
 }) => {
-  const [isExpanded, setIsExpanded] = useState(isOpen);
-  const [localItems, setLocalItems] = useState(items);
+  // 切换自动优化模式
+  const toggleAutoMode = useCallback(() => {
+    onUpdateUIState({ autoModeEnabled: !uiState.autoModeEnabled });
+  }, [uiState.autoModeEnabled, onUpdateUIState]);
 
-  // 合并默认配置
-  const panelConfig: ControlPanelConfig = {
-    enabled: true,
-    position: 'right',
-    width: 300,
-    height: 500,
-    backgroundColor: '#1e1b4b',
-    opacity: 0.95,
-    draggable: false,
-    ...config
-  };
+  // 切换性能面板显示
+  const togglePerformancePanel = useCallback(() => {
+    onUpdateUIState({ showPerformancePanel: !uiState.showPerformancePanel });
+  }, [uiState.showPerformancePanel, onUpdateUIState]);
 
-  // 更新本地状态当外部items变化时
-  useEffect(() => {
-    setLocalItems(items);
-  }, [items]);
-
-  // 处理配置项变化
-  const handleItemChange = (id: string, value: any) => {
-    const item = localItems.find(item => item.id === id);
-    if (item) {
-      item.onChange(value);
-      setLocalItems(prev => prev.map(item => item.id === id ? { ...item, value } : item));
-    }
-  };
-
-  // 渲染配置项
-  const renderControlItem = (item: ControlItem) => {
-    switch (item.type) {
-      case 'slider':
-        return (
-          <div key={item.id} className="mb-4">
-            <div className="flex justify-between mb-2">
-              <label className="text-sm font-medium text-gray-300">{item.label}</label>
-              <span className="text-sm text-gray-400">{item.value.toFixed(2)}</span>
-            </div>
-            <input
-              type="range"
-              min={item.min || 0}
-              max={item.max || 100}
-              step={item.step || 1}
-              value={item.value}
-              onChange={(e) => handleItemChange(item.id, parseFloat(e.target.value))}
-              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-            />
-          </div>
-        );
-
-      case 'checkbox':
-        return (
-          <div key={item.id} className="mb-4 flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-300">{item.label}</label>
-            <input
-              type="checkbox"
-              checked={item.value}
-              onChange={(e) => handleItemChange(item.id, e.target.checked)}
-              className="w-4 h-4 text-indigo-600 bg-gray-700 rounded focus:ring-indigo-500"
-            />
-          </div>
-        );
-
-      case 'select':
-        return (
-          <div key={item.id} className="mb-4">
-            <label className="block mb-2 text-sm font-medium text-gray-300">{item.label}</label>
-            <select
-              value={item.value}
-              onChange={(e) => handleItemChange(item.id, e.target.value)}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              {item.options?.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        );
-
-      case 'color':
-        return (
-          <div key={item.id} className="mb-4">
-            <label className="block mb-2 text-sm font-medium text-gray-300">{item.label}</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={item.value}
-                onChange={(e) => handleItemChange(item.id, e.target.value)}
-                className="w-12 h-10 rounded cursor-pointer border border-gray-600"
-              />
-              <span className="text-sm text-gray-400">{item.value}</span>
-            </div>
-          </div>
-        );
-
-      case 'number':
-        return (
-          <div key={item.id} className="mb-4">
-            <label className="block mb-2 text-sm font-medium text-gray-300">{item.label}</label>
-            <input
-              type="number"
-              min={item.min}
-              max={item.max}
-              step={item.step}
-              value={item.value}
-              onChange={(e) => handleItemChange(item.id, parseFloat(e.target.value))}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
+  // 切换统计信息显示
+  const toggleStats = useCallback(() => {
+    onUpdateUIState({ showStats: !uiState.showStats });
+  }, [uiState.showStats, onUpdateUIState]);
 
   return (
-    <AnimatePresence>
-      {isExpanded && (
-        <motion.div
-          className={`fixed z-50 overflow-hidden rounded-lg shadow-2xl backdrop-blur-sm ${panelConfig.position}-0 transform transition-all duration-300 ease-in-out`}
-          style={{
-            width: panelConfig.width,
-            height: panelConfig.height,
-            backgroundColor: panelConfig.backgroundColor,
-            opacity: panelConfig.opacity
-          }}
-          initial={{ [panelConfig.position === 'left' || panelConfig.position === 'right' ? 'x' : 'y']: panelConfig.position === 'left' || panelConfig.position === 'top' ? '-100%' : '100%' }}
-          animate={{ [panelConfig.position === 'left' || panelConfig.position === 'right' ? 'x' : 'y']: 0 }}
-          exit={{ [panelConfig.position === 'left' || panelConfig.position === 'right' ? 'x' : 'y']: panelConfig.position === 'left' || panelConfig.position === 'top' ? '-100%' : '100%' }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        >
-          {/* 面板标题栏 */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gray-800/50 border-b border-gray-700">
-            <h3 className="text-lg font-semibold text-white">{title}</h3>
-            <div className="flex items-center gap-2">
-              {/* 最小化按钮 */}
-              <button
-                onClick={() => setIsExpanded(false)}
-                className="p-1 rounded hover:bg-gray-700 transition-colors"
-              >
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              {/* 关闭按钮 */}
-              {onClose && (
-                <button
-                  onClick={onClose}
-                  className="p-1 rounded hover:bg-gray-700 transition-colors"
-                >
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
+    <motion.div
+      className={`absolute top-4 left-4 p-3 text-xs text-white rounded-xl border shadow-lg backdrop-blur-md bg-black/80 border-blue-500/30 shadow-blue-500/10 ${className}`}
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3, delay: 0.2 }}
+    >
+      <div className="flex flex-col gap-2">
+        {/* 性能设置 */}
+        <div className="flex justify-between items-center">
+          <span className="text-blue-300">⚡ 自动优化</span>
+          <label className="inline-flex relative items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={uiState.autoModeEnabled}
+              onChange={toggleAutoMode}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
 
-          {/* 面板内容 */}
-          <div className="overflow-y-auto px-4 py-6 max-h-[calc(100%-60px)]">
-            {localItems.map(renderControlItem)}
-          </div>
-        </motion.div>
-      )}
+        {/* 性能面板开关 */}
+        <div className="flex justify-between items-center">
+          <span className="text-blue-300">📊 性能面板</span>
+          <label className="inline-flex relative items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={uiState.showPerformancePanel}
+              onChange={togglePerformancePanel}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
 
-      {/* 展开按钮 */}
-      {!isExpanded && (
-        <motion.button
-          className={`fixed z-50 p-2 rounded-lg shadow-lg backdrop-blur-sm ${panelConfig.position}-4 bottom-4 bg-gray-800 text-white hover:bg-gray-700 transition-all duration-300`}
-          onClick={() => setIsExpanded(true)}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          exit={{ scale: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-        </motion.button>
-      )}
-    </AnimatePresence>
+        {/* 统计信息开关 */}
+        <div className="flex justify-between items-center">
+          <span className="text-blue-300">📈 统计信息</span>
+          <label className="inline-flex relative items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={uiState.showStats}
+              onChange={toggleStats}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+      </div>
+    </motion.div>
   );
-};
+});
 
-export default ControlPanel;
+export default React.memo(ControlPanel);

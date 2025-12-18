@@ -8,7 +8,7 @@ const HomePage: React.FC = () => {
   return (
     <div className="w-full">
       {/* 英雄区域 - 增强版响应式设计 */}
-      <section className="overflow-hidden relative py-16 text-center md:py-28 lg:py-36">
+      <section className="overflow-hidden relative pt-32 pb-16 text-center md:pt-40 md:pb-28 lg:pt-48 lg:pb-36">
         {/* 动态背景网格 - 增强版 */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.15),transparent_70%)]"></div>

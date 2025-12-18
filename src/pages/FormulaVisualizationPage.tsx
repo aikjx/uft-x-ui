@@ -8,8 +8,8 @@ import { useFormula } from '../hooks/useFormula';
 import { useThreeScene } from '../hooks/useThreeScene';
 import { ANIMATION_VARIANTS, FORMULAS } from '../constants/index';
 import { cn, showNotification } from '../utils';
-import { FormulaService, formulaService } from '../services/formulaService';
-import { VisualizationService, visualizationService } from '../services/visualizationService';
+import { serviceContainer } from '../services';
+import { VisualizationService } from '../services/visualizationService';
 
 const { containerVariants, itemVariants, formulaVariants } = ANIMATION_VARIANTS;
 
@@ -18,6 +18,9 @@ const FormulaVisualizationPage: React.FC = () => {
   const { selectedFormula, isLoading, selectFormula, formulas, formulasByCategory } = useFormula();
   // 使用ref存储当前场景引用
   const currentSceneRef = useRef<THREE.Scene | null>(null);
+  
+  // 从serviceContainer获取VisualizationService实例
+  const visualizationService = serviceContainer.resolve(VisualizationService);
 
   // 使用useCallback优化导航函数
   const handleFormulaSelect = useCallback((formula: any) => {

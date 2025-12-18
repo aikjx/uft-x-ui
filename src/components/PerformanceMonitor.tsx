@@ -1,329 +1,252 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 
-/**
- * 性能监控指标类型
- */
+// 性能指标接口
 export interface PerformanceMetrics {
+  /** 帧率 */
   fps: number;
-  cpuUsage: number;
-  memoryUsage: number;
+  /** 渲染时间（毫秒） */
   renderTime: number;
+  /** 每帧时间（毫秒） */
   frameTime: number;
+  /** 内存使用情况（MB） */
+  memoryUsage: number;
+  /** 绘制调用次数 */
   drawCalls: number;
-  triangleCount: number;
-  vertexCount: number;
-  textureMemory: number;
-  shaderCount: number;
-  activeObjects: number;
+  /** 三角形数量 */
+  triangles: number;
+  /** 顶点数量 */
+  vertices: number;
+  /** GPU内存使用情况（MB） */
+  gpuMemory: number;
 }
 
-/**
- * 性能监控配置
- */
-export interface PerformanceMonitorConfig {
-  enabled: boolean;
-  refreshRate: number;
-  showFPS: boolean;
-  showCPU: boolean;
-  showMemory: boolean;
-  showRenderTime: boolean;
-  showFrameTime: boolean;
-  showDrawCalls: boolean;
-  showTriangleCount: boolean;
-  showVertexCount: boolean;
-  showTextureMemory: boolean;
-  showShaderCount: boolean;
-  showActiveObjects: boolean;
-  theme: 'dark' | 'light' | 'minimal';
-  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-  autoHide: boolean;
-  autoHideDelay: number;
-  showLabels: boolean;
-  compactMode: boolean;
+// 渲染状态接口
+export interface RenderState {
+  /** 是否正在渲染 */
+  isRendering: boolean;
+  /** 是否暂停 */
+  isPaused: boolean;
+  /** 是否正在进行性能优化 */
+  isOptimizing: boolean;
+  /** 优化级别（0-5） */
+  optimizationLevel: number;
+  /** 是否正在初始化 */
+  isInitializing: boolean;
 }
 
-/**
- * 性能等级
- */
-export enum PerformanceLevel {
-  EXCELLENT = 'excellent',
-  GOOD = 'good',
-  FAIR = 'fair',
-  POOR = 'poor',
-  CRITICAL = 'critical'
+// UI状态接口
+export interface UIState {
+  /** 是否显示性能监控面板 */
+  showPerformancePanel: boolean;
+  /** 是否显示统计信息 */
+  showStats: boolean;
+  /** 是否启用自动优化模式 */
+  autoModeEnabled: boolean;
 }
 
-/**
- * 性能监控组件
- */
-const PerformanceMonitor: React.FC<{
+// 组件属性接口
+export interface PerformanceMonitorProps {
+  /** 性能指标数据 */
   metrics: PerformanceMetrics;
-  config?: Partial<PerformanceMonitorConfig>;
-  onMetricsUpdate?: (metrics: PerformanceMetrics) => void;
-}> = ({
+  /** 渲染状态 */
+  renderState: RenderState;
+  /** UI状态 */
+  uiState: UIState;
+  /** 更新UI状态的回调 */
+  onUpdateUIState: (updates: Partial<UIState>) => void;
+  /** 自定义CSS类名 */
+  className?: string;
+}
+
+const PerformanceMonitor: React.FC<PerformanceMonitorProps> = React.memo(({
   metrics,
-  config = {},
-  onMetricsUpdate
+  renderState,
+  uiState,
+  onUpdateUIState,
+  className = ''
 }) => {
-  const [isVisible, setIsVisible] = useState(true);
-  const [localMetrics, setLocalMetrics] = useState(metrics);
-  const autoHideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // 切换性能面板显示
+  const togglePerformancePanel = useCallback(() => {
+    onUpdateUIState({ showPerformancePanel: !uiState.showPerformancePanel });
+  }, [uiState.showPerformancePanel, onUpdateUIState]);
 
-  // 合并默认配置
-  const monitorConfig: PerformanceMonitorConfig = {
-    enabled: true,
-    refreshRate: 1000,
-    showFPS: true,
-    showCPU: true,
-    showMemory: true,
-    showRenderTime: true,
-    showFrameTime: false,
-    showDrawCalls: false,
-    showTriangleCount: false,
-    showVertexCount: false,
-    showTextureMemory: false,
-    showShaderCount: false,
-    showActiveObjects: false,
-    theme: 'dark',
-    position: 'top-left',
-    autoHide: false,
-    autoHideDelay: 3000,
-    showLabels: true,
-    compactMode: false,
-    ...config
-  };
+  // 切换自动优化模式
+  const toggleAutoMode = useCallback(() => {
+    onUpdateUIState({ autoModeEnabled: !uiState.autoModeEnabled });
+  }, [uiState.autoModeEnabled, onUpdateUIState]);
 
-  // 更新本地指标
-  useEffect(() => {
-    setLocalMetrics(metrics);
-    onMetricsUpdate?.(metrics);
-  }, [metrics, onMetricsUpdate]);
+  // 切换统计信息显示
+  const toggleStats = useCallback(() => {
+    onUpdateUIState({ showStats: !uiState.showStats });
+  }, [uiState.showStats, onUpdateUIState]);
 
-  // 自动隐藏逻辑
-  useEffect(() => {
-    if (monitorConfig.autoHide) {
-      if (autoHideTimeoutRef.current) {
-        clearTimeout(autoHideTimeoutRef.current);
-      }
-      
-      setIsVisible(true);
-      autoHideTimeoutRef.current = setTimeout(() => {
-        setIsVisible(false);
-      }, monitorConfig.autoHideDelay);
-    }
-  }, [localMetrics, monitorConfig.autoHide, monitorConfig.autoHideDelay]);
-
-  // 清除定时器
-  useEffect(() => {
-    return () => {
-      if (autoHideTimeoutRef.current) {
-        clearTimeout(autoHideTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // 根据FPS获取性能等级
-  const getPerformanceLevel = (fps: number): PerformanceLevel => {
-    if (fps >= 60) return PerformanceLevel.EXCELLENT;
-    if (fps >= 45) return PerformanceLevel.GOOD;
-    if (fps >= 30) return PerformanceLevel.FAIR;
-    if (fps >= 15) return PerformanceLevel.POOR;
-    return PerformanceLevel.CRITICAL;
-  };
-
-  // 根据性能等级获取颜色
-  const getPerformanceColor = (level: PerformanceLevel): string => {
-    switch (level) {
-      case PerformanceLevel.EXCELLENT:
-        return '#10b981'; // 绿色
-      case PerformanceLevel.GOOD:
-        return '#3b82f6'; // 蓝色
-      case PerformanceLevel.FAIR:
-        return '#f59e0b'; // 黄色
-      case PerformanceLevel.POOR:
-        return '#f97316'; // 橙色
-      case PerformanceLevel.CRITICAL:
-        return '#ef4444'; // 红色
-      default:
-        return '#6b7280'; // 灰色
-    }
-  };
-
-  // 主题样式
-  const themeStyles = {
-    dark: {
-      background: 'rgba(0, 0, 0, 0.8)',
-      border: '#4b5563',
-      text: '#e5e7eb',
-      label: '#9ca3af',
-      metric: '#ffffff'
-    },
-    light: {
-      background: 'rgba(255, 255, 255, 0.9)',
-      border: '#e5e7eb',
-      text: '#111827',
-      label: '#6b7280',
-      metric: '#1f2937'
-    },
-    minimal: {
-      background: 'transparent',
-      border: 'transparent',
-      text: '#ffffff',
-      label: '#ffffff',
-      metric: '#ffffff'
-    }
-  };
-
-  const styles = themeStyles[monitorConfig.theme];
-  const performanceLevel = getPerformanceLevel(localMetrics.fps);
-  const performanceColor = getPerformanceColor(performanceLevel);
-
-  // 位置样式
-  const positionStyles = {
-    'top-left': {
-      top: '10px',
-      left: '10px'
-    },
-    'top-right': {
-      top: '10px',
-      right: '10px'
-    },
-    'bottom-left': {
-      bottom: '10px',
-      left: '10px'
-    },
-    'bottom-right': {
-      bottom: '10px',
-      right: '10px'
-    }
-  };
-
-  // 渲染性能指标项
-  const renderMetricItem = (label: string, value: number, unit: string, show: boolean, key: keyof PerformanceMetrics) => {
-    if (!show) return null;
-
-    return (
-      <motion.div
-        key={key}
-        className={`flex items-center gap-2 ${monitorConfig.showLabels ? 'flex-col items-start' : 'flex-row items-center'}`}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        {monitorConfig.showLabels && (
-          <span className="text-xs font-medium opacity-80" style={{ color: styles.label }}>
-            {label}
-          </span>
-        )}
-        <span className="text-sm font-bold" style={{ color: styles.metric }}>
-          {value.toFixed(unit === '%' ? 1 : 0)}{unit}
-        </span>
-      </motion.div>
-    );
-  };
-
-  // 渲染指标组
-  const renderMetrics = () => {
-    const metrics = [
-      renderMetricItem('FPS', localMetrics.fps, '', monitorConfig.showFPS, 'fps'),
-      renderMetricItem('CPU', localMetrics.cpuUsage, '%', monitorConfig.showCPU, 'cpuUsage'),
-      renderMetricItem('内存', localMetrics.memoryUsage, 'MB', monitorConfig.showMemory, 'memoryUsage'),
-      renderMetricItem('渲染时间', localMetrics.renderTime, 'ms', monitorConfig.showRenderTime, 'renderTime'),
-      renderMetricItem('帧时间', localMetrics.frameTime, 'ms', monitorConfig.showFrameTime, 'frameTime'),
-      renderMetricItem('绘制调用', localMetrics.drawCalls, '', monitorConfig.showDrawCalls, 'drawCalls'),
-      renderMetricItem('三角形数', localMetrics.triangleCount, 'K', monitorConfig.showTriangleCount, 'triangleCount'),
-      renderMetricItem('顶点数', localMetrics.vertexCount, 'K', monitorConfig.showVertexCount, 'vertexCount'),
-      renderMetricItem('纹理内存', localMetrics.textureMemory, 'MB', monitorConfig.showTextureMemory, 'textureMemory'),
-      renderMetricItem('着色器数', localMetrics.shaderCount, '', monitorConfig.showShaderCount, 'shaderCount'),
-      renderMetricItem('活跃对象', localMetrics.activeObjects, '', monitorConfig.showActiveObjects, 'activeObjects')
-    ].filter(Boolean);
-
-    if (monitorConfig.compactMode) {
-      return (
-        <div className="flex flex-wrap gap-3">
-          {metrics}
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid grid-cols-1 gap-2">
-        {metrics}
-      </div>
-    );
-  };
-
-  // 渲染性能等级指示器
-  const renderPerformanceIndicator = () => {
-    if (monitorConfig.compactMode) return null;
-
-    return (
-      <div className="flex items-center gap-2 mb-2">
-        <div
-          className="w-3 h-3 rounded-full animate-pulse"
-          style={{ backgroundColor: performanceColor }}
-        />
-        <span className="text-xs font-medium capitalize" style={{ color: performanceColor }}>
-          {performanceLevel}
-        </span>
-      </div>
-    );
-  };
-
-  if (!monitorConfig.enabled || (monitorConfig.autoHide && !isVisible)) {
+  // 如果不显示性能面板，直接返回null
+  if (!uiState.showPerformancePanel) {
     return null;
   }
 
   return (
-    <motion.div
-      className={`fixed z-50 p-3 rounded-lg shadow-lg transition-all duration-300 transform backdrop-blur-sm border`}
-      style={{
-        ...positionStyles[monitorConfig.position],
-        backgroundColor: styles.background,
-        borderColor: styles.border,
-        color: styles.text,
-        opacity: isVisible ? 1 : 0,
-        pointerEvents: isVisible ? 'auto' : 'none'
-      }}
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: isVisible ? 1 : 0, scale: isVisible ? 1 : 0.8 }}
-      transition={{ duration: 0.3 }}
-      onMouseEnter={() => {
-        if (monitorConfig.autoHide) {
-          setIsVisible(true);
-          if (autoHideTimeoutRef.current) {
-            clearTimeout(autoHideTimeoutRef.current);
-          }
-        }
-      }}
-      onMouseLeave={() => {
-        if (monitorConfig.autoHide) {
-          autoHideTimeoutRef.current = setTimeout(() => {
-            setIsVisible(false);
-          }, monitorConfig.autoHideDelay);
-        }
-      }}
-    >
-      {/* 性能等级指示器 */}
-      {renderPerformanceIndicator()}
-
-      {/* 性能指标 */}
-      {renderMetrics()}
-
-      {/* 最小化/展开按钮（如果需要） */}
-      {!monitorConfig.compactMode && (
-        <div className="flex items-center justify-between mt-2 pt-2 border-t opacity-70" style={{ borderColor: styles.border }}>
-          <span className="text-xs" style={{ color: styles.label }}>
-            性能监控
-          </span>
-          <svg className="w-4 h-4 opacity-70" fill="currentColor" viewBox="0 0 20 20" style={{ color: styles.text }}>
-            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-          </svg>
+    <>
+      {/* 性能监控面板 */}
+      <motion.div
+        className={`absolute top-4 right-4 p-4 text-xs text-white rounded-xl border shadow-lg backdrop-blur-lg bg-black/85 border-blue-500/30 shadow-blue-500/15 ${className}`}
+        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -20, scale: 0.95 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        whileHover={{ y: -2, boxShadow: "0 8px 30px rgba(59, 130, 246, 0.2)" }}
+      >
+        {/* 面板标题和控制 */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex gap-2 items-center">
+            <motion.span
+              className="text-blue-400"
+              animate={{ rotate: [0, 5, -5, 5, 0] }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 5 }}
+            >
+              📊
+            </motion.span>
+            <h4 className="font-semibold text-transparent text-blue-300 bg-clip-text bg-gradient-to-r from-blue-400 to-blue-300">性能监控</h4>
+          </div>
+          <motion.button
+            onClick={togglePerformancePanel}
+            className="p-1 text-gray-400 rounded-full transition-colors hover:text-white hover:bg-blue-500/20"
+            aria-label="关闭性能面板"
+            whileHover={{ scale: 1.2, rotate: 90, color: '#60a5fa' }}
+            whileTap={{ scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+          >
+            ✕
+          </motion.button>
         </div>
-      )}
-    </motion.div>
-  );
-};
 
-export default PerformanceMonitor;
+        {/* 性能指标网格 */}
+        <div className="grid grid-cols-2 gap-y-3 gap-x-6 mb-3">
+          {/* FPS指标 */}
+          <motion.div
+            className="flex flex-col"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1, duration: 0.3 }}
+            whileHover={{ scale: 1.03 }}
+          >
+            <span className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">帧率</span>
+            <div className="flex gap-1 items-baseline">
+              <motion.span
+                className={`font-mono text-lg ${metrics.fps < 30 ? 'text-red-400' : metrics.fps < 50 ? 'text-yellow-400' : 'text-green-400'}`}
+                animate={{ scale: metrics.fps < 30 ? [1, 1.1, 1] : 1 }}
+                transition={{ duration: 0.5, repeat: metrics.fps < 30 ? Infinity : 0 }}
+              >
+                {metrics.fps}
+              </motion.span>
+              <span className="text-gray-500">FPS</span>
+            </div>
+          </motion.div>
+
+          {/* 优化级别 */}
+          <motion.div
+            className="flex flex-col"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.15, duration: 0.3 }}
+            whileHover={{ scale: 1.03 }}
+          >
+            <span className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">优化级别</span>
+            <span className="font-mono text-lg text-purple-400">{renderState.optimizationLevel}</span>
+          </motion.div>
+
+          {/* 渲染时间 */}
+          <motion.div
+            className="flex flex-col"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+            whileHover={{ scale: 1.03 }}
+          >
+            <span className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">渲染时间</span>
+            <div className="flex gap-1 items-baseline">
+              <span className="font-mono text-lg text-cyan-400">{metrics.renderTime}</span>
+              <span className="text-gray-500">ms</span>
+            </div>
+          </motion.div>
+
+          {/* 内存使用 */}
+          <motion.div
+            className="flex flex-col"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.25, duration: 0.3 }}
+            whileHover={{ scale: 1.03 }}
+          >
+            <span className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">内存使用</span>
+            <div className="flex gap-1 items-baseline">
+              <span className="font-mono text-lg text-orange-400">{metrics.memoryUsage.toFixed(0)}</span>
+              <span className="text-gray-500">MB</span>
+            </div>
+          </motion.div>
+
+          {/* 绘制调用 */}
+          <motion.div
+            className="flex flex-col"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+            whileHover={{ scale: 1.03 }}
+          >
+            <span className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">绘制调用</span>
+            <span className="font-mono text-lg text-green-400">{metrics.drawCalls}</span>
+          </motion.div>
+
+          {/* 三角形数量 */}
+          <motion.div
+            className="flex flex-col"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.35, duration: 0.3 }}
+            whileHover={{ scale: 1.03 }}
+          >
+            <span className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">三角形</span>
+            <span className="font-mono text-lg text-yellow-400">{metrics.triangles.toLocaleString()}</span>
+          </motion.div>
+        </div>
+
+        {/* 渲染状态标签 */}
+        <div className="flex flex-wrap gap-2 pt-3 mt-4 border-t border-blue-500/20">
+          <motion.span
+            className={`px-2 py-1 rounded-full text-[10px] font-medium ${renderState.isRendering ? 'bg-green-500/30 text-green-300' : 'bg-gray-500/30 text-gray-300'}`}
+            whileHover={{ scale: 1.1 }}
+          >
+            {renderState.isRendering ? '🟢 渲染中' : '⏸️ 已暂停'}
+          </motion.span>
+          <motion.span
+            className={`px-2 py-1 rounded-full text-[10px] font-medium ${renderState.isOptimizing ? 'bg-purple-500/30 text-purple-300' : 'bg-gray-500/30 text-gray-300'}`}
+            whileHover={{ scale: 1.1 }}
+          >
+            {renderState.isOptimizing ? '🔮 优化中' : '✅ 已优化'}
+          </motion.span>
+          <motion.span
+            className={`px-2 py-1 rounded-full text-[10px] font-medium ${renderState.isInitializing ? 'bg-blue-500/30 text-blue-300' : 'bg-gray-500/30 text-gray-300'}`}
+            whileHover={{ scale: 1.1 }}
+          >
+            {renderState.isInitializing ? '🔄 初始化' : '✅ 就绪'}
+          </motion.span>
+        </div>
+
+        {/* 性能优化提示 */}
+        {renderState.optimizationLevel > 3 && (
+          <motion.div
+            className="pt-3 mt-3 text-xs italic border-t border-blue-500/20 text-blue-300/80"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            transition={{ delay: 0.4, duration: 0.3 }}
+          >
+            💡 当前已启用高级优化，可获得最佳性能体验
+          </motion.div>
+        )}
+      </motion.div>
+    </>
+  );
+});
+
+export default React.memo(PerformanceMonitor);

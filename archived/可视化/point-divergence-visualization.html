@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>空间点四周发散运动可视化</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #canvas {
+            display: block;
+            cursor: grab;
+        }
+
+        #canvas:active {
+            cursor: grabbing;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ffff;
+            border-radius: 8px;
+            padding: 20px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #00ffff;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        p {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #00ffff;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .value {
+            font-size: 12px;
+            color: #ffffff;
+            text-align: right;
+        }
+
+        .stats {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ffff;
+            border-radius: 8px;
+            padding: 15px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            font-size: 12px;
+        }
+
+        .stats div {
+            margin-bottom: 5px;
+        }
+
+        .stats span {
+            color: #00ffff;
+            font-weight: bold;
+        }
+
+        .fullscreen-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #00ffff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .fullscreen-btn:hover {
+            background: rgba(0, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        .fullscreen-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: #00ffff;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+        <div class="info-panel">
+            <h1>空间点四周发散运动</h1>
+            <p>这是一个展示空间中一点向四周发散粒子的可视化效果。粒子从中心点出发，沿不同方向运动，形成美丽的三维图案。</p>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="particle-count">粒子数量</label>
+                    <input type="range" id="particle-count" min="100" max="5000" value="1000" step="100">
+                    <div class="value" id="particle-count-value">1000</div>
+                </div>
+                <div class="control-group">
+                    <label for="particle-speed">粒子速度</label>
+                    <input type="range" id="particle-speed" min="0.1" max="5" value="1" step="0.1">
+                    <div class="value" id="particle-speed-value">1.0</div>
+                </div>
+                <div class="control-group">
+                    <label for="particle-size">粒子大小</label>
+                    <input type="range" id="particle-size" min="0.1" max="5" value="1" step="0.1">
+                    <div class="value" id="particle-size-value">1.0</div>
+                </div>
+                <div class="control-group">
+                    <label for="emission-rate">发射速率</label>
+                    <input type="range" id="emission-rate" min="1" max="50" value="10" step="1">
+                    <div class="value" id="emission-rate-value">10</div>
+                </div>
+                <div class="control-group">
+                    <label for="particle-life">粒子寿命</label>
+                    <input type="range" id="particle-life" min="1" max="10" value="5" step="0.5">
+                    <div class="value" id="particle-life-value">5.0</div>
+                </div>
+            </div>
+        </div>
+        <button class="fullscreen-btn" id="fullscreen-btn" title="全屏">
+            <svg viewBox="0 0 24 24">
+                <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+            </svg>
+        </button>
+        <div class="stats">
+            <div>FPS: <span id="fps">60</span></div>
+            <div>粒子数量: <span id="current-particles">0</span></div>
+            <div>中心点: <span id="center-point">0, 0, 0</span></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+    <script>
+        // 性能统计
+        class Stats {
+            constructor() {
+                this.fps = 0;
+                this.frameCount = 0;
+                this.lastTime = performance.now();
+            }
+
+            update() {
+                this.frameCount++;
+                const currentTime = performance.now();
+                if (currentTime - this.lastTime >= 1000) {
+                    this.fps = Math.round((this.frameCount * 1000) / (currentTime - this.lastTime));
+                    this.frameCount = 0;
+                    this.lastTime = currentTime;
+                }
+                return this.fps;
+            }
+        }
+
+        // 粒子系统
+        class ParticleSystem {
+            constructor(scene) {
+                this.scene = scene;
+                this.particles = [];
+                this.particleCount = 1000;
+                this.particleSpeed = 1;
+                this.particleSize = 1;
+                this.emissionRate = 10;
+                this.particleLife = 5;
+                this.centerPoint = new THREE.Vector3(0, 0, 0);
+                this.geometry = new THREE.BufferGeometry();
+                this.material = new THREE.PointsMaterial({
+                    size: 1,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.8,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false,
+                    map: this.createParticleTexture()
+                });
+                this.pointCloud = new THREE.Points(this.geometry, this.material);
+                this.scene.add(this.pointCloud);
+                this.emissionTimer = 0;
+            }
+
+            createParticleTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 64;
+                canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+                const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+                gradient.addColorStop(0, 'rgba(0, 255, 255, 1)');
+                gradient.addColorStop(0.5, 'rgba(0, 255, 255, 0.5)');
+                gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 64, 64);
+                return new THREE.CanvasTexture(canvas);
+            }
+
+            createParticle() {
+                // 随机生成方向
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                const speed = this.particleSpeed * (0.5 + Math.random() * 0.5);
+                
+                // 计算方向向量
+                const direction = new THREE.Vector3(
+                    Math.sin(phi) * Math.cos(theta),
+                    Math.sin(phi) * Math.sin(theta),
+                    Math.cos(phi)
+                ).normalize().multiplyScalar(speed);
+
+                // 随机生成颜色
+                const color = new THREE.Color();
+                const hue = Math.random() * 0.3 + 0.1; // 蓝色到青色
+                color.setHSL(hue, 1, 0.5);
+
+                return {
+                    position: this.centerPoint.clone(),
+                    velocity: direction,
+                    color: color,
+                    life: this.particleLife,
+                    maxLife: this.particleLife,
+                    size: this.particleSize * (0.5 + Math.random() * 0.5)
+                };
+            }
+
+            emit(count) {
+                for (let i = 0; i < count; i++) {
+                    if (this.particles.length < this.particleCount) {
+                        this.particles.push(this.createParticle());
+                    }
+                }
+            }
+
+            update(deltaTime) {
+                // 发射新粒子
+                this.emissionTimer += deltaTime;
+                if (this.emissionTimer >= 1 / this.emissionRate) {
+                    this.emit(1);
+                    this.emissionTimer = 0;
+                }
+
+                // 更新粒子
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const particle = this.particles[i];
+                    particle.position.add(particle.velocity.clone().multiplyScalar(deltaTime));
+                    particle.life -= deltaTime;
+
+                    // 移除死亡的粒子
+                    if (particle.life <= 0) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+
+                // 更新点云
+                this.updatePointCloud();
+            }
+
+            updatePointCloud() {
+                const positions = new Float32Array(this.particles.length * 3);
+                const colors = new Float32Array(this.particles.length * 3);
+                const sizes = new Float32Array(this.particles.length);
+
+                for (let i = 0; i < this.particles.length; i++) {
+                    const particle = this.particles[i];
+                    const index = i * 3;
+                    
+                    // 更新位置
+                    positions[index] = particle.position.x;
+                    positions[index + 1] = particle.position.y;
+                    positions[index + 2] = particle.position.z;
+
+                    // 更新颜色（根据生命周期）
+                    const lifeRatio = particle.life / particle.maxLife;
+                    const color = particle.color.clone();
+                    color.multiplyScalar(lifeRatio);
+                    colors[index] = color.r;
+                    colors[index + 1] = color.g;
+                    colors[index + 2] = color.b;
+
+                    // 更新大小
+                    sizes[i] = particle.size * lifeRatio;
+                }
+
+                // 更新几何体
+                this.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                this.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                this.geometry.attributes.position.needsUpdate = true;
+                this.geometry.attributes.color.needsUpdate = true;
+            }
+
+            setParticleCount(count) {
+                this.particleCount = count;
+            }
+
+            setParticleSpeed(speed) {
+                this.particleSpeed = speed;
+            }
+
+            setParticleSize(size) {
+                this.particleSize = size;
+            }
+
+            setEmissionRate(rate) {
+                this.emissionRate = rate;
+            }
+
+            setParticleLife(life) {
+                this.particleLife = life;
+            }
+
+            reset() {
+                this.particles = [];
+                this.updatePointCloud();
+            }
+        }
+
+        // 主应用
+        class App {
+            constructor() {
+                this.container = document.getElementById('container');
+                this.canvas = document.getElementById('canvas');
+                this.stats = new Stats();
+                this.init();
+            }
+
+            init() {
+                // 初始化场景
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x000000);
+
+                // 初始化相机
+                this.camera = new THREE.PerspectiveCamera(
+                    75,
+                    window.innerWidth / window.innerHeight,
+                    0.1,
+                    1000
+                );
+                this.camera.position.set(0, 0, 20);
+
+                // 初始化渲染器
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas: this.canvas,
+                    antialias: true
+                });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+                // 添加灯光
+                this.addLights();
+
+                // 添加粒子系统
+                this.particleSystem = new ParticleSystem(this.scene);
+
+                // 添加辅助元素
+                this.addHelpers();
+
+                // 初始化控制器
+                this.initControls();
+
+                // 初始化事件监听
+                this.initEventListeners();
+
+                // 开始动画循环
+                this.animate();
+            }
+
+            addLights() {
+                // 环境光
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+                this.scene.add(ambientLight);
+
+                // 点光源
+                const pointLight = new THREE.PointLight(0x00ffff, 1, 100);
+                pointLight.position.set(0, 0, 0);
+                this.scene.add(pointLight);
+
+                // 添加发光效果
+                const glowGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+                const glowMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x00ffff,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const glowSphere = new THREE.Mesh(glowGeometry, glowMaterial);
+                this.scene.add(glowSphere);
+            }
+
+            addHelpers() {
+                // 添加坐标系
+                const axesHelper = new THREE.AxesHelper(5);
+                this.scene.add(axesHelper);
+
+                // 添加网格
+                const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+                this.scene.add(gridHelper);
+            }
+
+            initControls() {
+                // 鼠标控制
+                this.mouse = new THREE.Vector2();
+                this.raycaster = new THREE.Raycaster();
+                this.isMouseDown = false;
+                this.lastMousePos = { x: 0, y: 0 };
+                this.cameraAngle = { theta: 0, phi: Math.PI / 2 };
+                this.cameraDistance = 20;
+
+                // 键盘控制
+                this.keys = {};
+            }
+
+            initEventListeners() {
+                // 窗口大小变化
+                window.addEventListener('resize', () => this.onWindowResize());
+
+                // 鼠标事件
+                this.canvas.addEventListener('mousedown', (event) => this.onMouseDown(event));
+                this.canvas.addEventListener('mousemove', (event) => this.onMouseMove(event));
+                this.canvas.addEventListener('mouseup', () => this.onMouseUp());
+                this.canvas.addEventListener('wheel', (event) => this.onWheel(event));
+
+                // 键盘事件
+                window.addEventListener('keydown', (event) => this.onKeyDown(event));
+                window.addEventListener('keyup', (event) => this.onKeyUp(event));
+
+                // 全屏按钮
+                document.getElementById('fullscreen-btn').addEventListener('click', () => this.toggleFullscreen());
+
+                // 控制面板
+                this.initControlPanel();
+            }
+
+            initControlPanel() {
+                const particleCountSlider = document.getElementById('particle-count');
+                const particleCountValue = document.getElementById('particle-count-value');
+                particleCountSlider.addEventListener('input', (event) => {
+                    const value = parseInt(event.target.value);
+                    particleCountValue.textContent = value;
+                    this.particleSystem.setParticleCount(value);
+                });
+
+                const particleSpeedSlider = document.getElementById('particle-speed');
+                const particleSpeedValue = document.getElementById('particle-speed-value');
+                particleSpeedSlider.addEventListener('input', (event) => {
+                    const value = parseFloat(event.target.value);
+                    particleSpeedValue.textContent = value.toFixed(1);
+                    this.particleSystem.setParticleSpeed(value);
+                });
+
+                const particleSizeSlider = document.getElementById('particle-size');
+                const particleSizeValue = document.getElementById('particle-size-value');
+                particleSizeSlider.addEventListener('input', (event) => {
+                    const value = parseFloat(event.target.value);
+                    particleSizeValue.textContent = value.toFixed(1);
+                    this.particleSystem.setParticleSize(value);
+                });
+
+                const emissionRateSlider = document.getElementById('emission-rate');
+                const emissionRateValue = document.getElementById('emission-rate-value');
+                emissionRateSlider.addEventListener('input', (event) => {
+                    const value = parseInt(event.target.value);
+                    emissionRateValue.textContent = value;
+                    this.particleSystem.setEmissionRate(value);
+                });
+
+                const particleLifeSlider = document.getElementById('particle-life');
+                const particleLifeValue = document.getElementById('particle-life-value');
+                particleLifeSlider.addEventListener('input', (event) => {
+                    const value = parseFloat(event.target.value);
+                    particleLifeValue.textContent = value.toFixed(1);
+                    this.particleSystem.setParticleLife(value);
+                });
+            }
+
+            onWindowResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            onMouseDown(event) {
+                this.isMouseDown = true;
+                this.lastMousePos = { x: event.clientX, y: event.clientY };
+            }
+
+            onMouseMove(event) {
+                if (this.isMouseDown) {
+                    const deltaX = event.clientX - this.lastMousePos.x;
+                    const deltaY = event.clientY - this.lastMousePos.y;
+
+                    // 更新相机角度
+                    this.cameraAngle.theta += deltaX * 0.005;
+                    this.cameraAngle.phi = Math.max(0.1, Math.min(Math.PI - 0.1, this.cameraAngle.phi - deltaY * 0.005));
+
+                    // 更新相机位置
+                    this.updateCameraPosition();
+
+                    this.lastMousePos = { x: event.clientX, y: event.clientY };
+                }
+            }
+
+            onMouseUp() {
+                this.isMouseDown = false;
+            }
+
+            onWheel(event) {
+                // 缩放相机
+                this.cameraDistance = Math.max(5, Math.min(50, this.cameraDistance - event.deltaY * 0.01));
+                this.updateCameraPosition();
+            }
+
+            updateCameraPosition() {
+                const x = this.cameraDistance * Math.sin(this.cameraAngle.phi) * Math.cos(this.cameraAngle.theta);
+                const y = this.cameraDistance * Math.cos(this.cameraAngle.phi);
+                const z = this.cameraDistance * Math.sin(this.cameraAngle.phi) * Math.sin(this.cameraAngle.theta);
+                this.camera.position.set(x, y, z);
+                this.camera.lookAt(0, 0, 0);
+            }
+
+            onKeyDown(event) {
+                this.keys[event.code] = true;
+            }
+
+            onKeyUp(event) {
+                this.keys[event.code] = false;
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    this.container.requestFullscreen().catch(err => {
+                        console.error(`全屏请求失败: ${err.message}`);
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            }
+
+            updateStats() {
+                const fps = this.stats.update();
+                document.getElementById('fps').textContent = fps;
+                document.getElementById('current-particles').textContent = this.particleSystem.particles.length;
+                document.getElementById('center-point').textContent = '0, 0, 0';
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                // 更新粒子系统
+                this.particleSystem.update(0.016);
+
+                // 更新相机位置（如果有键盘控制）
+                this.updateCameraPosition();
+
+                // 渲染场景
+                this.renderer.render(this.scene, this.camera);
+
+                // 更新统计信息
+                this.updateStats();
+            }
+        }
+
+        // 启动应用
+        window.addEventListener('DOMContentLoaded', () => {
+            new App();
+        });
+    </script>
+</body>
+</html>

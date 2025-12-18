@@ -1,5 +1,15 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js';
+import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass.js';
+import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js';
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { VISUALIZATION_CONFIG } from '../constants';
 import { SceneManager } from './SceneManager';
 import { CameraManager } from './CameraManager';
@@ -24,6 +34,14 @@ export class RenderEngine {
   private sceneManager: SceneManager;
   private cameraManager: CameraManager;
   private renderer: THREE.WebGLRenderer;
+  private composer: EffectComposer | null = null;
+  private renderPass: RenderPass | null = null;
+  private bloomPass: UnrealBloomPass | null = null;
+  private outlinePass: OutlinePass | null = null;
+  private fxaaPass: ShaderPass | null = null;
+  private smaaPass: SMAAPass | null = null;
+  private filmPass: FilmPass | null = null;
+  private glitchPass: GlitchPass | null = null;
   private controls: OrbitControls | null;
   private config: RenderEngineConfig;
   private animationId: number | null = null;
@@ -50,6 +68,7 @@ export class RenderEngine {
     this.controls = this.config.enableControls ? this.createControls() : null;
 
     this.setupScene();
+    this.setupPostProcessing();
   }
 
   /**
@@ -62,7 +81,9 @@ export class RenderEngine {
       powerPreference: 'high-performance',
       premultipliedAlpha: false,
       preserveDrawingBuffer: false,
-      stencil: false
+      stencil: true,
+      depth: true,
+      logarithmicDepthBuffer: true
     });
 
     // 初始设置
@@ -74,19 +95,19 @@ export class RenderEngine {
 
     renderer.setSize(width, height);
     renderer.setPixelRatio(optimalPixelRatio);
-    renderer.setClearColor(VISUALIZATION_CONFIG.clearColor || 0x000000, VISUALIZATION_CONFIG.clearAlpha || 1);
+    renderer.setClearColor(VISUALIZATION_CONFIG.clearColor || 0x000000, VISUALIZATION_CONFIG.clearAlpha || 0.8);
 
-    // 性能优化设置
+    // 高级渲染设置
     renderer.autoClear = true;
     renderer.localClippingEnabled = false;
     renderer.info.autoReset = true;
     renderer.sortObjects = true;
-    renderer.toneMapping = THREE.LinearToneMapping;
-    renderer.toneMappingExposure = 1.0;
-    
-    // 优化：在新版本Three.js中，渲染器会自动处理像素格式，不再需要手动设置
-    // renderer.setPixelFormat(THREE.RGBAFormat);
-    // renderer.setDepthFormat(THREE.DepthFormat);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.5;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ReinhardToneMapping;
+    renderer.toneMappingExposure = 2.0;
+    renderer.physicallyCorrectLights = true;
 
     // 阴影优化
     if (VISUALIZATION_CONFIG.performance?.enableShadowMap) {
@@ -94,13 +115,84 @@ export class RenderEngine {
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.shadowMap.autoUpdate = false;
       renderer.shadowMap.needsUpdate = true;
-      // 移除：renderSingleSided属性在新版本Three.js中已移除
+      renderer.shadowMap.renderSingleSided = false;
     }
 
     // 添加到容器
     this.container.appendChild(renderer.domElement);
 
     return renderer;
+  }
+
+  /**
+   * 设置后期处理效果 - 优化性能，减少不必要的通道
+   */
+  private setupPostProcessing(): void {
+    const { width, height } = this.container.getBoundingClientRect();
+    
+    // 创建效果合成器
+    this.composer = new EffectComposer(this.renderer);
+    
+    // 渲染通道
+    this.renderPass = new RenderPass(
+      this.sceneManager.getScene(),
+      this.cameraManager.getCamera()
+    );
+    this.composer.addPass(this.renderPass);
+    
+    // 只添加必要的后期处理通道，减少性能消耗
+    
+    // 1. 基础抗锯齿 - 根据设备性能选择合适的抗锯齿方案
+    const useHighQualityAA = VISUALIZATION_CONFIG.performance?.highQualityAA || false;
+    if (useHighQualityAA) {
+      // SMAAPass - 高质量抗锯齿，性能消耗较大
+      this.smaaPass = new SMAAPass(width, height);
+      this.composer.addPass(this.smaaPass);
+    } else {
+      // FXAA - 快速抗锯齿，性能消耗较小
+      this.fxaaPass = new ShaderPass(FXAAShader);
+      this.fxaaPass.material.uniforms['resolution'].value.x = 1 / width;
+      this.fxaaPass.material.uniforms['resolution'].value.y = 1 / height;
+      this.composer.addPass(this.fxaaPass);
+    }
+    
+    // 2. 泛光效果 - 可选，根据性能设置强度
+    this.bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(width, height),
+      1.0, // 降低强度，提高性能
+      0.3, // 降低半径，提高性能
+      0.85 // 阈值
+    );
+    this.composer.addPass(this.bloomPass);
+    
+    // 3. 边缘轮廓通道 - 可选，默认禁用，需要时启用
+    this.outlinePass = new OutlinePass(
+      new THREE.Vector2(width, height),
+      this.sceneManager.getScene(),
+      this.cameraManager.getCamera()
+    );
+    this.outlinePass.edgeStrength = 3.0;
+    this.outlinePass.edgeGlow = 1.5;
+    this.outlinePass.edgeThickness = 2.0;
+    this.outlinePass.pulsePeriod = 2.0;
+    this.outlinePass.visibleEdgeColor.set('#00ffff');
+    this.outlinePass.hiddenEdgeColor.set('#00ffff');
+    this.outlinePass.enabled = false; // 默认禁用，减少性能消耗
+    this.composer.addPass(this.outlinePass);
+    
+    // 4. 其他效果通道 - 默认禁用，需要时启用
+    this.filmPass = new FilmPass(
+      0.3, // 噪点强度
+      0.025, // 扫描线强度
+      648, // 扫描线计数
+      false // 灰度
+    );
+    this.filmPass.enabled = false;
+    this.composer.addPass(this.filmPass);
+    
+    this.glitchPass = new GlitchPass();
+    this.glitchPass.enabled = false;
+    this.composer.addPass(this.glitchPass);
   }
 
   /**
@@ -126,24 +218,67 @@ export class RenderEngine {
   private setupScene(): void {
     const scene = this.sceneManager.getScene();
 
-    // 添加灯光
-    const ambientLight = new THREE.AmbientLight(0xffffff, this.config.ambientLightIntensity);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, this.config.directionalLightIntensity);
-    directionalLight.position.set(5, 10, 7.5);
-
-    if (VISUALIZATION_CONFIG.performance.enableShadowMap) {
-      directionalLight.castShadow = true;
-      directionalLight.shadow.mapSize.width = 2048;
-      directionalLight.shadow.mapSize.height = 2048;
+    // 设置场景雾效
+    if (this.config.enableFog) {
+      scene.fog = new THREE.FogExp2(0x000000, 0.03);
     }
 
-    scene.add(ambientLight, directionalLight);
+    // 添加高级灯光系统
+    // 1. 环境光
+    const ambientLight = new THREE.AmbientLight(0x404040, this.config.ambientLightIntensity);
+    scene.add(ambientLight);
+
+    // 2. 主方向光
+    const directionalLight = new THREE.DirectionalLight(0xffffff, this.config.directionalLightIntensity);
+    directionalLight.position.set(5, 10, 7.5);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    directionalLight.shadow.camera.near = 0.5;
+    directionalLight.shadow.camera.far = 50;
+    directionalLight.shadow.camera.left = -20;
+    directionalLight.shadow.camera.right = 20;
+    directionalLight.shadow.camera.top = 20;
+    directionalLight.shadow.camera.bottom = -20;
+    scene.add(directionalLight);
+
+    // 3. 补光
+    const fillLight = new THREE.DirectionalLight(0x87CEEB, 0.3);
+    fillLight.position.set(-5, 5, -7.5);
+    scene.add(fillLight);
+
+    // 4. 点光源 - 用于创建发光效果
+    const pointLight1 = new THREE.PointLight(0x00ffff, 1, 100);
+    pointLight1.position.set(10, 10, 10);
+    pointLight1.castShadow = true;
+    scene.add(pointLight1);
+
+    const pointLight2 = new THREE.PointLight(0xff00ff, 1, 100);
+    pointLight2.position.set(-10, -10, -10);
+    pointLight2.castShadow = true;
+    scene.add(pointLight2);
+
+    // 5. 聚光灯 - 用于强调特定区域
+    const spotLight = new THREE.SpotLight(0xffffff, 0.5);
+    spotLight.position.set(0, 20, 0);
+    spotLight.angle = Math.PI / 4;
+    spotLight.penumbra = 0.1;
+    spotLight.decay = 2;
+    spotLight.distance = 50;
+    spotLight.castShadow = true;
+    spotLight.shadow.mapSize.width = 1024;
+    spotLight.shadow.mapSize.height = 1024;
+    spotLight.shadow.camera.near = 1;
+    spotLight.shadow.camera.far = 20;
+    scene.add(spotLight);
 
     // 添加网格辅助线
     if (VISUALIZATION_CONFIG.showGrid) {
       const gridHelper = new THREE.GridHelper(
         VISUALIZATION_CONFIG.gridSize,
-        VISUALIZATION_CONFIG.gridDivisions
+        VISUALIZATION_CONFIG.gridDivisions,
+        0x444444,
+        0x222222
       );
       gridHelper.name = 'gridHelper';
       scene.add(gridHelper);
@@ -155,6 +290,48 @@ export class RenderEngine {
       axesHelper.name = 'axesHelper';
       scene.add(axesHelper);
     }
+
+    // 添加星空背景
+    this.addStarfield(scene);
+  }
+
+  /**
+   * 添加星空背景 - 优化性能，减少星星数量，使用实例化渲染
+   */
+  private addStarfield(scene: THREE.Scene): void {
+    // 优化：减少星星数量，根据设备性能动态调整
+    const starsCount = VISUALIZATION_CONFIG.performance?.starCount || 2000;
+    
+    let starsGeometry = new THREE.BufferGeometry();
+    const starsMaterial = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.1,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending, // 优化：使用加法混合，提高视觉效果同时降低性能消耗
+      depthWrite: false, // 优化：禁用深度写入，提高性能
+      sizeAttenuation: true // 优化：启用大小衰减，提高视觉效果
+    });
+
+    const starsVertices = [];
+    for (let i = 0; i < starsCount; i++) {
+      const x = (Math.random() - 0.5) * 2000;
+      const y = (Math.random() - 0.5) * 2000;
+      const z = (Math.random() - 0.5) * 2000;
+      starsVertices.push(x, y, z);
+    }
+
+    starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+    
+    // 优化：使用BufferGeometryUtils优化几何体
+    try {
+      starsGeometry = BufferGeometryUtils.mergeVertices(starsGeometry, 0.1);
+    } catch (error) {
+      console.warn('BufferGeometryUtils.mergeVertices failed:', error);
+    }
+    
+    const stars = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(stars);
   }
 
   /**
@@ -203,7 +380,6 @@ export class RenderEngine {
       memoryUsageMB: Math.round(memoryUsageMB),
       drawCalls: renderer.info.render.calls,
       triangles: renderer.info.render.triangles,
-      vertices: renderer.info.render.vertices,
       optimizationLevel: this.config.dynamicPixelRatio ? 2 : 1,
       pixelRatio: renderer.getPixelRatio()
     };
@@ -211,7 +387,7 @@ export class RenderEngine {
     // 触发性能指标更新事件
     // @ts-ignore - 假设eventSystem存在
     if (typeof eventSystem !== 'undefined') {
-      eventSystem.emit(APP_EVENTS.PERFORMANCE_METRICS_UPDATED, metrics);
+      eventSystem.emit(APP_EVENTS.PERFORMANCE_METRICS_UPDATE, metrics);
     }
     
     // 限制历史数据长度，避免内存泄漏
@@ -248,11 +424,16 @@ export class RenderEngine {
     // 记录渲染开始时间
     const renderStartTime = performance.now();
     
-    // 渲染场景
-    this.renderer.render(
-      this.sceneManager.getScene(),
-      this.cameraManager.getCamera()
-    );
+    // 使用效果合成器渲染场景
+    if (this.composer) {
+      this.composer.render();
+    } else {
+      // 备选方案：直接渲染
+      this.renderer.render(
+        this.sceneManager.getScene(),
+        this.cameraManager.getCamera()
+      );
+    }
     
     // 记录渲染结束时间
     const renderEndTime = performance.now();
@@ -320,6 +501,22 @@ export class RenderEngine {
     
     this.renderer.setPixelRatio(optimalPixelRatio);
     this.renderer.setSize(width, height);
+    
+    // 更新后期处理效果
+    if (this.composer) {
+      this.composer.setSize(width, height);
+      
+      // 更新FXAA分辨率
+      if (this.fxaaPass) {
+        this.fxaaPass.material.uniforms['resolution'].value.x = 1 / width;
+        this.fxaaPass.material.uniforms['resolution'].value.y = 1 / height;
+      }
+      
+      // 更新边缘轮廓通道
+      if (this.outlinePass) {
+        this.outlinePass.setSize(width, height);
+      }
+    }
     
     // 优化：更新阴影贴图大小
     if (this.renderer.shadowMap.enabled) {
@@ -406,6 +603,12 @@ export class RenderEngine {
       this.controls = null;
     }
     
+    // 释放后期处理资源
+    if (this.composer) {
+      this.composer.dispose();
+      this.composer = null;
+    }
+    
     // 清理性能监控数据
     this.performanceData = {
       frameCount: 0,
@@ -438,8 +641,8 @@ export class RenderEngine {
     frameTime: number;
     drawCalls: number;
     triangles: number;
-    vertices: number;
   } {
+    
     const now = performance.now();
     const elapsed = now - this.performanceData.startTime;
     const fps = (this.performanceData.frameCount / elapsed) * 1000;
@@ -457,8 +660,7 @@ export class RenderEngine {
       renderTime: avgRenderTime,
       frameTime: avgFrameTime,
       drawCalls: this.renderer.info.render.calls,
-      triangles: this.renderer.info.render.triangles,
-      vertices: this.renderer.info.render.vertices
+      triangles: this.renderer.info.render.triangles
     };
   }
 

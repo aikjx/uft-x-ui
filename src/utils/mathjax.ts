@@ -35,6 +35,9 @@ class MathJaxService {
   private maxRetries: number = 3;
   private isClient: boolean = typeof window !== 'undefined' && typeof document !== 'undefined';
   private mergedConfig: any = {};
+  // 添加公式缓存，避免重复渲染相同的公式
+  private formulaCache: Map<string, string> = new Map();
+  private elementCache: Map<HTMLElement, string> = new Map();
   
   private constructor() {
     // 初始化时检查环境
@@ -398,7 +401,7 @@ class MathJaxService {
   }
   
   /**
-   * 立即渲染指定元素
+   * 立即渲染指定元素 - 优化性能，添加缓存机制
    */
   public async typeset(elements?: HTMLElement[]): Promise<void> {
     if (!this.isClient || !this.isReady || !window.MathJax) {
@@ -412,6 +415,28 @@ class MathJaxService {
       if (elements.length === 0) {
         return; // 没有有效元素，直接返回
       }
+      
+      // 过滤掉已经渲染过相同内容的元素
+      const elementsToRender: HTMLElement[] = [];
+      for (const element of elements) {
+        const currentContent = element.textContent?.trim() || '';
+        const cachedContent = this.elementCache.get(element);
+        
+        // 只有当内容变化时才需要重新渲染
+        if (cachedContent !== currentContent) {
+          elementsToRender.push(element);
+          // 更新缓存
+          this.elementCache.set(element, currentContent);
+        }
+      }
+      
+      // 如果没有需要渲染的元素，直接返回
+      if (elementsToRender.length === 0) {
+        return;
+      }
+      
+      // 使用过滤后的元素数组
+      elements = elementsToRender;
     }
     
     try {

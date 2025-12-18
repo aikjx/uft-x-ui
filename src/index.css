@@ -53,6 +53,11 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #444466;
   }
+  
+  /* Ensure proper box sizing */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
 }
 
 @layer utilities {
@@ -119,5 +124,14 @@
 
   .delay-500 {
     animation-delay: 0.5s;
+  }
+  
+  /* 添加缺失的实用类 */
+  .min-h-screen {
+    min-height: 100vh;
+  }
+  
+  .flex-col {
+    flex-direction: column;
   }
 }

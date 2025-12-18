@@ -20,6 +20,7 @@ import { PhysicsEngine } from '../core/PhysicsEngine';
 import { unifiedPerformanceManager, UnifiedPerformanceConfig } from '../performance/UnifiedPerformanceManager';
 import { eventSystem, APP_EVENTS } from '../utils/eventSystem';
 import { VISUALIZATION_CONFIG } from '../constants';
+import { LODSystem, lodSystem } from '../performance/LODSystem';
 
 // 可视化模块依赖注入类型
 export interface VisualizationDependencies {
@@ -115,6 +116,37 @@ export interface VisualizationConfig {
   dependencies?: VisualizationDependencies;
 }
 
+// 可视化模式类型
+export enum VisualizationMode {
+  DEFAULT = 'default',
+  EQUATION = 'equation',
+  FIELD = 'field',
+  PARTICLE = 'particle',
+  WAVE = 'wave',
+  ORBITAL = 'orbital',
+  SPIRAL = 'spiral',
+  QUANTUM = 'quantum',
+  RELATIVITY = 'relativity',
+  COSMOLOGICAL = 'cosmological',
+  NEURAL = 'neural',
+  INTERACTIVE = 'interactive',
+  VR = 'vr',
+  AR = 'ar'
+}
+
+// 可视化预设接口
+export interface VisualizationPreset {
+  id: string;
+  name: string;
+  description: string;
+  mode: VisualizationMode;
+  config: VisualizationConfig;
+  createdAt: number;
+  updatedAt: number;
+  tags: string[];
+  thumbnail?: string;
+}
+
 // 可视化管理器事件类型
 export enum VisualizationEvent {
   INITIALIZED = 'visualization:initialized',
@@ -133,7 +165,11 @@ export enum VisualizationEvent {
   COMPONENT_ADDED = 'visualization:component:added',
   COMPONENT_REMOVED = 'visualization:component:removed',
   DISPOSED = 'visualization:disposed',
-  TEXTURE_QUALITY_UPDATED = 'visualization:texture-quality:updated'
+  TEXTURE_QUALITY_UPDATED = 'visualization:texture-quality:updated',
+  MODE_CHANGED = 'visualization:mode:changed',
+  PRESET_APPLIED = 'visualization:preset:applied',
+  PRESET_SAVED = 'visualization:preset:saved',
+  PRESET_DELETED = 'visualization:preset:deleted'
 }
 
 /**
@@ -169,6 +205,188 @@ export class VisualizationManager {
   private frameTime: number = 0;
   private lastMetricsUpdateTime: number = 0;
   
+  // 可视化模式和预设相关属性
+  private currentMode: VisualizationMode = VisualizationMode.DEFAULT;
+  private presets: Map<string, VisualizationPreset> = new Map();
+  private defaultPresets: VisualizationPreset[] = [
+    {
+      id: 'preset-default',
+      name: '默认可视化',
+      description: '标准的统一场论可视化模式',
+      mode: VisualizationMode.DEFAULT,
+      config: {
+        scene: {
+          backgroundColor: 0x000000,
+          fog: { type: 'exponential', color: 0x000000, density: 0.01 },
+          enableGrid: false,
+          enableAxes: false
+        },
+        camera: {
+          fov: 75,
+          position: new THREE.Vector3(0, 0, 5),
+          lookAt: new THREE.Vector3(0, 0, 0)
+        },
+        postProcessing: {
+          enabled: true,
+          bloom: {
+            enabled: true,
+            intensity: 1.5,
+            radius: 0.5,
+            threshold: 0.1
+          },
+          film: {
+            enabled: true,
+            noiseIntensity: 0.3,
+            scanlineIntensity: 0.025,
+            scanlineCount: 256
+          }
+        }
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      tags: ['default', 'standard', 'basic'],
+      thumbnail: ''
+    },
+    {
+      id: 'preset-equation',
+      name: '方程可视化',
+      description: '专注于方程的可视化模式',
+      mode: VisualizationMode.EQUATION,
+      config: {
+        scene: {
+          backgroundColor: 0x0a0a0a,
+          enableGrid: true,
+          enableAxes: true
+        },
+        postProcessing: {
+          enabled: true,
+          bloom: {
+            enabled: false
+          },
+          film: {
+            enabled: false
+          }
+        }
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      tags: ['equation', 'formula', 'math'],
+      thumbnail: ''
+    },
+    {
+      id: 'preset-field',
+      name: '场论可视化',
+      description: '专注于场论的可视化模式',
+      mode: VisualizationMode.FIELD,
+      config: {
+        scene: {
+          backgroundColor: 0x000022,
+          fog: { type: 'exponential', color: 0x000022, density: 0.02 }
+        },
+        postProcessing: {
+          enabled: true,
+          bloom: {
+            enabled: true,
+            intensity: 2.0,
+            radius: 0.8,
+            threshold: 0.05
+          }
+        }
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      tags: ['field', 'field-theory', 'physics'],
+      thumbnail: ''
+    },
+    {
+      id: 'preset-particle',
+      name: '粒子效果',
+      description: '增强的粒子效果模式',
+      mode: VisualizationMode.PARTICLE,
+      config: {
+        scene: {
+          backgroundColor: 0x000000
+        },
+        particleSystem: {
+          enabled: true,
+          maxParticles: 200000,
+          emissionRate: 1000
+        },
+        postProcessing: {
+          enabled: true,
+          bloom: {
+            enabled: true,
+            intensity: 2.5,
+            radius: 0.6,
+            threshold: 0.1
+          }
+        }
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      tags: ['particle', 'effects', 'visual'],
+      thumbnail: ''
+    },
+    {
+      id: 'preset-quantum',
+      name: '量子力学模式',
+      description: '量子力学风格的可视化',
+      mode: VisualizationMode.QUANTUM,
+      config: {
+        scene: {
+          backgroundColor: 0x000011,
+          fog: { type: 'linear', color: 0x000011, near: 1, far: 100 }
+        },
+        postProcessing: {
+          enabled: true,
+          bloom: {
+            enabled: true,
+            intensity: 1.8,
+            radius: 0.7,
+            threshold: 0.08
+          }
+        }
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      tags: ['quantum', 'physics', 'advanced'],
+      thumbnail: ''
+    },
+    {
+      id: 'preset-cosmological',
+      name: '宇宙学模式',
+      description: '宇宙学风格的可视化',
+      mode: VisualizationMode.COSMOLOGICAL,
+      config: {
+        scene: {
+          backgroundColor: 0x000000,
+          fog: { type: 'exponential', color: 0x000000, density: 0.005 }
+        },
+        camera: {
+          fov: 60,
+          position: new THREE.Vector3(0, 0, 10),
+          lookAt: new THREE.Vector3(0, 0, 0)
+        },
+        postProcessing: {
+          enabled: true,
+          bloom: {
+            enabled: true,
+            intensity: 1.2,
+            radius: 0.9,
+            threshold: 0.05
+          },
+          film: {
+            enabled: false
+          }
+        }
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      tags: ['cosmology', 'universe', 'space'],
+      thumbnail: ''
+    }
+  ];
+
   // 单例模式构造函数
   private constructor(config: Partial<VisualizationConfig> = {}) {
     // 提取依赖项
@@ -178,7 +396,6 @@ export class VisualizationManager {
     this.config = {
       scene: {
         backgroundColor: VISUALIZATION_CONFIG.backgroundColor || 0x000000,
-        fog: VISUALIZATION_CONFIG.fog || undefined,
         enableGrid: false,
         enableAxes: false,
         ...config.scene
@@ -239,6 +456,12 @@ export class VisualizationManager {
         monitorUpdateInterval: 1000,
         enablePerformanceLogging: false,
         loggingLevel: 'info',
+        strategy: 'auto',
+        enableAutoQualityAdjustment: true,
+        enableAdaptiveRendering: true,
+        enableBloomOptimization: true,
+        enableParticleOptimization: true,
+        enableShadowOptimization: false,
         ...config.performance
       },
       dependencies: dependencies
@@ -249,6 +472,9 @@ export class VisualizationManager {
     this.fieldVisualizerManager = dependencies.fieldVisualizerManager || null;
     this.resourceManager = dependencies.resourceManager || null;
     this.physicsEngine = dependencies.physicsEngine || null;
+    
+    // 初始化预设
+    this.initializePresets();
     
     // 初始化事件监听
     this.initializeEventListeners();
@@ -264,6 +490,16 @@ export class VisualizationManager {
     return VisualizationManager.instance;
   }
   
+  /**
+   * 初始化预设
+   */
+  private initializePresets(): void {
+    // 添加默认预设
+    this.defaultPresets.forEach(preset => {
+      this.presets.set(preset.id, preset);
+    });
+  }
+
   /**
    * 初始化事件监听
    */
@@ -302,6 +538,264 @@ export class VisualizationManager {
     eventSystem.on(APP_EVENTS.TEXTURE_QUALITY_CHANGE, (data) => {
       this.handleTextureQualityChange(data.quality);
     });
+  }
+
+  /**
+   * 设置可视化模式
+   */
+  public setMode(mode: VisualizationMode): void {
+    this.currentMode = mode;
+    
+    // 根据模式应用默认配置
+    const modeConfig: Partial<VisualizationConfig> = {};
+    
+    switch (mode) {
+      case VisualizationMode.EQUATION:
+        modeConfig.scene = {
+          enableGrid: true,
+          enableAxes: true
+        };
+        modeConfig.postProcessing = {
+          bloom: { enabled: false },
+          film: { enabled: false }
+        };
+        break;
+        
+      case VisualizationMode.FIELD:
+        modeConfig.scene = {
+          backgroundColor: 0x000022,
+          fog: { type: 'exponential', color: 0x000022, density: 0.02 }
+        };
+        modeConfig.postProcessing = {
+          bloom: {
+            enabled: true,
+            intensity: 2.0,
+            radius: 0.8,
+            threshold: 0.05
+          }
+        };
+        break;
+        
+      case VisualizationMode.PARTICLE:
+        modeConfig.particleSystem = {
+          enabled: true,
+          maxParticles: 200000,
+          emissionRate: 1000
+        };
+        modeConfig.postProcessing = {
+          bloom: {
+            enabled: true,
+            intensity: 2.5,
+            radius: 0.6,
+            threshold: 0.1
+          }
+        };
+        break;
+        
+      default:
+        // 使用默认配置
+        break;
+    }
+    
+    // 应用配置
+    this.updateConfig(modeConfig);
+    
+    // 发布模式变化事件
+    eventSystem.emit(VisualizationEvent.MODE_CHANGED, { mode });
+  }
+
+  /**
+   * 获取当前可视化模式
+   */
+  public getMode(): VisualizationMode {
+    return this.currentMode;
+  }
+
+  /**
+   * 应用预设
+   */
+  public applyPreset(id: string): void {
+    const preset = this.presets.get(id);
+    if (!preset) {
+      console.warn(`Preset ${id} not found`);
+      return;
+    }
+    
+    // 应用预设配置
+    this.updateConfig(preset.config);
+    
+    // 更新当前模式
+    this.currentMode = preset.mode;
+    
+    // 发布预设应用事件
+    eventSystem.emit(VisualizationEvent.PRESET_APPLIED, { preset });
+  }
+
+  /**
+   * 保存预设
+   */
+  public savePreset(preset: Omit<VisualizationPreset, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }): string {
+    const id = preset.id || `preset-${Date.now()}`;
+    const now = Date.now();
+    
+    const newPreset: VisualizationPreset = {
+      ...preset,
+      id,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.presets.set(id, newPreset);
+    
+    // 发布预设保存事件
+    eventSystem.emit(VisualizationEvent.PRESET_SAVED, { preset: newPreset });
+    
+    return id;
+  }
+
+  /**
+   * 删除预设
+   */
+  public deletePreset(id: string): void {
+    const preset = this.presets.get(id);
+    if (!preset) return;
+    
+    this.presets.delete(id);
+    
+    // 发布预设删除事件
+    eventSystem.emit(VisualizationEvent.PRESET_DELETED, { id });
+  }
+
+  /**
+   * 获取预设
+   */
+  public getPreset(id: string): VisualizationPreset | undefined {
+    return this.presets.get(id);
+  }
+
+  /**
+   * 获取所有预设
+   */
+  public getAllPresets(): VisualizationPreset[] {
+    return Array.from(this.presets.values());
+  }
+
+  /**
+   * 根据标签获取预设
+   */
+  public getPresetsByTag(tag: string): VisualizationPreset[] {
+    return Array.from(this.presets.values()).filter(preset => preset.tags.includes(tag));
+  }
+
+  /**
+   * 根据模式获取预设
+   */
+  public getPresetsByMode(mode: VisualizationMode): VisualizationPreset[] {
+    return Array.from(this.presets.values()).filter(preset => preset.mode === mode);
+  }
+
+  /**
+   * 更新配置
+   */
+  public updateConfig(config: Partial<VisualizationConfig>): void {
+    // 合并配置
+    this.config = {
+      ...this.config,
+      scene: {
+        ...this.config.scene,
+        ...config.scene
+      },
+      camera: {
+        ...this.config.camera,
+        ...config.camera
+      },
+      renderer: {
+        ...this.config.renderer,
+        ...config.renderer
+      },
+      controls: {
+        ...this.config.controls,
+        ...config.controls
+      },
+      postProcessing: {
+        ...this.config.postProcessing,
+        bloom: {
+          ...this.config.postProcessing?.bloom,
+          ...config.postProcessing?.bloom
+        },
+        film: {
+          ...this.config.postProcessing?.film,
+          ...config.postProcessing?.film
+        }
+      },
+      particleSystem: {
+        ...this.config.particleSystem,
+        ...config.particleSystem
+      },
+      performance: {
+        ...this.config.performance,
+        ...config.performance
+      }
+    };
+    
+    // 应用配置到场景
+    this.applyConfigToScene();
+  }
+
+  /**
+   * 应用配置到场景
+   */
+  private applyConfigToScene(): void {
+    if (!this.scene || !this.camera || !this.renderer) return;
+    
+    // 更新场景
+    if (this.config.scene) {
+      if (this.config.scene.backgroundColor !== undefined) {
+        this.scene.background = new THREE.Color(this.config.scene.backgroundColor);
+      }
+      
+      if (this.config.scene.fog) {
+        const fogConfig = this.config.scene.fog;
+        if (fogConfig.type === 'linear') {
+          this.scene.fog = new THREE.Fog(
+            fogConfig.color || 0x000000,
+            fogConfig.near || 1,
+            fogConfig.far || 100
+          );
+        } else {
+          this.scene.fog = new THREE.FogExp2(
+            fogConfig.color || 0x000000,
+            fogConfig.density || 0.01
+          );
+        }
+      } else {
+        this.scene.fog = null;
+      }
+    }
+    
+    // 更新相机
+    if (this.config.camera) {
+      if (this.config.camera.fov !== undefined) {
+        this.camera.fov = this.config.camera.fov;
+        this.camera.updateProjectionMatrix();
+      }
+      
+      if (this.config.camera.position) {
+        this.camera.position.copy(this.config.camera.position);
+      }
+      
+      if (this.config.camera.lookAt) {
+        this.camera.lookAt(this.config.camera.lookAt);
+      }
+    }
+    
+    // 更新后处理
+    this.reinitializePostProcessing();
+    
+    // 更新粒子系统
+    if (this.particleSystemManager && this.config.particleSystem) {
+      // 这里可以添加粒子系统配置更新逻辑
+    }
   }
   
   /**
@@ -343,12 +837,15 @@ export class VisualizationManager {
       // 8. 初始化资源管理器
       this.initializeResourceManager();
       
-      // 9. 初始化性能优化系统
+      // 9. 初始化LOD系统
+      this.initializeLODSystem();
+      
+      // 10. 初始化性能优化系统
       if (this.scene && this.camera && this.renderer) {
         unifiedPerformanceManager.initialize(this.scene, this.camera, this.renderer);
       }
       
-      // 10. 添加默认场景元素
+      // 11. 添加默认场景元素
       this.addDefaultSceneElements();
       
       this.isInitialized = true;
@@ -366,6 +863,17 @@ export class VisualizationManager {
       console.error('❌ VisualizationManager initialization failed:', error);
       throw error;
     }
+  }
+
+  /**
+   * 初始化LOD系统
+   */
+  private initializeLODSystem(): void {
+    if (this.camera) {
+      lodSystem.setCamera(this.camera);
+    }
+    
+    console.log('📊 LOD system initialized');
   }
   
   /**
@@ -534,11 +1042,10 @@ export class VisualizationManager {
     
     // 添加电影颗粒效果通道
     if (this.config.postProcessing.film?.enabled) {
+      // 创建电影效果通道（FilmPass构造函数只接受0-2个参数）
       const filmPass = new FilmPass(
         this.config.postProcessing.film.noiseIntensity || 0.1,
-        this.config.postProcessing.film.scanlineIntensity || 0.1,
-        this.config.postProcessing.film.scanlineCount || 800,
-        false
+        this.config.postProcessing.film.scanlineIntensity || 0.1
       );
       this.composer.addPass(filmPass);
     }
@@ -744,6 +1251,9 @@ export class VisualizationManager {
       this.controls.update();
     }
     
+    // 更新LOD系统
+    lodSystem.updateLOD();
+    
     // 只在需要时更新粒子系统（根据性能设置）
     if (this.particleSystemManager) {
       this.particleSystemManager.update(deltaTime);
@@ -770,7 +1280,7 @@ export class VisualizationManager {
         frameTime: this.frameTime,
         drawCalls: this.renderer.info.render.calls,
         triangleCount: this.renderer.info.render.triangles,
-        vertexCount: this.renderer.info.render.vertices,
+        vertexCount: this.renderer.info.render.points + this.renderer.info.render.lines + this.renderer.info.render.triangles,
         activeObjects: this.scene.children.length,
         particleCount: this.particleSystemManager?.getStats().particleCount || 0,
         sceneComplexity: this.scene.children.length,

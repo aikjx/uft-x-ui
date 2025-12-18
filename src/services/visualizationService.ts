@@ -1,21 +1,7 @@
 import * as THREE from 'three';
 import { Formula } from '../types';
-import { Service } from './ServiceManager';
 
-export class VisualizationService implements Service {
-  private static instance: VisualizationService;
-
-  public static getInstance(): VisualizationService {
-    if (!VisualizationService.instance) {
-      VisualizationService.instance = new VisualizationService();
-    }
-    return VisualizationService.instance;
-  }
-
-  /**
-   * 服务名称
-   */
-  public readonly serviceName: string = 'VisualizationService';
+export class VisualizationService {
 
   public createGridHelper(size: number = 10, divisions: number = 10): THREE.GridHelper {
     const gridHelper = new THREE.GridHelper(size, divisions, 0x444444, 0x222222);
@@ -354,5 +340,3 @@ export class VisualizationService implements Service {
     }
   }
 }
-
-export const visualizationService = VisualizationService.getInstance();

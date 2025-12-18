@@ -3,24 +3,34 @@
  * 统一管理所有服务的注册和初始化
  */
 
-import { serviceManager } from './ServiceManager';
-import { FormulaService, formulaService } from './formulaService';
-import { VisualizationService, visualizationService } from './visualizationService';
+import { serviceContainer, Injectable, ServiceLifetime } from './ServiceContainer';
+import { FormulaService } from './formulaService';
+import { VisualizationService } from './visualizationService';
 import { FieldTheoristPerformanceMonitor } from './fieldTheoryService';
-import { ErrorMonitoringService, errorMonitoringService } from './ErrorMonitoringService';
+import { ErrorMonitoringService } from './ErrorMonitoringService';
 
 /**
  * 注册所有服务
  */
 export const registerAllServices = (): void => {
-  // 创建服务实例
-  const performanceMonitor = new FieldTheoristPerformanceMonitor();
-  
   // 注册服务
-  serviceManager.register(formulaService);
-  serviceManager.register(visualizationService, ['FormulaService']);
-  serviceManager.register(performanceMonitor, ['FormulaService']);
-  serviceManager.register(errorMonitoringService); // 错误监控服务，无需依赖
+  serviceContainer.register(FormulaService, FormulaService, {
+    lifetime: ServiceLifetime.SINGLETON
+  });
+  
+  serviceContainer.register(VisualizationService, VisualizationService, {
+    lifetime: ServiceLifetime.SINGLETON,
+    dependencies: [FormulaService]
+  });
+  
+  serviceContainer.register(FieldTheoristPerformanceMonitor, FieldTheoristPerformanceMonitor, {
+    lifetime: ServiceLifetime.SINGLETON,
+    dependencies: [FormulaService]
+  });
+  
+  serviceContainer.register(ErrorMonitoringService, ErrorMonitoringService, {
+    lifetime: ServiceLifetime.SINGLETON
+  }); // 错误监控服务，无需依赖
   
   console.log('📋 All services registered successfully');
 };
@@ -30,7 +40,7 @@ export const registerAllServices = (): void => {
  */
 export const initializeAllServices = async (): Promise<void> => {
   try {
-    await serviceManager.initializeAllServices();
+    await serviceContainer.initializeAllServices();
     console.log('✅ All services initialized successfully');
   } catch (error) {
     console.error('❌ Failed to initialize services:', error);
@@ -42,16 +52,12 @@ export const initializeAllServices = async (): Promise<void> => {
  * 销毁所有服务
  */
 export const disposeAllServices = (): void => {
-  serviceManager.disposeAllServices();
+  serviceContainer.disposeAllServices();
   console.log('💥 All services disposed successfully');
 };
 
 /**
- * 导出服务管理器和服务实例
+ * 导出服务容器
  */
-export { serviceManager };
-export { formulaService };
-export { visualizationService };
-export { FieldTheoristPerformanceMonitor };
-export { errorMonitoringService };
+export { serviceContainer };
 export type { PerformanceData } from './fieldTheoryService';

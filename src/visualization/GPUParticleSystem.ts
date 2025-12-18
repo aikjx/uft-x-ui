@@ -184,7 +184,7 @@ export class GPUParticleSystem {
         USE_TURBULENCE: config.turbulence > 0 ? '1' : '0',
         USE_DAMPING: config.damping < 1 ? '1' : '0'
       },
-      precision: 'highp' as THREE.Precision, // 根据设备选择精度
+      precision: 'highp' as any, // 根据设备选择精度
       clipping: false // 禁用裁剪以提高性能
     });
     

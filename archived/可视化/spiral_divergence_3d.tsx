@@ -109,31 +109,56 @@ const SpiralDivergenceVisualization = () => {
       cylinders.push(cylinder);
       scene.add(cylinder);
 
-      // 为每个方向创建螺旋粒子系统
+      // 为每个方向创建螺旋粒子系统 - 优化：使用 BufferGeometry 和 Points
       const spiralParticles = [];
       const particleCount = 60;
       
+      // 存储粒子数据用于更新
       for (let j = 0; j < particleCount; j++) {
-        const geometry = new THREE.SphereGeometry(0.15, 12, 12);
-        const material = new THREE.MeshPhongMaterial({
-          color: directions[i].color,
-          emissive: directions[i].color,
-          emissiveIntensity: 0.4,
-          transparent: true,
-          opacity: 0.9
-        });
-        const particle = new THREE.Mesh(geometry, material);
-        
         spiralParticles.push({
-          mesh: particle,
           phase: j * 0.1,
-          index: j
+          index: j,
+          position: new THREE.Vector3()
         });
-        scene.add(particle);
       }
+      
+      // 创建 BufferGeometry 用于 Points
+      const particleGeometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+      const colors = new Float32Array(particleCount * 3);
+      const sizes = new Float32Array(particleCount);
+      
+      // 初始化位置和颜色
+      for (let j = 0; j < particleCount; j++) {
+        const color = directions[i].color;
+        colors[j * 3] = color.r;
+        colors[j * 3 + 1] = color.g;
+        colors[j * 3 + 2] = color.b;
+        sizes[j] = 0.3 + Math.random() * 0.2;
+      }
+      
+      particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+      
+      // 使用 PointsMaterial 而非 MeshPhongMaterial
+      const particleMaterial = new THREE.PointsMaterial({
+        vertexColors: true,
+        size: 0.3,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        sizeAttenuation: true
+      });
+      
+      const particles = new THREE.Points(particleGeometry, particleMaterial);
+      scene.add(particles);
       
       spiralSystems.push({
         particles: spiralParticles,
+        pointsObject: particles,
+        geometry: particleGeometry,
         direction: direction,
         angle: angle,
         color: directions[i].color
@@ -202,7 +227,9 @@ const SpiralDivergenceVisualization = () => {
 
         // 更新每个方向的螺旋粒子 - 圆柱状螺旋发散
         spiralSystems.forEach((system, sysIndex) => {
-          system.particles.forEach((particle) => {
+          const positions = system.geometry.attributes.position.array;
+          
+          system.particles.forEach((particle, particleIndex) => {
             const t = (time + particle.phase) % 8;
             
             // 圆柱参数
@@ -241,15 +268,17 @@ const SpiralDivergenceVisualization = () => {
             // 最终位置 = 主方向位置 + 径向偏移
             const finalPosition = mainDirection.clone().add(radialOffset);
             
-            particle.mesh.position.copy(finalPosition);
+            // 更新 BufferGeometry 中的位置数据
+            positions[particleIndex * 3] = finalPosition.x;
+            positions[particleIndex * 3 + 1] = finalPosition.y;
+            positions[particleIndex * 3 + 2] = finalPosition.z;
             
-            // 根据距离调整透明度和大小
-            const distance = finalPosition.length();
-            particle.mesh.material.opacity = Math.max(0.1, 1 - distance / 20);
-            
-            const scale = 1 + (distance / 30);
-            particle.mesh.scale.set(scale, scale, scale);
+            // 存储位置用于其他计算
+            particle.position.copy(finalPosition);
           });
+          
+          // 标记位置属性需要更新
+          system.geometry.attributes.position.needsUpdate = true;
         });
       }
 
@@ -276,28 +305,58 @@ const SpiralDivergenceVisualization = () => {
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      mountRef.current?.removeChild(renderer.domElement);
+      
+      // 清理螺旋系统资源
+      cylinders.forEach(cylinder => {
+        scene.remove(cylinder);
+        cylinder.geometry.dispose();
+        cylinder.material.dispose();
+      });
+      
+      spiralSystems.forEach(system => {
+        if (system.pointsObject) {
+          scene.remove(system.pointsObject);
+          system.geometry.dispose();
+          system.pointsObject.material.dispose();
+        }
+      });
+      
+      // 清理其他资源
+      scene.remove(centralSphere);
+      scene.remove(glowSphere);
+      scene.remove(ambientLight);
+      scene.remove(pointLight1);
+      scene.remove(pointLight2);
+      scene.remove(axesHelper);
+      scene.remove(gridHelper);
+      
+      centralGeometry.dispose();
+      centralMaterial.dispose();
+      glowGeometry.dispose();
+      glowMaterial.dispose();
+      
       renderer.dispose();
+      mountRef.current?.removeChild(renderer.domElement);
     };
   }, [isAnimating, speed, showCylinders]);
 
   return (
-    <div className="w-full h-screen bg-gray-900 flex flex-col">
-      <div className="bg-gradient-to-r from-indigo-900 via-purple-900 to-pink-900 p-6 text-white">
-        <h1 className="text-3xl font-bold mb-3">物体12方向圆柱状螺旋发散运动</h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm opacity-90">
+    <div className="flex flex-col w-full h-screen bg-gray-900">
+      <div className="p-6 text-white bg-gradient-to-r from-indigo-900 via-purple-900 to-pink-900">
+        <h1 className="mb-3 text-3xl font-bold">物体12方向圆柱状螺旋发散运动</h1>
+        <div className="grid grid-cols-1 gap-2 text-sm opacity-90 md:grid-cols-3">
           <p>• 时空同一化: <span className="font-mono">r⃗(t) = C⃗t</span></p>
           <p>• 三维螺旋: <span className="font-mono">r⃗(t) = r·cos(ωt)i⃗ + r·sin(ωt)j⃗ + ht·k⃗</span></p>
           <p>• 质量定义: <span className="font-mono">m = k·(dn/dΩ)</span></p>
         </div>
       </div>
       
-      <div className="flex-1 relative" ref={mountRef}>
-        <div className="absolute top-4 right-4 bg-black bg-opacity-80 text-white p-4 rounded-lg space-y-3 z-10 max-w-xs">
-          <h3 className="font-bold text-lg border-b border-gray-600 pb-2">控制面板</h3>
+      <div className="relative flex-1" ref={mountRef}>
+        <div className="absolute top-4 right-4 z-10 p-4 space-y-3 max-w-xs text-white bg-black bg-opacity-80 rounded-lg">
+          <h3 className="pb-2 text-lg font-bold border-b border-gray-600">控制面板</h3>
           
           <div>
-            <label className="block text-sm mb-1">运动速度: {speed.toFixed(1)}x</label>
+            <label className="block mb-1 text-sm">运动速度: {speed.toFixed(1)}x</label>
             <input
               type="range"
               min="0.1"
@@ -322,12 +381,12 @@ const SpiralDivergenceVisualization = () => {
           
           <button
             onClick={() => setIsAnimating(!isAnimating)}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-4 py-2 rounded-lg transition-all font-semibold"
+            className="px-4 py-2 w-full font-semibold bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg transition-all hover:from-blue-700 hover:to-purple-700"
           >
             {isAnimating ? '⏸ 暂停' : '▶ 播放'}
           </button>
           
-          <div className="text-xs mt-4 space-y-2 border-t border-gray-600 pt-3">
+          <div className="pt-3 mt-4 space-y-2 text-xs border-t border-gray-600">
             <p className="font-semibold">可视化说明:</p>
             <p>🟡 中心物体发出</p>
             <p>🌈 12个方向圆柱体</p>
@@ -336,8 +395,8 @@ const SpiralDivergenceVisualization = () => {
           </div>
         </div>
 
-        <div className="absolute bottom-4 left-4 bg-black bg-opacity-80 text-white p-3 rounded-lg text-xs z-10">
-          <p className="font-semibold mb-1">圆柱状螺旋运动特征：</p>
+        <div className="absolute bottom-4 left-4 z-10 p-3 text-xs text-white bg-black bg-opacity-80 rounded-lg">
+          <p className="mb-1 font-semibold">圆柱状螺旋运动特征：</p>
           <p>• 12个均匀分布方向</p>
           <p>• 每个方向为独立圆柱体</p>
           <p>• 粒子在圆柱内螺旋前进</p>

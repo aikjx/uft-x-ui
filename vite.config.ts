@@ -5,16 +5,24 @@ import { resolve } from 'path';
 import viteCompression from 'vite-plugin-compression';
 import { splitVendorChunkPlugin } from 'vite';
 
-// 自定义构建优化插件
+// 自定义构建优化插件 - 增强版
 const customBuildOptimizer = {
   name: 'custom-build-optimizer',
   enforce: 'pre' as const,
   config(config) {
     // 自动优化构建配置
     config.build = config.build || {};
+    
+    // 优化构建输出
+    config.build.assetsInlineLimit = 4096; // 4KB以下的资源内联
+    config.build.cssCodeSplit = true; // 启用CSS代码分割
+    config.build.rollupOptions = config.build.rollupOptions || {};
+    
     return config;
   }
 };
+
+
 
 export default defineConfig({
   plugins: [
@@ -24,17 +32,17 @@ export default defineConfig({
     customBuildOptimizer,
     // 添加gzip和brotli压缩
     viteCompression({
-      verbose: true,
+      verbose: false, // 关闭详细日志
       disable: false,
-      threshold: 10240, // 10KB以上才压缩
+      threshold: 4096, // 4KB以上才压缩，减少小文件压缩开销
       algorithm: 'gzip',
       ext: '.gz',
       deleteOriginFile: false
     }),
     viteCompression({
-      verbose: true,
+      verbose: false, // 关闭详细日志
       disable: false,
-      threshold: 10240,
+      threshold: 4096,
       algorithm: 'brotliCompress',
       ext: '.br',
       deleteOriginFile: false
@@ -136,18 +144,32 @@ export default defineConfig({
     exclude: [],
     // 预构建配置优化
     esbuildOptions: {
-      target: 'esnext',
+      target: 'es2020', // 降低目标，提高兼容性
       // 优化预构建的tree shaking
       treeShaking: true,
       // 优化chunk大小
       bundle: true,
       // 优化依赖解析
-      resolveExtensions: ['.ts', '.tsx', '.js', '.jsx', '.json']
+      resolveExtensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+      // 移除无用代码
+      pure: ['console.log', 'console.info', 'console.debug', 'console.warn'],
+      // 优化代码生成
+      minify: true,
+      minifySyntax: true,
+      minifyIdentifiers: true,
+      minifyWhitespace: true,
+      // 优化输出大小
+      keepNames: false,
+      legalComments: 'none'
     },
     // 强制预构建所有依赖
     force: false,
     // 提高预构建并发数
-    maxWorkers: process.env.CI ? 2 : undefined
+    maxWorkers: process.env.CI ? 2 : undefined,
+    // 启用依赖优化缓存
+    cacheDir: 'node_modules/.vite',
+    // 优化依赖顺序
+    orderImports: true
   },
   // 优化静态资源处理
   assetsInclude: ['**/*.md', '**/*.pdf', '**/*.glb', '**/*.gltf'],

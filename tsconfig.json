@@ -22,7 +22,9 @@
       "@pages/*": ["src/pages/*"],
       "@utils/*": ["src/utils/*"]
     },
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": [
     "src/**/*.ts",
