@@ -3,11 +3,15 @@ import type { RouteRecordRaw } from 'vue-router'
 
 // 路由懒加载 - 添加魔法注释优化预加载
 const HomePage = () => import(/* webpackChunkName: "home" */ '@/pages/HomePage.vue')
-const UnifiedFieldVisualization = () => import(/* webpackChunkName: "unified-field" */ '@/pages/UnifiedFieldVisualization.vue')
-const FormulaVisualizationPage = () => import(/* webpackChunkName: "formula" */ '@/pages/FormulaVisualizationPage.vue')
-const InteractiveExplorationPage = () => import(/* webpackChunkName: "interactive" */ '@/pages/InteractiveExplorationPage.vue')
+const UnifiedFieldVisualization = () =>
+  import(/* webpackChunkName: "unified-field" */ '@/pages/UnifiedFieldVisualization.vue')
+const FormulaVisualizationPage = () =>
+  import(/* webpackChunkName: "formula" */ '@/pages/FormulaVisualizationPage.vue')
+const InteractiveExplorationPage = () =>
+  import(/* webpackChunkName: "interactive" */ '@/pages/InteractiveExplorationPage.vue')
 const KnowledgePage = () => import(/* webpackChunkName: "knowledge" */ '@/pages/KnowledgePage.vue')
-const CodeOptimizerPage = () => import(/* webpackChunkName: "optimizer" */ '@/pages/CodeOptimizerPage.vue')
+const CodeOptimizerPage = () =>
+  import(/* webpackChunkName: "optimizer" */ '@/pages/CodeOptimizerPage.vue')
 const NotFoundPage = () => import(/* webpackChunkName: "404" */ '@/pages/NotFound.vue')
 
 // 路由配置
@@ -88,7 +92,7 @@ const router = createRouter({
 // 全局前置守卫
 router.beforeEach((to, _from, next) => {
   // 设置页面标题
-  document.title = to.meta.title as string || 'UFT-X - 统一场论可视化'
+  document.title = (to.meta.title as string) || 'UFT-X - 统一场论可视化'
   next()
 })
 

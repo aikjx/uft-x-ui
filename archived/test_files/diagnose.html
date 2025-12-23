@@ -1,324 +1,332 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>公式加载诊断</title>
-  <style>
-    body {
-      font-family: monospace;
-      padding: 20px;
-      background: #1e1e1e;
-      color: #d4d4d4;
-    }
-
-    .section {
-      background: #252526;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 5px;
-      border-left: 4px solid #007acc;
-    }
-
-    .success {
-      border-left-color: #4ec9b0;
-    }
-
-    .error {
-      border-left-color: #f48771;
-    }
-
-    .warning {
-      border-left-color: #dcdcaa;
-    }
-
-    h2 {
-      color: #4ec9b0;
-      margin-top: 0;
-    }
-
-    pre {
-      background: #1e1e1e;
-      padding: 10px;
-      border-radius: 3px;
-      overflow-x: auto;
-    }
-
-    .test-formula {
-      background: #2d2d30;
-      padding: 20px;
-      margin: 10px 0;
-      border-radius: 5px;
-      min-height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    button {
-      background: #007acc;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 3px;
-      cursor: pointer;
-      margin: 5px;
-    }
-
-    button:hover {
-      background: #005a9e;
-    }
-  </style>
-</head>
-
-<body>
-  <h1>🔍 公式加载诊断工具</h1>
-
-  <div class="section" id="status-section">
-    <h2>1. 系统状态</h2>
-    <div id="status-info">检查中...</div>
-  </div>
-
-  <div class="section">
-    <h2>2. 测试公式渲染</h2>
-    <p>测试 1: 带 $ 符号的公式</p>
-    <div class="test-formula" id="test1">$E = mc^2$</div>
-
-    <p>测试 2: 不带 $ 符号的公式</p>
-    <div class="test-formula" id="test2">\[E = mc^2\]</div>
-
-    <p>测试 3: 向量公式</p>
-    <div class="test-formula" id="test3">$\vec{F} = m\vec{a}$</div>
-
-    <button onclick="renderTests()">🔄 重新渲染测试</button>
-  </div>
-
-  <div class="section">
-    <h2>3. 模拟组件处理</h2>
-    <div id="component-test"></div>
-    <button onclick="testComponentLogic()">🧪 测试组件逻辑</button>
-  </div>
-
-  <div class="section">
-    <h2>4. 控制台日志</h2>
-    <pre id="console-log"></pre>
-  </div>
-
-  <div class="section">
-    <h2>5. 快速修复</h2>
-    <button onclick="quickFix()">⚡ 一键修复</button>
-    <button onclick="location.reload()">🔃 刷新页面</button>
-  </div>
-
-  <script>
-    let logs = [];
-
-    function log (message, type = 'info') {
-      const timestamp = new Date().toLocaleTimeString();
-      const logMessage = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
-      logs.push(logMessage);
-      console.log(logMessage);
-      updateConsoleLog();
-    }
-
-    function updateConsoleLog () {
-      document.getElementById('console-log').textContent = logs.join('\n');
-    }
-
-    // 检查系统状态
-    function checkStatus () {
-      const statusDiv = document.getElementById('status-info');
-      const statusSection = document.getElementById('status-section');
-
-      let html = '<pre>';
-      let allGood = true;
-
-      // 检查 MathJax
-      if (window.MathJax) {
-        html += '✅ MathJax 对象存在\n';
-        log('MathJax 对象存在', 'success');
-      } else {
-        html += '❌ MathJax 对象不存在\n';
-        log('MathJax 对象不存在', 'error');
-        allGood = false;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>公式加载诊断</title>
+    <style>
+      body {
+        font-family: monospace;
+        padding: 20px;
+        background: #1e1e1e;
+        color: #d4d4d4;
       }
 
-      // 检查 typesetPromise
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        html += '✅ typesetPromise 可用\n';
-        log('typesetPromise 可用', 'success');
-      } else {
-        html += '❌ typesetPromise 不可用\n';
-        log('typesetPromise 不可用', 'error');
-        allGood = false;
+      .section {
+        background: #252526;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border-left: 4px solid #007acc;
       }
 
-      // 检查 startup
-      if (window.MathJax && window.MathJax.startup) {
-        html += '✅ startup 存在\n';
-        log('startup 存在', 'success');
-      } else {
-        html += '❌ startup 不存在\n';
-        log('startup 不存在', 'error');
-        allGood = false;
+      .success {
+        border-left-color: #4ec9b0;
       }
 
-      html += '\n当前时间: ' + new Date().toLocaleString();
-      html += '</pre>';
-
-      statusDiv.innerHTML = html;
-      statusSection.className = allGood ? 'section success' : 'section error';
-    }
-
-    // 渲染测试
-    async function renderTests () {
-      log('开始渲染测试', 'info');
-
-      if (!window.MathJax || !window.MathJax.typesetPromise) {
-        log('MathJax 不可用，无法渲染', 'error');
-        alert('❌ MathJax 未加载，请等待或刷新页面');
-        return;
+      .error {
+        border-left-color: #f48771;
       }
 
-      try {
-        const elements = [
-          document.getElementById('test1'),
-          document.getElementById('test2'),
-          document.getElementById('test3')
-        ];
-
-        await window.MathJax.typesetPromise(elements);
-        log('测试渲染成功', 'success');
-        alert('✅ 测试渲染成功！');
-      } catch (error) {
-        log('测试渲染失败: ' + error.message, 'error');
-        alert('❌ 渲染失败: ' + error.message);
-      }
-    }
-
-    // 测试组件逻辑
-    function testComponentLogic () {
-      log('测试组件逻辑', 'info');
-
-      const testDiv = document.getElementById('component-test');
-
-      // 模拟 cleanFormula 函数
-      function cleanFormula (text) {
-        if (!text) return '';
-
-        let cleaned = text.trim()
-          .replace(/^\$\$|\$\$$/g, '')
-          .replace(/^\$|\$$/g, '')
-          .replace(/^\\\[|\\\]$/g, '')
-          .replace(/^\\\(|\\\)$/g, '')
-          .replace(/&nbsp;/g, ' ')
-          .trim();
-
-        return cleaned;
+      .warning {
+        border-left-color: #dcdcaa;
       }
 
-      // 模拟 wrapFormula 函数
-      function wrapFormula (formula, inline = false) {
-        const cleaned = cleanFormula(formula);
-        if (!cleaned) return '';
+      h2 {
+        color: #4ec9b0;
+        margin-top: 0;
+      }
 
-        if (inline) {
-          return `\\(${cleaned}\\)`;
+      pre {
+        background: #1e1e1e;
+        padding: 10px;
+        border-radius: 3px;
+        overflow-x: auto;
+      }
+
+      .test-formula {
+        background: #2d2d30;
+        padding: 20px;
+        margin: 10px 0;
+        border-radius: 5px;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      button {
+        background: #007acc;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 3px;
+        cursor: pointer;
+        margin: 5px;
+      }
+
+      button:hover {
+        background: #005a9e;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>🔍 公式加载诊断工具</h1>
+
+    <div class="section" id="status-section">
+      <h2>1. 系统状态</h2>
+      <div id="status-info">检查中...</div>
+    </div>
+
+    <div class="section">
+      <h2>2. 测试公式渲染</h2>
+      <p>测试 1: 带 $ 符号的公式</p>
+      <div class="test-formula" id="test1">$E = mc^2$</div>
+
+      <p>测试 2: 不带 $ 符号的公式</p>
+      <div class="test-formula" id="test2">\[E = mc^2\]</div>
+
+      <p>测试 3: 向量公式</p>
+      <div class="test-formula" id="test3">$\vec{F} = m\vec{a}$</div>
+
+      <button onclick="renderTests()">🔄 重新渲染测试</button>
+    </div>
+
+    <div class="section">
+      <h2>3. 模拟组件处理</h2>
+      <div id="component-test"></div>
+      <button onclick="testComponentLogic()">🧪 测试组件逻辑</button>
+    </div>
+
+    <div class="section">
+      <h2>4. 控制台日志</h2>
+      <pre id="console-log"></pre>
+    </div>
+
+    <div class="section">
+      <h2>5. 快速修复</h2>
+      <button onclick="quickFix()">⚡ 一键修复</button>
+      <button onclick="location.reload()">🔃 刷新页面</button>
+    </div>
+
+    <script>
+      let logs = []
+
+      function log(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString()
+        const logMessage = `[${timestamp}] ${type.toUpperCase()}: ${message}`
+        logs.push(logMessage)
+        console.log(logMessage)
+        updateConsoleLog()
+      }
+
+      function updateConsoleLog() {
+        document.getElementById('console-log').textContent = logs.join('\n')
+      }
+
+      // 检查系统状态
+      function checkStatus() {
+        const statusDiv = document.getElementById('status-info')
+        const statusSection = document.getElementById('status-section')
+
+        let html = '<pre>'
+        let allGood = true
+
+        // 检查 MathJax
+        if (window.MathJax) {
+          html += '✅ MathJax 对象存在\n'
+          log('MathJax 对象存在', 'success')
         } else {
-          return `\\[${cleaned}\\]`;
+          html += '❌ MathJax 对象不存在\n'
+          log('MathJax 对象不存在', 'error')
+          allGood = false
+        }
+
+        // 检查 typesetPromise
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          html += '✅ typesetPromise 可用\n'
+          log('typesetPromise 可用', 'success')
+        } else {
+          html += '❌ typesetPromise 不可用\n'
+          log('typesetPromise 不可用', 'error')
+          allGood = false
+        }
+
+        // 检查 startup
+        if (window.MathJax && window.MathJax.startup) {
+          html += '✅ startup 存在\n'
+          log('startup 存在', 'success')
+        } else {
+          html += '❌ startup 不存在\n'
+          log('startup 不存在', 'error')
+          allGood = false
+        }
+
+        html += '\n当前时间: ' + new Date().toLocaleString()
+        html += '</pre>'
+
+        statusDiv.innerHTML = html
+        statusSection.className = allGood ? 'section success' : 'section error'
+      }
+
+      // 渲染测试
+      async function renderTests() {
+        log('开始渲染测试', 'info')
+
+        if (!window.MathJax || !window.MathJax.typesetPromise) {
+          log('MathJax 不可用，无法渲染', 'error')
+          alert('❌ MathJax 未加载，请等待或刷新页面')
+          return
+        }
+
+        try {
+          const elements = [
+            document.getElementById('test1'),
+            document.getElementById('test2'),
+            document.getElementById('test3')
+          ]
+
+          await window.MathJax.typesetPromise(elements)
+          log('测试渲染成功', 'success')
+          alert('✅ 测试渲染成功！')
+        } catch (error) {
+          log('测试渲染失败: ' + error.message, 'error')
+          alert('❌ 渲染失败: ' + error.message)
         }
       }
 
-      // 测试用例
-      const testCases = [
-        { input: '$E = mc^2$', expected: '\\[E = mc^2\\]' },
-        { input: '\\vec{F} = m\\vec{a}', expected: '\\[\\vec{F} = m\\vec{a}\\]' },
-        { input: '$$x^2 + y^2 = r^2$$', expected: '\\[x^2 + y^2 = r^2\\]' }
-      ];
+      // 测试组件逻辑
+      function testComponentLogic() {
+        log('测试组件逻辑', 'info')
 
-      let html = '<h3>组件逻辑测试结果:</h3><pre>';
+        const testDiv = document.getElementById('component-test')
 
-      testCases.forEach((test, i) => {
-        const result = wrapFormula(test.input, false);
-        const passed = result === test.expected;
+        // 模拟 cleanFormula 函数
+        function cleanFormula(text) {
+          if (!text) return ''
 
-        html += `\n测试 ${i + 1}: ${passed ? '✅' : '❌'}\n`;
-        html += `  输入: ${test.input}\n`;
-        html += `  期望: ${test.expected}\n`;
-        html += `  实际: ${result}\n`;
+          let cleaned = text
+            .trim()
+            .replace(/^\$\$|\$\$$/g, '')
+            .replace(/^\$|\$$/g, '')
+            .replace(/^\\\[|\\\]$/g, '')
+            .replace(/^\\\(|\\\)$/g, '')
+            .replace(/&nbsp;/g, ' ')
+            .trim()
 
-        log(`测试 ${i + 1}: ${passed ? '通过' : '失败'}`, passed ? 'success' : 'error');
-      });
-
-      html += '</pre>';
-      testDiv.innerHTML = html;
-    }
-
-    // 快速修复
-    async function quickFix () {
-      log('执行快速修复', 'info');
-
-      if (!window.MathJax) {
-        log('MathJax 未加载', 'error');
-        alert('❌ MathJax 未加载，请刷新页面');
-        return;
-      }
-
-      try {
-        if (window.MathJax.typesetClear) {
-          window.MathJax.typesetClear();
-          log('清除旧渲染', 'info');
+          return cleaned
         }
 
-        await window.MathJax.typesetPromise();
-        log('重新渲染成功', 'success');
-        alert('✅ 修复完成！');
+        // 模拟 wrapFormula 函数
+        function wrapFormula(formula, inline = false) {
+          const cleaned = cleanFormula(formula)
+          if (!cleaned) return ''
 
-        checkStatus();
-      } catch (error) {
-        log('修复失败: ' + error.message, 'error');
-        alert('❌ 修复失败: ' + error.message);
-      }
-    }
-
-    // MathJax 配置
-    window.MathJax = {
-      tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        processEscapes: true,
-        macros: {
-          vec: ['\\overrightarrow{#1}', 1]
+          if (inline) {
+            return `\\(${cleaned}\\)`
+          } else {
+            return `\\[${cleaned}\\]`
+          }
         }
-      },
-      svg: {
-        scale: 1.2,
-        fontCache: 'global'
-      },
-      startup: {
-        pageReady: () => {
-          return window.MathJax.startup.defaultPageReady().then(() => {
-            log('MathJax 加载成功', 'success');
-            checkStatus();
-            renderTests();
-            testComponentLogic();
-          }).catch((err) => {
-            log('MathJax 加载失败: ' + err.message, 'error');
-            checkStatus();
-          });
+
+        // 测试用例
+        const testCases = [
+          { input: '$E = mc^2$', expected: '\\[E = mc^2\\]' },
+          { input: '\\vec{F} = m\\vec{a}', expected: '\\[\\vec{F} = m\\vec{a}\\]' },
+          { input: '$$x^2 + y^2 = r^2$$', expected: '\\[x^2 + y^2 = r^2\\]' }
+        ]
+
+        let html = '<h3>组件逻辑测试结果:</h3><pre>'
+
+        testCases.forEach((test, i) => {
+          const result = wrapFormula(test.input, false)
+          const passed = result === test.expected
+
+          html += `\n测试 ${i + 1}: ${passed ? '✅' : '❌'}\n`
+          html += `  输入: ${test.input}\n`
+          html += `  期望: ${test.expected}\n`
+          html += `  实际: ${result}\n`
+
+          log(`测试 ${i + 1}: ${passed ? '通过' : '失败'}`, passed ? 'success' : 'error')
+        })
+
+        html += '</pre>'
+        testDiv.innerHTML = html
+      }
+
+      // 快速修复
+      async function quickFix() {
+        log('执行快速修复', 'info')
+
+        if (!window.MathJax) {
+          log('MathJax 未加载', 'error')
+          alert('❌ MathJax 未加载，请刷新页面')
+          return
+        }
+
+        try {
+          if (window.MathJax.typesetClear) {
+            window.MathJax.typesetClear()
+            log('清除旧渲染', 'info')
+          }
+
+          await window.MathJax.typesetPromise()
+          log('重新渲染成功', 'success')
+          alert('✅ 修复完成！')
+
+          checkStatus()
+        } catch (error) {
+          log('修复失败: ' + error.message, 'error')
+          alert('❌ 修复失败: ' + error.message)
         }
       }
-    };
 
-    // 页面加载时检查
-    window.addEventListener('DOMContentLoaded', () => {
-      log('页面加载完成', 'info');
-      checkStatus();
-    });
-  </script>
+      // MathJax 配置
+      window.MathJax = {
+        tex: {
+          inlineMath: [
+            ['$', '$'],
+            ['\\(', '\\)']
+          ],
+          displayMath: [
+            ['$$', '$$'],
+            ['\\[', '\\]']
+          ],
+          processEscapes: true,
+          macros: {
+            vec: ['\\overrightarrow{#1}', 1]
+          }
+        },
+        svg: {
+          scale: 1.2,
+          fontCache: 'global'
+        },
+        startup: {
+          pageReady: () => {
+            return window.MathJax.startup
+              .defaultPageReady()
+              .then(() => {
+                log('MathJax 加载成功', 'success')
+                checkStatus()
+                renderTests()
+                testComponentLogic()
+              })
+              .catch(err => {
+                log('MathJax 加载失败: ' + err.message, 'error')
+                checkStatus()
+              })
+          }
+        }
+      }
 
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
-</body>
+      // 页面加载时检查
+      window.addEventListener('DOMContentLoaded', () => {
+        log('页面加载完成', 'info')
+        checkStatus()
+      })
+    </script>
 
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  </body>
 </html>

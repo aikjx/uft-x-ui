@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统一场论3D可视化</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            color: #fff;
+        }
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(10, 10, 30, 0.95);
+            padding: 25px;
+            border-radius: 20px;
+            border: 2px solid rgba(0, 212, 255, 0.4);
+            backdrop-filter: blur(25px);
+            max-width: 380px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.8),
+                0 0 40px rgba(0, 212, 255, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h2 {
+            margin: 0 0 20px 0;
+            font-size: 22px;
+            background: linear-gradient(135deg, #00d4ff 0%, #7b68ee 50%, #ff00ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.2);
+        }
+        .control-group {
+            margin: 18px 0;
+            padding: 18px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .control-group::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+            transition: left 0.6s;
+        }
+        .control-group:hover::before {
+            left: 100%;
+        }
+        .control-group:hover {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(123, 104, 238, 0.05) 100%);
+            border-color: rgba(0, 212, 255, 0.4);
+            transform: translateX(5px);
+            box-shadow: -5px 0 20px rgba(0, 212, 255, 0.2);
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #ccc;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            margin: 12px 0;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+            border-radius: 6px;
+            outline: none;
+            transition: all 0.3s;
+            position: relative;
+            box-shadow: 
+                inset 0 1px 3px rgba(0, 0, 0, 0.3),
+                0 0 10px rgba(102, 126, 234, 0.2);
+        }
+        input[type="range"]:hover {
+            box-shadow: 
+                inset 0 1px 3px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(102, 126, 234, 0.4);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 
+                0 0 15px rgba(102, 126, 234, 0.6),
+                0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+            box-shadow: 
+                0 0 25px rgba(102, 126, 234, 1),
+                0 6px 15px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 0 15px rgba(102, 126, 234, 0.6),
+                0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.3);
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 14px 26px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            margin: 6px 6px 6px 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        button:hover::before {
+            width: 350px;
+            height: 350px;
+        }
+        button:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6);
+        }
+        button:active {
+            transform: translateY(-2px) scale(0.98);
+        }
+        button.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 6px 25px rgba(245, 87, 108, 0.5);
+            animation: activeGlow 2s ease-in-out infinite;
+        }
+        @keyframes activeGlow {
+            0%, 100% { box-shadow: 0 6px 25px rgba(245, 87, 108, 0.5); }
+            50% { box-shadow: 0 8px 35px rgba(245, 87, 108, 0.8); }
+        }
+        .value-display {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.25), rgba(123, 104, 238, 0.25));
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-left: 12px;
+            color: #00d4ff;
+            font-weight: 900;
+            border: 2px solid rgba(0, 212, 255, 0.4);
+            min-width: 60px;
+            text-align: center;
+            box-shadow: 
+                0 0 15px rgba(0, 212, 255, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            animation: valueGlow 2s ease-in-out infinite;
+        }
+        @keyframes valueGlow {
+            0%, 100% { 
+                box-shadow: 0 0 15px rgba(0, 212, 255, 0.3),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            }
+            50% { 
+                box-shadow: 0 0 25px rgba(0, 212, 255, 0.6),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            }
+        }
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(10, 10, 30, 0.95);
+            padding: 25px;
+            border-radius: 20px;
+            font-size: 12px;
+            max-width: 420px;
+            border: 2px solid rgba(0, 212, 255, 0.4);
+            backdrop-filter: blur(25px);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.8),
+                0 0 40px rgba(0, 212, 255, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
+        }
+        #info strong {
+            font-size: 16px;
+            background: linear-gradient(135deg, #00d4ff 0%, #7b68ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.2);
+        }
+        .legend {
+            margin-top: 15px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 12px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .legend-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(8px);
+            border-color: rgba(0, 212, 255, 0.3);
+            box-shadow: -5px 0 15px rgba(0, 212, 255, 0.2);
+        }
+        .legend-color {
+            width: 40px;
+            height: 5px;
+            margin-right: 15px;
+            border-radius: 4px;
+            box-shadow: 0 0 15px currentColor;
+            position: relative;
+        }
+        .legend-color::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            border-radius: inherit;
+            filter: blur(5px);
+            animation: pulse 2.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scaleX(1); }
+            50% { opacity: 0.5; transform: scaleX(1.2); }
+        }
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            padding: 10px 14px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.06) 100%);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+        }
+        .checkbox-label:hover {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(123, 104, 238, 0.08) 100%);
+            border-color: rgba(0, 212, 255, 0.4);
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.2);
+        }
+        .checkbox-label input {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #00d4ff;
+        }
+        #status-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 10, 30, 0.95);
+            padding: 25px 30px;
+            border-radius: 20px;
+            border: 2px solid rgba(0, 212, 255, 0.4);
+            backdrop-filter: blur(25px);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.8),
+                0 0 40px rgba(0, 212, 255, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.15s both;
+            min-width: 220px;
+        }
+        .status-title {
+            font-size: 20px;
+            font-weight: 900;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ff00ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(245, 87, 108, 0.3);
+        }
+        .status-item {
+            margin: 14px 0;
+            padding: 12px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s;
+        }
+        .status-item:hover {
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);
+            border-color: rgba(245, 87, 108, 0.3);
+            transform: translateX(-5px);
+        }
+        .status-label {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        .status-value {
+            font-size: 20px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d4ff 0%, #7b68ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+        .particle-trail {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        @keyframes trailFade {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div id="controls">
+        <h2>⚛️ 统一场论实时模拟</h2>
+        
+        <div class="control-group">
+            <label>运动状态</label>
+            <button id="btnStatic" class="active">静止态</button>
+            <button id="btnUniform">匀速态</button>
+            <button id="btnAccel">加速态</button>
+        </div>
+
+        <div class="control-group">
+            <label>速度 V/c <span class="value-display" id="velocityVal">0.00</span></label>
+            <input type="range" id="velocity" min="0" max="90" value="0" step="1">
+        </div>
+
+        <div class="control-group">
+            <label>加速度 a <span class="value-display" id="accelVal">0.00</span></label>
+            <input type="range" id="acceleration" min="-100" max="100" value="0" step="1">
+        </div>
+
+        <div class="control-group">
+            <label>电荷量 q <span class="value-display" id="chargeVal">+1.00</span></label>
+            <input type="range" id="charge" min="-100" max="100" value="100" step="1">
+        </div>
+
+        <div class="control-group">
+            <label>显示场矢量</label>
+            <div class="checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showE" checked> 
+                    <span style="color: #ff4444;">⚡ E场</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showB" checked> 
+                    <span style="color: #44ff44;">🧲 B场</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showA" checked> 
+                    <span style="color: #4444ff;">🌍 A场</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showD" checked> 
+                    <span style="color: #ffff44;">☢️ D场</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <button id="btnReset">🔄 重置</button>
+            <button id="btnAnimate">🔄 自转</button>
+        </div>
+    </div>
+
+    <div id="status-display">
+        <div class="status-title">实时状态</div>
+        <div class="status-item">
+            <div class="status-label">运动模式</div>
+            <div class="status-value" id="stateDisplay">静止</div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">场强度</div>
+            <div class="status-value" id="fieldStrength">0.0</div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">活跃场数</div>
+            <div class="status-value" id="activeFields">0</div>
+        </div>
+    </div>
+
+    <div id="info">
+        <strong style="font-size: 14px; color: #00d4ff;">📐 场关系方程</strong>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff4444; color: #ff4444;"></div>
+                <span><strong>E场</strong>: E = k'(dΩ/dt)R/r³</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #44ff44; color: #44ff44;"></div>
+                <span><strong>B场</strong>: B = (V × E) / c²</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4444ff; color: #4444ff;"></div>
+                <span><strong>A场</strong>: A = -Gm R/r³</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ffff44; color: #ffff44;"></div>
+                <span><strong>D场</strong>: D = -gm[d(R/r³)/dt]</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff00ff; color: #ff00ff;"></div>
+                <span><strong>dB/dt</strong>: ∂B/∂t = -(a × E)/c²</span>
+            </div>
+        </div>
+        <p style="margin-top: 15px; font-size: 11px; color: #888; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+            🖱️ 拖动旋转 | 🔍 滚轮缩放 | ⚙️ 实时调参
+        </p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer;
+        let particle, particleGlow, particleCore;
+        let fieldVectors = { E: [], B: [], A: [], D: [] };
+        let fieldLabels = [];
+        let velocityArrow, accelArrow;
+        let particleTrail = [];
+        let fieldLines = { E: [], B: [], A: [], D: [] };
+        let state = 'static';
+        let params = {
+            velocity: 0,
+            acceleration: 0,
+            charge: 1,
+            showE: true,
+            showB: true,
+            showA: true,
+            showD: true,
+            autoRotate: false
+        };
+        let time = 0;
+        let particlePosition = new THREE.Vector3(0, 0, 0);
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x050510);
+            scene.fog = new THREE.Fog(0x050510, 10, 50);
+            
+            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(10, 10, 10);
+            camera.lookAt(0, 0, 0);
+            
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: document.getElementById('canvas'), 
+                antialias: true,
+                alpha: true 
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            
+            // 增强光照
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+            
+            const pointLight1 = new THREE.PointLight(0x00d4ff, 1, 50);
+            pointLight1.position.set(10, 10, 10);
+            scene.add(pointLight1);
+            
+            const pointLight2 = new THREE.PointLight(0xff00ff, 0.8, 50);
+            pointLight2.position.set(-10, -10, -10);
+            scene.add(pointLight2);
+            
+            // 创建粒子核心
+            const coreGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+            const coreMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xffffff,
+                emissive: 0xffffff,
+                emissiveIntensity: 1,
+                transparent: true,
+                opacity: 1
+            });
+            particleCore = new THREE.Mesh(coreGeometry, coreMaterial);
+            scene.add(particleCore);
+            
+            // 创建粒子主体
+            const particleGeometry = new THREE.SphereGeometry(0.35, 32, 32);
+            const particleMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x00d4ff,
+                emissive: 0x00d4ff,
+                emissiveIntensity: 0.8,
+                transparent: true,
+                opacity: 0.8,
+                shininess: 100
+            });
+            particle = new THREE.Mesh(particleGeometry, particleMaterial);
+            scene.add(particle);
+            
+            // 外层发光
+            const glowGeometry = new THREE.SphereGeometry(0.6, 32, 32);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00d4ff,
+                transparent: true,
+                opacity: 0.15
+            });
+            particleGlow = new THREE.Mesh(glowGeometry, glowMaterial);
+            scene.add(particleGlow);
+            
+            // 添加星空背景
+            createStarfield();
+            
+            // 坐标轴
+            const axesHelper = new THREE.AxesHelper(6);
+            axesHelper.material.linewidth = 2;
+            scene.add(axesHelper);
+            
+            // 网格
+            const gridHelper = new THREE.GridHelper(20, 20, 0x333344, 0x111122);
+            gridHelper.material.opacity = 0.3;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+            
+            setupControls();
+            updateFields();
+        }
+
+        function createStarfield() {
+            const starsGeometry = new THREE.BufferGeometry();
+            const starsMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.1,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            const starsVertices = [];
+            for (let i = 0; i < 1000; i++) {
+                const x = (Math.random() - 0.5) * 100;
+                const y = (Math.random() - 0.5) * 100;
+                const z = (Math.random() - 0.5) * 100;
+                starsVertices.push(x, y, z);
+            }
+
+            starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+            const stars = new THREE.Points(starsGeometry, starsMaterial);
+            scene.add(stars);
+        }
+
+        function setupControls() {
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            
+            renderer.domElement.addEventListener('mousedown', () => isDragging = true);
+            renderer.domElement.addEventListener('mouseup', () => isDragging = false);
+            renderer.domElement.addEventListener('mouseleave', () => isDragging = false);
+            
+            renderer.domElement.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaX = e.clientX - previousMousePosition.x;
+                    const deltaY = e.clientY - previousMousePosition.y;
+                    
+                    const rotationSpeed = 0.005;
+                    camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), deltaX * rotationSpeed);
+                    
+                    const axis = new THREE.Vector3(1, 0, 0);
+                    axis.applyQuaternion(camera.quaternion);
+                    camera.position.applyAxisAngle(axis, deltaY * rotationSpeed);
+                    
+                    camera.lookAt(0, 0, 0);
+                }
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+            
+            renderer.domElement.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoomSpeed = 0.1;
+                const direction = camera.position.clone().normalize();
+                const distance = camera.position.length();
+                const newDistance = Math.max(5, Math.min(30, distance + e.deltaY * zoomSpeed * 0.01));
+                camera.position.copy(direction.multiplyScalar(newDistance));
+            }, { passive: false });
+        }
+
+        function createArrow(origin, direction, color, length = 1, lineWidth = 1) {
+            const dir = direction.clone().normalize();
+            const arrowLength = length * Math.max(0.5, direction.length());
+            
+            const arrowHelper = new THREE.ArrowHelper(
+                dir,
+                origin,
+                arrowLength,
+                color,
+                arrowLength * 0.25,
+                arrowLength * 0.2
+            );
+            
+            arrowHelper.line.material.linewidth = lineWidth * 2;
+            
+            return arrowHelper;
+        }
+
+        function createTextSprite(text, color = '#ffffff', size = 1) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 256;
+            canvas.height = 128;
+            
+            context.fillStyle = color;
+            context.font = `Bold ${48 * size}px Arial`;
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.shadowColor = color;
+            context.shadowBlur = 10;
+            context.fillText(text, 128, 64);
+            
+            const texture = new THREE.Texture(canvas);
+            texture.needsUpdate = true;
+            
+            const spriteMaterial = new THREE.SpriteMaterial({ 
+                map: texture,
+                transparent: true,
+                depthTest: false
+            });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(1 * size, 0.5 * size, 1);
+            
+            return sprite;
+        }
+
+        function createFieldLine(startPoint, direction, color, segments = 20) {
+            const points = [];
+            let currentPoint = startPoint.clone();
+            const step = 0.2;
+            
+            for (let i = 0; i < segments; i++) {
+                points.push(currentPoint.clone());
+                currentPoint.add(direction.clone().normalize().multiplyScalar(step));
+            }
+            
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ 
+                color: color,
+                transparent: true,
+                opacity: 0.3,
+                linewidth: 2
+            });
+            
+            return new THREE.Line(geometry, material);
+        }
+
+        function updateFields() {
+            // 清除旧的场向量和标签
+            Object.values(fieldVectors).forEach(vectors => {
+                vectors.forEach(v => scene.remove(v));
+            });
+            Object.values(fieldLines).forEach(lines => {
+                lines.forEach(l => scene.remove(l));
+            });
+            fieldLabels.forEach(label => scene.remove(label));
+            if (velocityArrow) scene.remove(velocityArrow);
+            if (accelArrow) scene.remove(accelArrow);
+            
+            fieldVectors = { E: [], B: [], A: [], D: [] };
+            fieldLines = { E: [], B: [], A: [], D: [] };
+            fieldLabels = [];
+
+            const v = params.velocity / 100;
+            const a = params.acceleration / 100;
+            const q = params.charge / 100;
+
+            // 更新粒子颜色
+            if (q > 0) {
+                particle.material.color.setHex(0xff4444);
+                particle.material.emissive.setHex(0xff4444);
+                particleGlow.material.color.setHex(0xff4444);
+                particleCore.material.color.setHex(0xffaaaa);
+                particleCore.material.emissive.setHex(0xffaaaa);
+            } else if (q < 0) {
+                particle.material.color.setHex(0x4444ff);
+                particle.material.emissive.setHex(0x4444ff);
+                particleGlow.material.color.setHex(0x4444ff);
+                particleCore.material.color.setHex(0xaaaaff);
+                particleCore.material.emissive.setHex(0xaaaaff);
+            } else {
+                particle.material.color.setHex(0xaaaaaa);
+                particle.material.emissive.setHex(0xaaaaaa);
+                particleGlow.material.color.setHex(0xaaaaaa);
+                particleCore.material.color.setHex(0xffffff);
+                particleCore.material.emissive.setHex(0xffffff);
+            }
+
+            // 显示速度箭头（匀速和加速态）
+            if (Math.abs(v) > 0.01 && (state === 'uniform' || state === 'accelerating')) {
+                const velocityVec = new THREE.Vector3(v * 4, 0, 0);
+                velocityArrow = createArrow(
+                    new THREE.Vector3(0, -1.2, 0), 
+                    velocityVec, 
+                    0xff00ff, 
+                    1.5, 
+                    3
+                );
+                scene.add(velocityArrow);
+                
+                const vLabel = createTextSprite('V', '#ff00ff', 1.2);
+                vLabel.position.set(v * 4 + 0.8, -1.2, 0);
+                scene.add(vLabel);
+                fieldLabels.push(vLabel);
+            }
+
+            // 显示加速度箭头（仅加速态）
+            if (Math.abs(a) > 0.01 && state === 'accelerating') {
+                const accelVec = new THREE.Vector3(a * 4, 0, 0);
+                accelArrow = createArrow(
+                    new THREE.Vector3(0, -2, 0), 
+                    accelVec, 
+                    0xffaa00, 
+                    1.5, 
+                    3
+                );
+                scene.add(accelArrow);
+                
+                const aLabel = createTextSprite('a', '#ffaa00', 1.2);
+                aLabel.position.set(a * 4 + 0.8, -2, 0);
+                scene.add(aLabel);
+                fieldLabels.push(aLabel);
+            }
+
+            // 球面采样点
+            const samplePoints = [];
+            const radius = 3;
+            const rings = 4;
+            const pointsPerRing = 8;
+            
+            for (let i = 0; i < rings; i++) {
+                const theta = Math.PI * (i + 1) / (rings + 1);
+                for (let j = 0; j < pointsPerRing; j++) {
+                    const phi = 2 * Math.PI * j / pointsPerRing;
+                    const x = radius * Math.sin(theta) * Math.cos(phi);
+                    const y = radius * Math.sin(theta) * Math.sin(phi);
+                    const z = radius * Math.cos(theta);
+                    samplePoints.push(new THREE.Vector3(x, y, z));
+                }
+            }
+
+            let activeFieldCount = 0;
+
+            samplePoints.forEach((point, index) => {
+                const r = point.length();
+                const R = point.clone().normalize();
+
+                // E场: 电场
+                if (params.showE && Math.abs(q) > 0.01) {
+                    const E = R.clone().multiplyScalar(q * 1.5);
+                    const arrowE = createArrow(point, E, 0xff4444, 1.3, 2);
+                    scene.add(arrowE);
+                    fieldVectors.E.push(arrowE);
+                    activeFieldCount++;
+                    
+                    // 添加电场线
+                    if (index % 4 === 0) {
+                        const fieldLine = createFieldLine(point, E, 0xff4444, 15);
+                        scene.add(fieldLine);
+                        fieldLines.E.push(fieldLine);
+                    }
+                    
+                    if (index % 8 === 0) {
+                        const eLabel = createTextSprite('E', '#ff4444', 0.7);
+                        eLabel.position.copy(point).add(E.clone().multiplyScalar(0.8));
+                        scene.add(eLabel);
+                        fieldLabels.push(eLabel);
+                    }
+                }
+
+                // B场: B = (V × E) / c² (匀速和加速态显示)
+                if (params.showB && Math.abs(v) > 0.01 && Math.abs(q) > 0.01 && 
+                    (state === 'uniform' || state === 'accelerating')) {
+                    const V = new THREE.Vector3(v, 0, 0);
+                    const E = R.clone().multiplyScalar(q);
+                    const B = new THREE.Vector3().crossVectors(V, E).multiplyScalar(2);
+                    
+                    if (B.length() > 0.03) {
+                        const arrowB = createArrow(point, B, 0x44ff44, 1.2, 2);
+                        scene.add(arrowB);
+                        fieldVectors.B.push(arrowB);
+                        activeFieldCount++;
+                        
+                        // 添加磁场线（环形）
+                        if (index % 4 === 0) {
+                            const fieldLine = createFieldLine(point, B, 0x44ff44, 12);
+                            scene.add(fieldLine);
+                            fieldLines.B.push(fieldLine);
+                        }
+                        
+                        if (index % 8 === 0 && B.length() > 0.15) {
+                            const bLabel = createTextSprite('B', '#44ff44', 0.6);
+                            bLabel.position.copy(point).add(B.clone().multiplyScalar(0.7));
+                            scene.add(bLabel);
+                            fieldLabels.push(bLabel);
+                        }
+                    }
+                }
+
+                // A场: 引力场
+                if (params.showA) {
+                    const A = R.clone().multiplyScalar(-0.5);
+                    const arrowA = createArrow(point, A, 0x4444ff, 1.4, 2);
+                    scene.add(arrowA);
+                    fieldVectors.A.push(arrowA);
+                    activeFieldCount++;
+                    
+                    // 添加引力场线
+                    if (index % 4 === 0) {
+                        const fieldLine = createFieldLine(point, A, 0x4444ff, 15);
+                        scene.add(fieldLine);
+                        fieldLines.A.push(fieldLine);
+                    }
+                    
+                    if (index % 8 === 0 && r < 4) {
+                        const aLabel = createTextSprite('A', '#4444ff', 0.7);
+                        aLabel.position.copy(point).add(A.clone().multiplyScalar(0.8));
+                        scene.add(aLabel);
+                        fieldLabels.push(aLabel);
+                    }
+                }
+
+                // D场: 核力场 (仅加速态显示)
+                if (params.showD && Math.abs(a) > 0.01 && state === 'accelerating') {
+                    const accelDir = new THREE.Vector3(a, 0, 0);
+                    const D = new THREE.Vector3().crossVectors(accelDir, R).multiplyScalar(0.8);
+                    
+                    if (D.length() > 0.03) {
+                        const arrowD = createArrow(point, D, 0xffff44, 1.0, 2);
+                        scene.add(arrowD);
+                        fieldVectors.D.push(arrowD);
+                        activeFieldCount++;
+                        
+                        if (index % 4 === 0) {
+                            const fieldLine = createFieldLine(point, D, 0xffff44, 10);
+                            scene.add(fieldLine);
+                            fieldLines.D.push(fieldLine);
+                        }
+                        
+                        if (index % 8 === 0 && D.length() > 0.15) {
+                            const dLabel = createTextSprite('D', '#ffff44', 0.6);
+                            dLabel.position.copy(point).add(D.clone().multiplyScalar(0.7));
+                            scene.add(dLabel);
+                            fieldLabels.push(dLabel);
+                        }
+                    }
+                }
+            });
+
+            // 加速态特殊效果: dB/dt = (a × E) / c²
+            if (state === 'accelerating' && Math.abs(a) > 0.05 && Math.abs(v) > 0.05) {
+                const specialPoints = [
+                    new THREE.Vector3(4, 0, 0),
+                    new THREE.Vector3(0, 4, 0),
+                    new THREE.Vector3(-4, 0, 0),
+                    new THREE.Vector3(0, 0, 4),
+                    new THREE.Vector3(0, 0, -4)
+                ];
+                
+                specialPoints.forEach((point, index) => {
+                    const R = point.clone().normalize();
+                    const accelVec = new THREE.Vector3(a, 0, 0);
+                    const E = R.clone().multiplyScalar(q);
+                    const dBdt = new THREE.Vector3().crossVectors(accelVec, E).multiplyScalar(1.2);
+                    
+                    if (dBdt.length() > 0.08) {
+                        const arrow = createArrow(point, dBdt, 0xff00ff, 1.3, 3);
+                        scene.add(arrow);
+                        fieldVectors.D.push(arrow);
+                        
+                        if (index % 2 === 0) {
+                            const label = createTextSprite('∂B/∂t', '#ff00ff', 0.5);
+                            label.position.copy(point).add(dBdt.clone().multiplyScalar(0.6));
+                            scene.add(label);
+                            fieldLabels.push(label);
+                        }
+                        
+                        // 添加脉动效果
+                        const fieldLine = createFieldLine(point, dBdt, 0xff00ff, 15);
+                        scene.add(fieldLine);
+                        fieldLines.D.push(fieldLine);
+                    }
+                });
+            }
+
+            // 更新状态显示
+            updateStatusDisplay(activeFieldCount);
+        }
+
+        function updateStatusDisplay(activeFieldCount) {
+            const stateNames = {
+                'static': '静止态',
+                'uniform': '匀速态',
+                'accelerating': '加速态'
+            };
+            
+            document.getElementById('stateDisplay').textContent = stateNames[state];
+            
+            const v = params.velocity / 100;
+            const a = params.acceleration / 100;
+            const q = params.charge / 100;
+            
+            const fieldStrength = Math.abs(q) + Math.abs(v) * 0.5 + Math.abs(a) * 0.3;
+            document.getElementById('fieldStrength').textContent = fieldStrength.toFixed(2);
+            document.getElementById('activeFields').textContent = activeFieldCount;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            time += 0.02;
+            
+            // 粒子核心旋转
+            particleCore.rotation.y += 0.02;
+            particleCore.rotation.x += 0.01;
+            
+            // 粒子脉动
+            const pulseScale = 1 + 0.15 * Math.sin(time * 2);
+            particleGlow.scale.set(pulseScale, pulseScale, pulseScale);
+            particleGlow.material.opacity = 0.12 + 0.08 * Math.sin(time * 2);
+            
+            particle.rotation.y += 0.005;
+            
+            // 根据运动状态更新粒子位置
+            if (state === 'uniform' && Math.abs(params.velocity) > 0) {
+                const v = params.velocity / 100;
+                particlePosition.x = Math.sin(time * v * 0.3) * 0.5;
+                particle.position.copy(particlePosition);
+                particleCore.position.copy(particlePosition);
+                particleGlow.position.copy(particlePosition);
+            } else if (state === 'accelerating' && Math.abs(params.acceleration) > 0) {
+                const a = params.acceleration / 100;
+                particlePosition.x = Math.sin(time * 0.5) * a * 0.8;
+                particle.position.copy(particlePosition);
+                particleCore.position.copy(particlePosition);
+                particleGlow.position.copy(particlePosition);
+                
+                // 加速态发光增强
+                particle.material.emissiveIntensity = 0.8 + 0.3 * Math.abs(Math.sin(time * 2));
+            } else {
+                particlePosition.set(0, 0, 0);
+                particle.position.copy(particlePosition);
+                particleCore.position.copy(particlePosition);
+                particleGlow.position.copy(particlePosition);
+            }
+            
+            // 场线动画
+            Object.values(fieldLines).forEach(lines => {
+                lines.forEach(line => {
+                    if (line.material) {
+                        line.material.opacity = 0.2 + 0.15 * Math.sin(time * 3);
+                    }
+                });
+            });
+            
+            // 箭头脉动
+            Object.values(fieldVectors).forEach(vectors => {
+                vectors.forEach((arrow, index) => {
+                    const phase = (index * 0.2 + time) % (Math.PI * 2);
+                    const scale = 1 + 0.1 * Math.sin(phase * 2);
+                    arrow.scale.set(scale, scale, scale);
+                });
+            });
+            
+            if (params.autoRotate) {
+                camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.003);
+                camera.lookAt(0, 0, 0);
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // 事件监听器
+        document.getElementById('btnStatic').addEventListener('click', () => {
+            state = 'static';
+            params.velocity = 0;
+            params.acceleration = 0;
+            document.getElementById('velocity').value = 0;
+            document.getElementById('acceleration').value = 0;
+            updateDisplayValues();
+            updateFields();
+            updateButtonStates('btnStatic');
+        });
+
+        document.getElementById('btnUniform').addEventListener('click', () => {
+            state = 'uniform';
+            if (params.velocity === 0) {
+                params.velocity = 50;
+                document.getElementById('velocity').value = 50;
+            }
+            params.acceleration = 0;
+            document.getElementById('acceleration').value = 0;
+            updateDisplayValues();
+            updateFields();
+            updateButtonStates('btnUniform');
+        });
+
+        document.getElementById('btnAccel').addEventListener('click', () => {
+            state = 'accelerating';
+            if (params.velocity === 0) {
+                params.velocity = 40;
+                document.getElementById('velocity').value = 40;
+            }
+            if (params.acceleration === 0) {
+                params.acceleration = 50;
+                document.getElementById('acceleration').value = 50;
+            }
+            updateDisplayValues();
+            updateFields();
+            updateButtonStates('btnAccel');
+        });
+
+        document.getElementById('velocity').addEventListener('input', (e) => {
+            params.velocity = parseFloat(e.target.value);
+            updateDisplayValues();
+            updateFields();
+        });
+
+        document.getElementById('acceleration').addEventListener('input', (e) => {
+            params.acceleration = parseFloat(e.target.value);
+            updateDisplayValues();
+            updateFields();
+        });
+
+        document.getElementById('charge').addEventListener('input', (e) => {
+            params.charge = parseFloat(e.target.value);
+            updateDisplayValues();
+            updateFields();
+        });
+
+        ['showE', 'showB', 'showA', 'showD'].forEach(id => {
+            document.getElementById(id).addEventListener('change', (e) => {
+                params[id] = e.target.checked;
+                updateFields();
+            });
+        });
+
+        document.getElementById('btnReset').addEventListener('click', () => {
+            camera.position.set(10, 10, 10);
+            camera.lookAt(0, 0, 0);
+        });
+
+        document.getElementById('btnAnimate').addEventListener('click', function() {
+            params.autoRotate = !params.autoRotate;
+            this.classList.toggle('active');
+        });
+
+        function updateDisplayValues() {
+            document.getElementById('velocityVal').textContent = (params.velocity / 100).toFixed(2);
+            document.getElementById('accelVal').textContent = (params.acceleration / 100).toFixed(2);
+            const chargeSign = params.charge >= 0 ? '+' : '';
+            document.getElementById('chargeVal').textContent = chargeSign + (params.charge / 100).toFixed(2);
+        }
+
+        function updateButtonStates(activeId) {
+            ['btnStatic', 'btnUniform', 'btnAccel'].forEach(id => {
+                document.getElementById(id).classList.remove('active');
+            });
+            document.getElementById(activeId).classList.add('active');
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init();
+        animate();
+        updateDisplayValues();
+    </script>
+</body>
+</html>

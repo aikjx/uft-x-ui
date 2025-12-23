@@ -30,7 +30,7 @@ const testConfig = {
         measure: () => {}
       }
     },
-    
+
     // 模拟document
     document: {
       createElement: () => ({
@@ -41,17 +41,17 @@ const testConfig = {
       addEventListener: () => {},
       removeEventListener: () => {}
     },
-    
+
     // 模拟navigator
     navigator: {
       userAgent: 'test',
       hardwareConcurrency: 8
     }
   },
-  
+
   // 测试超时设置
   testTimeout: 30000,
-  
+
   // 钩子函数
   hooks: {
     beforeEach: () => {
@@ -84,7 +84,7 @@ expect.extend({
       }
     }
   },
-  
+
   toBePerformanceOptimal(received: number, threshold: number) {
     const pass = received <= threshold
     if (pass) {

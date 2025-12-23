@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统一场论 - 终极3D可视化系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(0, 212, 255, 0.6); }
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(0.98); }
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', -apple-system, sans-serif;
+            background: radial-gradient(ellipse at center, #0a0e1a 0%, #000000 100%);
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+            cursor: grab;
+        }
+        
+        body.grabbing {
+            cursor: grabbing;
+        }
+        
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        /* 主控制面板 */
+        .main-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            background: linear-gradient(135deg, 
+                rgba(10, 14, 26, 0.96) 0%, 
+                rgba(20, 24, 36, 0.94) 50%,
+                rgba(10, 14, 26, 0.96) 100%);
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid transparent;
+            max-width: 420px;
+            max-height: 96vh;
+            overflow-y: auto;
+            backdrop-filter: blur(30px) saturate(180%);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.9),
+                0 0 60px rgba(0, 212, 255, 0.15),
+                inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            animation: glow 3s ease-in-out infinite;
+        }
+        
+        .main-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 20px;
+            padding: 2px;
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7, #f107a3);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.6;
+            z-index: -1;
+        }
+        
+        .main-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .main-panel::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+        }
+        
+        .main-panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00d4ff, #7b2ff7, #f107a3);
+            border-radius: 3px;
+        }
+        
+        h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+            background: linear-gradient(120deg, 
+                #00d4ff 0%, 
+                #7b2ff7 30%, 
+                #f107a3 60%,
+                #00d4ff 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            letter-spacing: 1px;
+            animation: shimmer 3s linear infinite;
+            filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.5));
+        }
+        
+        .subtitle {
+            font-size: 0.8em;
+            color: #888;
+            margin-bottom: 16px;
+            font-style: italic;
+            line-height: 1.4;
+        }
+        
+        /* 模式选择器 */
+        .mode-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        
+        .mode-btn {
+            padding: 12px 8px;
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.25);
+            border-radius: 10px;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.85em;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .mode-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(0, 212, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .mode-btn:hover::before {
+            width: 200px;
+            height: 200px;
+        }
+        
+        .mode-btn:hover {
+            background: rgba(0, 212, 255, 0.15);
+            border-color: rgba(0, 212, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+        
+        .mode-btn.active {
+            background: linear-gradient(135deg, 
+                rgba(0, 212, 255, 0.3), 
+                rgba(123, 47, 247, 0.3));
+            border-color: #00d4ff;
+            color: #00d4ff;
+            font-weight: bold;
+            box-shadow: 
+                0 0 20px rgba(0, 212, 255, 0.5),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2);
+        }
+        
+        /* 章节 */
+        .section {
+            margin: 14px 0;
+            padding: 16px;
+            background: linear-gradient(135deg,
+                rgba(0, 212, 255, 0.03) 0%,
+                rgba(123, 47, 247, 0.02) 100%);
+            border-radius: 12px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+        
+        .section:hover {
+            background: linear-gradient(135deg,
+                rgba(0, 212, 255, 0.08) 0%,
+                rgba(123, 47, 247, 0.05) 100%);
+            transform: translateX(3px);
+        }
+        
+        .section.geo { 
+            border-color: #00d4ff;
+            box-shadow: -4px 0 20px rgba(0, 212, 255, 0.15);
+        }
+        .section.force { 
+            border-color: #7b2ff7;
+            box-shadow: -4px 0 20px rgba(123, 47, 247, 0.15);
+        }
+        .section.control { 
+            border-color: #f107a3;
+            box-shadow: -4px 0 20px rgba(241, 7, 163, 0.15);
+        }
+        .section.formula { 
+            border-color: #ffd93d;
+            box-shadow: -4px 0 20px rgba(255, 217, 61, 0.15);
+        }
+        .section.camera {
+            border-color: #4CAF50;
+            box-shadow: -4px 0 20px rgba(76, 175, 80, 0.15);
+        }
+        
+        .section h3 {
+            font-size: 0.98em;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+        
+        .section.geo h3 { color: #00d4ff; }
+        .section.force h3 { color: #7b2ff7; }
+        .section.control h3 { color: #f107a3; }
+        .section.formula h3 { color: #ffd93d; }
+        .section.camera h3 { color: #4CAF50; }
+        
+        /* 力类型卡片 */
+        .force-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .force-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: linear-gradient(180deg, transparent, currentColor, transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .force-card:hover::before {
+            opacity: 1;
+        }
+        
+        .force-card:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.4);
+            transform: translateX(5px) scale(1.02);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.2);
+        }
+        
+        .force-card.active {
+            background: linear-gradient(90deg, 
+                rgba(0, 212, 255, 0.2), 
+                rgba(123, 47, 247, 0.15));
+            border-color: #00d4ff;
+            box-shadow: 
+                0 0 15px rgba(0, 212, 255, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        }
+        
+        .force-info {
+            flex: 1;
+        }
+        
+        .force-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        
+        .force-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            animation: float 3s ease-in-out infinite;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .force-name {
+            font-size: 0.92em;
+            font-weight: 600;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .force-origin {
+            font-size: 0.72em;
+            color: #999;
+            margin-left: 44px;
+            line-height: 1.4;
+        }
+        
+        .force-direction {
+            font-size: 0.7em;
+            color: #00d4ff;
+            margin-left: 44px;
+            margin-top: 3px;
+            font-weight: 500;
+        }
+        
+        /* 开关 */
+        .toggle-switch {
+            width: 46px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .toggle-switch.active {
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            box-shadow: 
+                inset 0 1px 2px rgba(255, 255, 255, 0.3),
+                0 0 15px rgba(0, 212, 255, 0.5);
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #ffffff, #f0f0f0);
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        }
+        
+        .toggle-switch.active::after {
+            left: 25px;
+            box-shadow: 0 2px 8px rgba(0, 212, 255, 0.6);
+        }
+        
+        /* 公式显示 */
+        .formula-box {
+            background: linear-gradient(135deg,
+                rgba(0, 0, 0, 0.6) 0%,
+                rgba(20, 20, 30, 0.5) 100%);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.82em;
+            color: #ffd93d;
+            margin: 10px 0;
+            border: 1px solid rgba(255, 217, 61, 0.3);
+            line-height: 1.7;
+            box-shadow: 
+                0 4px 15px rgba(0, 0, 0, 0.3),
+                inset 0 1px 1px rgba(255, 217, 61, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .formula-box:hover {
+            border-color: rgba(255, 217, 61, 0.6);
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(255, 217, 61, 0.2);
+        }
+        
+        /* 滑块组 */
+        .slider-group {
+            margin: 12px 0;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            color: #bbb;
+            font-size: 0.82em;
+            margin-bottom: 8px;
+        }
+        
+        .slider-label span {
+            color: #00d4ff;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, 
+                rgba(123, 47, 247, 0.3), 
+                rgba(0, 212, 255, 0.3));
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 
+                0 0 8px rgba(0, 212, 255, 0.8),
+                0 2px 6px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+            box-shadow: 
+                0 0 20px rgba(0, 212, 255, 1),
+                0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.1);
+        }
+        
+        /* 按钮网格 */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        button {
+            padding: 11px;
+            background: linear-gradient(135deg, #7b2ff7 0%, #f107a3 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.82em;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(123, 47, 247, 0.3);
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        button:hover::before {
+            width: 250px;
+            height: 250px;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(123, 47, 247, 0.6);
+        }
+        
+        button:active {
+            transform: translateY(-1px);
+        }
+        
+        /* 信息框 */
+        .info-box {
+            margin-top: 14px;
+            padding: 12px;
+            background: linear-gradient(135deg, 
+                rgba(0, 212, 255, 0.1), 
+                rgba(123, 47, 247, 0.08));
+            border-radius: 10px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            font-size: 0.76em;
+            line-height: 1.6;
+            color: #ccc;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .info-box strong {
+            color: #00d4ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+        
+        /* 控制提示 */
+        .control-hint {
+            font-size: 0.72em;
+            color: #4CAF50;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid #4CAF50;
+        }
+        
+        /* 图例 */
+        .legend {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: linear-gradient(135deg,
+                rgba(10, 14, 26, 0.95) 0%,
+                rgba(20, 24, 36, 0.92) 100%);
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            font-size: 0.8em;
+            backdrop-filter: blur(25px) saturate(180%);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.8),
+                0 0 40px rgba(0, 212, 255, 0.1);
+        }
+        
+        .legend-title {
+            color: #00d4ff;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 6px 0;
+            transition: all 0.3s;
+        }
+        
+        .legend-item:hover {
+            transform: translateX(3px);
+        }
+        
+        .legend-line {
+            width: 30px;
+            height: 3px;
+            border-radius: 2px;
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        /* 统计面板 */
+        .stats-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg,
+                rgba(10, 14, 26, 0.95) 0%,
+                rgba(20, 24, 36, 0.92) 100%);
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            backdrop-filter: blur(25px) saturate(180%);
+            min-width: 160px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.8),
+                0 0 40px rgba(0, 212, 255, 0.1);
+        }
+        
+        .stats-title {
+            color: #00d4ff;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 6px 0;
+            color: #aaa;
+            font-size: 0.8em;
+        }
+        
+        .stat-value {
+            color: #00d4ff;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+        }
+        
+        /* 理论面板 */
+        .theory-panel {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: linear-gradient(135deg,
+                rgba(10, 14, 26, 0.95) 0%,
+                rgba(30, 24, 16, 0.92) 100%);
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 217, 61, 0.3);
+            backdrop-filter: blur(25px) saturate(180%);
+            max-width: 330px;
+            font-size: 0.76em;
+            line-height: 1.6;
+            color: #ccc;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.8),
+                0 0 40px rgba(255, 217, 61, 0.1);
+        }
+        
+        .theory-title {
+            color: #ffd93d;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.05em;
+            text-shadow: 0 0 10px rgba(255, 217, 61, 0.5);
+        }
+        
+        /* 进度条 */
+        .progress-container {
+            margin: 10px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 8px;
+        }
+        
+        .progress-label {
+            font-size: 0.75em;
+            color: #00d4ff;
+            margin-bottom: 5px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            border-radius: 3px;
+            transition: width 0.3s;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <!-- 主控制面板 -->
+    <div class="main-panel">
+        <h1>统一场论</h1>
+        <div class="subtitle">从垂直原理到四种基本力的几何统一</div>
+        
+        <!-- 模式选择 -->
+        <div class="mode-selector">
+            <div class="mode-btn active" data-mode="unified">🌌 统一</div>
+            <div class="mode-btn" data-mode="separate">🔬 分解</div>
+            <div class="mode-btn" data-mode="comparison">⚖️ 对比</div>
+            <div class="mode-btn" data-mode="evolution">🎬 演化</div>
+        </div>
+        
+        <!-- 几何基础 -->
+        <div class="section geo">
+            <h3>⚛️ 垂直原理与螺旋运动</h3>
+            <div class="slider-group">
+                <div class="slider-label"><span>螺旋半径 r</span> <span id="radiusVal">3.5</span></div>
+                <input type="range" id="radius" min="2" max="7" step="0.5" value="3.5">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>角速度 ω</span> <span id="omegaVal">1.0</span></div>
+                <input type="range" id="omega" min="0.2" max="3" step="0.1" value="1">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>螺距 h</span> <span id="pitchVal">0.6</span></div>
+                <input type="range" id="pitch" min="0.2" max="1.5" step="0.1" value="0.6">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>螺旋圈数</span> <span id="turnsVal">5</span></div>
+                <input type="range" id="turns" min="3" max="12" value="5">
+            </div>
+            
+            <!-- 粒子进度显示 -->
+            <div class="progress-container">
+                <div class="progress-label">粒子运动进度</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 四种基本力 -->
+        <div class="section force">
+            <h3>💫 四种基本力展示</h3>
+            
+            <div class="force-card active" data-force="gravity">
+                <div class="force-info">
+                    <div class="force-header">
+                        <div class="force-icon" style="background: linear-gradient(135deg, #ff6b6b, #ee5a6f);">🌍</div>
+                        <div class="force-name">引力/惯性力</div>
+                    </div>
+                    <div class="force-origin">源自：直线运动分量速度变化 (dV/dt)</div>
+                    <div class="force-direction">→ 方向：指向质量中心或加速度反向</div>
+                </div>
+                <div class="toggle-switch active"></div>
+            </div>
+            
+            <div class="force-card active" data-force="electric">
+                <div class="force-info">
+                    <div class="force-header">
+                        <div class="force-icon" style="background: linear-gradient(135deg, #ffd93d, #f6c23e);">⚡</div>
+                        <div class="force-name">电场力</div>
+                    </div>
+                    <div class="force-origin">源自：直线运动流量变化 (dm/dt)</div>
+                    <div class="force-direction">→ 方向：沿电荷连线，同斥异吸</div>
+                </div>
+                <div class="toggle-switch active"></div>
+            </div>
+            
+            <div class="force-card active" data-force="magnetic">
+                <div class="force-info">
+                    <div class="force-header">
+                        <div class="force-icon" style="background: linear-gradient(135deg, #4d94ff, #3a7bd5);">🧲</div>
+                        <div class="force-name">磁场力</div>
+                    </div>
+                    <div class="force-origin">源自：旋转运动分量变化 (-V·dm/dt)</div>
+                    <div class="force-direction">→ 方向：垂直于速度与磁场平面</div>
+                </div>
+                <div class="toggle-switch active"></div>
+            </div>
+            
+            <div class="force-card active" data-force="nuclear">
+                <div class="force-info">
+                    <div class="force-header">
+                        <div class="force-icon" style="background: linear-gradient(135deg, #a78bfa, #8b5cf6);">☢️</div>
+                        <div class="force-name">核力</div>
+                    </div>
+                    <div class="force-origin">源自：光速矢量方向剧烈变化 (dC/dt)</div>
+                    <div class="force-direction">→ 方向：短程束缚，极强复杂</div>
+                </div>
+                <div class="toggle-switch active"></div>
+            </div>
+        </div>
+        
+        <!-- 统一公式 -->
+        <div class="section formula">
+            <h3>📐 宇宙大统一方程</h3>
+            <div class="formula-box">
+F = C·dm/dt - V·dm/dt + m·dC/dt - m·dV/dt
+            </div>
+            <div style="font-size: 0.7em; color: #888; margin-top: 6px;">
+                电场力 + 磁场力 + 核力 + 引力/惯性力
+            </div>
+        </div>
+        
+        <!-- 相机控制 -->
+        <div class="section camera">
+            <h3>📹 3D舞台控制</h3>
+            <div class="slider-group">
+                <div class="slider-label"><span>相机距离</span> <span id="cameraDistVal">32</span></div>
+                <input type="range" id="cameraDist" min="15" max="60" value="32">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>自动旋转速度</span> <span id="autoRotateVal">0.5</span></div>
+                <input type="range" id="autoRotate" min="0" max="2" step="0.1" value="0.5">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>视野角度 FOV</span> <span id="fovVal">60</span></div>
+                <input type="range" id="fov" min="40" max="90" value="60">
+            </div>
+            <div class="control-hint">
+                🖱️ 拖动旋转 | 🔍 滚轮缩放 | ⌨️ 空格暂停
+            </div>
+        </div>
+        
+        <!-- 控制选项 -->
+        <div class="section control">
+            <h3>🎮 视觉控制</h3>
+            <div class="slider-group">
+                <div class="slider-label"><span>粒子数量</span> <span id="particlesVal">12</span></div>
+                <input type="range" id="particles" min="5" max="30" value="12">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>粒子大小</span> <span id="particleSizeVal">1.0</span></div>
+                <input type="range" id="particleSize" min="0.5" max="2" step="0.1" value="1">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>向量长度</span> <span id="vectorLenVal">1.2</span></div>
+                <input type="range" id="vectorLen" min="0.5" max="2.5" step="0.1" value="1.2">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>向量粗细</span> <span id="vectorWidthVal">2</span></div>
+                <input type="range" id="vectorWidth" min="1" max="5" value="2">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>运动速度</span> <span id="speedVal">1.0</span></div>
+                <input type="range" id="speed" min="0.1" max="3" step="0.1" value="1">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>轨迹长度</span> <span id="trailLenVal">80</span></div>
+                <input type="range" id="trailLen" min="30" max="150" value="80">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>轨迹透明度</span> <span id="trailOpacityVal">0.5</span></div>
+                <input type="range" id="trailOpacity" min="0.1" max="1" step="0.1" value="0.5">
+            </div>
+            <div class="btn-grid">
+                <button id="toggleVectors">向量 ON</button>
+                <button id="toggleTrails">轨迹 ON</button>
+                <button id="toggleAxes">坐标轴 ON</button>
+                <button id="toggleGlow">光晕 ON</button>
+                <button id="toggleRainbow">彩虹 ON</button>
+                <button id="resetView">重置视角</button>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <strong>🔬 统一场论核心：</strong><br>
+            垂直原理要求空间以三维螺旋方式运动。粒子将完整地沿螺旋线运动一整圈，展示从起点到终点的完整轨迹。四种基本力的方向是这种螺旋运动的几何体现。
+        </div>
+    </div>
+    
+    <!-- 图例 -->
+    <div class="legend">
+        <div class="legend-title">力场向量图例</div>
+        <div class="legend-item">
+            <div class="legend-line" style="background: #ff6b6b;"></div>
+            <span>引力场（指向中心）</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line" style="background: #ffd93d;"></div>
+            <span>电场（径向发散/汇聚）</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line" style="background: #4d94ff;"></div>
+            <span>磁场（垂直平面）</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line" style="background: #a78bfa;"></div>
+            <span>核力场（复杂方向）</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line" style="background: #00d4ff;"></div>
+            <span>螺旋轨迹</span>
+        </div>
+    </div>
+    
+    <!-- 统计面板 -->
+    <div class="stats-panel">
+        <div class="stats-title">系统状态</div>
+        <div class="stat-item">
+            <span>FPS</span>
+            <span class="stat-value" id="fps">60</span>
+        </div>
+        <div class="stat-item">
+            <span>粒子数</span>
+            <span class="stat-value" id="particleCount">0</span>
+        </div>
+        <div class="stat-item">
+            <span>力向量</span>
+            <span class="stat-value" id="vectorCount">0</span>
+        </div>
+        <div class="stat-item">
+            <span>相机角度</span>
+            <span class="stat-value" id="cameraAngle">0°</span>
+        </div>
+    </div>
+    
+    <!-- 理论面板 -->
+    <div class="theory-panel">
+        <div class="theory-title">统一模式</div>
+        <div id="theoryContent">
+展示完整的三维螺旋运动及其分解出的四种基本力。每个粒子沿螺旋轨迹完整运动，从起点到终点展示全程。这是垂直原理最直接的几何体现。
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // ============ 全局变量 ============
+        let scene, camera, renderer;
+        let spiralGroup;
+        let particles = [];
+        let forceVectors = { gravity: [], electric: [], magnetic: [], nuclear: [] };
+        
+        // 状态管理
+        const state = {
+            mode: 'unified',
+            showVectors: true,
+            showTrails: true,
+            showAxes: true,
+            showGlow: true,
+            showRainbow: true,
+            isPaused: false,
+            isDragging: false,
+            forces: {
+                gravity: true,
+                electric: true,
+                magnetic: true,
+                nuclear: true
+            }
+        };
+        
+        // 配置参数
+        const config = {
+            radius: 3.5,
+            omega: 1.0,
+            pitch: 0.6,
+            turns: 5,
+            particleCount: 12,
+            particleSize: 1.0,
+            vectorLength: 1.2,
+            vectorWidth: 2,
+            speed: 1.0,
+            cameraDist: 32,
+            autoRotateSpeed: 0.5,
+            fov: 60,
+            trailLength: 80,
+            trailOpacity: 0.5
+        };
+        
+        // 相机控制
+        let mouseX = 0, mouseY = 0;
+        let lastMouseX = 0, lastMouseY = 0;
+        let targetRotX = 0.3, targetRotY = 0.2;
+        let currentRotX = 0.3, currentRotY = 0.2;
+        let autoRotateAngle = 0;
+        
+        // 性能监控
+        let frameCount = 0;
+        let lastFpsTime = 0;
+        let animTime = 0;
+        
+        // ============ 初始化 ============
+        function init() {
+            try {
+                // 场景设置
+                scene = new THREE.Scene();
+                scene.fog = new THREE.FogExp2(0x000000, 0.008);
+                
+                // 相机设置
+                camera = new THREE.PerspectiveCamera(
+                    config.fov,
+                    window.innerWidth / window.innerHeight,
+                    0.1,
+                    1000
+                );
+                updateCameraPosition();
+                
+                // 渲染器设置
+                renderer = new THREE.WebGLRenderer({
+                    antialias: true,
+                    alpha: true,
+                    powerPreference: "high-performance"
+                });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                renderer.setClearColor(0x000000, 1);
+                document.getElementById('container').appendChild(renderer.domElement);
+                
+                // 光照系统
+                setupLights();
+                
+                // 创建星空
+                createStarfield();
+                
+                // 创建坐标轴
+                createAxes();
+                
+                // 创建螺旋系统
+                spiralGroup = new THREE.Group();
+                scene.add(spiralGroup);
+                createSpiralSystem();
+                
+                // 事件监听
+                setupControls();
+                setupMouseControls();
+                window.addEventListener('resize', onResize, false);
+                window.addEventListener('keydown', onKeyDown, false);
+                
+                // 开始动画
+                lastFpsTime = performance.now();
+                animate();
+                
+            } catch (error) {
+                console.error('初始化错误:', error);
+            }
+        }
+        
+        // ============ 光照系统 ============
+        function setupLights() {
+            const ambientLight = new THREE.AmbientLight(0x1a1a2e, 0.6);
+            scene.add(ambientLight);
+            
+            const light1 = new THREE.PointLight(0x00d4ff, 1.5, 150);
+            light1.position.set(20, 20, 20);
+            scene.add(light1);
+            
+            const light2 = new THREE.PointLight(0x7b2ff7, 1.3, 150);
+            light2.position.set(-20, -15, -20);
+            scene.add(light2);
+            
+            const light3 = new THREE.PointLight(0xf107a3, 1.0, 120);
+            light3.position.set(0, -20, 15);
+            scene.add(light3);
+        }
+        
+        // ============ 星空背景 ============
+        function createStarfield() {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            const colors = [];
+            
+            for (let i = 0; i < 6000; i++) {
+                vertices.push(
+                    (Math.random() - 0.5) * 250,
+                    (Math.random() - 0.5) * 250,
+                    (Math.random() - 0.5) * 250
+                );
+                
+                const color = new THREE.Color();
+                color.setHSL(Math.random() * 0.2 + 0.5, 0.7, 0.5 + Math.random() * 0.4);
+                colors.push(color.r, color.g, color.b);
+            }
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            
+            const material = new THREE.PointsMaterial({
+                size: 0.35,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.85,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const starField = new THREE.Points(geometry, material);
+            scene.add(starField);
+        }
+        
+        // ============ 坐标轴系统 ============
+        function createAxes() {
+            const axesGroup = new THREE.Group();
+            axesGroup.name = 'axes';
+            const length = 20;
+            
+            const axisData = [
+                { color: 0xff6b6b, dir: [1, 0, 0] },
+                { color: 0x6bff6b, dir: [0, 1, 0] },
+                { color: 0x6b6bff, dir: [0, 0, 1] }
+            ];
+            
+            axisData.forEach(axis => {
+                const material = new THREE.LineBasicMaterial({
+                    color: axis.color,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const posPoints = [
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(axis.dir[0] * length, axis.dir[1] * length, axis.dir[2] * length)
+                ];
+                const posGeometry = new THREE.BufferGeometry().setFromPoints(posPoints);
+                const posLine = new THREE.Line(posGeometry, material);
+                axesGroup.add(posLine);
+                
+                const negPoints = [
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(-axis.dir[0] * length, -axis.dir[1] * length, -axis.dir[2] * length)
+                ];
+                const negGeometry = new THREE.BufferGeometry().setFromPoints(negPoints);
+                const negLine = new THREE.Line(negGeometry, material);
+                axesGroup.add(negLine);
+            });
+            
+            scene.add(axesGroup);
+        }
+        
+        // ============ 创建螺旋系统 ============
+        function createSpiralSystem() {
+            spiralGroup.clear();
+            particles = [];
+            forceVectors = { gravity: [], electric: [], magnetic: [], nuclear: [] };
+            
+            // 创建螺旋线
+            const points = [];
+            const segments = 400;
+            for (let i = 0; i <= segments; i++) {
+                const t = (i / segments) * config.turns * Math.PI * 2;
+                const x = config.radius * Math.cos(t);
+                const y = config.pitch * t - config.turns * Math.PI * config.pitch;
+                const z = config.radius * Math.sin(t);
+                points.push(new THREE.Vector3(x, y, z));
+            }
+            
+            const spiralGeometry = new THREE.BufferGeometry().setFromPoints(points);
+            const spiralMaterial = new THREE.LineBasicMaterial({
+                color: 0x00d4ff,
+                transparent: true,
+                opacity: 0.5
+            });
+            const spiralLine = new THREE.Line(spiralGeometry, spiralMaterial);
+            spiralGroup.add(spiralLine);
+            
+            // 创建粒子
+            for (let i = 0; i < config.particleCount; i++) {
+                const particle = {
+                    progress: i / config.particleCount,
+                    mesh: null,
+                    trailPoints: [],
+                    trail: null,
+                    glow: null
+                };
+                
+                // 粒子球（更高质量）
+                const baseSize = 0.2 * config.particleSize;
+                const sphereGeom = new THREE.SphereGeometry(baseSize, 24, 24);
+                const sphereMat = new THREE.MeshPhongMaterial({
+                    color: 0x00d4ff,
+                    emissive: 0x0099dd,
+                    shininess: 120,
+                    transparent: true,
+                    opacity: 0.95,
+                    specular: 0xffffff
+                });
+                particle.mesh = new THREE.Mesh(sphereGeom, sphereMat);
+                spiralGroup.add(particle.mesh);
+                
+                // 粒子光晕（可选）
+                const glowGeom = new THREE.SphereGeometry(baseSize * 1.8, 16, 16);
+                const glowMat = new THREE.MeshBasicMaterial({
+                    color: 0x00d4ff,
+                    transparent: true,
+                    opacity: 0.3,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                particle.glow = new THREE.Mesh(glowGeom, glowMat);
+                spiralGroup.add(particle.glow);
+                
+                // 轨迹（渐变颜色）
+                const trailGeom = new THREE.BufferGeometry();
+                const trailMat = new THREE.LineBasicMaterial({
+                    color: 0x00d4ff,
+                    transparent: true,
+                    opacity: config.trailOpacity,
+                    linewidth: 2
+                });
+                particle.trail = new THREE.Line(trailGeom, trailMat);
+                spiralGroup.add(particle.trail);
+                
+                // 力向量（更粗的线条）
+                const forceTypes = [
+                    { name: 'gravity', color: 0xff6b6b },
+                    { name: 'electric', color: 0xffd93d },
+                    { name: 'magnetic', color: 0x4d94ff },
+                    { name: 'nuclear', color: 0xa78bfa }
+                ];
+                
+                forceTypes.forEach(force => {
+                    const vectorGeom = new THREE.BufferGeometry();
+                    const positions = new Float32Array(6);
+                    vectorGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                    
+                    // 使用更粗的线条
+                    const vectorMat = new THREE.LineBasicMaterial({
+                        color: force.color,
+                        transparent: true,
+                        opacity: 0.85,
+                        linewidth: config.vectorWidth
+                    });
+                    const vector = new THREE.Line(vectorGeom, vectorMat);
+                    spiralGroup.add(vector);
+                    
+                    if (!forceVectors[force.name]) forceVectors[force.name] = [];
+                    forceVectors[force.name].push(vector);
+                });
+                
+                particles.push(particle);
+            }
+            
+            updateStats();
+        }
+        
+        // ============ 更新粒子（完整螺旋运动）============
+        function updateParticles() {
+            let maxProgress = 0;
+            
+            particles.forEach((p, idx) => {
+                // 每个粒子完整跑完螺旋线（从0到1的完整周期）
+                const cycleTime = 10000; // 10秒完成一个完整周期
+                const baseT = ((animTime * config.speed) % cycleTime) / cycleTime;
+                const offsetT = (idx / config.particleCount);
+                let t = (baseT + offsetT) % 1; // 当前粒子在螺旋线上的位置（0到1）
+                
+                // 计算螺旋线上的实际位置
+                const totalAngle = t * config.turns * Math.PI * 2; // 总旋转角度
+                
+                const x = config.radius * Math.cos(totalAngle);
+                const y = config.pitch * totalAngle - config.turns * Math.PI * config.pitch;
+                const z = config.radius * Math.sin(totalAngle);
+                
+                p.mesh.position.set(x, y, z);
+                if (p.glow) {
+                    p.glow.position.set(x, y, z);
+                    p.glow.visible = state.showGlow;
+                }
+                
+                // 记录最大进度（用于进度条显示）
+                maxProgress = Math.max(maxProgress, t);
+                
+                // 粒子颜色随进度变化（彩虹效果可选）
+                if (state.showRainbow) {
+                    const hue = t * 0.6; // 从青色到紫色
+                    p.mesh.material.color.setHSL(0.5 + hue * 0.3, 1, 0.6);
+                    p.mesh.material.emissive.setHSL(0.5 + hue * 0.3, 1, 0.4);
+                    if (p.glow) {
+                        p.glow.material.color.setHSL(0.5 + hue * 0.3, 1, 0.6);
+                    }
+                    if (p.trail.visible) {
+                        p.trail.material.color.setHSL(0.5 + hue * 0.3, 1, 0.5);
+                    }
+                } else {
+                    // 默认青色
+                    p.mesh.material.color.setHex(0x00d4ff);
+                    p.mesh.material.emissive.setHex(0x0099dd);
+                    if (p.glow) {
+                        p.glow.material.color.setHex(0x00d4ff);
+                    }
+                    if (p.trail.visible) {
+                        p.trail.material.color.setHex(0x00d4ff);
+                    }
+                }
+                
+                // 粒子大小脉动效果
+                const pulse = 1 + Math.sin(animTime * 0.003 + idx) * 0.1;
+                p.mesh.scale.set(pulse, pulse, pulse);
+                
+                // 轨迹
+                if (state.showTrails) {
+                    p.trailPoints.push(new THREE.Vector3(x, y, z));
+                    if (p.trailPoints.length > config.trailLength) p.trailPoints.shift();
+                    
+                    // 当粒子完成一圈时，清空轨迹重新开始
+                    if (t < 0.01 && p.trailPoints.length > 10) {
+                        p.trailPoints = [];
+                    }
+                    
+                    if (p.trailPoints.length > 1) {
+                        p.trail.geometry.setFromPoints(p.trailPoints);
+                        p.trail.material.opacity = config.trailOpacity;
+                        p.trail.visible = true;
+                    }
+                } else {
+                    p.trail.visible = false;
+                }
+                
+                // 力向量更新
+                if (state.showVectors) {
+                    const vecLen = config.vectorLength;
+                    
+                    // 1. 引力向量 - 指向中心
+                    if (state.forces.gravity && forceVectors.gravity[idx]) {
+                        const gravDir = new THREE.Vector3(-x, -y, -z).normalize().multiplyScalar(vecLen);
+                        const pos = forceVectors.gravity[idx].geometry.attributes.position.array;
+                        pos[0] = x; pos[1] = y; pos[2] = z;
+                        pos[3] = x + gravDir.x; pos[4] = y + gravDir.y; pos[5] = z + gravDir.z;
+                        forceVectors.gravity[idx].geometry.attributes.position.needsUpdate = true;
+                        forceVectors.gravity[idx].visible = true;
+                    } else if (forceVectors.gravity[idx]) {
+                        forceVectors.gravity[idx].visible = false;
+                    }
+                    
+                    // 2. 电场向量 - 径向发散
+                    if (state.forces.electric && forceVectors.electric[idx]) {
+                        const elecDir = new THREE.Vector3(x, 0, z).normalize().multiplyScalar(vecLen);
+                        const pos = forceVectors.electric[idx].geometry.attributes.position.array;
+                        pos[0] = x; pos[1] = y; pos[2] = z;
+                        pos[3] = x + elecDir.x; pos[4] = y + elecDir.y; pos[5] = z + elecDir.z;
+                        forceVectors.electric[idx].geometry.attributes.position.needsUpdate = true;
+                        forceVectors.electric[idx].visible = true;
+                    } else if (forceVectors.electric[idx]) {
+                        forceVectors.electric[idx].visible = false;
+                    }
+                    
+                    // 3. 磁场向量 - 垂直于运动平面
+                    if (state.forces.magnetic && forceVectors.magnetic[idx]) {
+                        const tangent = new THREE.Vector3(-Math.sin(totalAngle), 0, Math.cos(totalAngle)).normalize();
+                        const radial = new THREE.Vector3(Math.cos(totalAngle), 0, Math.sin(totalAngle)).normalize();
+                        const magDir = new THREE.Vector3().crossVectors(tangent, radial).normalize().multiplyScalar(vecLen);
+                        const pos = forceVectors.magnetic[idx].geometry.attributes.position.array;
+                        pos[0] = x; pos[1] = y; pos[2] = z;
+                        pos[3] = x + magDir.x; pos[4] = y + magDir.y; pos[5] = z + magDir.z;
+                        forceVectors.magnetic[idx].geometry.attributes.position.needsUpdate = true;
+                        forceVectors.magnetic[idx].visible = true;
+                    } else if (forceVectors.magnetic[idx]) {
+                        forceVectors.magnetic[idx].visible = false;
+                    }
+                    
+                    // 4. 核力向量 - 复杂方向
+                    if (state.forces.nuclear && forceVectors.nuclear[idx]) {
+                        const nucDir = new THREE.Vector3(
+                            Math.sin(totalAngle * 3 + animTime * 0.001),
+                            Math.cos(totalAngle * 2 - animTime * 0.0008),
+                            Math.sin(totalAngle * 5 + animTime * 0.0012)
+                        ).normalize().multiplyScalar(vecLen * 0.75);
+                        const pos = forceVectors.nuclear[idx].geometry.attributes.position.array;
+                        pos[0] = x; pos[1] = y; pos[2] = z;
+                        pos[3] = x + nucDir.x; pos[4] = y + nucDir.y; pos[5] = z + nucDir.z;
+                        forceVectors.nuclear[idx].geometry.attributes.position.needsUpdate = true;
+                        forceVectors.nuclear[idx].visible = true;
+                    } else if (forceVectors.nuclear[idx]) {
+                        forceVectors.nuclear[idx].visible = false;
+                    }
+                } else {
+                    Object.values(forceVectors).forEach(vectors => {
+                        vectors.forEach(v => v.visible = false);
+                    });
+                }
+            });
+            
+            // 更新进度条（显示第一个粒子的进度）
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill && particles.length > 0) {
+                const cycleTime = 10000;
+                const firstParticleProgress = (((animTime * config.speed) % cycleTime) / cycleTime);
+                progressFill.style.width = (firstParticleProgress * 100) + '%';
+            }
+        }
+        
+        // ============ 动画循环 ============
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (!state.isPaused) {
+                const now = performance.now();
+                animTime = now;
+                
+                // FPS计数
+                frameCount++;
+                if (now - lastFpsTime >= 1000) {
+                    document.getElementById('fps').textContent = frameCount;
+                    frameCount = 0;
+                    lastFpsTime = now;
+                }
+                
+                // 更新粒子
+                updateParticles();
+                
+                // 自动旋转
+                if (config.autoRotateSpeed > 0 && !state.isDragging) {
+                    autoRotateAngle += 0.001 * config.autoRotateSpeed;
+                    spiralGroup.rotation.y = autoRotateAngle;
+                }
+                
+                // 相机平滑移动
+                currentRotX += (targetRotX - currentRotX) * 0.08;
+                currentRotY += (targetRotY - currentRotY) * 0.08;
+                
+                updateCameraPosition();
+                
+                // 更新相机角度显示
+                const angle = Math.round((currentRotX / Math.PI) * 180);
+                const angleElem = document.getElementById('cameraAngle');
+                if (angleElem) angleElem.textContent = angle + '°';
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // ============ 更新相机位置 ============
+        function updateCameraPosition() {
+            const dist = config.cameraDist;
+            camera.position.x = dist * Math.sin(currentRotX) * Math.cos(currentRotY);
+            camera.position.z = dist * Math.cos(currentRotX) * Math.cos(currentRotY);
+            camera.position.y = dist * Math.sin(currentRotY);
+            camera.lookAt(0, 0, 0);
+        }
+        
+        // ============ 鼠标控制 ============
+        function setupMouseControls() {
+            let isDragging = false;
+            
+            document.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                state.isDragging = true;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+                document.body.classList.add('grabbing');
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaX = e.clientX - lastMouseX;
+                    const deltaY = e.clientY - lastMouseY;
+                    
+                    targetRotX += deltaX * 0.01;
+                    targetRotY = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, targetRotY - deltaY * 0.01));
+                    
+                    lastMouseX = e.clientX;
+                    lastMouseY = e.clientY;
+                }
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                state.isDragging = false;
+                document.body.classList.remove('grabbing');
+            });
+            
+            document.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY * 0.02;
+                config.cameraDist = Math.max(15, Math.min(60, config.cameraDist + delta));
+                const distElem = document.getElementById('cameraDistVal');
+                if (distElem) distElem.textContent = config.cameraDist.toFixed(1);
+                const distSlider = document.getElementById('cameraDist');
+                if (distSlider) distSlider.value = config.cameraDist;
+                updateCameraPosition();
+            }, { passive: false });
+        }
+        
+        // ============ 键盘控制 ============
+        function onKeyDown(e) {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                state.isPaused = !state.isPaused;
+            }
+        }
+        
+        // ============ 控制设置 ============
+        function setupControls() {
+            // 模式切换
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.mode = btn.dataset.mode;
+                    updateModeDisplay();
+                });
+            });
+            
+            // 滑块控制
+            const sliders = {
+                radius: { id: 'radius', display: 'radiusVal', prop: 'radius', rebuild: true },
+                omega: { id: 'omega', display: 'omegaVal', prop: 'omega', rebuild: false },
+                pitch: { id: 'pitch', display: 'pitchVal', prop: 'pitch', rebuild: true },
+                turns: { id: 'turns', display: 'turnsVal', prop: 'turns', rebuild: true },
+                particles: { id: 'particles', display: 'particlesVal', prop: 'particleCount', rebuild: true },
+                particleSize: { id: 'particleSize', display: 'particleSizeVal', prop: 'particleSize', rebuild: true },
+                vectorLen: { id: 'vectorLen', display: 'vectorLenVal', prop: 'vectorLength', rebuild: false },
+                vectorWidth: { id: 'vectorWidth', display: 'vectorWidthVal', prop: 'vectorWidth', rebuild: true },
+                speed: { id: 'speed', display: 'speedVal', prop: 'speed', rebuild: false },
+                cameraDist: { id: 'cameraDist', display: 'cameraDistVal', prop: 'cameraDist', rebuild: false },
+                autoRotate: { id: 'autoRotate', display: 'autoRotateVal', prop: 'autoRotateSpeed', rebuild: false },
+                fov: { id: 'fov', display: 'fovVal', prop: 'fov', rebuild: false },
+                trailLen: { id: 'trailLen', display: 'trailLenVal', prop: 'trailLength', rebuild: false },
+                trailOpacity: { id: 'trailOpacity', display: 'trailOpacityVal', prop: 'trailOpacity', rebuild: false }
+            };
+            
+            Object.values(sliders).forEach(slider => {
+                const elem = document.getElementById(slider.id);
+                if (elem) {
+                    elem.addEventListener('input', (e) => {
+                        const val = parseFloat(e.target.value);
+                        config[slider.prop] = val;
+                        const display = document.getElementById(slider.display);
+                        if (display) display.textContent = val.toFixed(1);
+                        
+                        if (slider.prop === 'fov') {
+                            camera.fov = val;
+                            camera.updateProjectionMatrix();
+                        } else if (slider.prop === 'cameraDist') {
+                            updateCameraPosition();
+                        } else if (slider.rebuild) {
+                            createSpiralSystem();
+                        }
+                    });
+                }
+            });
+            
+            // 力类型切换
+            document.querySelectorAll('.force-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const force = card.dataset.force;
+                    state.forces[force] = !state.forces[force];
+                    card.classList.toggle('active');
+                    const toggle = card.querySelector('.toggle-switch');
+                    if (toggle) toggle.classList.toggle('active');
+                    updateStats();
+                });
+            });
+            
+            // 按钮控制
+            const toggleVectorsBtn = document.getElementById('toggleVectors');
+            if (toggleVectorsBtn) {
+                toggleVectorsBtn.addEventListener('click', function() {
+                    state.showVectors = !state.showVectors;
+                    this.textContent = state.showVectors ? '向量 ON' : '向量 OFF';
+                });
+            }
+            
+            const toggleTrailsBtn = document.getElementById('toggleTrails');
+            if (toggleTrailsBtn) {
+                toggleTrailsBtn.addEventListener('click', function() {
+                    state.showTrails = !state.showTrails;
+                    this.textContent = state.showTrails ? '轨迹 ON' : '轨迹 OFF';
+                    if (!state.showTrails) particles.forEach(p => p.trailPoints = []);
+                });
+            }
+            
+            const toggleAxesBtn = document.getElementById('toggleAxes');
+            if (toggleAxesBtn) {
+                toggleAxesBtn.addEventListener('click', function() {
+                    state.showAxes = !state.showAxes;
+                    const axes = scene.getObjectByName('axes');
+                    if (axes) axes.visible = state.showAxes;
+                    this.textContent = state.showAxes ? '坐标轴 ON' : '坐标轴 OFF';
+                });
+            }
+            
+            const toggleGlowBtn = document.getElementById('toggleGlow');
+            if (toggleGlowBtn) {
+                toggleGlowBtn.addEventListener('click', function() {
+                    state.showGlow = !state.showGlow;
+                    this.textContent = state.showGlow ? '光晕 ON' : '光晕 OFF';
+                });
+            }
+            
+            const toggleRainbowBtn = document.getElementById('toggleRainbow');
+            if (toggleRainbowBtn) {
+                toggleRainbowBtn.addEventListener('click', function() {
+                    state.showRainbow = !state.showRainbow;
+                    this.textContent = state.showRainbow ? '彩虹 ON' : '彩虹 OFF';
+                });
+            }
+            
+            const resetViewBtn = document.getElementById('resetView');
+            if (resetViewBtn) {
+                resetViewBtn.addEventListener('click', () => {
+                    targetRotX = 0.3;
+                    targetRotY = 0.2;
+                    currentRotX = 0.3;
+                    currentRotY = 0.2;
+                    config.cameraDist = 32;
+                    autoRotateAngle = 0;
+                    spiralGroup.rotation.y = 0;
+                    updateCameraPosition();
+                    
+                    const distSlider = document.getElementById('cameraDist');
+                    if (distSlider) distSlider.value = 32;
+                    const distElem = document.getElementById('cameraDistVal');
+                    if (distElem) distElem.textContent = '32.0';
+                });
+            }
+        }
+        
+        // ============ 更新模式显示 ============
+        function updateModeDisplay() {
+            const theoryContent = document.getElementById('theoryContent');
+            const theoryTitle = document.querySelector('.theory-title');
+            
+            if (!theoryContent || !theoryTitle) return;
+            
+            const modes = {
+                unified: {
+                    title: '统一模式',
+                    content: '展示完整的三维螺旋运动及其分解出的四种基本力。每个粒子沿螺旋轨迹完整运动，从起点到终点展示全程。这是垂直原理最直接的几何体现。'
+                },
+                separate: {
+                    title: '分解模式',
+                    content: '将螺旋运动分解为直线运动分量和旋转运动分量。引力和电场力源于直线分量的变化，磁场力源于旋转分量的变化，核力源于光速矢量的剧烈方向变化。'
+                },
+                comparison: {
+                    title: '对比模式',
+                    content: '对比四种力的方向特征：引力指向质量中心，电场沿径向发散或汇聚，磁场始终垂直于运动平面，核力在微观尺度呈现复杂多变的方向。揭示力的方向是几何运动变化的必然结果。'
+                },
+                evolution: {
+                    title: '演化模式',
+                    content: '动态展示从垂直原理→螺旋运动→运动变化→力的产生的完整演化过程。理解力不是超距作用，而是空间为维持其三维垂直几何状态而产生的运动变化的表现。'
+                }
+            };
+            
+            const mode = modes[state.mode];
+            theoryTitle.textContent = mode.title;
+            theoryContent.textContent = mode.content;
+        }
+        
+        // ============ 更新统计 ============
+        function updateStats() {
+            const particleCountElem = document.getElementById('particleCount');
+            if (particleCountElem) particleCountElem.textContent = particles.length;
+            
+            const vectorCount = Object.values(state.forces).filter(v => v).length * particles.length;
+            const vectorCountElem = document.getElementById('vectorCount');
+            if (vectorCountElem) vectorCountElem.textContent = vectorCount;
+        }
+        
+        // ============ 窗口调整 ============
+        function onResize() {
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+        
+        // ============ 启动应用 ============
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>

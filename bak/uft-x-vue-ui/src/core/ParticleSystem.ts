@@ -118,7 +118,7 @@ export class ParticleEmitter {
     this.particles = []
     this.particlePool = new ObjectPool(
       () => new Particle(),
-      (p) => p.reset(),
+      p => p.reset(),
       maxParticles
     )
   }
@@ -138,7 +138,8 @@ export class ParticleEmitter {
     const theta = Math.random() * Math.PI * 2
     const phi = (Math.random() - 0.5) * this.config.spread
 
-    const speed = this.config.velocity.length() * (1 + (Math.random() - 0.5) * this.config.velocityVariance)
+    const speed =
+      this.config.velocity.length() * (1 + (Math.random() - 0.5) * this.config.velocityVariance)
 
     particle.velocity.set(
       Math.sin(phi) * Math.cos(theta) * speed,
@@ -147,7 +148,8 @@ export class ParticleEmitter {
     )
 
     // 设置生命周期
-    particle.lifetime = this.config.lifetime * (1 + (Math.random() - 0.5) * this.config.lifetimeVariance)
+    particle.lifetime =
+      this.config.lifetime * (1 + (Math.random() - 0.5) * this.config.lifetimeVariance)
     particle.age = 0
 
     // 设置大小

@@ -1,1978 +1,2183 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>算法联盟 - 张祥前统一场论终极可视化 v2.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;500;700&display=swap');
-        
-        :root {
-            --primary-glow: #00f5ff;
-            --secondary-glow: #ff0080;
-            --accent-glow: #8000ff;
-            --bg-dark: #0a0a0f;
-            --bg-panel: rgba(10, 15, 35, 0.95);
-            --border-glow: rgba(0, 245, 255, 0.6);
-            --text-primary: #ffffff;
-            --text-secondary: #00f5ff;
-            --shadow-glow: 0 0 30px;
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;500;700&display=swap');
+
+      :root {
+        --primary-glow: #00f5ff;
+        --secondary-glow: #ff0080;
+        --accent-glow: #8000ff;
+        --bg-dark: #0a0a0f;
+        --bg-panel: rgba(10, 15, 35, 0.95);
+        --border-glow: rgba(0, 245, 255, 0.6);
+        --text-primary: #ffffff;
+        --text-secondary: #00f5ff;
+        --shadow-glow: 0 0 30px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        overflow: hidden;
+        background: radial-gradient(ellipse at center, #1a0f2e 0%, #0f0518 50%, #000000 100%);
+        font-family: 'Orbitron', monospace;
+        color: var(--text-primary);
+        user-select: none;
+      }
+
+      #container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      /* 算法联盟标识 */
+      .alliance-brand {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        background: linear-gradient(135deg, var(--primary-glow), var(--secondary-glow));
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 24px;
+        font-weight: 900;
+        text-shadow: var(--shadow-glow) var(--primary-glow);
+        animation: brandPulse 3s ease-in-out infinite;
+      }
+
+      @keyframes brandPulse {
+        0%,
+        100% {
+          opacity: 0.8;
+          transform: translateX(-50%) scale(1);
         }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        50% {
+          opacity: 1;
+          transform: translateX(-50%) scale(1.05);
         }
-        
-        body {
-            overflow: hidden;
-            background: radial-gradient(ellipse at center, #1a0f2e 0%, #0f0518 50%, #000000 100%);
-            font-family: 'Orbitron', monospace;
-            color: var(--text-primary);
-            user-select: none;
+      }
+
+      /* 超级面板系统 */
+      .super-panel {
+        position: absolute;
+        background: var(--bg-panel);
+        border: 2px solid var(--border-glow);
+        border-radius: 20px;
+        backdrop-filter: blur(25px);
+        box-shadow: var(--shadow-glow) var(--primary-glow);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .super-panel:hover {
+        border-color: var(--secondary-glow);
+        box-shadow: var(--shadow-glow) var(--secondary-glow);
+        transform: scale(1.02);
+      }
+
+      .super-panel.minimized {
+        opacity: 0.7;
+        transform: scale(0.9);
+      }
+
+      /* 控制面板布局优化 */
+      #main-controls {
+        top: 60px;
+        left: 20px;
+        width: 400px;
+        max-height: 85vh;
+        padding: 25px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary-glow) transparent;
+      }
+
+      #advanced-controls {
+        top: 60px;
+        right: 20px;
+        width: 380px;
+        max-height: 85vh;
+        padding: 25px;
+        overflow-y: auto;
+      }
+
+      #theory-display {
+        bottom: 20px;
+        left: 20px;
+        width: 520px;
+        max-height: 350px;
+        padding: 25px;
+        overflow-y: auto;
+      }
+
+      #stats-monitor {
+        bottom: 20px;
+        right: 20px;
+        width: 300px;
+        padding: 20px;
+      }
+
+      /* 面板头部 */
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-glow);
+      }
+
+      .panel-title {
+        font-size: 18px;
+        font-weight: 700;
+        background: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow));
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .minimize-btn {
+        background: none;
+        border: 1px solid var(--border-glow);
+        color: var(--text-secondary);
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 12px;
+      }
+
+      .minimize-btn:hover {
+        background: var(--primary-glow);
+        color: var(--bg-dark);
+        box-shadow: 0 0 15px var(--primary-glow);
+      }
+
+      /* 超级控制组 */
+      .super-control-group {
+        margin: 25px 0;
+        padding: 20px;
+        border-radius: 15px;
+        background: linear-gradient(135deg, rgba(0, 245, 255, 0.05), rgba(255, 0, 128, 0.05));
+        border: 1px solid rgba(0, 245, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .super-control-group::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--primary-glow), transparent);
+        animation: scanLine 3s ease-in-out infinite;
+      }
+
+      @keyframes scanLine {
+        0% {
+          left: -100%;
         }
-        
-        #container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
+        100% {
+          left: 100%;
         }
-        
-        /* 算法联盟标识 */
-        .alliance-brand {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            background: linear-gradient(135deg, var(--primary-glow), var(--secondary-glow));
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 24px;
-            font-weight: 900;
-            text-shadow: var(--shadow-glow) var(--primary-glow);
-            animation: brandPulse 3s ease-in-out infinite;
-        }
-        
-        @keyframes brandPulse {
-            0%, 100% { opacity: 0.8; transform: translateX(-50%) scale(1); }
-            50% { opacity: 1; transform: translateX(-50%) scale(1.05); }
-        }
-        
-        /* 超级面板系统 */
-        .super-panel {
-            position: absolute;
-            background: var(--bg-panel);
-            border: 2px solid var(--border-glow);
-            border-radius: 20px;
-            backdrop-filter: blur(25px);
-            box-shadow: var(--shadow-glow) var(--primary-glow);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            font-family: 'JetBrains Mono', monospace;
-        }
-        
-        .super-panel:hover {
-            border-color: var(--secondary-glow);
-            box-shadow: var(--shadow-glow) var(--secondary-glow);
-            transform: scale(1.02);
-        }
-        
-        .super-panel.minimized {
-            opacity: 0.7;
-            transform: scale(0.9);
-        }
-        
-        /* 控制面板布局优化 */
-        #main-controls {
-            top: 60px;
-            left: 20px;
-            width: 400px;
-            max-height: 85vh;
-            padding: 25px;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--primary-glow) transparent;
-        }
-        
+      }
+
+      .super-control-group:hover {
+        background: linear-gradient(135deg, rgba(0, 245, 255, 0.1), rgba(255, 0, 128, 0.1));
+        border-color: var(--secondary-glow);
+        transform: translateY(-2px);
+      }
+
+      /* 智能标签系统 */
+      .smart-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text-secondary);
+        text-shadow: 0 0 10px var(--primary-glow);
+      }
+
+      .param-value {
+        background: rgba(0, 245, 255, 0.1);
+        padding: 4px 10px;
+        border-radius: 8px;
+        border: 1px solid var(--primary-glow);
+        font-family: 'Orbitron', monospace;
+        font-weight: 700;
+        color: var(--primary-glow);
+        text-shadow: 0 0 5px var(--primary-glow);
+        min-width: 60px;
+        text-align: center;
+      }
+
+      /* 量子滑块系统 */
+      .quantum-slider {
+        position: relative;
+        width: 100%;
+        height: 12px;
+        margin: 15px 0;
+      }
+
+      .quantum-slider input[type='range'] {
+        width: 100%;
+        height: 12px;
+        background: transparent;
+        outline: none;
+        -webkit-appearance: none;
+        position: relative;
+        z-index: 2;
+      }
+
+      .quantum-slider input[type='range']::-webkit-slider-track {
+        background: linear-gradient(
+          90deg,
+          rgba(0, 245, 255, 0.3) 0%,
+          rgba(255, 0, 128, 0.3) 50%,
+          rgba(128, 0, 255, 0.3) 100%
+        );
+        height: 8px;
+        border-radius: 4px;
+        border: 1px solid var(--border-glow);
+        box-shadow: inset 0 0 10px rgba(0, 245, 255, 0.2);
+      }
+
+      .quantum-slider input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 24px;
+        height: 24px;
+        background: radial-gradient(circle, var(--primary-glow), var(--secondary-glow));
+        border-radius: 50%;
+        border: 3px solid var(--text-primary);
+        cursor: pointer;
+        box-shadow:
+          0 0 20px var(--primary-glow),
+          inset 0 0 10px rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .quantum-slider input[type='range']::-webkit-slider-thumb:hover {
+        transform: scale(1.3);
+        box-shadow:
+          0 0 30px var(--primary-glow),
+          inset 0 0 15px rgba(255, 255, 255, 0.5);
+      }
+
+      .quantum-slider input[type='range']::-webkit-slider-thumb:active {
+        transform: scale(1.1);
+        box-shadow: 0 0 40px var(--secondary-glow);
+      }
+
+      /* 进度光环 */
+      .progress-ring {
+        position: absolute;
+        top: -6px;
+        left: 0;
+        width: 100%;
+        height: 24px;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          var(--primary-glow) var(--progress, 50%),
+          transparent var(--progress, 50%)
+        );
+        border-radius: 12px;
+        opacity: 0.3;
+        pointer-events: none;
+        transition: all 0.3s ease;
+      }
+
+      /* 超级按钮系统 */
+      .super-btn {
+        background: linear-gradient(135deg, var(--primary-glow), var(--secondary-glow));
+        border: none;
+        color: var(--bg-dark);
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 13px;
+        font-family: 'Orbitron', monospace;
+        cursor: pointer;
+        margin: 8px 4px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 245, 255, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .super-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        transition: left 0.6s ease;
+      }
+
+      .super-btn:hover::before {
+        left: 100%;
+      }
+
+      .super-btn:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 8px 25px rgba(0, 245, 255, 0.6);
+      }
+
+      .super-btn:active {
+        transform: translateY(-1px) scale(0.98);
+      }
+
+      .super-btn.active {
+        background: linear-gradient(135deg, var(--secondary-glow), var(--accent-glow));
+        box-shadow: 0 4px 20px rgba(255, 0, 128, 0.5);
+      }
+
+      /* 预设按钮网格 */
+      .preset-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin: 20px 0;
+      }
+
+      .preset-btn {
+        background: linear-gradient(45deg, var(--accent-glow), var(--primary-glow));
+        border: none;
+        color: var(--text-primary);
+        padding: 12px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+      }
+
+      .preset-btn::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transition: all 0.4s ease;
+        transform: translate(-50%, -50%);
+      }
+
+      .preset-btn:hover::after {
+        width: 100%;
+        height: 100%;
+      }
+
+      .preset-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 5px 20px rgba(128, 0, 255, 0.5);
+      }
+
+      /* 公式显示系统 */
+      .formula-display {
+        background: linear-gradient(135deg, rgba(0, 245, 255, 0.15), rgba(128, 0, 255, 0.15));
+        padding: 20px;
+        border-radius: 15px;
+        margin: 15px 0;
+        border: 2px solid rgba(0, 245, 255, 0.3);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 16px;
+        font-weight: 600;
+        text-align: center;
+        box-shadow: inset 0 0 20px rgba(0, 245, 255, 0.1);
+        position: relative;
+      }
+
+      .formula-display::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(
+          45deg,
+          var(--primary-glow),
+          var(--secondary-glow),
+          var(--accent-glow)
+        );
+        border-radius: 15px;
+        z-index: -1;
+        opacity: 0.3;
+      }
+
+      /* 物理概念卡片 */
+      .physics-card {
+        background: linear-gradient(135deg, rgba(255, 200, 0, 0.1), rgba(255, 100, 0, 0.1));
+        border-left: 4px solid #ffcc00;
+        padding: 15px;
+        margin: 12px 0;
+        border-radius: 10px;
+        font-size: 13px;
+        line-height: 1.7;
+        box-shadow: 0 4px 15px rgba(255, 200, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+
+      .physics-card:hover {
+        background: linear-gradient(135deg, rgba(255, 200, 0, 0.15), rgba(255, 100, 0, 0.15));
+        transform: translateX(5px);
+      }
+
+      /* 状态监控系统 */
+      .status-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin: 15px 0;
+      }
+
+      .status-item {
+        background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 245, 255, 0.1));
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(0, 255, 136, 0.3);
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+
+      .status-item:hover {
+        background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 245, 255, 0.2));
+        transform: scale(1.05);
+      }
+
+      .status-label {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .status-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: #00ff88;
+        font-family: 'Orbitron', monospace;
+        text-shadow: 0 0 10px #00ff88;
+      }
+
+      /* 工具提示系统 */
+      .tooltip {
+        position: relative;
+        display: inline-block;
+      }
+
+      .tooltip::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 120%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bg-panel);
+        color: var(--text-primary);
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid var(--primary-glow);
+        box-shadow: 0 5px 15px rgba(0, 245, 255, 0.3);
+        z-index: 1000;
+      }
+
+      .tooltip:hover::after {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      /* 响应式优化 */
+      @media (max-width: 1600px) {
+        #main-controls,
         #advanced-controls {
-            top: 60px;
-            right: 20px;
-            width: 380px;
-            max-height: 85vh;
-            padding: 25px;
-            overflow-y: auto;
+          width: 350px;
         }
-        
         #theory-display {
-            bottom: 20px;
-            left: 20px;
-            width: 520px;
-            max-height: 350px;
-            padding: 25px;
-            overflow-y: auto;
+          width: 450px;
         }
-        
         #stats-monitor {
-            bottom: 20px;
-            right: 20px;
-            width: 300px;
-            padding: 20px;
+          width: 280px;
         }
-        
-        /* 面板头部 */
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-glow);
+      }
+
+      @media (max-width: 1200px) {
+        .super-panel {
+          transform: scale(0.9);
         }
-        
-        .panel-title {
-            font-size: 18px;
-            font-weight: 700;
-            background: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow));
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        #main-controls,
+        #advanced-controls {
+          width: 300px;
         }
-        
-        .minimize-btn {
-            background: none;
-            border: 1px solid var(--border-glow);
-            color: var(--text-secondary);
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 12px;
+        #theory-display {
+          width: 400px;
+          max-height: 250px;
         }
-        
-        .minimize-btn:hover {
-            background: var(--primary-glow);
-            color: var(--bg-dark);
-            box-shadow: 0 0 15px var(--primary-glow);
+      }
+
+      @media (max-width: 900px) {
+        .super-panel {
+          position: fixed !important;
+          transform: scale(0.8);
+          z-index: 100;
         }
-        
-        /* 超级控制组 */
-        .super-control-group {
-            margin: 25px 0;
-            padding: 20px;
-            border-radius: 15px;
-            background: linear-gradient(135deg, rgba(0, 245, 255, 0.05), rgba(255, 0, 128, 0.05));
-            border: 1px solid rgba(0, 245, 255, 0.2);
-            position: relative;
-            overflow: hidden;
+        .alliance-brand {
+          font-size: 18px;
         }
-        
-        .super-control-group::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--primary-glow), transparent);
-            animation: scanLine 3s ease-in-out infinite;
+      }
+
+      /* 自定义滚动条 */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: linear-gradient(to bottom, var(--primary-glow), var(--secondary-glow));
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(to bottom, var(--secondary-glow), var(--accent-glow));
+      }
+
+      /* 动画关键帧 */
+      @keyframes quantumGlow {
+        0%,
+        100% {
+          box-shadow: 0 0 20px var(--primary-glow);
         }
-        
-        @keyframes scanLine {
-            0% { left: -100%; }
-            100% { left: 100%; }
+        50% {
+          box-shadow: 0 0 40px var(--secondary-glow);
         }
-        
-        .super-control-group:hover {
-            background: linear-gradient(135deg, rgba(0, 245, 255, 0.1), rgba(255, 0, 128, 0.1));
-            border-color: var(--secondary-glow);
-            transform: translateY(-2px);
+      }
+
+      @keyframes dataStream {
+        0% {
+          transform: translateX(-100%);
         }
-        
-        /* 智能标签系统 */
-        .smart-label {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--text-secondary);
-            text-shadow: 0 0 10px var(--primary-glow);
+        100% {
+          transform: translateX(100%);
         }
-        
-        .param-value {
-            background: rgba(0, 245, 255, 0.1);
-            padding: 4px 10px;
-            border-radius: 8px;
-            border: 1px solid var(--primary-glow);
-            font-family: 'Orbitron', monospace;
-            font-weight: 700;
-            color: var(--primary-glow);
-            text-shadow: 0 0 5px var(--primary-glow);
-            min-width: 60px;
-            text-align: center;
+      }
+
+      @keyframes particleFloat {
+        0%,
+        100% {
+          transform: translateY(0px);
         }
-        
-        /* 量子滑块系统 */
-        .quantum-slider {
-            position: relative;
-            width: 100%;
-            height: 12px;
-            margin: 15px 0;
+        50% {
+          transform: translateY(-10px);
         }
-        
-        .quantum-slider input[type="range"] {
-            width: 100%;
-            height: 12px;
-            background: transparent;
-            outline: none;
-            -webkit-appearance: none;
-            position: relative;
-            z-index: 2;
-        }
-        
-        .quantum-slider input[type="range"]::-webkit-slider-track {
-            background: linear-gradient(90deg, 
-                rgba(0, 245, 255, 0.3) 0%, 
-                rgba(255, 0, 128, 0.3) 50%, 
-                rgba(128, 0, 255, 0.3) 100%);
-            height: 8px;
-            border-radius: 4px;
-            border: 1px solid var(--border-glow);
-            box-shadow: inset 0 0 10px rgba(0, 245, 255, 0.2);
-        }
-        
-        .quantum-slider input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 24px;
-            height: 24px;
-            background: radial-gradient(circle, var(--primary-glow), var(--secondary-glow));
-            border-radius: 50%;
-            border: 3px solid var(--text-primary);
-            cursor: pointer;
-            box-shadow: 0 0 20px var(--primary-glow), inset 0 0 10px rgba(255, 255, 255, 0.3);
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .quantum-slider input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.3);
-            box-shadow: 0 0 30px var(--primary-glow), inset 0 0 15px rgba(255, 255, 255, 0.5);
-        }
-        
-        .quantum-slider input[type="range"]::-webkit-slider-thumb:active {
-            transform: scale(1.1);
-            box-shadow: 0 0 40px var(--secondary-glow);
-        }
-        
-        /* 进度光环 */
-        .progress-ring {
-            position: absolute;
-            top: -6px;
-            left: 0;
-            width: 100%;
-            height: 24px;
-            background: linear-gradient(90deg, 
-                transparent 0%, 
-                var(--primary-glow) var(--progress, 50%), 
-                transparent var(--progress, 50%));
-            border-radius: 12px;
-            opacity: 0.3;
-            pointer-events: none;
-            transition: all 0.3s ease;
-        }
-        
-        /* 超级按钮系统 */
-        .super-btn {
-            background: linear-gradient(135deg, var(--primary-glow), var(--secondary-glow));
-            border: none;
-            color: var(--bg-dark);
-            padding: 14px 20px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 13px;
-            font-family: 'Orbitron', monospace;
-            cursor: pointer;
-            margin: 8px 4px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 245, 255, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .super-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            transition: left 0.6s ease;
-        }
-        
-        .super-btn:hover::before {
-            left: 100%;
-        }
-        
-        .super-btn:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(0, 245, 255, 0.6);
-        }
-        
-        .super-btn:active {
-            transform: translateY(-1px) scale(0.98);
-        }
-        
-        .super-btn.active {
-            background: linear-gradient(135deg, var(--secondary-glow), var(--accent-glow));
-            box-shadow: 0 4px 20px rgba(255, 0, 128, 0.5);
-        }
-        
-        /* 预设按钮网格 */
-        .preset-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin: 20px 0;
-        }
-        
-        .preset-btn {
-            background: linear-gradient(45deg, var(--accent-glow), var(--primary-glow));
-            border: none;
-            color: var(--text-primary);
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            position: relative;
-        }
-        
-        .preset-btn::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            transition: all 0.4s ease;
-            transform: translate(-50%, -50%);
-        }
-        
-        .preset-btn:hover::after {
-            width: 100%;
-            height: 100%;
-        }
-        
-        .preset-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 5px 20px rgba(128, 0, 255, 0.5);
-        }
-        
-        /* 公式显示系统 */
-        .formula-display {
-            background: linear-gradient(135deg, 
-                rgba(0, 245, 255, 0.15), 
-                rgba(128, 0, 255, 0.15));
-            padding: 20px;
-            border-radius: 15px;
-            margin: 15px 0;
-            border: 2px solid rgba(0, 245, 255, 0.3);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 16px;
-            font-weight: 600;
-            text-align: center;
-            box-shadow: inset 0 0 20px rgba(0, 245, 255, 0.1);
-            position: relative;
-        }
-        
-        .formula-display::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow), var(--accent-glow));
-            border-radius: 15px;
-            z-index: -1;
-            opacity: 0.3;
-        }
-        
-        /* 物理概念卡片 */
-        .physics-card {
-            background: linear-gradient(135deg, 
-                rgba(255, 200, 0, 0.1), 
-                rgba(255, 100, 0, 0.1));
-            border-left: 4px solid #ffcc00;
-            padding: 15px;
-            margin: 12px 0;
-            border-radius: 10px;
-            font-size: 13px;
-            line-height: 1.7;
-            box-shadow: 0 4px 15px rgba(255, 200, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-        
-        .physics-card:hover {
-            background: linear-gradient(135deg, 
-                rgba(255, 200, 0, 0.15), 
-                rgba(255, 100, 0, 0.15));
-            transform: translateX(5px);
-        }
-        
-        /* 状态监控系统 */
-        .status-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 15px 0;
-        }
-        
-        .status-item {
-            background: linear-gradient(135deg, 
-                rgba(0, 255, 136, 0.1), 
-                rgba(0, 245, 255, 0.1));
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(0, 255, 136, 0.3);
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        
-        .status-item:hover {
-            background: linear-gradient(135deg, 
-                rgba(0, 255, 136, 0.2), 
-                rgba(0, 245, 255, 0.2));
-            transform: scale(1.05);
-        }
-        
-        .status-label {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .status-value {
-            font-size: 16px;
-            font-weight: 700;
-            color: #00ff88;
-            font-family: 'Orbitron', monospace;
-            text-shadow: 0 0 10px #00ff88;
-        }
-        
-        /* 工具提示系统 */
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .tooltip::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 120%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--bg-panel);
-            color: var(--text-primary);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            border: 1px solid var(--primary-glow);
-            box-shadow: 0 5px 15px rgba(0, 245, 255, 0.3);
-            z-index: 1000;
-        }
-        
-        .tooltip:hover::after {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        /* 响应式优化 */
-        @media (max-width: 1600px) {
-            #main-controls, #advanced-controls { width: 350px; }
-            #theory-display { width: 450px; }
-            #stats-monitor { width: 280px; }
-        }
-        
-        @media (max-width: 1200px) {
-            .super-panel { transform: scale(0.9); }
-            #main-controls, #advanced-controls { width: 300px; }
-            #theory-display { width: 400px; max-height: 250px; }
-        }
-        
-        @media (max-width: 900px) {
-            .super-panel { 
-                position: fixed !important;
-                transform: scale(0.8);
-                z-index: 100;
-            }
-            .alliance-brand { font-size: 18px; }
-        }
-        
-        /* 自定义滚动条 */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(to bottom, var(--primary-glow), var(--secondary-glow));
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(to bottom, var(--secondary-glow), var(--accent-glow));
-        }
-        
-        /* 动画关键帧 */
-        @keyframes quantumGlow {
-            0%, 100% { box-shadow: 0 0 20px var(--primary-glow); }
-            50% { box-shadow: 0 0 40px var(--secondary-glow); }
-        }
-        
-        @keyframes dataStream {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-        
-        @keyframes particleFloat {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        /* 性能优化类 */
-        .gpu-accelerated {
-            transform: translateZ(0);
-            will-change: transform;
-        }
-        
-        .no-select {
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-        }
+      }
+
+      /* 性能优化类 */
+      .gpu-accelerated {
+        transform: translateZ(0);
+        will-change: transform;
+      }
+
+      .no-select {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="container" class="no-select">
-        <!-- 算法联盟品牌标识 -->
-        <div class="alliance-brand">⚡ ALGORITHM ALLIANCE ⚡</div>
-        
-        <!-- 主控制面板 -->
-        <div id="main-controls" class="super-panel gpu-accelerated">
-            <div class="panel-header">
-                <div class="panel-title">🌌 核心参数控制</div>
-                <button class="minimize-btn" onclick="togglePanel('main-controls')">−</button>
-            </div>
-            
-            <!-- 快速预设 -->
-            <div class="super-control-group">
-                <div class="smart-label">⚡ 快速预设配置</div>
-                <div class="preset-grid">
-                    <button class="preset-btn" onclick="loadPreset('default')">🎯 标准场</button>
-                    <button class="preset-btn" onclick="loadPreset('intense')">⚡ 强力场</button>
-                    <button class="preset-btn" onclick="loadPreset('gentle')">🌸 温和场</button>
-                    <button class="preset-btn" onclick="loadPreset('spiral')">🌀 螺旋场</button>
-                    <button class="preset-btn" onclick="loadPreset('quantum')">⚛️ 量子场</button>
-                    <button class="preset-btn" onclick="loadPreset('cosmic')">🌌 宇宙场</button>
-                </div>
-            </div>
-            
-            <!-- 发散方向控制 -->
-            <div class="super-control-group">
-                <div class="smart-label tooltip" data-tooltip="空间发散的对称方向数量，影响场的完整性">
-                    🎯 发散方向数 N
-                    <div class="param-value" id="directionCount">14</div>
-                </div>
-                <div class="quantum-slider">
-                    <input type="range" id="directions" min="8" max="30" value="14" step="2">
-                    <div class="progress-ring" style="--progress: 33%"></div>
-                </div>
-            </div>
-            
-            <!-- 螺旋参数控制 -->
-            <div class="super-control-group">
-                <div class="smart-label tooltip" data-tooltip="螺旋运动的角频率，影响磁场分量强度">
-                    ⚡ 螺旋角频率 ω
-                    <div class="param-value" id="omegaValue">1.5</div>
-                </div>
-                <div class="quantum-slider">
-                    <input type="range" id="omega" min="0.1" max="5.0" value="1.5" step="0.1">
-                    <div class="progress-ring" style="--progress: 28%"></div>
-                </div>
-            </div>
-            
-            <!-- 光速控制 -->
-            <div class="super-control-group">
-                <div class="smart-label tooltip" data-tooltip="矢量光速的大小，空间发散的基本速度">
-                    💫 矢量光速 |C⃗|
-                    <div class="param-value" id="velocityValue">1.0c</div>
-                </div>
-                <div class="quantum-slider">
-                    <input type="range" id="velocity" min="0.2" max="3.0" value="1.0" step="0.1">
-                    <div class="progress-ring" style="--progress: 29%"></div>
-                </div>
-            </div>
-            
-            <!-- 螺旋半径控制 -->
-            <div class="super-control-group">
-                <div class="smart-label tooltip" data-tooltip="螺旋运动的半径，影响场的空间分布">
-                    🌀 螺旋半径 R
-                    <div class="param-value" id="radiusValue">0.8</div>
-                </div>
-                <div class="quantum-slider">
-                    <input type="range" id="radius" min="0.1" max="2.5" value="0.8" step="0.1">
-                    <div class="progress-ring" style="--progress: 29%"></div>
-                </div>
-            </div>
-            
-            <!-- 质量参数控制 -->
-            <div class="super-control-group">
-                <div class="smart-label tooltip" data-tooltip="质量参数，影响空间矢量密度和粒子数量">
-                    ⚛️ 质量参数 m
-                    <div class="param-value" id="massValue">1.0</div>
-                </div>
-                <div class="quantum-slider">
-                    <input type="range" id="mass" min="0.3" max="4.0" value="1.0" step="0.1">
-                    <div class="progress-ring" style="--progress: 18%"></div>
-                </div>
-            </div>
+      <!-- 算法联盟品牌标识 -->
+      <div class="alliance-brand">⚡ ALGORITHM ALLIANCE ⚡</div>
+
+      <!-- 主控制面板 -->
+      <div id="main-controls" class="super-panel gpu-accelerated">
+        <div class="panel-header">
+          <div class="panel-title">🌌 核心参数控制</div>
+          <button class="minimize-btn" onclick="togglePanel('main-controls')">−</button>
         </div>
-        
-        <!-- 高级控制面板 -->
-        <div id="advanced-controls" class="super-panel gpu-accelerated">
-            <div class="panel-header">
-                <div class="panel-title">🎮 高级控制系统</div>
-                <button class="minimize-btn" onclick="togglePanel('advanced-controls')">−</button>
-            </div>
-            
-            <!-- 动画控制 -->
-            <div class="super-control-group">
-                <div class="smart-label">🎬 动画系统控制</div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="super-btn" id="playPauseBtn" onclick="toggleAnimation()">⏸️ 暂停</button>
-                    <button class="super-btn" onclick="resetSimulation()">🔄 重置</button>
-                    <button class="super-btn" onclick="stepAnimation()">⏭️ 单步</button>
-                </div>
-                
-                <div class="smart-label" style="margin-top: 15px;">
-                    ⚡ 动画速度
-                    <div class="param-value" id="speedValue">1.0x</div>
-                </div>
-                <div class="quantum-slider">
-                    <input type="range" id="animSpeed" min="0.1" max="4.0" value="1.0" step="0.1">
-                    <div class="progress-ring" style="--progress: 23%"></div>
-                </div>
-            </div>
-            
-            <!-- 视觉效果控制 -->
-            <div class="super-control-group">
-                <div class="smart-label">🎨 视觉效果系统</div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="super-btn" id="vectorBtn" onclick="toggleVectors()">📐 矢量场</button>
-                    <button class="super-btn" id="trailBtn" onclick="toggleTrails()">✨ 粒子轨迹</button>
-                    <button class="super-btn" id="fieldBtn" onclick="toggleFieldLines()">🌊 场线</button>
-                </div>
-                
-                <div style="margin-top: 15px;">
-                    <div class="smart-label">🌈 色彩主题</div>
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <button class="preset-btn" onclick="changeColorScheme('quantum')">⚛️ 量子</button>
-                        <button class="preset-btn" onclick="changeColorScheme('aurora')">🌌 极光</button>
-                        <button class="preset-btn" onclick="changeColorScheme('nebula')">☄️ 星云</button>
-                        <button class="preset-btn" onclick="changeColorScheme('plasma')">⚡ 等离子</button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 相机控制 -->
-            <div class="super-control-group">
-                <div class="smart-label">📹 智能相机系统</div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="super-btn" id="cameraBtn" onclick="cycleCameraMode()">🔄 轨道模式</button>
-                    <button class="super-btn" onclick="resetCamera()">🎯 重置视角</button>
-                    <button class="super-btn" onclick="autoFocus()">🔍 自动聚焦</button>
-                </div>
-                
-                <div class="smart-label" style="margin-top: 15px;">
-                    📏 视场距离
-                    <div class="param-value" id="cameraDistance">15.0</div>
-                </div>
-                <div class="quantum-slider">
-                    <input type="range" id="cameraDistanceSlider" min="5" max="50" value="15" step="1">
-                    <div class="progress-ring" style="--progress: 22%"></div>
-                </div>
-            </div>
-            
-            <!-- 高级物理参数 -->
-            <div class="super-control-group">
-                <div class="smart-label">⚛️ 高级物理参数</div>
-                
-                <div class="smart-label" style="margin-top: 10px;">
-                    🌊 场强衰减系数
-                    <div class="param-value" id="decayValue">1.0</div>
-                </div>
-                <div class="quantum-slider">
-                    <input type="range" id="fieldDecay" min="0.1" max="3.0" value="1.0" step="0.1">
-                    <div class="progress-ring" style="--progress: 31%"></div>
-                </div>
-                
-                <div class="smart-label" style="margin-top: 10px;">
-                    💫 粒子密度
-                    <div class="param-value" id="densityValue">1.0</div>
-                </div>
-                <div class="quantum-slider">
-                    <input type="range" id="particleDensity" min="0.2" max="3.0" value="1.0" step="0.1">
-                    <div class="progress-ring" style="--progress: 29%"></div>
-                </div>
-            </div>
-            
-            <!-- 系统操作 -->
-            <div class="super-control-group">
-                <div class="smart-label">🔧 系统操作</div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="super-btn" onclick="captureFrame()">📸 截图</button>
-                    <button class="super-btn" onclick="exportData()">💾 导出数据</button>
-                    <button class="super-btn" onclick="toggleFullscreen()">🖥️ 全屏</button>
-                </div>
-            </div>
+
+        <!-- 快速预设 -->
+        <div class="super-control-group">
+          <div class="smart-label">⚡ 快速预设配置</div>
+          <div class="preset-grid">
+            <button class="preset-btn" onclick="loadPreset('default')">🎯 标准场</button>
+            <button class="preset-btn" onclick="loadPreset('intense')">⚡ 强力场</button>
+            <button class="preset-btn" onclick="loadPreset('gentle')">🌸 温和场</button>
+            <button class="preset-btn" onclick="loadPreset('spiral')">🌀 螺旋场</button>
+            <button class="preset-btn" onclick="loadPreset('quantum')">⚛️ 量子场</button>
+            <button class="preset-btn" onclick="loadPreset('cosmic')">🌌 宇宙场</button>
+          </div>
         </div>
-        
-        <!-- 理论显示面板 -->
-        <div id="theory-display" class="super-panel gpu-accelerated">
-            <div class="panel-header">
-                <div class="panel-title">📚 统一场论核心方程</div>
-                <button class="minimize-btn" onclick="togglePanel('theory-display')">−</button>
-            </div>
-            
-            <div class="formula-display">
-                r⃗(t) = C⃗t = |C⃗|t · û_r
-            </div>
-            <div class="physics-card">
-                ⏰ <strong>时空同一化定理：</strong>时间的本质是空间以光速运动的度量。时间不是独立维度，而是空间运动的表征。
-            </div>
-            
-            <div class="formula-display">
-                螺旋运动: r⃗ = R cos(ωt)ê₁ + R sin(ωt)ê₂ + v_z t ê₃
-            </div>
-            <div class="physics-card">
-                🌀 <strong>圆柱螺旋理论：</strong>空间运动由旋转分量（磁场本质）和直线分量（电场本质）复合而成，统一了电磁现象。
-            </div>
-            
-            <div class="formula-display">
-                质量定义: m = k(dn/dΩ)
-            </div>
-            <div class="physics-card">
-                ⚛️ <strong>质量起源理论：</strong>质量不是物质的内在属性，而是单位立体角内空间位移矢量的密度，体现了物体对周围空间的扰动程度。
-            </div>
-            
-            <div class="physics-card">
-                🎯 <strong>14方向对称性：</strong>基于三维空间的最大对称分布原理，包含6个主轴方向和8个对角方向，确保空间运动的完整性和各向同性，体现了宇宙的基本对称性。
-            </div>
-            
-            <div class="physics-card">
-                🌌 <strong>引力统一解释：</strong>引力不是独立的基本力，而是空间螺旋运动产生的向心加速度效应。两个物体间的引力相互作用本质上是各自空间运动场的耦合结果。
-            </div>
+
+        <!-- 发散方向控制 -->
+        <div class="super-control-group">
+          <div class="smart-label tooltip" data-tooltip="空间发散的对称方向数量，影响场的完整性">
+            🎯 发散方向数 N
+            <div class="param-value" id="directionCount">14</div>
+          </div>
+          <div class="quantum-slider">
+            <input type="range" id="directions" min="8" max="30" value="14" step="2" />
+            <div class="progress-ring" style="--progress: 33%"></div>
+          </div>
         </div>
-        
-        <!-- 状态监控面板 -->
-        <div id="stats-monitor" class="super-panel gpu-accelerated">
-            <div class="panel-header">
-                <div class="panel-title">📊 实时状态监控</div>
-                <button class="minimize-btn" onclick="togglePanel('stats-monitor')">−</button>
-            </div>
-            
-            <div class="status-grid">
-                <div class="status-item tooltip" data-tooltip="当前模拟时间参数">
-                    <div class="status-label">⏱️ 模拟时间</div>
-                    <div class="status-value" id="timeValue">0.00s</div>
-                </div>
-                
-                <div class="status-item tooltip" data-tooltip="系统渲染帧率">
-                    <div class="status-label">📈 实时FPS</div>
-                    <div class="status-value" id="fpsCounter">60</div>
-                </div>
-                
-                <div class="status-item tooltip" data-tooltip="活跃粒子总数">
-                    <div class="status-label">🎯 活跃粒子</div>
-                    <div class="status-value" id="particleCount">0</div>
-                </div>
-                
-                <div class="status-item tooltip" data-tooltip="平均场强度值">
-                    <div class="status-label">⚡ 平均场强</div>
-                    <div class="status-value" id="fieldStrength">0.00</div>
-                </div>
-                
-                <div class="status-item tooltip" data-tooltip="空间曲率参数">
-                    <div class="status-label">🌌 空间曲率</div>
-                    <div class="status-value" id="curvature">0.00</div>
-                </div>
-                
-                <div class="status-item tooltip" data-tooltip="系统能量总值">
-                    <div class="status-label">💫 系统能量</div>
-                    <div class="status-value" id="systemEnergy">1.00</div>
-                </div>
-                
-                <div class="status-item tooltip" data-tooltip="活跃方向数量">
-                    <div class="status-label">🎯 活跃方向</div>
-                    <div class="status-value" id="activeDirections">14</div>
-                </div>
-                
-                <div class="status-item tooltip" data-tooltip="场相干性指数">
-                    <div class="status-label">🔗 场相干性</div>
-                    <div class="status-value" id="coherence">0.85</div>
-                </div>
-            </div>
-            
-            <!-- 系统状态指示 -->
-            <div class="super-control-group" style="margin-top: 20px;">
-                <div class="smart-label">🚦 系统状态</div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <div class="status-indicator" id="systemStatus">🟢 运行正常</div>
-                </div>
-                <div style="margin-top: 10px; font-size: 11px; color: rgba(255,255,255,0.6);">
-                    内存使用: <span id="memoryUsage">正常</span> | 
-                    GPU利用: <span id="gpuUsage">优化</span> | 
-                    网格复杂度: <span id="meshComplexity">中等</span>
-                </div>
-            </div>
+
+        <!-- 螺旋参数控制 -->
+        <div class="super-control-group">
+          <div class="smart-label tooltip" data-tooltip="螺旋运动的角频率，影响磁场分量强度">
+            ⚡ 螺旋角频率 ω
+            <div class="param-value" id="omegaValue">1.5</div>
+          </div>
+          <div class="quantum-slider">
+            <input type="range" id="omega" min="0.1" max="5.0" value="1.5" step="0.1" />
+            <div class="progress-ring" style="--progress: 28%"></div>
+          </div>
         </div>
+
+        <!-- 光速控制 -->
+        <div class="super-control-group">
+          <div class="smart-label tooltip" data-tooltip="矢量光速的大小，空间发散的基本速度">
+            💫 矢量光速 |C⃗|
+            <div class="param-value" id="velocityValue">1.0c</div>
+          </div>
+          <div class="quantum-slider">
+            <input type="range" id="velocity" min="0.2" max="3.0" value="1.0" step="0.1" />
+            <div class="progress-ring" style="--progress: 29%"></div>
+          </div>
+        </div>
+
+        <!-- 螺旋半径控制 -->
+        <div class="super-control-group">
+          <div class="smart-label tooltip" data-tooltip="螺旋运动的半径，影响场的空间分布">
+            🌀 螺旋半径 R
+            <div class="param-value" id="radiusValue">0.8</div>
+          </div>
+          <div class="quantum-slider">
+            <input type="range" id="radius" min="0.1" max="2.5" value="0.8" step="0.1" />
+            <div class="progress-ring" style="--progress: 29%"></div>
+          </div>
+        </div>
+
+        <!-- 质量参数控制 -->
+        <div class="super-control-group">
+          <div class="smart-label tooltip" data-tooltip="质量参数，影响空间矢量密度和粒子数量">
+            ⚛️ 质量参数 m
+            <div class="param-value" id="massValue">1.0</div>
+          </div>
+          <div class="quantum-slider">
+            <input type="range" id="mass" min="0.3" max="4.0" value="1.0" step="0.1" />
+            <div class="progress-ring" style="--progress: 18%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 高级控制面板 -->
+      <div id="advanced-controls" class="super-panel gpu-accelerated">
+        <div class="panel-header">
+          <div class="panel-title">🎮 高级控制系统</div>
+          <button class="minimize-btn" onclick="togglePanel('advanced-controls')">−</button>
+        </div>
+
+        <!-- 动画控制 -->
+        <div class="super-control-group">
+          <div class="smart-label">🎬 动画系统控制</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <button class="super-btn" id="playPauseBtn" onclick="toggleAnimation()">⏸️ 暂停</button>
+            <button class="super-btn" onclick="resetSimulation()">🔄 重置</button>
+            <button class="super-btn" onclick="stepAnimation()">⏭️ 单步</button>
+          </div>
+
+          <div class="smart-label" style="margin-top: 15px">
+            ⚡ 动画速度
+            <div class="param-value" id="speedValue">1.0x</div>
+          </div>
+          <div class="quantum-slider">
+            <input type="range" id="animSpeed" min="0.1" max="4.0" value="1.0" step="0.1" />
+            <div class="progress-ring" style="--progress: 23%"></div>
+          </div>
+        </div>
+
+        <!-- 视觉效果控制 -->
+        <div class="super-control-group">
+          <div class="smart-label">🎨 视觉效果系统</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <button class="super-btn" id="vectorBtn" onclick="toggleVectors()">📐 矢量场</button>
+            <button class="super-btn" id="trailBtn" onclick="toggleTrails()">✨ 粒子轨迹</button>
+            <button class="super-btn" id="fieldBtn" onclick="toggleFieldLines()">🌊 场线</button>
+          </div>
+
+          <div style="margin-top: 15px">
+            <div class="smart-label">🌈 色彩主题</div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap">
+              <button class="preset-btn" onclick="changeColorScheme('quantum')">⚛️ 量子</button>
+              <button class="preset-btn" onclick="changeColorScheme('aurora')">🌌 极光</button>
+              <button class="preset-btn" onclick="changeColorScheme('nebula')">☄️ 星云</button>
+              <button class="preset-btn" onclick="changeColorScheme('plasma')">⚡ 等离子</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 相机控制 -->
+        <div class="super-control-group">
+          <div class="smart-label">📹 智能相机系统</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <button class="super-btn" id="cameraBtn" onclick="cycleCameraMode()">
+              🔄 轨道模式
+            </button>
+            <button class="super-btn" onclick="resetCamera()">🎯 重置视角</button>
+            <button class="super-btn" onclick="autoFocus()">🔍 自动聚焦</button>
+          </div>
+
+          <div class="smart-label" style="margin-top: 15px">
+            📏 视场距离
+            <div class="param-value" id="cameraDistance">15.0</div>
+          </div>
+          <div class="quantum-slider">
+            <input type="range" id="cameraDistanceSlider" min="5" max="50" value="15" step="1" />
+            <div class="progress-ring" style="--progress: 22%"></div>
+          </div>
+        </div>
+
+        <!-- 高级物理参数 -->
+        <div class="super-control-group">
+          <div class="smart-label">⚛️ 高级物理参数</div>
+
+          <div class="smart-label" style="margin-top: 10px">
+            🌊 场强衰减系数
+            <div class="param-value" id="decayValue">1.0</div>
+          </div>
+          <div class="quantum-slider">
+            <input type="range" id="fieldDecay" min="0.1" max="3.0" value="1.0" step="0.1" />
+            <div class="progress-ring" style="--progress: 31%"></div>
+          </div>
+
+          <div class="smart-label" style="margin-top: 10px">
+            💫 粒子密度
+            <div class="param-value" id="densityValue">1.0</div>
+          </div>
+          <div class="quantum-slider">
+            <input type="range" id="particleDensity" min="0.2" max="3.0" value="1.0" step="0.1" />
+            <div class="progress-ring" style="--progress: 29%"></div>
+          </div>
+        </div>
+
+        <!-- 系统操作 -->
+        <div class="super-control-group">
+          <div class="smart-label">🔧 系统操作</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <button class="super-btn" onclick="captureFrame()">📸 截图</button>
+            <button class="super-btn" onclick="exportData()">💾 导出数据</button>
+            <button class="super-btn" onclick="toggleFullscreen()">🖥️ 全屏</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 理论显示面板 -->
+      <div id="theory-display" class="super-panel gpu-accelerated">
+        <div class="panel-header">
+          <div class="panel-title">📚 统一场论核心方程</div>
+          <button class="minimize-btn" onclick="togglePanel('theory-display')">−</button>
+        </div>
+
+        <div class="formula-display">r⃗(t) = C⃗t = |C⃗|t · û_r</div>
+        <div class="physics-card">
+          ⏰
+          <strong>时空同一化定理：</strong
+          >时间的本质是空间以光速运动的度量。时间不是独立维度，而是空间运动的表征。
+        </div>
+
+        <div class="formula-display">螺旋运动: r⃗ = R cos(ωt)ê₁ + R sin(ωt)ê₂ + v_z t ê₃</div>
+        <div class="physics-card">
+          🌀
+          <strong>圆柱螺旋理论：</strong
+          >空间运动由旋转分量（磁场本质）和直线分量（电场本质）复合而成，统一了电磁现象。
+        </div>
+
+        <div class="formula-display">质量定义: m = k(dn/dΩ)</div>
+        <div class="physics-card">
+          ⚛️
+          <strong>质量起源理论：</strong
+          >质量不是物质的内在属性，而是单位立体角内空间位移矢量的密度，体现了物体对周围空间的扰动程度。
+        </div>
+
+        <div class="physics-card">
+          🎯
+          <strong>14方向对称性：</strong
+          >基于三维空间的最大对称分布原理，包含6个主轴方向和8个对角方向，确保空间运动的完整性和各向同性，体现了宇宙的基本对称性。
+        </div>
+
+        <div class="physics-card">
+          🌌
+          <strong>引力统一解释：</strong
+          >引力不是独立的基本力，而是空间螺旋运动产生的向心加速度效应。两个物体间的引力相互作用本质上是各自空间运动场的耦合结果。
+        </div>
+      </div>
+
+      <!-- 状态监控面板 -->
+      <div id="stats-monitor" class="super-panel gpu-accelerated">
+        <div class="panel-header">
+          <div class="panel-title">📊 实时状态监控</div>
+          <button class="minimize-btn" onclick="togglePanel('stats-monitor')">−</button>
+        </div>
+
+        <div class="status-grid">
+          <div class="status-item tooltip" data-tooltip="当前模拟时间参数">
+            <div class="status-label">⏱️ 模拟时间</div>
+            <div class="status-value" id="timeValue">0.00s</div>
+          </div>
+
+          <div class="status-item tooltip" data-tooltip="系统渲染帧率">
+            <div class="status-label">📈 实时FPS</div>
+            <div class="status-value" id="fpsCounter">60</div>
+          </div>
+
+          <div class="status-item tooltip" data-tooltip="活跃粒子总数">
+            <div class="status-label">🎯 活跃粒子</div>
+            <div class="status-value" id="particleCount">0</div>
+          </div>
+
+          <div class="status-item tooltip" data-tooltip="平均场强度值">
+            <div class="status-label">⚡ 平均场强</div>
+            <div class="status-value" id="fieldStrength">0.00</div>
+          </div>
+
+          <div class="status-item tooltip" data-tooltip="空间曲率参数">
+            <div class="status-label">🌌 空间曲率</div>
+            <div class="status-value" id="curvature">0.00</div>
+          </div>
+
+          <div class="status-item tooltip" data-tooltip="系统能量总值">
+            <div class="status-label">💫 系统能量</div>
+            <div class="status-value" id="systemEnergy">1.00</div>
+          </div>
+
+          <div class="status-item tooltip" data-tooltip="活跃方向数量">
+            <div class="status-label">🎯 活跃方向</div>
+            <div class="status-value" id="activeDirections">14</div>
+          </div>
+
+          <div class="status-item tooltip" data-tooltip="场相干性指数">
+            <div class="status-label">🔗 场相干性</div>
+            <div class="status-value" id="coherence">0.85</div>
+          </div>
+        </div>
+
+        <!-- 系统状态指示 -->
+        <div class="super-control-group" style="margin-top: 20px">
+          <div class="smart-label">🚦 系统状态</div>
+          <div style="display: flex; gap: 10px; align-items: center">
+            <div class="status-indicator" id="systemStatus">🟢 运行正常</div>
+          </div>
+          <div style="margin-top: 10px; font-size: 11px; color: rgba(255, 255, 255, 0.6)">
+            内存使用: <span id="memoryUsage">正常</span> | GPU利用:
+            <span id="gpuUsage">优化</span> | 网格复杂度: <span id="meshComplexity">中等</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
-        // 🤖 算法联盟 - 终极优化核心系统 v2.0
-        
-        // === 全局状态管理 ===
-        class UnifiedFieldSystem {
-            constructor() {
-                this.scene = null;
-                this.camera = null;
-                this.renderer = null;
-                this.centralMass = null;
-                
-                this.spiralGroups = [];
-                this.particleSystems = [];
-                this.fieldLines = [];
-                this.trailSystems = [];
-                this.vectorHelpers = [];
-                
-                this.time = 0;
-                this.animationSpeed = 1.0;
-                this.isAnimating = true;
-                this.showVectors = false;
-                this.showTrails = false;
-                this.showFieldLines = false;
-                
-                this.cameraMode = 'orbit'; // orbit, follow, free, cinematic
-                this.colorScheme = 'quantum';
-                this.fieldDecay = 1.0;
-                this.particleDensity = 1.0;
-                
-                this.frameCount = 0;
-                this.lastTime = performance.now();
-                this.fpsHistory = [];
-                
-                this.mouseX = 0;
-                this.mouseY = 0;
-                this.cameraTarget = new THREE.Vector3(0, 0, 0);
-                this.cameraDistance = 15;
-                
-                this.isInitialized = false;
+      // 🤖 算法联盟 - 终极优化核心系统 v2.0
+
+      // === 全局状态管理 ===
+      class UnifiedFieldSystem {
+        constructor() {
+          this.scene = null
+          this.camera = null
+          this.renderer = null
+          this.centralMass = null
+
+          this.spiralGroups = []
+          this.particleSystems = []
+          this.fieldLines = []
+          this.trailSystems = []
+          this.vectorHelpers = []
+
+          this.time = 0
+          this.animationSpeed = 1.0
+          this.isAnimating = true
+          this.showVectors = false
+          this.showTrails = false
+          this.showFieldLines = false
+
+          this.cameraMode = 'orbit' // orbit, follow, free, cinematic
+          this.colorScheme = 'quantum'
+          this.fieldDecay = 1.0
+          this.particleDensity = 1.0
+
+          this.frameCount = 0
+          this.lastTime = performance.now()
+          this.fpsHistory = []
+
+          this.mouseX = 0
+          this.mouseY = 0
+          this.cameraTarget = new THREE.Vector3(0, 0, 0)
+          this.cameraDistance = 15
+
+          this.isInitialized = false
+        }
+
+        // 高级预设系统
+        getPresets() {
+          return {
+            default: {
+              directions: 14,
+              omega: 1.5,
+              velocity: 1.0,
+              radius: 0.8,
+              mass: 1.0,
+              decay: 1.0,
+              density: 1.0
+            },
+            intense: {
+              directions: 22,
+              omega: 3.5,
+              velocity: 2.2,
+              radius: 1.4,
+              mass: 2.8,
+              decay: 0.7,
+              density: 1.8
+            },
+            gentle: {
+              directions: 10,
+              omega: 0.8,
+              velocity: 0.6,
+              radius: 0.5,
+              mass: 0.6,
+              decay: 1.5,
+              density: 0.7
+            },
+            spiral: {
+              directions: 18,
+              omega: 4.2,
+              velocity: 1.8,
+              radius: 1.8,
+              mass: 1.6,
+              decay: 0.9,
+              density: 1.4
+            },
+            quantum: {
+              directions: 26,
+              omega: 2.8,
+              velocity: 1.5,
+              radius: 1.0,
+              mass: 2.2,
+              decay: 0.8,
+              density: 2.0
+            },
+            cosmic: {
+              directions: 30,
+              omega: 1.2,
+              velocity: 2.8,
+              radius: 2.2,
+              mass: 3.5,
+              decay: 0.6,
+              density: 2.5
             }
-            
-            // 高级预设系统
-            getPresets() {
-                return {
-                    default: { directions: 14, omega: 1.5, velocity: 1.0, radius: 0.8, mass: 1.0, decay: 1.0, density: 1.0 },
-                    intense: { directions: 22, omega: 3.5, velocity: 2.2, radius: 1.4, mass: 2.8, decay: 0.7, density: 1.8 },
-                    gentle: { directions: 10, omega: 0.8, velocity: 0.6, radius: 0.5, mass: 0.6, decay: 1.5, density: 0.7 },
-                    spiral: { directions: 18, omega: 4.2, velocity: 1.8, radius: 1.8, mass: 1.6, decay: 0.9, density: 1.4 },
-                    quantum: { directions: 26, omega: 2.8, velocity: 1.5, radius: 1.0, mass: 2.2, decay: 0.8, density: 2.0 },
-                    cosmic: { directions: 30, omega: 1.2, velocity: 2.8, radius: 2.2, mass: 3.5, decay: 0.6, density: 2.5 }
-                };
+          }
+        }
+
+        // 高级颜色方案
+        getColorSchemes() {
+          return {
+            quantum: {
+              primary: 0x00f5ff,
+              secondary: 0xff0080,
+              accent: 0x8000ff,
+              bg: 0x0a0a0f,
+              particle: 0x00ddff
+            },
+            aurora: {
+              primary: 0x00ff88,
+              secondary: 0xff4488,
+              accent: 0x8844ff,
+              bg: 0x0f1a0f,
+              particle: 0x44ff88
+            },
+            nebula: {
+              primary: 0xff6b35,
+              secondary: 0xf7931e,
+              accent: 0xff005d,
+              bg: 0x1a0f05,
+              particle: 0xff8844
+            },
+            plasma: {
+              primary: 0xff0080,
+              secondary: 0x8000ff,
+              accent: 0x00ff80,
+              bg: 0x1a051a,
+              particle: 0xff4080
             }
-            
-            // 高级颜色方案
-            getColorSchemes() {
-                return {
-                    quantum: { 
-                        primary: 0x00f5ff, secondary: 0xff0080, accent: 0x8000ff,
-                        bg: 0x0a0a0f, particle: 0x00ddff 
-                    },
-                    aurora: { 
-                        primary: 0x00ff88, secondary: 0xff4488, accent: 0x8844ff,
-                        bg: 0x0f1a0f, particle: 0x44ff88 
-                    },
-                    nebula: { 
-                        primary: 0xff6b35, secondary: 0xf7931e, accent: 0xff005d,
-                        bg: 0x1a0f05, particle: 0xff8844 
-                    },
-                    plasma: { 
-                        primary: 0xff0080, secondary: 0x8000ff, accent: 0x00ff80,
-                        bg: 0x1a051a, particle: 0xff4080 
-                    }
-                };
+          }
+        }
+      }
+
+      // 全局系统实例
+      const unifiedField = new UnifiedFieldSystem()
+
+      // === 高级几何算法 ===
+      function generateOptimizedDirections(count) {
+        const directions = []
+
+        // 基础6方向（主轴）
+        if (count >= 6) {
+          directions.push([1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1])
+        }
+
+        // 标准8方向（立方体顶点）
+        if (count >= 14) {
+          const diagonals = [
+            [1, 1, 1],
+            [-1, 1, 1],
+            [1, -1, 1],
+            [1, 1, -1],
+            [-1, -1, 1],
+            [-1, 1, -1],
+            [1, -1, -1],
+            [-1, -1, -1]
+          ]
+          directions.push(
+            ...diagonals.map(d => {
+              const len = Math.sqrt(d[0] ** 2 + d[1] ** 2 + d[2] ** 2)
+              return [d[0] / len, d[1] / len, d[2] / len]
+            })
+          )
+        }
+
+        // 高阶对称方向（二十面体顶点）
+        if (count >= 20) {
+          const phi = (1 + Math.sqrt(5)) / 2 // 黄金比例
+          const icosahedron = [
+            [1, phi, 0],
+            [-1, phi, 0],
+            [1, -phi, 0],
+            [-1, -phi, 0],
+            [0, 1, phi],
+            [0, -1, phi],
+            [0, 1, -phi],
+            [0, -1, -phi],
+            [phi, 0, 1],
+            [-phi, 0, 1],
+            [phi, 0, -1],
+            [-phi, 0, -1]
+          ]
+          directions.push(
+            ...icosahedron.map(d => {
+              const len = Math.sqrt(d[0] ** 2 + d[1] ** 2 + d[2] ** 2)
+              return [d[0] / len, d[1] / len, d[2] / len]
+            })
+          )
+        }
+
+        // 球面均匀分布（Fibonacci球面）
+        while (directions.length < count) {
+          const i = directions.length
+          const theta = (2 * Math.PI * i) / ((1 + Math.sqrt(5)) / 2)
+          const phi = Math.acos(1 - (2 * i) / count)
+          directions.push([
+            Math.sin(phi) * Math.cos(theta),
+            Math.sin(phi) * Math.sin(theta),
+            Math.cos(phi)
+          ])
+        }
+
+        return directions.slice(0, count)
+      }
+
+      // === 系统初始化 ===
+      function initializeSystem() {
+        console.log('🚀 算法联盟 - 初始化统一场论系统...')
+
+        // 场景设置
+        unifiedField.scene = new THREE.Scene()
+        unifiedField.scene.fog = new THREE.Fog(0x0a0a0f, 20, 100)
+
+        // 相机设置
+        unifiedField.camera = new THREE.PerspectiveCamera(
+          65,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          500
+        )
+        unifiedField.camera.position.set(15, 10, 15)
+        unifiedField.camera.lookAt(0, 0, 0)
+
+        // 渲染器设置（高级优化）
+        unifiedField.renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: true,
+          preserveDrawingBuffer: true,
+          powerPreference: 'high-performance'
+        })
+        unifiedField.renderer.setSize(window.innerWidth, window.innerHeight)
+        unifiedField.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        unifiedField.renderer.setClearColor(0x0a0a0f, 0.1)
+
+        // 高级渲染设置
+        unifiedField.renderer.shadowMap.enabled = true
+        unifiedField.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+        unifiedField.renderer.outputEncoding = THREE.sRGBEncoding
+        unifiedField.renderer.toneMapping = THREE.ACESFilmicToneMapping
+        unifiedField.renderer.toneMappingExposure = 1.0
+
+        document.getElementById('container').appendChild(unifiedField.renderer.domElement)
+
+        // 创建核心组件
+        createAdvancedCentralMass()
+        createSuperiorSpatialSystem()
+        setupAdvancedLighting()
+        setupSmartControls()
+        setupAdvancedInteraction()
+
+        console.log('✅ 系统初始化完成 - 性能模式已激活')
+        unifiedField.isInitialized = true
+
+        // 开始渲染循环
+        animate()
+      }
+
+      // === 高级中心质量系统 ===
+      function createAdvancedCentralMass() {
+        const mass = parseFloat(document.getElementById('mass').value)
+        const colors = unifiedField.getColorSchemes()[unifiedField.colorScheme]
+
+        if (unifiedField.centralMass) {
+          unifiedField.scene.remove(unifiedField.centralMass)
+        }
+
+        unifiedField.centralMass = new THREE.Group()
+
+        // 核心量子球体
+        const coreGeometry = new THREE.SphereGeometry(0.4 * mass, 64, 64)
+        const coreMaterial = new THREE.MeshPhysicalMaterial({
+          color: colors.accent,
+          emissive: new THREE.Color(colors.accent).multiplyScalar(0.4),
+          metalness: 0.1,
+          roughness: 0.2,
+          transparent: true,
+          opacity: 0.9,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.1
+        })
+        const core = new THREE.Mesh(coreGeometry, coreMaterial)
+        core.castShadow = true
+        unifiedField.centralMass.add(core)
+
+        // 多层能量场环系统
+        for (let i = 1; i <= 5; i++) {
+          const ringRadius = 0.5 + i * 0.4 * mass
+          const ringThickness = 0.02 * Math.sqrt(mass)
+
+          const ringGeometry = new THREE.TorusGeometry(ringRadius, ringThickness, 16, 64)
+          const ringMaterial = new THREE.MeshBasicMaterial({
+            color: i % 2 === 0 ? colors.primary : colors.secondary,
+            transparent: true,
+            opacity: (0.6 / i) * (1 + 0.3 * Math.sin(unifiedField.time * (i + 1))),
+            blending: THREE.AdditiveBlending
+          })
+
+          const ring = new THREE.Mesh(ringGeometry, ringMaterial)
+          ring.rotation.x = Math.PI / 2 + (Math.PI / 12) * i
+          ring.rotation.y = (Math.PI / 6) * i
+          ring.userData.rotationSpeed = 0.008 * (i + 1)
+          ring.userData.oscillationPhase = (i * Math.PI) / 3
+          unifiedField.centralMass.add(ring)
+        }
+
+        // 高级粒子场系统
+        const particleCount = Math.floor(400 * mass * unifiedField.particleDensity)
+        const particleGeometry = new THREE.BufferGeometry()
+
+        const positions = new Float32Array(particleCount * 3)
+        const particleColors = new Float32Array(particleCount * 3)
+        const sizes = new Float32Array(particleCount)
+        const velocities = new Float32Array(particleCount * 3)
+
+        for (let i = 0; i < particleCount; i++) {
+          const radius = 0.8 + Math.random() * 4
+          const theta = Math.random() * Math.PI * 2
+          const phi = Math.acos(2 * Math.random() - 1)
+
+          positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta)
+          positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta)
+          positions[i * 3 + 2] = radius * Math.cos(phi)
+
+          const color = new THREE.Color(colors.particle).multiplyScalar(0.8 + Math.random() * 0.4)
+          particleColors[i * 3] = color.r
+          particleColors[i * 3 + 1] = color.g
+          particleColors[i * 3 + 2] = color.b
+
+          sizes[i] = 0.06 + Math.random() * 0.04
+
+          velocities[i3] = direction[0]
+          velocities[i3 + 1] = direction[1]
+          velocities[i3 + 2] = direction[2]
+
+          phases[i] = (i / particleCount) * Math.PI * 2
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+        geometry.setAttribute('color', new THREE.BufferAttribute(particleColors, 3))
+        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
+
+        const material = new THREE.PointsMaterial({
+          size: 0.1,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.9,
+          blending: THREE.AdditiveBlending,
+          sizeAttenuation: true
+        })
+
+        const particleSystem = new THREE.Points(geometry, material)
+        particleSystem.userData = {
+          direction: direction,
+          helixPoints: helixPoints,
+          velocities: velocities,
+          phases: phases,
+          index: index,
+          totalDirections: totalDirections
+        }
+
+        return particleSystem
+      }
+
+      // === 动态场线系统 ===
+      function createDynamicFieldLines(helixPoints, index, colors) {
+        const fieldGeometry = new THREE.BufferGeometry()
+        const fieldPositions = []
+        const fieldColors = []
+
+        // 创建场线网格
+        for (let i = 0; i < helixPoints.length; i += 10) {
+          const point = helixPoints[i]
+          const nextPoint = helixPoints[Math.min(i + 10, helixPoints.length - 1)]
+
+          fieldPositions.push(point.x, point.y, point.z)
+          fieldPositions.push(nextPoint.x, nextPoint.y, nextPoint.z)
+
+          const intensity = Math.max(0.3, 1 - point.length() / 15)
+          const color = new THREE.Color(colors.primary).multiplyScalar(intensity)
+
+          fieldColors.push(color.r, color.g, color.b)
+          fieldColors.push(color.r, color.g, color.b)
+        }
+
+        fieldGeometry.setAttribute('position', new THREE.Float32BufferAttribute(fieldPositions, 3))
+        fieldGeometry.setAttribute('color', new THREE.Float32BufferAttribute(fieldColors, 3))
+
+        const fieldMaterial = new THREE.LineBasicMaterial({
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.4,
+          blending: THREE.AdditiveBlending
+        })
+
+        return new THREE.LineSegments(fieldGeometry, fieldMaterial)
+      }
+
+      // === 高级光照系统 ===
+      function setupAdvancedLighting() {
+        // 清除现有光源
+        const lights = unifiedField.scene.children.filter(child => child.isLight)
+        lights.forEach(light => unifiedField.scene.remove(light))
+
+        const colors = unifiedField.getColorSchemes()[unifiedField.colorScheme]
+
+        // 环境光
+        const ambientLight = new THREE.AmbientLight(colors.primary, 0.2)
+        unifiedField.scene.add(ambientLight)
+
+        // 主方向光
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1.0)
+        mainLight.position.set(20, 20, 10)
+        mainLight.castShadow = true
+        mainLight.shadow.mapSize.width = 4096
+        mainLight.shadow.mapSize.height = 4096
+        mainLight.shadow.camera.near = 0.1
+        mainLight.shadow.camera.far = 100
+        mainLight.shadow.camera.left = -20
+        mainLight.shadow.camera.right = 20
+        mainLight.shadow.camera.top = 20
+        mainLight.shadow.camera.bottom = -20
+        unifiedField.scene.add(mainLight)
+
+        // 动态点光源系统
+        const pointLight1 = new THREE.PointLight(colors.primary, 2.0, 30)
+        pointLight1.position.set(0, 0, 0)
+        unifiedField.scene.add(pointLight1)
+
+        const pointLight2 = new THREE.PointLight(colors.secondary, 1.5, 25)
+        pointLight2.position.set(8, 8, 8)
+        unifiedField.scene.add(pointLight2)
+
+        const pointLight3 = new THREE.PointLight(colors.accent, 1.0, 20)
+        pointLight3.position.set(-5, 5, -5)
+        unifiedField.scene.add(pointLight3)
+
+        // 补充光源
+        const fillLight1 = new THREE.DirectionalLight(colors.secondary, 0.3)
+        fillLight1.position.set(-15, -15, -10)
+        unifiedField.scene.add(fillLight1)
+
+        const fillLight2 = new THREE.DirectionalLight(colors.accent, 0.2)
+        fillLight2.position.set(10, -10, 15)
+        unifiedField.scene.add(fillLight2)
+      }
+
+      // === 智能控制系统 ===
+      function setupSmartControls() {
+        // 参数滑块事件
+        const sliders = [
+          'directions',
+          'omega',
+          'velocity',
+          'radius',
+          'mass',
+          'animSpeed',
+          'fieldDecay',
+          'particleDensity',
+          'cameraDistanceSlider'
+        ]
+
+        sliders.forEach(sliderId => {
+          const slider = document.getElementById(sliderId)
+          if (slider) {
+            slider.addEventListener('input', handleSliderChange)
+            slider.addEventListener('change', handleSliderChange)
+          }
+        })
+      }
+
+      function handleSliderChange(event) {
+        const sliderId = event.target.id
+        const value = parseFloat(event.target.value)
+
+        // 更新显示值
+        switch (sliderId) {
+          case 'directions':
+            document.getElementById('directionCount').textContent = value
+            createSuperiorSpatialSystem()
+            break
+          case 'omega':
+            document.getElementById('omegaValue').textContent = value.toFixed(1)
+            break
+          case 'velocity':
+            document.getElementById('velocityValue').textContent = value.toFixed(1) + 'c'
+            break
+          case 'radius':
+            document.getElementById('radiusValue').textContent = value.toFixed(1)
+            createSuperiorSpatialSystem()
+            break
+          case 'mass':
+            document.getElementById('massValue').textContent = value.toFixed(1)
+            createAdvancedCentralMass()
+            createSuperiorSpatialSystem()
+            break
+          case 'animSpeed':
+            unifiedField.animationSpeed = value
+            document.getElementById('speedValue').textContent = value.toFixed(1) + 'x'
+            break
+          case 'fieldDecay':
+            unifiedField.fieldDecay = value
+            document.getElementById('decayValue').textContent = value.toFixed(1)
+            break
+          case 'particleDensity':
+            unifiedField.particleDensity = value
+            document.getElementById('densityValue').textContent = value.toFixed(1)
+            createSuperiorSpatialSystem()
+            break
+          case 'cameraDistanceSlider':
+            unifiedField.cameraDistance = value
+            document.getElementById('cameraDistance').textContent = value.toFixed(1)
+            updateCameraDistance()
+            break
+        }
+
+        updateProgressBar(event.target)
+      }
+
+      function updateProgressBar(slider) {
+        const progress = ((slider.value - slider.min) / (slider.max - slider.min)) * 100
+        const progressRing = slider.parentElement.querySelector('.progress-ring')
+        if (progressRing) {
+          progressRing.style.setProperty('--progress', progress + '%')
+        }
+      }
+
+      // === 高级交互系统 ===
+      function setupAdvancedInteraction() {
+        let mouseDown = false
+        let mouseDownX = 0,
+          mouseDownY = 0
+        let targetRotationX = 0,
+          targetRotationY = 0
+
+        // 鼠标事件
+        unifiedField.renderer.domElement.addEventListener('mousedown', event => {
+          mouseDown = true
+          mouseDownX = event.clientX
+          mouseDownY = event.clientY
+        })
+
+        unifiedField.renderer.domElement.addEventListener('mouseup', () => {
+          mouseDown = false
+        })
+
+        unifiedField.renderer.domElement.addEventListener('mousemove', event => {
+          unifiedField.mouseX = (event.clientX / window.innerWidth) * 2 - 1
+          unifiedField.mouseY = -(event.clientY / window.innerHeight) * 2 + 1
+
+          if (mouseDown && unifiedField.cameraMode === 'free') {
+            const deltaX = event.clientX - mouseDownX
+            const deltaY = event.clientY - mouseDownY
+
+            targetRotationY -= deltaX * 0.01
+            targetRotationX -= deltaY * 0.01
+            targetRotationX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, targetRotationX))
+
+            const radius = unifiedField.cameraDistance
+            unifiedField.camera.position.x =
+              radius * Math.cos(targetRotationX) * Math.sin(targetRotationY)
+            unifiedField.camera.position.y = radius * Math.sin(targetRotationX)
+            unifiedField.camera.position.z =
+              radius * Math.cos(targetRotationX) * Math.cos(targetRotationY)
+            unifiedField.camera.lookAt(0, 0, 0)
+
+            mouseDownX = event.clientX
+            mouseDownY = event.clientY
+          }
+        })
+
+        // 滚轮缩放
+        unifiedField.renderer.domElement.addEventListener('wheel', event => {
+          event.preventDefault()
+          unifiedField.cameraDistance = Math.max(
+            3,
+            Math.min(100, unifiedField.cameraDistance + event.deltaY * 0.01)
+          )
+          document.getElementById('cameraDistance').textContent =
+            unifiedField.cameraDistance.toFixed(1)
+          updateCameraDistance()
+        })
+
+        // 键盘快捷键
+        document.addEventListener('keydown', handleKeyPress)
+      }
+
+      function handleKeyPress(event) {
+        switch (event.key.toLowerCase()) {
+          case ' ':
+            event.preventDefault()
+            toggleAnimation()
+            break
+          case 'r':
+            resetSimulation()
+            break
+          case 'v':
+            toggleVectors()
+            break
+          case 't':
+            toggleTrails()
+            break
+          case 'f':
+            toggleFieldLines()
+            break
+          case 'c':
+            cycleCameraMode()
+            break
+          case 's':
+            captureFrame()
+            break
+          case 'h':
+            toggleAllPanels()
+            break
+          case '1':
+            loadPreset('default')
+            break
+          case '2':
+            loadPreset('intense')
+            break
+          case '3':
+            loadPreset('gentle')
+            break
+          case '4':
+            loadPreset('spiral')
+            break
+          case '5':
+            loadPreset('quantum')
+            break
+          case '6':
+            loadPreset('cosmic')
+            break
+        }
+      }
+
+      // === 核心动画循环 ===
+      function animate() {
+        // FPS统计
+        unifiedField.frameCount++
+        const currentTime = performance.now()
+        if (currentTime - unifiedField.lastTime >= 1000) {
+          const fps = Math.round(
+            (unifiedField.frameCount * 1000) / (currentTime - unifiedField.lastTime)
+          )
+          document.getElementById('fpsCounter').textContent = fps
+          unifiedField.fpsHistory.push(fps)
+          if (unifiedField.fpsHistory.length > 10) unifiedField.fpsHistory.shift()
+
+          unifiedField.frameCount = 0
+          unifiedField.lastTime = currentTime
+        }
+
+        if (unifiedField.isAnimating) {
+          unifiedField.time += 0.016 * unifiedField.animationSpeed
+
+          updateAdvancedCentralMass()
+          updateIntelligentParticleSystems()
+          updateSmartCamera()
+          updateSystemStats()
+          updateDynamicLighting()
+        }
+
+        unifiedField.renderer.render(unifiedField.scene, unifiedField.camera)
+        requestAnimationFrame(animate)
+      }
+
+      // === 高级中心质量更新 ===
+      function updateAdvancedCentralMass() {
+        if (!unifiedField.centralMass) return
+
+        const mass = parseFloat(document.getElementById('mass').value)
+
+        // 核心量子脉动
+        const core = unifiedField.centralMass.children[0]
+        const pulseFactor =
+          1 + 0.15 * Math.sin(unifiedField.time * 4) + 0.05 * Math.sin(unifiedField.time * 8.7)
+        core.scale.setScalar(pulseFactor)
+
+        // 整体旋转
+        unifiedField.centralMass.rotation.y += 0.015 * unifiedField.animationSpeed
+        unifiedField.centralMass.rotation.z += 0.008 * unifiedField.animationSpeed
+
+        // 能量环智能旋转
+        for (let i = 1; i < unifiedField.centralMass.children.length - 1; i++) {
+          const ring = unifiedField.centralMass.children[i]
+          if (ring.userData.rotationSpeed) {
+            ring.rotation.z += ring.userData.rotationSpeed * unifiedField.animationSpeed
+            ring.rotation.x += ring.userData.rotationSpeed * 0.3 * unifiedField.animationSpeed
+
+            // 动态透明度
+            const oscillation = Math.sin(unifiedField.time * 2 + ring.userData.oscillationPhase)
+            ring.material.opacity = (0.6 / i) * (1 + 0.4 * oscillation)
+          }
+        }
+
+        // 粒子场动画
+        const particleSystem =
+          unifiedField.centralMass.children[unifiedField.centralMass.children.length - 1]
+        if (particleSystem && particleSystem.geometry && particleSystem.userData.velocities) {
+          const positions = particleSystem.geometry.attributes.position.array
+          const colors = particleSystem.geometry.attributes.color.array
+          const velocities = particleSystem.userData.velocities
+
+          for (let i = 0; i < positions.length; i += 3) {
+            const idx = i // 索引变量
+
+            // 更新位置
+            positions[idx] += velocities[idx] * unifiedField.animationSpeed
+            positions[idx + 1] += velocities[idx + 1] * unifiedField.animationSpeed
+            positions[idx + 2] += velocities[idx + 2] * unifiedField.animationSpeed
+
+            // 边界检测和重置
+            const distance = Math.sqrt(
+              positions[idx] ** 2 + positions[idx + 1] ** 2 + positions[idx + 2] ** 2
+            )
+            if (distance > 8) {
+              const resetRadius = 0.8 + Math.random() * 1.5
+              const theta = Math.random() * Math.PI * 2
+              const phi = Math.acos(2 * Math.random() - 1)
+
+              positions[idx] = resetRadius * Math.sin(phi) * Math.cos(theta)
+              positions[idx + 1] = resetRadius * Math.sin(phi) * Math.sin(theta)
+              positions[idx + 2] = resetRadius * Math.cos(phi)
             }
+
+            // 动态颜色
+            const intensity = Math.max(0.3, 1 - distance / 8)
+            const colorShift = unifiedField.time * 0.5 + i * 0.01
+            const color = new THREE.Color().setHSL(colorShift % 1, 0.8, 0.6 * intensity)
+
+            colors[idx] = color.r
+            colors[idx + 1] = color.g
+            colors[idx + 2] = color.b
+          }
+
+          particleSystem.geometry.attributes.position.needsUpdate = true
+          particleSystem.geometry.attributes.color.needsUpdate = true
         }
-        
-        // 全局系统实例
-        const unifiedField = new UnifiedFieldSystem();
-        
-        // === 高级几何算法 ===
-        function generateOptimizedDirections(count) {
-            const directions = [];
-            
-            // 基础6方向（主轴）
-            if (count >= 6) {
-                directions.push(
-                    [1,0,0], [-1,0,0], [0,1,0], 
-                    [0,-1,0], [0,0,1], [0,0,-1]
-                );
-            }
-            
-            // 标准8方向（立方体顶点）
-            if (count >= 14) {
-                const diagonals = [
-                    [1,1,1], [-1,1,1], [1,-1,1], [1,1,-1],
-                    [-1,-1,1], [-1,1,-1], [1,-1,-1], [-1,-1,-1]
-                ];
-                directions.push(...diagonals.map(d => {
-                    const len = Math.sqrt(d[0]**2 + d[1]**2 + d[2]**2);
-                    return [d[0]/len, d[1]/len, d[2]/len];
-                }));
-            }
-            
-            // 高阶对称方向（二十面体顶点）
-            if (count >= 20) {
-                const phi = (1 + Math.sqrt(5)) / 2; // 黄金比例
-                const icosahedron = [
-                    [1, phi, 0], [-1, phi, 0], [1, -phi, 0], [-1, -phi, 0],
-                    [0, 1, phi], [0, -1, phi], [0, 1, -phi], [0, -1, -phi],
-                    [phi, 0, 1], [-phi, 0, 1], [phi, 0, -1], [-phi, 0, -1]
-                ];
-                directions.push(...icosahedron.map(d => {
-                    const len = Math.sqrt(d[0]**2 + d[1]**2 + d[2]**2);
-                    return [d[0]/len, d[1]/len, d[2]/len];
-                }));
-            }
-            
-            // 球面均匀分布（Fibonacci球面）
-            while (directions.length < count) {
-                const i = directions.length;
-                const theta = 2 * Math.PI * i / ((1 + Math.sqrt(5)) / 2);
-                const phi = Math.acos(1 - 2 * i / count);
-                directions.push([
-                    Math.sin(phi) * Math.cos(theta),
-                    Math.sin(phi) * Math.sin(theta),
-                    Math.cos(phi)
-                ]);
-            }
-            
-            return directions.slice(0, count);
-        }
-        
-        // === 系统初始化 ===
-        function initializeSystem() {
-            console.log('🚀 算法联盟 - 初始化统一场论系统...');
-            
-            // 场景设置
-            unifiedField.scene = new THREE.Scene();
-            unifiedField.scene.fog = new THREE.Fog(0x0a0a0f, 20, 100);
-            
-            // 相机设置
-            unifiedField.camera = new THREE.PerspectiveCamera(
-                65, window.innerWidth / window.innerHeight, 0.1, 500
-            );
-            unifiedField.camera.position.set(15, 10, 15);
-            unifiedField.camera.lookAt(0, 0, 0);
-            
-            // 渲染器设置（高级优化）
-            unifiedField.renderer = new THREE.WebGLRenderer({ 
-                antialias: true, 
-                alpha: true,
-                preserveDrawingBuffer: true,
-                powerPreference: "high-performance"
-            });
-            unifiedField.renderer.setSize(window.innerWidth, window.innerHeight);
-            unifiedField.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            unifiedField.renderer.setClearColor(0x0a0a0f, 0.1);
-            
-            // 高级渲染设置
-            unifiedField.renderer.shadowMap.enabled = true;
-            unifiedField.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            unifiedField.renderer.outputEncoding = THREE.sRGBEncoding;
-            unifiedField.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            unifiedField.renderer.toneMappingExposure = 1.0;
-            
-            document.getElementById('container').appendChild(unifiedField.renderer.domElement);
-            
-            // 创建核心组件
-            createAdvancedCentralMass();
-            createSuperiorSpatialSystem();
-            setupAdvancedLighting();
-            setupSmartControls();
-            setupAdvancedInteraction();
-            
-            console.log('✅ 系统初始化完成 - 性能模式已激活');
-            unifiedField.isInitialized = true;
-            
-            // 开始渲染循环
-            animate();
-        }
-        
-        // === 高级中心质量系统 ===
-        function createAdvancedCentralMass() {
-            const mass = parseFloat(document.getElementById('mass').value);
-            const colors = unifiedField.getColorSchemes()[unifiedField.colorScheme];
-            
-            if (unifiedField.centralMass) {
-                unifiedField.scene.remove(unifiedField.centralMass);
-            }
-            
-            unifiedField.centralMass = new THREE.Group();
-            
-            // 核心量子球体
-            const coreGeometry = new THREE.SphereGeometry(0.4 * mass, 64, 64);
-            const coreMaterial = new THREE.MeshPhysicalMaterial({ 
-                color: colors.accent,
-                emissive: new THREE.Color(colors.accent).multiplyScalar(0.4),
-                metalness: 0.1,
-                roughness: 0.2,
-                transparent: true,
-                opacity: 0.9,
-                clearcoat: 1.0,
-                clearcoatRoughness: 0.1
-            });
-            const core = new THREE.Mesh(coreGeometry, coreMaterial);
-            core.castShadow = true;
-            unifiedField.centralMass.add(core);
-            
-            // 多层能量场环系统
-            for (let i = 1; i <= 5; i++) {
-                const ringRadius = 0.5 + i * 0.4 * mass;
-                const ringThickness = 0.02 * Math.sqrt(mass);
-                
-                const ringGeometry = new THREE.TorusGeometry(ringRadius, ringThickness, 16, 64);
-                const ringMaterial = new THREE.MeshBasicMaterial({
-                    color: i % 2 === 0 ? colors.primary : colors.secondary,
-                    transparent: true,
-                    opacity: (0.6 / i) * (1 + 0.3 * Math.sin(unifiedField.time * (i + 1))),
-                    blending: THREE.AdditiveBlending
-                });
-                
-                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-                ring.rotation.x = Math.PI / 2 + (Math.PI / 12) * i;
-                ring.rotation.y = (Math.PI / 6) * i;
-                ring.userData.rotationSpeed = 0.008 * (i + 1);
-                ring.userData.oscillationPhase = i * Math.PI / 3;
-                unifiedField.centralMass.add(ring);
-            }
-            
-            // 高级粒子场系统
-            const particleCount = Math.floor(400 * mass * unifiedField.particleDensity);
-            const particleGeometry = new THREE.BufferGeometry();
-            
-            const positions = new Float32Array(particleCount * 3);
-            const particleColors = new Float32Array(particleCount * 3);
-            const sizes = new Float32Array(particleCount);
-            const velocities = new Float32Array(particleCount * 3);
-            
-            for (let i = 0; i < particleCount; i++) {
-                const radius = 0.8 + Math.random() * 4;
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos(2 * Math.random() - 1);
-                
-                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i * 3 + 2] = radius * Math.cos(phi);
-                
-                const color = new THREE.Color(colors.particle).multiplyScalar(0.8 + Math.random() * 0.4);
-                particleColors[i * 3] = color.r;
-                particleColors[i * 3 + 1] = color.g;
-                particleColors[i * 3 + 2] = color.b;
-                
-                sizes[i] = 0.06 + Math.random() * 0.04;
-                
-                velocities[i3] = direction[0];
-                velocities[i3 + 1] = direction[1];
-                velocities[i3 + 2] = direction[2];
-                
-                phases[i] = (i / particleCount) * Math.PI * 2;
-            }
-            
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
-            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-            
-            const material = new THREE.PointsMaterial({
-                size: 0.1,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.9,
-                blending: THREE.AdditiveBlending,
-                sizeAttenuation: true
-            });
-            
-            const particleSystem = new THREE.Points(geometry, material);
-            particleSystem.userData = {
-                direction: direction,
-                helixPoints: helixPoints,
-                velocities: velocities,
-                phases: phases,
-                index: index,
-                totalDirections: totalDirections
-            };
-            
-            return particleSystem;
-        }
-        
-        // === 动态场线系统 ===
-        function createDynamicFieldLines(helixPoints, index, colors) {
-            const fieldGeometry = new THREE.BufferGeometry();
-            const fieldPositions = [];
-            const fieldColors = [];
-            
-            // 创建场线网格
-            for (let i = 0; i < helixPoints.length; i += 10) {
-                const point = helixPoints[i];
-                const nextPoint = helixPoints[Math.min(i + 10, helixPoints.length - 1)];
-                
-                fieldPositions.push(point.x, point.y, point.z);
-                fieldPositions.push(nextPoint.x, nextPoint.y, nextPoint.z);
-                
-                const intensity = Math.max(0.3, 1 - point.length() / 15);
-                const color = new THREE.Color(colors.primary).multiplyScalar(intensity);
-                
-                fieldColors.push(color.r, color.g, color.b);
-                fieldColors.push(color.r, color.g, color.b);
-            }
-            
-            fieldGeometry.setAttribute('position', new THREE.Float32BufferAttribute(fieldPositions, 3));
-            fieldGeometry.setAttribute('color', new THREE.Float32BufferAttribute(fieldColors, 3));
-            
-            const fieldMaterial = new THREE.LineBasicMaterial({
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.4,
-                blending: THREE.AdditiveBlending
-            });
-            
-            return new THREE.LineSegments(fieldGeometry, fieldMaterial);
-        }
-        
-        // === 高级光照系统 ===
-        function setupAdvancedLighting() {
-            // 清除现有光源
-            const lights = unifiedField.scene.children.filter(child => child.isLight);
-            lights.forEach(light => unifiedField.scene.remove(light));
-            
-            const colors = unifiedField.getColorSchemes()[unifiedField.colorScheme];
-            
-            // 环境光
-            const ambientLight = new THREE.AmbientLight(colors.primary, 0.2);
-            unifiedField.scene.add(ambientLight);
-            
-            // 主方向光
-            const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
-            mainLight.position.set(20, 20, 10);
-            mainLight.castShadow = true;
-            mainLight.shadow.mapSize.width = 4096;
-            mainLight.shadow.mapSize.height = 4096;
-            mainLight.shadow.camera.near = 0.1;
-            mainLight.shadow.camera.far = 100;
-            mainLight.shadow.camera.left = -20;
-            mainLight.shadow.camera.right = 20;
-            mainLight.shadow.camera.top = 20;
-            mainLight.shadow.camera.bottom = -20;
-            unifiedField.scene.add(mainLight);
-            
-            // 动态点光源系统
-            const pointLight1 = new THREE.PointLight(colors.primary, 2.0, 30);
-            pointLight1.position.set(0, 0, 0);
-            unifiedField.scene.add(pointLight1);
-            
-            const pointLight2 = new THREE.PointLight(colors.secondary, 1.5, 25);
-            pointLight2.position.set(8, 8, 8);
-            unifiedField.scene.add(pointLight2);
-            
-            const pointLight3 = new THREE.PointLight(colors.accent, 1.0, 20);
-            pointLight3.position.set(-5, 5, -5);
-            unifiedField.scene.add(pointLight3);
-            
-            // 补充光源
-            const fillLight1 = new THREE.DirectionalLight(colors.secondary, 0.3);
-            fillLight1.position.set(-15, -15, -10);
-            unifiedField.scene.add(fillLight1);
-            
-            const fillLight2 = new THREE.DirectionalLight(colors.accent, 0.2);
-            fillLight2.position.set(10, -10, 15);
-            unifiedField.scene.add(fillLight2);
-        }
-        
-        // === 智能控制系统 ===
-        function setupSmartControls() {
-            // 参数滑块事件
-            const sliders = ['directions', 'omega', 'velocity', 'radius', 'mass', 'animSpeed', 'fieldDecay', 'particleDensity', 'cameraDistanceSlider'];
-            
-            sliders.forEach(sliderId => {
-                const slider = document.getElementById(sliderId);
-                if (slider) {
-                    slider.addEventListener('input', handleSliderChange);
-                    slider.addEventListener('change', handleSliderChange);
-                }
-            });
-        }
-        
-        function handleSliderChange(event) {
-            const sliderId = event.target.id;
-            const value = parseFloat(event.target.value);
-            
-            // 更新显示值
-            switch(sliderId) {
-                case 'directions':
-                    document.getElementById('directionCount').textContent = value;
-                    createSuperiorSpatialSystem();
-                    break;
-                case 'omega':
-                    document.getElementById('omegaValue').textContent = value.toFixed(1);
-                    break;
-                case 'velocity':
-                    document.getElementById('velocityValue').textContent = value.toFixed(1) + 'c';
-                    break;
-                case 'radius':
-                    document.getElementById('radiusValue').textContent = value.toFixed(1);
-                    createSuperiorSpatialSystem();
-                    break;
-                case 'mass':
-                    document.getElementById('massValue').textContent = value.toFixed(1);
-                    createAdvancedCentralMass();
-                    createSuperiorSpatialSystem();
-                    break;
-                case 'animSpeed':
-                    unifiedField.animationSpeed = value;
-                    document.getElementById('speedValue').textContent = value.toFixed(1) + 'x';
-                    break;
-                case 'fieldDecay':
-                    unifiedField.fieldDecay = value;
-                    document.getElementById('decayValue').textContent = value.toFixed(1);
-                    break;
-                case 'particleDensity':
-                    unifiedField.particleDensity = value;
-                    document.getElementById('densityValue').textContent = value.toFixed(1);
-                    createSuperiorSpatialSystem();
-                    break;
-                case 'cameraDistanceSlider':
-                    unifiedField.cameraDistance = value;
-                    document.getElementById('cameraDistance').textContent = value.toFixed(1);
-                    updateCameraDistance();
-                    break;
-            }
-            
-            updateProgressBar(event.target);
-        }
-        
-        function updateProgressBar(slider) {
-            const progress = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
-            const progressRing = slider.parentElement.querySelector('.progress-ring');
-            if (progressRing) {
-                progressRing.style.setProperty('--progress', progress + '%');
-            }
-        }
-        
-        // === 高级交互系统 ===
-        function setupAdvancedInteraction() {
-            let mouseDown = false;
-            let mouseDownX = 0, mouseDownY = 0;
-            let targetRotationX = 0, targetRotationY = 0;
-            
-            // 鼠标事件
-            unifiedField.renderer.domElement.addEventListener('mousedown', (event) => {
-                mouseDown = true;
-                mouseDownX = event.clientX;
-                mouseDownY = event.clientY;
-            });
-            
-            unifiedField.renderer.domElement.addEventListener('mouseup', () => {
-                mouseDown = false;
-            });
-            
-            unifiedField.renderer.domElement.addEventListener('mousemove', (event) => {
-                unifiedField.mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-                unifiedField.mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-                
-                if (mouseDown && unifiedField.cameraMode === 'free') {
-                    const deltaX = event.clientX - mouseDownX;
-                    const deltaY = event.clientY - mouseDownY;
-                    
-                    targetRotationY -= deltaX * 0.01;
-                    targetRotationX -= deltaY * 0.01;
-                    targetRotationX = Math.max(-Math.PI/2, Math.min(Math.PI/2, targetRotationX));
-                    
-                    const radius = unifiedField.cameraDistance;
-                    unifiedField.camera.position.x = radius * Math.cos(targetRotationX) * Math.sin(targetRotationY);
-                    unifiedField.camera.position.y = radius * Math.sin(targetRotationX);
-                    unifiedField.camera.position.z = radius * Math.cos(targetRotationX) * Math.cos(targetRotationY);
-                    unifiedField.camera.lookAt(0, 0, 0);
-                    
-                    mouseDownX = event.clientX;
-                    mouseDownY = event.clientY;
-                }
-            });
-            
-            // 滚轮缩放
-            unifiedField.renderer.domElement.addEventListener('wheel', (event) => {
-                event.preventDefault();
-                unifiedField.cameraDistance = Math.max(3, Math.min(100, unifiedField.cameraDistance + event.deltaY * 0.01));
-                document.getElementById('cameraDistance').textContent = unifiedField.cameraDistance.toFixed(1);
-                updateCameraDistance();
-            });
-            
-            // 键盘快捷键
-            document.addEventListener('keydown', handleKeyPress);
-        }
-        
-        function handleKeyPress(event) {
-            switch(event.key.toLowerCase()) {
-                case ' ': event.preventDefault(); toggleAnimation(); break;
-                case 'r': resetSimulation(); break;
-                case 'v': toggleVectors(); break;
-                case 't': toggleTrails(); break;
-                case 'f': toggleFieldLines(); break;
-                case 'c': cycleCameraMode(); break;
-                case 's': captureFrame(); break;
-                case 'h': toggleAllPanels(); break;
-                case '1': loadPreset('default'); break;
-                case '2': loadPreset('intense'); break;
-                case '3': loadPreset('gentle'); break;
-                case '4': loadPreset('spiral'); break;
-                case '5': loadPreset('quantum'); break;
-                case '6': loadPreset('cosmic'); break;
-            }
-        }
-        
-        // === 核心动画循环 ===
-        function animate() {
-            // FPS统计
-            unifiedField.frameCount++;
-            const currentTime = performance.now();
-            if (currentTime - unifiedField.lastTime >= 1000) {
-                const fps = Math.round(unifiedField.frameCount * 1000 / (currentTime - unifiedField.lastTime));
-                document.getElementById('fpsCounter').textContent = fps;
-                unifiedField.fpsHistory.push(fps);
-                if (unifiedField.fpsHistory.length > 10) unifiedField.fpsHistory.shift();
-                
-                unifiedField.frameCount = 0;
-                unifiedField.lastTime = currentTime;
-            }
-            
-            if (unifiedField.isAnimating) {
-                unifiedField.time += 0.016 * unifiedField.animationSpeed;
-                
-                updateAdvancedCentralMass();
-                updateIntelligentParticleSystems();
-                updateSmartCamera();
-                updateSystemStats();
-                updateDynamicLighting();
-            }
-            
-            unifiedField.renderer.render(unifiedField.scene, unifiedField.camera);
-            requestAnimationFrame(animate);
-        }
-        
-        // === 高级中心质量更新 ===
-        function updateAdvancedCentralMass() {
-            if (!unifiedField.centralMass) return;
-            
-            const mass = parseFloat(document.getElementById('mass').value);
-            
-            // 核心量子脉动
-            const core = unifiedField.centralMass.children[0];
-            const pulseFactor = 1 + 0.15 * Math.sin(unifiedField.time * 4) + 0.05 * Math.sin(unifiedField.time * 8.7);
-            core.scale.setScalar(pulseFactor);
-            
-            // 整体旋转
-            unifiedField.centralMass.rotation.y += 0.015 * unifiedField.animationSpeed;
-            unifiedField.centralMass.rotation.z += 0.008 * unifiedField.animationSpeed;
-            
-            // 能量环智能旋转
-            for (let i = 1; i < unifiedField.centralMass.children.length - 1; i++) {
-                const ring = unifiedField.centralMass.children[i];
-                if (ring.userData.rotationSpeed) {
-                    ring.rotation.z += ring.userData.rotationSpeed * unifiedField.animationSpeed;
-                    ring.rotation.x += ring.userData.rotationSpeed * 0.3 * unifiedField.animationSpeed;
-                    
-                    // 动态透明度
-                    const oscillation = Math.sin(unifiedField.time * 2 + ring.userData.oscillationPhase);
-                    ring.material.opacity = (0.6 / i) * (1 + 0.4 * oscillation);
-                }
-            }
-            
-            // 粒子场动画
-            const particleSystem = unifiedField.centralMass.children[unifiedField.centralMass.children.length - 1];
-            if (particleSystem && particleSystem.geometry && particleSystem.userData.velocities) {
-                const positions = particleSystem.geometry.attributes.position.array;
-                const colors = particleSystem.geometry.attributes.color.array;
-                const velocities = particleSystem.userData.velocities;
-                
-                for (let i = 0; i < positions.length; i += 3) {
-                    const idx = i; // 索引变量
-                    
-                    // 更新位置
-                    positions[idx] += velocities[idx] * unifiedField.animationSpeed;
-                    positions[idx + 1] += velocities[idx + 1] * unifiedField.animationSpeed;
-                    positions[idx + 2] += velocities[idx + 2] * unifiedField.animationSpeed;
-                    
-                    // 边界检测和重置
-                    const distance = Math.sqrt(positions[idx]**2 + positions[idx + 1]**2 + positions[idx + 2]**2);
-                    if (distance > 8) {
-                        const resetRadius = 0.8 + Math.random() * 1.5;
-                        const theta = Math.random() * Math.PI * 2;
-                        const phi = Math.acos(2 * Math.random() - 1);
-                        
-                        positions[idx] = resetRadius * Math.sin(phi) * Math.cos(theta);
-                        positions[idx + 1] = resetRadius * Math.sin(phi) * Math.sin(theta);
-                        positions[idx + 2] = resetRadius * Math.cos(phi);
-                    }
-                    
-                    // 动态颜色
-                    const intensity = Math.max(0.3, 1 - distance / 8);
-                    const colorShift = unifiedField.time * 0.5 + i * 0.01;
-                    const color = new THREE.Color().setHSL((colorShift % 1), 0.8, 0.6 * intensity);
-                    
-                    colors[idx] = color.r;
-                    colors[idx + 1] = color.g;
-                    colors[idx + 2] = color.b;
-                }
-                
-                particleSystem.geometry.attributes.position.needsUpdate = true;
-                particleSystem.geometry.attributes.color.needsUpdate = true;
-            }
-        }
-        
-        // === 智能粒子系统更新 ===
-        function updateIntelligentParticleSystems() {
-            const velocity = parseFloat(document.getElementById('velocity').value);
-            const omega = parseFloat(document.getElementById('omega').value);
-            const radius = parseFloat(document.getElementById('radius').value);
-            
-            let totalParticles = 0;
-            let totalFieldStrength = 0;
-            let systemEnergy = 0;
-            
-            unifiedField.particleSystems.forEach((system, systemIndex) => {
-                const positions = system.geometry.attributes.position.array;
-                const colors = system.geometry.attributes.color.array;
-                const sizes = system.geometry.attributes.size.array;
-                const { direction, phases, index, totalDirections } = system.userData;
-                
-                const particleCount = positions.length / 3;
-                totalParticles += particleCount;
-                
-                for (let i = 0; i < particleCount; i++) {
-                    const i3 = i * 3;
-                    const t = unifiedField.time * velocity + phases[i] + (i / particleCount) * 10;
-                    
-                    // 高级螺旋参数
-                    const spiralT = t % 12;
-                    const dynamicRadius = radius * (1 + 
-                        0.25 * Math.sin(t * 1.2) + 
-                        0.1 * Math.sin(t * 3.1 + index) +
-                        0.05 * Math.cos(t * 5.7)
-                    );
-                    const theta = omega * t + index * Math.PI / 8;
-                    const z = spiralT;
-                    
-                    // 构建局部坐标系
-                    const zAxis = new THREE.Vector3(...direction);
-                    const xAxis = new THREE.Vector3();
-                    const yAxis = new THREE.Vector3();
-                    
-                    if (Math.abs(zAxis.x) < 0.9) {
-                        xAxis.crossVectors(zAxis, new THREE.Vector3(1, 0, 0)).normalize();
-                    } else {
-                        xAxis.crossVectors(zAxis, new THREE.Vector3(0, 1, 0)).normalize();
-                    }
-                    yAxis.crossVectors(zAxis, xAxis).normalize();
-                    
-                    // 螺旋位置计算
-                    const localX = dynamicRadius * Math.cos(theta);
-                    const localY = dynamicRadius * Math.sin(theta);
-                    
-                    const globalPos = new THREE.Vector3();
-                    globalPos.addScaledVector(xAxis, localX);
-                    globalPos.addScaledVector(yAxis, localY);
-                    globalPos.addScaledVector(zAxis, z);
-                    
-                    positions[i3] = globalPos.x;
-                    positions[i3 + 1] = globalPos.y;
-                    positions[i3 + 2] = globalPos.z;
-                    
-                    // 智能颜色和强度计算
-                    const distance = globalPos.length();
-                    const intensity = Math.max(0.2, Math.exp(-distance * unifiedField.fieldDecay / 15));
-                    const hue = (index / totalDirections + unifiedField.time * 0.08 + distance * 0.02) % 1;
-                    const saturation = 0.8 + 0.2 * Math.sin(unifiedField.time * 3 + i * 0.1);
-                    const lightness = 0.6 + 0.3 * intensity;
-                    
-                    const color = new THREE.Color().setHSL(hue, saturation, lightness);
-                    colors[i3] = color.r * intensity;
-                    colors[i3 + 1] = color.g * intensity;
-                    colors[i3 + 2] = color.b * intensity;
-                    
-                    // 动态大小
-                    sizes[i] = (0.05 + 0.05 * Math.sin(unifiedField.time * 4 + i * 0.2)) * intensity;
-                    
-                    totalFieldStrength += intensity;
-                    systemEnergy += intensity * distance;
-                }
-                
-                system.geometry.attributes.position.needsUpdate = true;
-                system.geometry.attributes.color.needsUpdate = true;
-                system.geometry.attributes.size.needsUpdate = true;
-            });
-            
-            // 更新统计数据
-            document.getElementById('particleCount').textContent = totalParticles;
-            document.getElementById('fieldStrength').textContent = (totalFieldStrength / Math.max(totalParticles, 1)).toFixed(3);
-            document.getElementById('systemEnergy').textContent = (systemEnergy / 1000).toFixed(2);
-        }
-        
-        // === 智能相机系统 ===
-        function updateSmartCamera() {
-            const cameraSpeed = 0.02 * unifiedField.animationSpeed;
-            
-            switch (unifiedField.cameraMode) {
-                case 'orbit':
-                    const orbitRadius = unifiedField.cameraDistance + 3 * Math.sin(unifiedField.time * 0.1);
-                    unifiedField.camera.position.x = orbitRadius * Math.cos(unifiedField.time * cameraSpeed);
-                    unifiedField.camera.position.z = orbitRadius * Math.sin(unifiedField.time * cameraSpeed);
-                    unifiedField.camera.position.y = 8 + 5 * Math.sin(unifiedField.time * 0.03);
-                    unifiedField.camera.lookAt(unifiedField.cameraTarget);
-                    break;
-                    
-                case 'follow':
-                    if (unifiedField.particleSystems.length > 0) {
-                        const firstSystem = unifiedField.particleSystems[0];
-                        const positions = firstSystem.geometry.attributes.position.array;
-                        if (positions.length >= 3) {
-                            const targetPos = new THREE.Vector3(positions[0], positions[1], positions[2]);
-                            const cameraOffset = new THREE.Vector3(8, 6, 8);
-                            unifiedField.camera.position.copy(targetPos).add(cameraOffset);
-                            unifiedField.camera.lookAt(targetPos);
-                        }
-                    }
-                    break;
-                    
-                case 'cinematic':
-                    const cinematicRadius = unifiedField.cameraDistance;
-                    const cinematicAngle = unifiedField.time * 0.01;
-                    const elevation = 10 * Math.sin(unifiedField.time * 0.005) + 5;
-                    
-                    unifiedField.camera.position.x = cinematicRadius * Math.cos(cinematicAngle);
-                    unifiedField.camera.position.y = elevation;
-                    unifiedField.camera.position.z = cinematicRadius * Math.sin(cinematicAngle);
-                    unifiedField.camera.lookAt(unifiedField.cameraTarget);
-                    break;
-                    
-                case 'free':
-                    // 用户控制，不需要自动更新
-                    break;
-            }
-        }
-        
-        // === 动态光照更新 ===
-        function updateDynamicLighting() {
-            const lights = unifiedField.scene.children.filter(child => child.isLight);
-            
-            lights.forEach((light, index) => {
-                if (light.isPointLight) {
-                    const phase = unifiedField.time * 0.5 + index * Math.PI;
-                    light.intensity = light.userData?.baseIntensity || 1.5;
-                    light.intensity *= (1 + 0.3 * Math.sin(phase));
-                    
-                    if (index === 1) {
-                        light.position.x = 8 * Math.cos(unifiedField.time * 0.02);
-                        light.position.z = 8 * Math.sin(unifiedField.time * 0.02);
-                    }
-                }
-            });
-        }
-        
-        // === 系统状态更新 ===
-        function updateSystemStats() {
-            document.getElementById('timeValue').textContent = unifiedField.time.toFixed(2) + 's';
-            
-            // 计算空间曲率
-            const mass = parseFloat(document.getElementById('mass').value);
-            const curvature = Math.abs(Math.sin(unifiedField.time * 0.3)) * mass * 0.8;
-            document.getElementById('curvature').textContent = curvature.toFixed(3);
-            
-            // 计算场相干性
-            const coherence = Math.max(0.3, 0.85 + 0.15 * Math.sin(unifiedField.time * 0.1));
-            document.getElementById('coherence').textContent = coherence.toFixed(2);
-            
-            // 系统状态
-            const avgFPS = unifiedField.fpsHistory.reduce((a, b) => a + b, 0) / Math.max(unifiedField.fpsHistory.length, 1);
-            let statusText = '🟢 运行正常';
-            let statusColor = '#00ff88';
-            
-            if (avgFPS < 30) {
-                statusText = '🟡 性能警告';
-                statusColor = '#ffaa00';
-            }
-            if (avgFPS < 15) {
-                statusText = '🔴 性能不佳';
-                statusColor = '#ff4444';
-            }
-            
-            const statusElement = document.getElementById('systemStatus');
-            statusElement.textContent = statusText;
-            statusElement.style.color = statusColor;
-            
-            // 内存和GPU状态
-            document.getElementById('memoryUsage').textContent = unifiedField.particleSystems.length > 20 ? '高' : '正常';
-            document.getElementById('gpuUsage').textContent = avgFPS > 45 ? '优化' : '繁忙';
-            document.getElementById('meshComplexity').textContent = unifiedField.spiralGroups.length > 15 ? '高' : '中等';
-        }
-        
-        // === 实用功能函数 ===
-        function clearExistingSystems() {
-            unifiedField.spiralGroups.forEach(group => unifiedField.scene.remove(group));
-            unifiedField.particleSystems.forEach(system => unifiedField.scene.remove(system));
-            unifiedField.fieldLines.forEach(line => unifiedField.scene.remove(line));
-            unifiedField.trailSystems.forEach(trail => unifiedField.scene.remove(trail));
-            
-            unifiedField.spiralGroups = [];
-            unifiedField.particleSystems = [];
-            unifiedField.fieldLines = [];
-            unifiedField.trailSystems = [];
-        }
-        
-        function updateCameraDistance() {
-            if (unifiedField.cameraMode === 'orbit' || unifiedField.cameraMode === 'cinematic') {
-                const currentPos = unifiedField.camera.position;
-                const currentDistance = currentPos.length();
-                const scaleFactor = unifiedField.cameraDistance / currentDistance;
-                unifiedField.camera.position.multiplyScalar(scaleFactor);
-            }
-        }
-        
-        // === 用户交互函数 ===
-        function toggleAnimation() {
-            unifiedField.isAnimating = !unifiedField.isAnimating;
-            const btn = document.getElementById('playPauseBtn');
-            btn.textContent = unifiedField.isAnimating ? '⏸️ 暂停' : '▶️ 继续';
-            btn.classList.toggle('active', !unifiedField.isAnimating);
-        }
-        
-        function resetSimulation() {
-            unifiedField.time = 0;
-            createAdvancedCentralMass();
-            createSuperiorSpatialSystem();
-            console.log('🔄 系统已重置');
-        }
-        
-        function stepAnimation() {
-            if (!unifiedField.isAnimating) {
-                unifiedField.time += 0.016;
-                updateAdvancedCentralMass();
-                updateIntelligentParticleSystems();
-                updateSystemStats();
-            }
-        }
-        
-        function toggleVectors() {
-            unifiedField.showVectors = !unifiedField.showVectors;
-            const btn = document.getElementById('vectorBtn');
-            btn.classList.toggle('active', unifiedField.showVectors);
-            // 实现矢量场显示逻辑
-        }
-        
-        function toggleTrails() {
-            unifiedField.showTrails = !unifiedField.showTrails;
-            const btn = document.getElementById('trailBtn');
-            btn.classList.toggle('active', unifiedField.showTrails);
-            createSuperiorSpatialSystem();
-        }
-        
-        function toggleFieldLines() {
-            unifiedField.showFieldLines = !unifiedField.showFieldLines;
-            const btn = document.getElementById('fieldBtn');
-            btn.classList.toggle('active', unifiedField.showFieldLines);
-            createSuperiorSpatialSystem();
-        }
-        
-        function cycleCameraMode() {
-            const modes = ['orbit', 'follow', 'cinematic', 'free'];
-            const currentIndex = modes.indexOf(unifiedField.cameraMode);
-            unifiedField.cameraMode = modes[(currentIndex + 1) % modes.length];
-            
-            const btn = document.getElementById('cameraBtn');
-            const modeNames = { orbit: '轨道', follow: '跟随', cinematic: '电影', free: '自由' };
-            btn.textContent = `📹 ${modeNames[unifiedField.cameraMode]}模式`;
-            
-            console.log(`📹 相机模式: ${unifiedField.cameraMode}`);
-        }
-        
-        function resetCamera() {
-            unifiedField.cameraDistance = 15;
-            unifiedField.camera.position.set(15, 10, 15);
-            unifiedField.camera.lookAt(0, 0, 0);
-            document.getElementById('cameraDistance').textContent = '15.0';
-        }
-        
-        function autoFocus() {
-            if (unifiedField.centralMass) {
-                unifiedField.cameraTarget.copy(unifiedField.centralMass.position);
-                unifiedField.camera.lookAt(unifiedField.cameraTarget);
-                console.log('🎯 相机已自动聚焦到中心质量');
-            }
-        }
-        
-        function changeColorScheme(scheme) {
-            unifiedField.colorScheme = scheme;
-            setupAdvancedLighting();
-            createAdvancedCentralMass();
-            createSuperiorSpatialSystem();
-            
-            // 更新按钮状态
-            document.querySelectorAll('.preset-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent.toLowerCase().includes(scheme)) {
-                    btn.classList.add('active');
-                }
-            });
-            
-            console.log(`🎨 色彩方案已切换: ${scheme}`);
-        }
-        
-        function loadPreset(presetName) {
-            const preset = unifiedField.getPresets()[presetName];
-            if (!preset) return;
-            
-            console.log(`⚡ 加载预设: ${presetName}`);
-            
-            // 更新滑块值
-            document.getElementById('directions').value = preset.directions;
-            document.getElementById('omega').value = preset.omega;
-            document.getElementById('velocity').value = preset.velocity;
-            document.getElementById('radius').value = preset.radius;
-            document.getElementById('mass').value = preset.mass;
-            document.getElementById('fieldDecay').value = preset.decay;
-            document.getElementById('particleDensity').value = preset.density;
-            
-            // 更新显示值
-            document.getElementById('directionCount').textContent = preset.directions;
-            document.getElementById('omegaValue').textContent = preset.omega.toFixed(1);
-            document.getElementById('velocityValue').textContent = preset.velocity.toFixed(1) + 'c';
-            document.getElementById('radiusValue').textContent = preset.radius.toFixed(1);
-            document.getElementById('massValue').textContent = preset.mass.toFixed(1);
-            document.getElementById('decayValue').textContent = preset.decay.toFixed(1);
-            document.getElementById('densityValue').textContent = preset.density.toFixed(1);
-            
-            // 更新系统参数
-            unifiedField.fieldDecay = preset.decay;
-            unifiedField.particleDensity = preset.density;
-            
-            // 重建系统
-            createAdvancedCentralMass();
-            createSuperiorSpatialSystem();
-            
-            // 更新进度条
-            updateAllProgressBars();
-        }
-        
-        function captureFrame() {
-            const link = document.createElement('a');
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            link.download = `unified_field_${timestamp}.png`;
-            link.href = unifiedField.renderer.domElement.toDataURL('image/png');
-            link.click();
-            console.log('📸 截图已保存');
-        }
-        
-        function exportData() {
-            const data = {
-                timestamp: new Date().toISOString(),
-                version: '2.0',
-                parameters: {
-                    directions: parseInt(document.getElementById('directions').value),
-                    omega: parseFloat(document.getElementById('omega').value),
-                    velocity: parseFloat(document.getElementById('velocity').value),
-                    radius: parseFloat(document.getElementById('radius').value),
-                    mass: parseFloat(document.getElementById('mass').value),
-                    fieldDecay: unifiedField.fieldDecay,
-                    particleDensity: unifiedField.particleDensity,
-                    animationSpeed: unifiedField.animationSpeed
-                },
-                system: {
-                    time: unifiedField.time,
-                    particleCount: unifiedField.particleSystems.length,
-                    cameraMode: unifiedField.cameraMode,
-                    colorScheme: unifiedField.colorScheme
-                }
-            };
-            
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.download = `unified_field_data_${Date.now()}.json`;
-            link.href = url;
-            link.click();
-            URL.revokeObjectURL(url);
-            console.log('💾 数据已导出');
-        }
-        
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().then(() => {
-                    console.log('🖥️ 进入全屏模式');
-                }).catch(err => {
-                    console.warn('⚠️ 全屏模式不可用:', err);
-                });
+      }
+
+      // === 智能粒子系统更新 ===
+      function updateIntelligentParticleSystems() {
+        const velocity = parseFloat(document.getElementById('velocity').value)
+        const omega = parseFloat(document.getElementById('omega').value)
+        const radius = parseFloat(document.getElementById('radius').value)
+
+        let totalParticles = 0
+        let totalFieldStrength = 0
+        let systemEnergy = 0
+
+        unifiedField.particleSystems.forEach((system, systemIndex) => {
+          const positions = system.geometry.attributes.position.array
+          const colors = system.geometry.attributes.color.array
+          const sizes = system.geometry.attributes.size.array
+          const { direction, phases, index, totalDirections } = system.userData
+
+          const particleCount = positions.length / 3
+          totalParticles += particleCount
+
+          for (let i = 0; i < particleCount; i++) {
+            const i3 = i * 3
+            const t = unifiedField.time * velocity + phases[i] + (i / particleCount) * 10
+
+            // 高级螺旋参数
+            const spiralT = t % 12
+            const dynamicRadius =
+              radius *
+              (1 +
+                0.25 * Math.sin(t * 1.2) +
+                0.1 * Math.sin(t * 3.1 + index) +
+                0.05 * Math.cos(t * 5.7))
+            const theta = omega * t + (index * Math.PI) / 8
+            const z = spiralT
+
+            // 构建局部坐标系
+            const zAxis = new THREE.Vector3(...direction)
+            const xAxis = new THREE.Vector3()
+            const yAxis = new THREE.Vector3()
+
+            if (Math.abs(zAxis.x) < 0.9) {
+              xAxis.crossVectors(zAxis, new THREE.Vector3(1, 0, 0)).normalize()
             } else {
-                document.exitFullscreen().then(() => {
-                    console.log('🖥️ 退出全屏模式');
-                });
+              xAxis.crossVectors(zAxis, new THREE.Vector3(0, 1, 0)).normalize()
             }
-        }
-        
-        function togglePanel(panelId) {
-            const panel = document.getElementById(panelId);
-            panel.classList.toggle('minimized');
-            
-            const btn = panel.querySelector('.minimize-btn');
-            btn.textContent = panel.classList.contains('minimized') ? '+' : '−';
-        }
-        
-        function toggleAllPanels() {
-            const panels = document.querySelectorAll('.super-panel');
-            const firstPanel = panels[0];
-            const isMinimized = firstPanel.classList.contains('minimized');
-            
-            panels.forEach(panel => {
-                if (isMinimized) {
-                    panel.classList.remove('minimized');
-                    panel.querySelector('.minimize-btn').textContent = '−';
-                } else {
-                    panel.classList.add('minimized');
-                    panel.querySelector('.minimize-btn').textContent = '+';
-                }
-            });
-            
-            console.log(`🎛️ 所有面板已${isMinimized ? '显示' : '最小化'}`);
-        }
-        
-        function updateAllProgressBars() {
-            const sliders = ['directions', 'omega', 'velocity', 'radius', 'mass', 'animSpeed', 'fieldDecay', 'particleDensity', 'cameraDistanceSlider'];
-            sliders.forEach(sliderId => {
-                const slider = document.getElementById(sliderId);
-                if (slider) {
-                    updateProgressBar(slider);
-                }
-            });
-        }
-        
-        // === 窗口事件处理 ===
-        window.addEventListener('resize', () => {
-            if (unifiedField.camera && unifiedField.renderer) {
-                unifiedField.camera.aspect = window.innerWidth / window.innerHeight;
-                unifiedField.camera.updateProjectionMatrix();
-                unifiedField.renderer.setSize(window.innerWidth, window.innerHeight);
-                console.log('📐 窗口大小已调整');
+            yAxis.crossVectors(zAxis, xAxis).normalize()
+
+            // 螺旋位置计算
+            const localX = dynamicRadius * Math.cos(theta)
+            const localY = dynamicRadius * Math.sin(theta)
+
+            const globalPos = new THREE.Vector3()
+            globalPos.addScaledVector(xAxis, localX)
+            globalPos.addScaledVector(yAxis, localY)
+            globalPos.addScaledVector(zAxis, z)
+
+            positions[i3] = globalPos.x
+            positions[i3 + 1] = globalPos.y
+            positions[i3 + 2] = globalPos.z
+
+            // 智能颜色和强度计算
+            const distance = globalPos.length()
+            const intensity = Math.max(0.2, Math.exp((-distance * unifiedField.fieldDecay) / 15))
+            const hue = (index / totalDirections + unifiedField.time * 0.08 + distance * 0.02) % 1
+            const saturation = 0.8 + 0.2 * Math.sin(unifiedField.time * 3 + i * 0.1)
+            const lightness = 0.6 + 0.3 * intensity
+
+            const color = new THREE.Color().setHSL(hue, saturation, lightness)
+            colors[i3] = color.r * intensity
+            colors[i3 + 1] = color.g * intensity
+            colors[i3 + 2] = color.b * intensity
+
+            // 动态大小
+            sizes[i] = (0.05 + 0.05 * Math.sin(unifiedField.time * 4 + i * 0.2)) * intensity
+
+            totalFieldStrength += intensity
+            systemEnergy += intensity * distance
+          }
+
+          system.geometry.attributes.position.needsUpdate = true
+          system.geometry.attributes.color.needsUpdate = true
+          system.geometry.attributes.size.needsUpdate = true
+        })
+
+        // 更新统计数据
+        document.getElementById('particleCount').textContent = totalParticles
+        document.getElementById('fieldStrength').textContent = (
+          totalFieldStrength / Math.max(totalParticles, 1)
+        ).toFixed(3)
+        document.getElementById('systemEnergy').textContent = (systemEnergy / 1000).toFixed(2)
+      }
+
+      // === 智能相机系统 ===
+      function updateSmartCamera() {
+        const cameraSpeed = 0.02 * unifiedField.animationSpeed
+
+        switch (unifiedField.cameraMode) {
+          case 'orbit':
+            const orbitRadius = unifiedField.cameraDistance + 3 * Math.sin(unifiedField.time * 0.1)
+            unifiedField.camera.position.x = orbitRadius * Math.cos(unifiedField.time * cameraSpeed)
+            unifiedField.camera.position.z = orbitRadius * Math.sin(unifiedField.time * cameraSpeed)
+            unifiedField.camera.position.y = 8 + 5 * Math.sin(unifiedField.time * 0.03)
+            unifiedField.camera.lookAt(unifiedField.cameraTarget)
+            break
+
+          case 'follow':
+            if (unifiedField.particleSystems.length > 0) {
+              const firstSystem = unifiedField.particleSystems[0]
+              const positions = firstSystem.geometry.attributes.position.array
+              if (positions.length >= 3) {
+                const targetPos = new THREE.Vector3(positions[0], positions[1], positions[2])
+                const cameraOffset = new THREE.Vector3(8, 6, 8)
+                unifiedField.camera.position.copy(targetPos).add(cameraOffset)
+                unifiedField.camera.lookAt(targetPos)
+              }
             }
-        });
-        
-        // 防止右键菜单
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
-        
-        // 防止默认的拖拽行为
-        document.addEventListener('dragover', (e) => e.preventDefault());
-        document.addEventListener('drop', (e) => e.preventDefault());
-        
-        // === 错误处理 ===
-        window.addEventListener('error', (event) => {
-            console.error('🚨 系统错误:', event.error);
-            document.getElementById('systemStatus').textContent = '🔴 系统错误';
-            document.getElementById('systemStatus').style.color = '#ff4444';
-        });
-        
-        // WebGL上下文丢失处理
-        if (unifiedField.renderer) {
-            unifiedField.renderer.domElement.addEventListener('webglcontextlost', (event) => {
-                console.warn('⚠️ WebGL上下文丢失');
-                event.preventDefault();
-            });
-            
-            unifiedField.renderer.domElement.addEventListener('webglcontextrestored', () => {
-                console.log('✅ WebGL上下文已恢复');
-                initializeSystem();
-            });
+            break
+
+          case 'cinematic':
+            const cinematicRadius = unifiedField.cameraDistance
+            const cinematicAngle = unifiedField.time * 0.01
+            const elevation = 10 * Math.sin(unifiedField.time * 0.005) + 5
+
+            unifiedField.camera.position.x = cinematicRadius * Math.cos(cinematicAngle)
+            unifiedField.camera.position.y = elevation
+            unifiedField.camera.position.z = cinematicRadius * Math.sin(cinematicAngle)
+            unifiedField.camera.lookAt(unifiedField.cameraTarget)
+            break
+
+          case 'free':
+            // 用户控制，不需要自动更新
+            break
         }
-        
-        // === 性能监控 ===
-        function monitorPerformance() {
-            if (performance.memory) {
-                const memInfo = performance.memory;
-                if (memInfo.usedJSHeapSize > memInfo.jsHeapSizeLimit * 0.9) {
-                    console.warn('⚠️ 内存使用过高，建议重置系统');
-                    document.getElementById('memoryUsage').textContent = '警告';
-                    document.getElementById('memoryUsage').style.color = '#ffaa00';
-                }
+      }
+
+      // === 动态光照更新 ===
+      function updateDynamicLighting() {
+        const lights = unifiedField.scene.children.filter(child => child.isLight)
+
+        lights.forEach((light, index) => {
+          if (light.isPointLight) {
+            const phase = unifiedField.time * 0.5 + index * Math.PI
+            light.intensity = light.userData?.baseIntensity || 1.5
+            light.intensity *= 1 + 0.3 * Math.sin(phase)
+
+            if (index === 1) {
+              light.position.x = 8 * Math.cos(unifiedField.time * 0.02)
+              light.position.z = 8 * Math.sin(unifiedField.time * 0.02)
             }
+          }
+        })
+      }
+
+      // === 系统状态更新 ===
+      function updateSystemStats() {
+        document.getElementById('timeValue').textContent = unifiedField.time.toFixed(2) + 's'
+
+        // 计算空间曲率
+        const mass = parseFloat(document.getElementById('mass').value)
+        const curvature = Math.abs(Math.sin(unifiedField.time * 0.3)) * mass * 0.8
+        document.getElementById('curvature').textContent = curvature.toFixed(3)
+
+        // 计算场相干性
+        const coherence = Math.max(0.3, 0.85 + 0.15 * Math.sin(unifiedField.time * 0.1))
+        document.getElementById('coherence').textContent = coherence.toFixed(2)
+
+        // 系统状态
+        const avgFPS =
+          unifiedField.fpsHistory.reduce((a, b) => a + b, 0) /
+          Math.max(unifiedField.fpsHistory.length, 1)
+        let statusText = '🟢 运行正常'
+        let statusColor = '#00ff88'
+
+        if (avgFPS < 30) {
+          statusText = '🟡 性能警告'
+          statusColor = '#ffaa00'
         }
-        
-        // 每30秒执行一次性能检查
-        setInterval(monitorPerformance, 30000);
-        
-        // === 开发者调试接口 ===
-        if (typeof window !== 'undefined') {
-            window.UnifiedFieldDebug = {
-                system: unifiedField,
-                toggleDebug: () => {
-                    console.log('🔧 调试信息:');
-                    console.log('- 粒子系统数量:', unifiedField.particleSystems.length);
-                    console.log('- 螺旋组数量:', unifiedField.spiralGroups.length);
-                    console.log('- 当前时间:', unifiedField.time.toFixed(3));
-                    console.log('- FPS历史:', unifiedField.fpsHistory);
-                    console.log('- 相机模式:', unifiedField.cameraMode);
-                    console.log('- 色彩方案:', unifiedField.colorScheme);
-                },
-                exportGeometry: () => {
-                    const geometry = {
-                        spiralCount: unifiedField.spiralGroups.length,
-                        particleCount: unifiedField.particleSystems.reduce((sum, sys) => sum + sys.geometry.attributes.position.count, 0),
-                        boundingBox: new THREE.Box3().setFromObject(unifiedField.scene)
-                    };
-                    console.log('📐 几何信息:', geometry);
-                    return geometry;
-                }
-            };
-            
-            console.log(`
+        if (avgFPS < 15) {
+          statusText = '🔴 性能不佳'
+          statusColor = '#ff4444'
+        }
+
+        const statusElement = document.getElementById('systemStatus')
+        statusElement.textContent = statusText
+        statusElement.style.color = statusColor
+
+        // 内存和GPU状态
+        document.getElementById('memoryUsage').textContent =
+          unifiedField.particleSystems.length > 20 ? '高' : '正常'
+        document.getElementById('gpuUsage').textContent = avgFPS > 45 ? '优化' : '繁忙'
+        document.getElementById('meshComplexity').textContent =
+          unifiedField.spiralGroups.length > 15 ? '高' : '中等'
+      }
+
+      // === 实用功能函数 ===
+      function clearExistingSystems() {
+        unifiedField.spiralGroups.forEach(group => unifiedField.scene.remove(group))
+        unifiedField.particleSystems.forEach(system => unifiedField.scene.remove(system))
+        unifiedField.fieldLines.forEach(line => unifiedField.scene.remove(line))
+        unifiedField.trailSystems.forEach(trail => unifiedField.scene.remove(trail))
+
+        unifiedField.spiralGroups = []
+        unifiedField.particleSystems = []
+        unifiedField.fieldLines = []
+        unifiedField.trailSystems = []
+      }
+
+      function updateCameraDistance() {
+        if (unifiedField.cameraMode === 'orbit' || unifiedField.cameraMode === 'cinematic') {
+          const currentPos = unifiedField.camera.position
+          const currentDistance = currentPos.length()
+          const scaleFactor = unifiedField.cameraDistance / currentDistance
+          unifiedField.camera.position.multiplyScalar(scaleFactor)
+        }
+      }
+
+      // === 用户交互函数 ===
+      function toggleAnimation() {
+        unifiedField.isAnimating = !unifiedField.isAnimating
+        const btn = document.getElementById('playPauseBtn')
+        btn.textContent = unifiedField.isAnimating ? '⏸️ 暂停' : '▶️ 继续'
+        btn.classList.toggle('active', !unifiedField.isAnimating)
+      }
+
+      function resetSimulation() {
+        unifiedField.time = 0
+        createAdvancedCentralMass()
+        createSuperiorSpatialSystem()
+        console.log('🔄 系统已重置')
+      }
+
+      function stepAnimation() {
+        if (!unifiedField.isAnimating) {
+          unifiedField.time += 0.016
+          updateAdvancedCentralMass()
+          updateIntelligentParticleSystems()
+          updateSystemStats()
+        }
+      }
+
+      function toggleVectors() {
+        unifiedField.showVectors = !unifiedField.showVectors
+        const btn = document.getElementById('vectorBtn')
+        btn.classList.toggle('active', unifiedField.showVectors)
+        // 实现矢量场显示逻辑
+      }
+
+      function toggleTrails() {
+        unifiedField.showTrails = !unifiedField.showTrails
+        const btn = document.getElementById('trailBtn')
+        btn.classList.toggle('active', unifiedField.showTrails)
+        createSuperiorSpatialSystem()
+      }
+
+      function toggleFieldLines() {
+        unifiedField.showFieldLines = !unifiedField.showFieldLines
+        const btn = document.getElementById('fieldBtn')
+        btn.classList.toggle('active', unifiedField.showFieldLines)
+        createSuperiorSpatialSystem()
+      }
+
+      function cycleCameraMode() {
+        const modes = ['orbit', 'follow', 'cinematic', 'free']
+        const currentIndex = modes.indexOf(unifiedField.cameraMode)
+        unifiedField.cameraMode = modes[(currentIndex + 1) % modes.length]
+
+        const btn = document.getElementById('cameraBtn')
+        const modeNames = { orbit: '轨道', follow: '跟随', cinematic: '电影', free: '自由' }
+        btn.textContent = `📹 ${modeNames[unifiedField.cameraMode]}模式`
+
+        console.log(`📹 相机模式: ${unifiedField.cameraMode}`)
+      }
+
+      function resetCamera() {
+        unifiedField.cameraDistance = 15
+        unifiedField.camera.position.set(15, 10, 15)
+        unifiedField.camera.lookAt(0, 0, 0)
+        document.getElementById('cameraDistance').textContent = '15.0'
+      }
+
+      function autoFocus() {
+        if (unifiedField.centralMass) {
+          unifiedField.cameraTarget.copy(unifiedField.centralMass.position)
+          unifiedField.camera.lookAt(unifiedField.cameraTarget)
+          console.log('🎯 相机已自动聚焦到中心质量')
+        }
+      }
+
+      function changeColorScheme(scheme) {
+        unifiedField.colorScheme = scheme
+        setupAdvancedLighting()
+        createAdvancedCentralMass()
+        createSuperiorSpatialSystem()
+
+        // 更新按钮状态
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+          btn.classList.remove('active')
+          if (btn.textContent.toLowerCase().includes(scheme)) {
+            btn.classList.add('active')
+          }
+        })
+
+        console.log(`🎨 色彩方案已切换: ${scheme}`)
+      }
+
+      function loadPreset(presetName) {
+        const preset = unifiedField.getPresets()[presetName]
+        if (!preset) return
+
+        console.log(`⚡ 加载预设: ${presetName}`)
+
+        // 更新滑块值
+        document.getElementById('directions').value = preset.directions
+        document.getElementById('omega').value = preset.omega
+        document.getElementById('velocity').value = preset.velocity
+        document.getElementById('radius').value = preset.radius
+        document.getElementById('mass').value = preset.mass
+        document.getElementById('fieldDecay').value = preset.decay
+        document.getElementById('particleDensity').value = preset.density
+
+        // 更新显示值
+        document.getElementById('directionCount').textContent = preset.directions
+        document.getElementById('omegaValue').textContent = preset.omega.toFixed(1)
+        document.getElementById('velocityValue').textContent = preset.velocity.toFixed(1) + 'c'
+        document.getElementById('radiusValue').textContent = preset.radius.toFixed(1)
+        document.getElementById('massValue').textContent = preset.mass.toFixed(1)
+        document.getElementById('decayValue').textContent = preset.decay.toFixed(1)
+        document.getElementById('densityValue').textContent = preset.density.toFixed(1)
+
+        // 更新系统参数
+        unifiedField.fieldDecay = preset.decay
+        unifiedField.particleDensity = preset.density
+
+        // 重建系统
+        createAdvancedCentralMass()
+        createSuperiorSpatialSystem()
+
+        // 更新进度条
+        updateAllProgressBars()
+      }
+
+      function captureFrame() {
+        const link = document.createElement('a')
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+        link.download = `unified_field_${timestamp}.png`
+        link.href = unifiedField.renderer.domElement.toDataURL('image/png')
+        link.click()
+        console.log('📸 截图已保存')
+      }
+
+      function exportData() {
+        const data = {
+          timestamp: new Date().toISOString(),
+          version: '2.0',
+          parameters: {
+            directions: parseInt(document.getElementById('directions').value),
+            omega: parseFloat(document.getElementById('omega').value),
+            velocity: parseFloat(document.getElementById('velocity').value),
+            radius: parseFloat(document.getElementById('radius').value),
+            mass: parseFloat(document.getElementById('mass').value),
+            fieldDecay: unifiedField.fieldDecay,
+            particleDensity: unifiedField.particleDensity,
+            animationSpeed: unifiedField.animationSpeed
+          },
+          system: {
+            time: unifiedField.time,
+            particleCount: unifiedField.particleSystems.length,
+            cameraMode: unifiedField.cameraMode,
+            colorScheme: unifiedField.colorScheme
+          }
+        }
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.download = `unified_field_data_${Date.now()}.json`
+        link.href = url
+        link.click()
+        URL.revokeObjectURL(url)
+        console.log('💾 数据已导出')
+      }
+
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement
+            .requestFullscreen()
+            .then(() => {
+              console.log('🖥️ 进入全屏模式')
+            })
+            .catch(err => {
+              console.warn('⚠️ 全屏模式不可用:', err)
+            })
+        } else {
+          document.exitFullscreen().then(() => {
+            console.log('🖥️ 退出全屏模式')
+          })
+        }
+      }
+
+      function togglePanel(panelId) {
+        const panel = document.getElementById(panelId)
+        panel.classList.toggle('minimized')
+
+        const btn = panel.querySelector('.minimize-btn')
+        btn.textContent = panel.classList.contains('minimized') ? '+' : '−'
+      }
+
+      function toggleAllPanels() {
+        const panels = document.querySelectorAll('.super-panel')
+        const firstPanel = panels[0]
+        const isMinimized = firstPanel.classList.contains('minimized')
+
+        panels.forEach(panel => {
+          if (isMinimized) {
+            panel.classList.remove('minimized')
+            panel.querySelector('.minimize-btn').textContent = '−'
+          } else {
+            panel.classList.add('minimized')
+            panel.querySelector('.minimize-btn').textContent = '+'
+          }
+        })
+
+        console.log(`🎛️ 所有面板已${isMinimized ? '显示' : '最小化'}`)
+      }
+
+      function updateAllProgressBars() {
+        const sliders = [
+          'directions',
+          'omega',
+          'velocity',
+          'radius',
+          'mass',
+          'animSpeed',
+          'fieldDecay',
+          'particleDensity',
+          'cameraDistanceSlider'
+        ]
+        sliders.forEach(sliderId => {
+          const slider = document.getElementById(sliderId)
+          if (slider) {
+            updateProgressBar(slider)
+          }
+        })
+      }
+
+      // === 窗口事件处理 ===
+      window.addEventListener('resize', () => {
+        if (unifiedField.camera && unifiedField.renderer) {
+          unifiedField.camera.aspect = window.innerWidth / window.innerHeight
+          unifiedField.camera.updateProjectionMatrix()
+          unifiedField.renderer.setSize(window.innerWidth, window.innerHeight)
+          console.log('📐 窗口大小已调整')
+        }
+      })
+
+      // 防止右键菜单
+      document.addEventListener('contextmenu', e => e.preventDefault())
+
+      // 防止默认的拖拽行为
+      document.addEventListener('dragover', e => e.preventDefault())
+      document.addEventListener('drop', e => e.preventDefault())
+
+      // === 错误处理 ===
+      window.addEventListener('error', event => {
+        console.error('🚨 系统错误:', event.error)
+        document.getElementById('systemStatus').textContent = '🔴 系统错误'
+        document.getElementById('systemStatus').style.color = '#ff4444'
+      })
+
+      // WebGL上下文丢失处理
+      if (unifiedField.renderer) {
+        unifiedField.renderer.domElement.addEventListener('webglcontextlost', event => {
+          console.warn('⚠️ WebGL上下文丢失')
+          event.preventDefault()
+        })
+
+        unifiedField.renderer.domElement.addEventListener('webglcontextrestored', () => {
+          console.log('✅ WebGL上下文已恢复')
+          initializeSystem()
+        })
+      }
+
+      // === 性能监控 ===
+      function monitorPerformance() {
+        if (performance.memory) {
+          const memInfo = performance.memory
+          if (memInfo.usedJSHeapSize > memInfo.jsHeapSizeLimit * 0.9) {
+            console.warn('⚠️ 内存使用过高，建议重置系统')
+            document.getElementById('memoryUsage').textContent = '警告'
+            document.getElementById('memoryUsage').style.color = '#ffaa00'
+          }
+        }
+      }
+
+      // 每30秒执行一次性能检查
+      setInterval(monitorPerformance, 30000)
+
+      // === 开发者调试接口 ===
+      if (typeof window !== 'undefined') {
+        window.UnifiedFieldDebug = {
+          system: unifiedField,
+          toggleDebug: () => {
+            console.log('🔧 调试信息:')
+            console.log('- 粒子系统数量:', unifiedField.particleSystems.length)
+            console.log('- 螺旋组数量:', unifiedField.spiralGroups.length)
+            console.log('- 当前时间:', unifiedField.time.toFixed(3))
+            console.log('- FPS历史:', unifiedField.fpsHistory)
+            console.log('- 相机模式:', unifiedField.cameraMode)
+            console.log('- 色彩方案:', unifiedField.colorScheme)
+          },
+          exportGeometry: () => {
+            const geometry = {
+              spiralCount: unifiedField.spiralGroups.length,
+              particleCount: unifiedField.particleSystems.reduce(
+                (sum, sys) => sum + sys.geometry.attributes.position.count,
+                0
+              ),
+              boundingBox: new THREE.Box3().setFromObject(unifiedField.scene)
+            }
+            console.log('📐 几何信息:', geometry)
+            return geometry
+          }
+        }
+
+        console.log(`
 🤖 ================================
    ALGORITHM ALLIANCE v2.0
    统一场论终极可视化系统
@@ -1985,222 +2190,97 @@
 
 🔧 调试接口: window.UnifiedFieldDebug
 🚀 性能模式已激活
-================================`);
-        }
-        
-        // === 系统启动 ===
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 算法联盟 - 启动统一场论系统...');
-            
-            // 延迟初始化以确保DOM完全加载
-            setTimeout(() => {
-                initializeSystem();
-                updateAllProgressBars();
-                
-                // 显示启动完成消息
-                setTimeout(() => {
-                    const statusElement = document.getElementById('systemStatus');
-                    if (statusElement) {
-                        statusElement.textContent = '🟢 系统已就绪';
-                        statusElement.style.color = '#00ff88';
-                    }
-                }, 1000);
-                
-            }, 100);
-        });
-        
-        // 确保在页面加载时初始化
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            setTimeout(initializeSystem, 100);
-        }
+================================`)
+      }
+
+      // === 系统启动 ===
+      document.addEventListener('DOMContentLoaded', () => {
+        console.log('🚀 算法联盟 - 启动统一场论系统...')
+
+        // 延迟初始化以确保DOM完全加载
+        setTimeout(() => {
+          initializeSystem()
+          updateAllProgressBars()
+
+          // 显示启动完成消息
+          setTimeout(() => {
+            const statusElement = document.getElementById('systemStatus')
+            if (statusElement) {
+              statusElement.textContent = '🟢 系统已就绪'
+              statusElement.style.color = '#00ff88'
+            }
+          }, 1000)
+        }, 100)
+      })
+
+      // 确保在页面加载时初始化
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(initializeSystem, 100)
+      }
     </script>
-</body>
-</html>[i] = 0.03 + Math.random() * 0.07;
-                
-                // 随机速度
-                velocities[i * 3] = (Math.random() - 0.5) * 0.02;
-                velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.02;
-                velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02;
-            }
-            
-            particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            particleGeometry.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
-            particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-            
-            const particleMaterial = new THREE.PointsMaterial({
-                size: 0.08,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending,
-                sizeAttenuation: true
-            });
-            
-            const particles = new THREE.Points(particleGeometry, particleMaterial);
-            particles.userData = { velocities: velocities };
-            unifiedField.centralMass.add(particles);
-            
-            unifiedField.scene.add(unifiedField.centralMass);
-        }
-        
-        // === 超级空间系统 ===
-        function createSuperiorSpatialSystem() {
-            console.log('🌌 创建超级空间发散系统...');
-            
-            // 清理现有系统
-            clearExistingSystems();
-            
-            const directionCount = parseInt(document.getElementById('directions').value);
-            const directions = generateOptimizedDirections(directionCount);
-            const radius = parseFloat(document.getElementById('radius').value);
-            const mass = parseFloat(document.getElementById('mass').value);
-            const colors = unifiedField.getColorSchemes()[unifiedField.colorScheme];
-            
-            directions.forEach((direction, index) => {
-                createAdvancedSpiralSystem(direction, index, directions.length, radius, mass, colors);
-            });
-            
-            document.getElementById('activeDirections').textContent = directionCount;
-        }
-        
-        function createAdvancedSpiralSystem(direction, index, totalDirections, radius, mass, colors) {
-            const spiralGroup = new THREE.Group();
-            
-            // 构建高精度螺旋轨迹
-            const helixPoints = generateHighPrecisionHelix(direction, radius, index);
-            
-            // 创建动态渐变螺旋轨迹
-            const helixGeometry = createAdvancedHelixGeometry(helixPoints, index, totalDirections);
-            const helixMaterial = new THREE.LineBasicMaterial({
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.8,
-                linewidth: 3
-            });
-            
-            const helixLine = new THREE.LineSegments(helixGeometry, helixMaterial);
-            spiralGroup.add(helixLine);
-            
-            // 创建智能粒子系统
-            const particleSystem = createIntelligentParticleSystem(direction, helixPoints, index, totalDirections, mass, colors);
-            spiralGroup.add(particleSystem);
-            unifiedField.particleSystems.push(particleSystem);
-            
-            // 添加场线效果
-            if (unifiedField.showFieldLines) {
-                const fieldLines = createDynamicFieldLines(helixPoints, index, colors);
-                spiralGroup.add(fieldLines);
-                unifiedField.fieldLines.push(fieldLines);
-            }
-            
-            unifiedField.scene.add(spiralGroup);
-            unifiedField.spiralGroups.push(spiralGroup);
-        }
-        
-        // === 高精度螺旋生成 ===
-        function generateHighPrecisionHelix(direction, radius, index) {
-            const points = [];
-            const numPoints = 500; // 更高精度
-            const maxDistance = 15;
-            const omega = parseFloat(document.getElementById('omega').value);
-            
-            // 构建正交坐标系
-            const zAxis = new THREE.Vector3(...direction);
-            const xAxis = new THREE.Vector3();
-            const yAxis = new THREE.Vector3();
-            
-            if (Math.abs(zAxis.x) < 0.9) {
-                xAxis.crossVectors(zAxis, new THREE.Vector3(1, 0, 0)).normalize();
-            } else {
-                xAxis.crossVectors(zAxis, new THREE.Vector3(0, 1, 0)).normalize();
-            }
-            yAxis.crossVectors(zAxis, xAxis).normalize();
-            
-            // 生成高精度螺旋点
-            for (let i = 0; i < numPoints; i++) {
-                const t = (i / numPoints) * maxDistance;
-                
-                // 动态半径（更复杂的变化）
-                const dynamicRadius = radius * (1 + 
-                    0.2 * Math.sin(t * 0.8) + 
-                    0.1 * Math.sin(t * 2.3 + index) +
-                    0.05 * Math.sin(t * 4.7)
-                );
-                
-                // 螺旋参数
-                const theta = omega * t + index * Math.PI / 6;
-                const z = t;
-                
-                // 局部坐标
-                const localX = dynamicRadius * Math.cos(theta);
-                const localY = dynamicRadius * Math.sin(theta);
-                
-                // 转换到全局坐标
-                const point = new THREE.Vector3();
-                point.addScaledVector(xAxis, localX);
-                point.addScaledVector(yAxis, localY);
-                point.addScaledVector(zAxis, z);
-                
-                points.push(point);
-            }
-            
-            return points;
-        }
-        
-        // === 高级螺旋几何创建 ===
-        function createAdvancedHelixGeometry(points, index, totalDirections) {
-            const geometry = new THREE.BufferGeometry();
-            const positions = [];
-            const colors = [];
-            
-            for (let i = 0; i < points.length - 1; i++) {
-                const progress = i / points.length;
-                
-                // 动态颜色计算
-                const hue1 = (index / totalDirections + progress * 0.4 + unifiedField.time * 0.05) % 1;
-                const hue2 = (index / totalDirections + (progress + 0.005) * 0.4 + unifiedField.time * 0.05) % 1;
-                
-                const saturation = 0.8 + 0.2 * Math.sin(progress * Math.PI * 4);
-                const lightness = 0.5 + 0.3 * Math.sin(progress * Math.PI * 2);
-                
-                const color1 = new THREE.Color().setHSL(hue1, saturation, lightness);
-                const color2 = new THREE.Color().setHSL(hue2, saturation, lightness);
-                
-                // 添加线段
-                positions.push(points[i].x, points[i].y, points[i].z);
-                positions.push(points[i + 1].x, points[i + 1].y, points[i + 1].z);
-                
-                colors.push(color1.r, color1.g, color1.b);
-                colors.push(color2.r, color2.g, color2.b);
-            }
-            
-            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-            
-            return geometry;
-        }
-        
-        // === 智能粒子系统 ===
-        function createIntelligentParticleSystem(direction, helixPoints, index, totalDirections, mass, colors) {
-            const particleCount = Math.floor(30 * mass * unifiedField.particleDensity);
-            const geometry = new THREE.BufferGeometry();
-            
-            const positions = new Float32Array(particleCount * 3);
-            const particleColors = new Float32Array(particleCount * 3);
-            const sizes = new Float32Array(particleCount);
-            const velocities = new Float32Array(particleCount * 3);
-            const phases = new Float32Array(particleCount);
-            
-            for (let i = 0; i < particleCount; i++) {
-                const i3 = i * 3;
-                
-                positions[i3] = 0;
-                positions[i3 + 1] = 0;
-                positions[i3 + 2] = 0;
-                
-                const baseColor = new THREE.Color().setHSL((index / totalDirections), 0.8, 0.7);
-                particleColors[i3] = baseColor.r;
-                particleColors[i3 + 1] = baseColor.g;
-                particleColors[i3 + 2] = baseColor.b;
-                
-                sizes
+  </body>
+</html>
+[i] = 0.03 + Math.random() * 0.07; // 随机速度 velocities[i * 3] = (Math.random() - 0.5) * 0.02;
+velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.02; velocities[i * 3 + 2] = (Math.random() - 0.5)
+* 0.02; } particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+particleGeometry.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1)); const particleMaterial =
+new THREE.PointsMaterial({ size: 0.08, vertexColors: true, transparent: true, opacity: 0.8,
+blending: THREE.AdditiveBlending, sizeAttenuation: true }); const particles = new
+THREE.Points(particleGeometry, particleMaterial); particles.userData = { velocities: velocities };
+unifiedField.centralMass.add(particles); unifiedField.scene.add(unifiedField.centralMass); } // ===
+超级空间系统 === function createSuperiorSpatialSystem() { console.log('🌌 创建超级空间发散系统...');
+// 清理现有系统 clearExistingSystems(); const directionCount =
+parseInt(document.getElementById('directions').value); const directions =
+generateOptimizedDirections(directionCount); const radius =
+parseFloat(document.getElementById('radius').value); const mass =
+parseFloat(document.getElementById('mass').value); const colors =
+unifiedField.getColorSchemes()[unifiedField.colorScheme]; directions.forEach((direction, index) => {
+createAdvancedSpiralSystem(direction, index, directions.length, radius, mass, colors); });
+document.getElementById('activeDirections').textContent = directionCount; } function
+createAdvancedSpiralSystem(direction, index, totalDirections, radius, mass, colors) { const
+spiralGroup = new THREE.Group(); // 构建高精度螺旋轨迹 const helixPoints =
+generateHighPrecisionHelix(direction, radius, index); // 创建动态渐变螺旋轨迹 const helixGeometry =
+createAdvancedHelixGeometry(helixPoints, index, totalDirections); const helixMaterial = new
+THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.8, linewidth: 3 });
+const helixLine = new THREE.LineSegments(helixGeometry, helixMaterial); spiralGroup.add(helixLine);
+// 创建智能粒子系统 const particleSystem = createIntelligentParticleSystem(direction, helixPoints,
+index, totalDirections, mass, colors); spiralGroup.add(particleSystem);
+unifiedField.particleSystems.push(particleSystem); // 添加场线效果 if (unifiedField.showFieldLines)
+{ const fieldLines = createDynamicFieldLines(helixPoints, index, colors);
+spiralGroup.add(fieldLines); unifiedField.fieldLines.push(fieldLines); }
+unifiedField.scene.add(spiralGroup); unifiedField.spiralGroups.push(spiralGroup); } // ===
+高精度螺旋生成 === function generateHighPrecisionHelix(direction, radius, index) { const points =
+[]; const numPoints = 500; // 更高精度 const maxDistance = 15; const omega =
+parseFloat(document.getElementById('omega').value); // 构建正交坐标系 const zAxis = new
+THREE.Vector3(...direction); const xAxis = new THREE.Vector3(); const yAxis = new THREE.Vector3();
+if (Math.abs(zAxis.x) < 0.9) { xAxis.crossVectors(zAxis, new THREE.Vector3(1, 0, 0)).normalize(); }
+else { xAxis.crossVectors(zAxis, new THREE.Vector3(0, 1, 0)).normalize(); }
+yAxis.crossVectors(zAxis, xAxis).normalize(); // 生成高精度螺旋点 for (let i = 0; i < numPoints;
+i++) { const t = (i / numPoints) * maxDistance; // 动态半径（更复杂的变化） const dynamicRadius =
+radius * (1 + 0.2 * Math.sin(t * 0.8) + 0.1 * Math.sin(t * 2.3 + index) + 0.05 * Math.sin(t * 4.7)
+); // 螺旋参数 const theta = omega * t + index * Math.PI / 6; const z = t; // 局部坐标 const localX
+= dynamicRadius * Math.cos(theta); const localY = dynamicRadius * Math.sin(theta); // 转换到全局坐标
+const point = new THREE.Vector3(); point.addScaledVector(xAxis, localX);
+point.addScaledVector(yAxis, localY); point.addScaledVector(zAxis, z); points.push(point); } return
+points; } // === 高级螺旋几何创建 === function createAdvancedHelixGeometry(points, index,
+totalDirections) { const geometry = new THREE.BufferGeometry(); const positions = []; const colors =
+[]; for (let i = 0; i < points.length - 1; i++) { const progress = i / points.length; //
+动态颜色计算 const hue1 = (index / totalDirections + progress * 0.4 + unifiedField.time * 0.05) % 1;
+const hue2 = (index / totalDirections + (progress + 0.005) * 0.4 + unifiedField.time * 0.05) % 1;
+const saturation = 0.8 + 0.2 * Math.sin(progress * Math.PI * 4); const lightness = 0.5 + 0.3 *
+Math.sin(progress * Math.PI * 2); const color1 = new THREE.Color().setHSL(hue1, saturation,
+lightness); const color2 = new THREE.Color().setHSL(hue2, saturation, lightness); // 添加线段
+positions.push(points[i].x, points[i].y, points[i].z); positions.push(points[i + 1].x, points[i +
+1].y, points[i + 1].z); colors.push(color1.r, color1.g, color1.b); colors.push(color2.r, color2.g,
+color2.b); } geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3)); return geometry; } //
+=== 智能粒子系统 === function createIntelligentParticleSystem(direction, helixPoints, index,
+totalDirections, mass, colors) { const particleCount = Math.floor(30 * mass *
+unifiedField.particleDensity); const geometry = new THREE.BufferGeometry(); const positions = new
+Float32Array(particleCount * 3); const particleColors = new Float32Array(particleCount * 3); const
+sizes = new Float32Array(particleCount); const velocities = new Float32Array(particleCount * 3);
+const phases = new Float32Array(particleCount); for (let i = 0; i < particleCount; i++) { const i3 =
+i * 3; positions[i3] = 0; positions[i3 + 1] = 0; positions[i3 + 2] = 0; const baseColor = new
+THREE.Color().setHSL((index / totalDirections), 0.8, 0.7); particleColors[i3] = baseColor.r;
+particleColors[i3 + 1] = baseColor.g; particleColors[i3 + 2] = baseColor.b; sizes

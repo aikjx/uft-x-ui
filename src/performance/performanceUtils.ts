@@ -1,58 +1,64 @@
-import * as THREE from 'three';
-import { VISUALIZATION_CONFIG } from '../constants';
+import * as THREE from 'three'
+import { VISUALIZATION_CONFIG } from '../constants'
 
 /**
  * 性能监控和优化工具类
  */
 export class PerformanceMonitor {
-  private frameCount: number = 0;
-  private lastTime: number = 0;
-  private fpsHistory: number[] = [];
-  private readonly fpsHistorySize: number = 10;
-  private currentFPS: number = 60;
-  private isPerformanceMode: boolean = false;
-  private memoryUsageHistory: number[] = [];
-  private readonly memoryHistorySize: number = 20;
-  private lastDrawCallCount: number = 0;
+  private frameCount: number = 0
+  private lastTime: number = 0
+  private fpsHistory: number[] = []
+  private readonly fpsHistorySize: number = 10
+  private currentFPS: number = 60
+  private isPerformanceMode: boolean = false
+  private memoryUsageHistory: number[] = []
+  private readonly memoryHistorySize: number = 20
+  private lastDrawCallCount: number = 0
 
   /**
    * 更新FPS计数
    */
   updateFPS(): number {
-    const now = performance.now();
-    this.frameCount++;
+    const now = performance.now()
+    this.frameCount++
 
     // 每秒钟计算一次FPS
     if (now - this.lastTime >= 1000) {
-      this.currentFPS = Math.round((this.frameCount * 1000) / (now - this.lastTime));
-      this.frameCount = 0;
-      this.lastTime = now;
+      this.currentFPS = Math.round((this.frameCount * 1000) / (now - this.lastTime))
+      this.frameCount = 0
+      this.lastTime = now
 
       // 维护FPS历史记录
-      this.fpsHistory.push(this.currentFPS);
+      this.fpsHistory.push(this.currentFPS)
       if (this.fpsHistory.length > this.fpsHistorySize) {
-        this.fpsHistory.shift();
+        this.fpsHistory.shift()
       }
 
       // 根据FPS自动切换性能模式
-      this.updatePerformanceMode();
+      this.updatePerformanceMode()
     }
 
-    return this.currentFPS;
+    return this.currentFPS
   }
 
   /**
    * 更新性能模式
    */
   private updatePerformanceMode(): void {
-    const avgFPS = this.getAverageFPS();
-    
-    if (avgFPS < VISUALIZATION_CONFIG.performance.performanceModeThresholdFPS && !this.isPerformanceMode) {
-      this.isPerformanceMode = true;
-      console.log('切换到性能模式，当前平均FPS:', avgFPS);
-    } else if (avgFPS > VISUALIZATION_CONFIG.performance.qualityThresholdFPS && this.isPerformanceMode) {
-      this.isPerformanceMode = false;
-      console.log('切换到质量模式，当前平均FPS:', avgFPS);
+    const avgFPS = this.getAverageFPS()
+
+    if (
+      avgFPS < VISUALIZATION_CONFIG.performance.performanceModeThresholdFPS &&
+      !this.isPerformanceMode
+    ) {
+      this.isPerformanceMode = true
+      console.log('切换到性能模式，当前平均FPS:', avgFPS)
+    } else if (
+      avgFPS > VISUALIZATION_CONFIG.performance.qualityThresholdFPS &&
+      this.isPerformanceMode
+    ) {
+      this.isPerformanceMode = false
+      console.log('切换到质量模式，当前平均FPS:', avgFPS)
     }
   }
 
@@ -60,16 +66,16 @@ export class PerformanceMonitor {
    * 获取平均FPS
    */
   getAverageFPS(): number {
-    if (this.fpsHistory.length === 0) return 60;
-    const sum = this.fpsHistory.reduce((acc, fps) => acc + fps, 0);
-    return sum / this.fpsHistory.length;
+    if (this.fpsHistory.length === 0) return 60
+    const sum = this.fpsHistory.reduce((acc, fps) => acc + fps, 0)
+    return sum / this.fpsHistory.length
   }
 
   /**
    * 获取当前性能模式
    */
   getPerformanceMode(): boolean {
-    return this.isPerformanceMode;
+    return this.isPerformanceMode
   }
 
   /**
@@ -77,78 +83,78 @@ export class PerformanceMonitor {
    */
   estimateMemoryUsage(geometries: number, textures: number, shaders: number): number {
     // 简单估算：每个几何体1KB，每个纹理根据分辨率，每个着色器5KB
-    const geometryMemory = geometries * 1; // KB
-    const textureMemory = textures * 2; // KB
-    const shaderMemory = shaders * 5; // KB
-    
-    const totalMemoryKB = geometryMemory + textureMemory + shaderMemory;
-    const totalMemoryMB = totalMemoryKB / 1024;
-    
+    const geometryMemory = geometries * 1 // KB
+    const textureMemory = textures * 2 // KB
+    const shaderMemory = shaders * 5 // KB
+
+    const totalMemoryKB = geometryMemory + textureMemory + shaderMemory
+    const totalMemoryMB = totalMemoryKB / 1024
+
     // 维护内存使用历史
-    this.memoryUsageHistory.push(totalMemoryMB);
+    this.memoryUsageHistory.push(totalMemoryMB)
     if (this.memoryUsageHistory.length > this.memoryHistorySize) {
-      this.memoryUsageHistory.shift();
+      this.memoryUsageHistory.shift()
     }
-    
-    return totalMemoryMB;
+
+    return totalMemoryMB
   }
 
   /**
    * 获取平均内存使用情况
    */
   getAverageMemoryUsage(): number {
-    if (this.memoryUsageHistory.length === 0) return 0;
-    const sum = this.memoryUsageHistory.reduce((acc, usage) => acc + usage, 0);
-    return sum / this.memoryUsageHistory.length;
+    if (this.memoryUsageHistory.length === 0) return 0
+    const sum = this.memoryUsageHistory.reduce((acc, usage) => acc + usage, 0)
+    return sum / this.memoryUsageHistory.length
   }
 
   /**
    * 检查是否超出最大内存限制
    */
   isMemoryExceeded(): boolean {
-    return this.getAverageMemoryUsage() > VISUALIZATION_CONFIG.performance.maxMemoryUsageMB;
+    return this.getAverageMemoryUsage() > VISUALIZATION_CONFIG.performance.maxMemoryUsageMB
   }
 
   /**
    * 更新绘制调用计数
    */
   updateDrawCallCount(count: number): void {
-    this.lastDrawCallCount = count;
+    this.lastDrawCallCount = count
   }
 
   /**
    * 获取绘制调用计数
    */
   getDrawCallCount(): number {
-    return this.lastDrawCallCount;
+    return this.lastDrawCallCount
   }
 
   /**
    * 检查是否超出最大绘制调用限制
    */
   isDrawCallsExceeded(): boolean {
-    return this.lastDrawCallCount > VISUALIZATION_CONFIG.performance.maxDrawCalls;
+    return this.lastDrawCallCount > VISUALIZATION_CONFIG.performance.maxDrawCalls
   }
 
   /**
    * 获取性能优化建议
    */
   getOptimizationSuggestions(): string[] {
-    const suggestions: string[] = [];
-    
+    const suggestions: string[] = []
+
     if (this.getAverageFPS() < VISUALIZATION_CONFIG.performance.qualityThresholdFPS) {
-      suggestions.push('当前FPS低于质量阈值，建议降低粒子数量或场景复杂度');
+      suggestions.push('当前FPS低于质量阈值，建议降低粒子数量或场景复杂度')
     }
-    
+
     if (this.isMemoryExceeded()) {
-      suggestions.push('内存使用过高，建议释放未使用的资源');
+      suggestions.push('内存使用过高，建议释放未使用的资源')
     }
-    
+
     if (this.isDrawCallsExceeded()) {
-      suggestions.push('绘制调用过多，建议合并几何体或使用实例化渲染');
+      suggestions.push('绘制调用过多，建议合并几何体或使用实例化渲染')
     }
-    
-    return suggestions;
+
+    return suggestions
   }
 }
 
@@ -162,47 +168,44 @@ export class ParticleOptimizer {
   optimizeParticleCount(baseCount: number, distance: number, isPerformanceMode: boolean): number {
     if (isPerformanceMode) {
       // 性能模式下减少粒子数量
-      const reducedCount = Math.max(
-        VISUALIZATION_CONFIG.performance.minParticles,
-        baseCount * 0.5
-      );
-      return Math.floor(reducedCount);
+      const reducedCount = Math.max(VISUALIZATION_CONFIG.performance.minParticles, baseCount * 0.5)
+      return Math.floor(reducedCount)
     }
-    
+
     // 根据距离调整粒子数量
-    const distanceFactor = Math.max(0.1, 1 - distance * VISUALIZATION_CONFIG.performance.particleDistanceFactor);
-    const adjustedCount = baseCount * distanceFactor;
-    
+    const distanceFactor = Math.max(
+      0.1,
+      1 - distance * VISUALIZATION_CONFIG.performance.particleDistanceFactor
+    )
+    const adjustedCount = baseCount * distanceFactor
+
     return Math.floor(
       Math.min(
         VISUALIZATION_CONFIG.performance.maxParticles,
-        Math.max(
-          VISUALIZATION_CONFIG.performance.minParticles,
-          adjustedCount
-        )
+        Math.max(VISUALIZATION_CONFIG.performance.minParticles, adjustedCount)
       )
-    );
+    )
   }
 
   /**
    * 根据LOD级别优化粒子大小和细节
    */
   getParticleLODLevel(distance: number): number {
-    const maxDistance = VISUALIZATION_CONFIG.maxCameraDistance;
-    const lodRange = maxDistance / VISUALIZATION_CONFIG.performance.particleLODLevels;
-    
+    const maxDistance = VISUALIZATION_CONFIG.maxCameraDistance
+    const lodRange = maxDistance / VISUALIZATION_CONFIG.performance.particleLODLevels
+
     return Math.min(
       VISUALIZATION_CONFIG.performance.particleLODLevels - 1,
       Math.floor(distance / lodRange)
-    );
+    )
   }
 
   /**
    * 根据LOD级别获取粒子大小缩放因子
    */
   getParticleSizeScale(lodLevel: number): number {
-    const scales = [1.0, 0.8, 0.6, 0.4];
-    return scales[Math.min(lodLevel, scales.length - 1)];
+    const scales = [1.0, 0.8, 0.6, 0.4]
+    return scales[Math.min(lodLevel, scales.length - 1)]
   }
 }
 
@@ -210,39 +213,40 @@ export class ParticleOptimizer {
  * 渲染优化器
  */
 export class RenderOptimizer {
-  private lastFrameTime: number = 0;
-  private frameTimeHistory: number[] = [];
-  private readonly frameTimeHistorySize: number = 10;
-  private adaptiveTargetFPS: number = 60;
-  private lastResolutionUpdate: number = 0;
-  private readonly resolutionUpdateInterval: number = 3000; // 3秒更新一次分辨率
-  private lastSkipFactor: number = 1; // 用于平滑跳帧因子
+  private lastFrameTime: number = 0
+  private frameTimeHistory: number[] = []
+  private readonly frameTimeHistorySize: number = 10
+  private adaptiveTargetFPS: number = 60
+  private lastResolutionUpdate: number = 0
+  private readonly resolutionUpdateInterval: number = 3000 // 3秒更新一次分辨率
+  private lastSkipFactor: number = 1 // 用于平滑跳帧因子
 
   /**
    * 计算应该使用的像素比率
    */
   calculateOptimalPixelRatio(isPerformanceMode: boolean): number {
-    const devicePixelRatio = window.devicePixelRatio;
-    
+    const devicePixelRatio = window.devicePixelRatio
+
     if (isPerformanceMode) {
       // 性能模式下使用较低的像素比率
-      return Math.min(1.0, devicePixelRatio * 0.5);
+      return Math.min(1.0, devicePixelRatio * 0.5)
     }
-    
+
     // 质量模式下根据设备性能调整
     if (navigator.hardwareConcurrency) {
       if (navigator.hardwareConcurrency <= 4) {
-        return Math.min(1.5, devicePixelRatio);
+        return Math.min(1.5, devicePixelRatio)
       }
     }
-    
+
     // 根据可用内存调整（如果浏览器支持）
-    const memoryInfo = (window as any).performance?.memory;
-    if (memoryInfo && memoryInfo.totalJSHeapSize > 1.5 * 1024 * 1024 * 1024) { // 1.5GB
-      return Math.min(2, devicePixelRatio);
+    const memoryInfo = (window as any).performance?.memory
+    if (memoryInfo && memoryInfo.totalJSHeapSize > 1.5 * 1024 * 1024 * 1024) {
+      // 1.5GB
+      return Math.min(2, devicePixelRatio)
     }
-    
-    return Math.min(3, devicePixelRatio); // 最大3倍
+
+    return Math.min(3, devicePixelRatio) // 最大3倍
   }
 
   /**
@@ -250,20 +254,20 @@ export class RenderOptimizer {
    */
   shouldEnableShadows(isPerformanceMode: boolean, objectCount: number): boolean {
     if (isPerformanceMode) {
-      return false;
+      return false
     }
-    
+
     // 对象数量过多时禁用阴影
     if (objectCount > 30) {
-      return false;
+      return false
     }
-    
+
     // 低性能设备禁用阴影
     if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) {
-      return false;
+      return false
     }
-    
-    return VISUALIZATION_CONFIG.performance.enableShadows;
+
+    return VISUALIZATION_CONFIG.performance.enableShadows
   }
 
   /**
@@ -271,83 +275,88 @@ export class RenderOptimizer {
    */
   getOptimalShadowMapResolution(isPerformanceMode: boolean): number {
     if (isPerformanceMode) {
-      return 256;
+      return 256
     }
-    
+
     // 根据设备性能调整阴影分辨率
     if (navigator.hardwareConcurrency) {
-      if (navigator.hardwareConcurrency < 4) return 256;
-      if (navigator.hardwareConcurrency < 8) return 512;
+      if (navigator.hardwareConcurrency < 4) return 256
+      if (navigator.hardwareConcurrency < 8) return 512
     }
-    
-    return VISUALIZATION_CONFIG.performance.shadowMapResolution;
+
+    return VISUALIZATION_CONFIG.performance.shadowMapResolution
   }
 
   /**
    * 计算是否应该跳过当前动画帧（用于帧率控制）
    */
-  shouldSkipFrame(frameIndex: number, fps: number, additionalFactors?: {
-    sceneComplexity?: number;
-    hasUserInteraction?: boolean;
-    isImportantFrame?: boolean;
-    frameTimeHistory?: number[];
-  }): boolean {
+  shouldSkipFrame(
+    frameIndex: number,
+    fps: number,
+    additionalFactors?: {
+      sceneComplexity?: number
+      hasUserInteraction?: boolean
+      isImportantFrame?: boolean
+      frameTimeHistory?: number[]
+    }
+  ): boolean {
     // 更新自适应目标FPS
-    this.updateAdaptiveTargetFPS(fps);
-    
+    this.updateAdaptiveTargetFPS(fps)
+
     // 如果FPS足够高，不需要跳帧
     if (fps > this.adaptiveTargetFPS) {
-      return false;
+      return false
     }
-    
+
     // 如果是重要帧（如用户交互后的第一帧），不跳帧
     if (additionalFactors?.isImportantFrame) {
-      return false;
+      return false
     }
-    
+
     // 如果最近有用户交互，不跳帧
     if (additionalFactors?.hasUserInteraction) {
-      return false;
+      return false
     }
-    
+
     // 计算基础跳过因子
-    let skipFactor = Math.max(1, Math.floor(this.adaptiveTargetFPS / fps));
-    
+    let skipFactor = Math.max(1, Math.floor(this.adaptiveTargetFPS / fps))
+
     // 根据场景复杂度调整跳过因子
     if (additionalFactors?.sceneComplexity) {
-      const complexityFactor = Math.min(2, Math.ceil(additionalFactors.sceneComplexity / 1000));
-      skipFactor *= complexityFactor;
+      const complexityFactor = Math.min(2, Math.ceil(additionalFactors.sceneComplexity / 1000))
+      skipFactor *= complexityFactor
     }
-    
+
     // 分析帧时间历史，判断是否需要更积极地跳帧
     if (additionalFactors?.frameTimeHistory && additionalFactors.frameTimeHistory.length > 10) {
-      const recentFrameTimes = additionalFactors.frameTimeHistory.slice(-10);
-      const avgRecentFrameTime = recentFrameTimes.reduce((sum, time) => sum + time, 0) / recentFrameTimes.length;
-      
+      const recentFrameTimes = additionalFactors.frameTimeHistory.slice(-10)
+      const avgRecentFrameTime =
+        recentFrameTimes.reduce((sum, time) => sum + time, 0) / recentFrameTimes.length
+
       // 如果最近10帧的平均时间超过目标时间的150%，增加跳过因子
-      const targetFrameTime = 1000 / this.adaptiveTargetFPS;
+      const targetFrameTime = 1000 / this.adaptiveTargetFPS
       if (avgRecentFrameTime > targetFrameTime * 1.5) {
-        skipFactor = Math.min(5, skipFactor * 1.5);
+        skipFactor = Math.min(5, skipFactor * 1.5)
       }
     }
-    
+
     // 平滑过渡：避免跳跃式帧率变化
     // 使用指数移动平均来平滑跳过因子
     if (!this.lastSkipFactor) {
-      this.lastSkipFactor = 1;
+      this.lastSkipFactor = 1
     }
-    
-    const smoothedSkipFactor = this.lastSkipFactor * 0.7 + Math.min(5, skipFactor) * 0.3;
-    this.lastSkipFactor = smoothedSkipFactor;
-    
+
+    const smoothedSkipFactor = this.lastSkipFactor * 0.7 + Math.min(5, skipFactor) * 0.3
+    this.lastSkipFactor = smoothedSkipFactor
+
     // 转换为整数跳过因子
-    const currentSkipFactor = Math.round(smoothedSkipFactor);
-    
+    const currentSkipFactor = Math.round(smoothedSkipFactor)
+
     // 最多跳过4帧，避免画面过于卡顿
-    const finalSkipFactor = Math.min(5, currentSkipFactor);
-    
+    const finalSkipFactor = Math.min(5, currentSkipFactor)
+
     // 使用帧索引的模运算来决定是否跳过当前帧
-    return finalSkipFactor > 1 && frameIndex % finalSkipFactor !== 0;
+    return finalSkipFactor > 1 && frameIndex % finalSkipFactor !== 0
   }
 
   /**
@@ -355,23 +364,23 @@ export class RenderOptimizer {
    */
   private updateAdaptiveTargetFPS(currentFPS: number): void {
     // 维护帧时间历史
-    const currentTime = performance.now();
+    const currentTime = performance.now()
     if (this.lastFrameTime > 0) {
-      const frameTime = currentTime - this.lastFrameTime;
-      this.frameTimeHistory.push(frameTime);
+      const frameTime = currentTime - this.lastFrameTime
+      this.frameTimeHistory.push(frameTime)
       if (this.frameTimeHistory.length > this.frameTimeHistorySize) {
-        this.frameTimeHistory.shift();
+        this.frameTimeHistory.shift()
       }
     }
-    this.lastFrameTime = currentTime;
-    
+    this.lastFrameTime = currentTime
+
     // 根据当前性能和历史数据动态调整目标FPS
     if (currentFPS < 30) {
       // 性能较差时降低目标帧率
-      this.adaptiveTargetFPS = Math.max(20, currentFPS * 1.1);
+      this.adaptiveTargetFPS = Math.max(20, currentFPS * 1.1)
     } else if (currentFPS > 50) {
       // 性能良好时逐渐恢复目标帧率
-      this.adaptiveTargetFPS = Math.min(60, this.adaptiveTargetFPS + 2);
+      this.adaptiveTargetFPS = Math.min(60, this.adaptiveTargetFPS + 2)
     }
   }
 
@@ -379,29 +388,29 @@ export class RenderOptimizer {
    * 计算当前的渲染分辨率缩放因子
    */
   calculateRenderScale(fps: number, currentScale: number, isPerformanceMode: boolean): number {
-    const now = Date.now();
-    
+    const now = Date.now()
+
     // 限制更新频率，避免频繁切换
     if (now - this.lastResolutionUpdate < this.resolutionUpdateInterval) {
-      return currentScale;
+      return currentScale
     }
-    
-    this.lastResolutionUpdate = now;
-    let newScale = currentScale;
-    
+
+    this.lastResolutionUpdate = now
+    let newScale = currentScale
+
     if (isPerformanceMode) {
       // 性能模式下使用较低的缩放
-      newScale = 0.6;
+      newScale = 0.6
     } else {
       // 根据FPS动态调整缩放
       if (fps < 20) {
-        newScale = Math.max(0.5, currentScale * 0.8);
+        newScale = Math.max(0.5, currentScale * 0.8)
       } else if (fps > 45) {
-        newScale = Math.min(1.0, currentScale * 1.1);
+        newScale = Math.min(1.0, currentScale * 1.1)
       }
     }
-    
-    return newScale;
+
+    return newScale
   }
 
   /**
@@ -416,110 +425,103 @@ export class RenderOptimizer {
     // 快速检查：如果对象离相机太远，直接判定为不可见
     const distance = Math.sqrt(
       position.x * position.x + position.y * position.y + position.z * position.z
-    );
-    
+    )
+
     if (distance > camera.far) {
-      return false;
+      return false
     }
-    
+
     // 简化的视锥体检查（实际项目中可以使用Three.js的Frustum类）
     // 这里使用距离和方向简单判断
     if (camera.matrixWorldInverse) {
-      const frustumSensitivity = 1.5; // 略微扩大视锥范围，避免边缘物体闪烁
-      const viewDirection = camera.getWorldDirection(new THREE.Vector3());
-      const objectDirection = new THREE.Vector3(position.x, position.y, position.z)
-        .normalize();
-      
-      const dotProduct = viewDirection.dot(objectDirection);
+      const frustumSensitivity = 1.5 // 略微扩大视锥范围，避免边缘物体闪烁
+      const viewDirection = camera.getWorldDirection(new THREE.Vector3())
+      const objectDirection = new THREE.Vector3(position.x, position.y, position.z).normalize()
+
+      const dotProduct = viewDirection.dot(objectDirection)
       // 只渲染在相机前方一定角度范围内的物体
-      return dotProduct > -frustumSensitivity * Math.sin(camera.fov * Math.PI / 360);
+      return dotProduct > -frustumSensitivity * Math.sin((camera.fov * Math.PI) / 360)
     }
-    
-    return true;
+
+    return true
   }
 
   /**
    * 获取渲染优先级
    * 根据对象的重要性、可见性和性能成本返回优先级分数
    */
-  getRenderPriority(
-    object: any,
-    camera: any,
-    isPerformanceMode: boolean
-  ): number {
+  getRenderPriority(object: any, camera: any, isPerformanceMode: boolean): number {
     // 基础优先级
-    let priority = 100;
-    
+    let priority = 100
+
     // 计算距离因子
-    const distance = object.position.distanceTo(camera.position);
-    const distanceFactor = Math.max(0.1, 1 - distance / camera.far);
-    
+    const distance = object.position.distanceTo(camera.position)
+    const distanceFactor = Math.max(0.1, 1 - distance / camera.far)
+
     // 距离越近，优先级越高
-    priority *= (0.5 + distanceFactor * 0.5);
-    
+    priority *= 0.5 + distanceFactor * 0.5
+
     // 在性能模式下，提高距离因子的权重
     if (isPerformanceMode) {
-      priority *= (0.3 + distanceFactor * 0.7);
+      priority *= 0.3 + distanceFactor * 0.7
     }
-    
+
     // 检查是否可见
-    if (!this.isObjectVisible(object.position, object.geometry?.boundingSphere?.radius || 1, camera)) {
-      priority = 0; // 不可见物体优先级为0
+    if (
+      !this.isObjectVisible(object.position, object.geometry?.boundingSphere?.radius || 1, camera)
+    ) {
+      priority = 0 // 不可见物体优先级为0
     }
-    
+
     // 对于高复杂度对象（如大量面的网格）降低优先级
     if (object.geometry && object.geometry.attributes && object.geometry.attributes.position) {
-      const vertexCount = object.geometry.attributes.position.count;
+      const vertexCount = object.geometry.attributes.position.count
       if (vertexCount > 1000) {
-        priority *= 0.8;
+        priority *= 0.8
       }
     }
-    
-    return priority;
+
+    return priority
   }
 
   /**
    * 根据优先级对场景对象进行排序
    */
-  sortObjectsByPriority(
-    objects: any[],
-    camera: any,
-    isPerformanceMode: boolean
-  ): any[] {
+  sortObjectsByPriority(objects: any[], camera: any, isPerformanceMode: boolean): any[] {
     return [...objects].sort((a, b) => {
-      const priorityA = this.getRenderPriority(a, camera, isPerformanceMode);
-      const priorityB = this.getRenderPriority(b, camera, isPerformanceMode);
-      return priorityB - priorityA; // 降序排列，优先级高的在前
-    });
+      const priorityA = this.getRenderPriority(a, camera, isPerformanceMode)
+      const priorityB = this.getRenderPriority(b, camera, isPerformanceMode)
+      return priorityB - priorityA // 降序排列，优先级高的在前
+    })
   }
 }
 
 // 创建单例实例
-export const performanceMonitor = new PerformanceMonitor();
-export const particleOptimizer = new ParticleOptimizer();
-export const renderOptimizer = new RenderOptimizer();
+export const performanceMonitor = new PerformanceMonitor()
+export const particleOptimizer = new ParticleOptimizer()
+export const renderOptimizer = new RenderOptimizer()
 
 /**
  * 计算FPS的工具函数
  */
 export const calculateFPS = (deltaTime: number): number => {
-  return deltaTime > 0 ? 1 / deltaTime : 0;
-};
+  return deltaTime > 0 ? 1 / deltaTime : 0
+}
 
 /**
  * 估算内存使用量
  */
 export const estimateMemoryUsage = (geometries: number): number => {
-  return Math.floor(geometries / 1024); // 转换为 MB
-};
+  return Math.floor(geometries / 1024) // 转换为 MB
+}
 
 /**
  * 性能模式切换逻辑
  */
 export const shouldSwitchToPerformanceMode = (fps: number, currentMode: boolean): boolean => {
-  return fps < VISUALIZATION_CONFIG.performance.performanceModeThresholdFPS && !currentMode;
-};
+  return fps < VISUALIZATION_CONFIG.performance.performanceModeThresholdFPS && !currentMode
+}
 
 export const shouldSwitchToQualityMode = (fps: number, currentMode: boolean): boolean => {
-  return fps > VISUALIZATION_CONFIG.performance.qualityThresholdFPS && currentMode;
-};
+  return fps > VISUALIZATION_CONFIG.performance.qualityThresholdFPS && currentMode
+}

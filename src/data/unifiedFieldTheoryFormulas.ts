@@ -1,8 +1,8 @@
 // 张祥前统一场论20个核心公式数据
-import { FormulaData } from '../components/FormulaDisplay';
+import { FormulaData } from '../components/FormulaDisplay'
 
 // 公式变量类型
-type FormulaVariable = FormulaData['variables'][0];
+type FormulaVariable = FormulaData['variables'][0]
 
 export const unifiedFieldTheoryFormulas: FormulaData[] = [
   {
@@ -24,8 +24,10 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     id: 'uf2',
     name: '三维螺旋时空方程',
     category: '时空理论',
-    formula: '$$\vec{r}(t) = r\cos\omega t \cdot \vec{i} + r\sin\omega t \cdot \vec{j} + ht \cdot \vec{k}$$',
-    description: '揭示物体在时空中的螺旋运动规律，表明物体不仅在平面上做圆周运动，同时沿轴向做直线运动。',
+    formula:
+      '$$\vec{r}(t) = r\cos\omega t \cdot \vec{i} + r\sin\omega t \cdot \vec{j} + ht \cdot \vec{k}$$',
+    description:
+      '揭示物体在时空中的螺旋运动规律，表明物体不仅在平面上做圆周运动，同时沿轴向做直线运动。',
     variables: [
       { name: '$\vec{r}(t)$', description: '空间位置矢量', unit: 'm' },
       { name: '$r$', description: '圆周运动半径', unit: 'm' },
@@ -41,7 +43,8 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     name: '质量定义方程',
     category: '质量理论',
     formula: '$$m = k \cdot \frac{dn}{d\Omega}$$',
-    description: '从空间几何角度定义质量，与空间运动量有关，表明质量是空间运动量在立体角上的分布密度。',
+    description:
+      '从空间几何角度定义质量，与空间运动量有关，表明质量是空间运动量在立体角上的分布密度。',
     variables: [
       { name: '$m$', description: '质量', unit: 'kg' },
       { name: '$k$', description: '质量常数', unit: 'kg·s' },
@@ -96,7 +99,8 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     id: 'uf7',
     name: '宇宙大统一方程（力方程）',
     category: '力场理论',
-    formula: '$$F = \frac{d\vec{P}}{dt} = \vec{C}\frac{dm}{dt} - \vec{V}\frac{dm}{dt} + m\frac{d\vec{C}}{dt} - m\frac{d\vec{V}}{dt}$$',
+    formula:
+      '$$F = \frac{d\vec{P}}{dt} = \vec{C}\frac{dm}{dt} - \vec{V}\frac{dm}{dt} + m\frac{d\vec{C}}{dt} - m\frac{d\vec{V}}{dt}$$',
     description: '统一描述各种力的本质，揭示力与动量变化的关系，是统一场论的核心方程。',
     variables: [
       { name: '$F$', description: '力', unit: 'N' },
@@ -112,7 +116,8 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     id: 'uf8',
     name: '空间波动方程',
     category: '场论',
-    formula: '$$\frac{\partial^2 L}{\partial x^2} + \frac{\partial^2 L}{\partial y^2} + \frac{\partial^2 L}{\partial z^2} = \frac{1}{c^2} \frac{\partial^2 L}{\partial t^2}$$',
+    formula:
+      '$$\frac{\partial^2 L}{\partial x^2} + \frac{\partial^2 L}{\partial y^2} + \frac{\partial^2 L}{\partial z^2} = \frac{1}{c^2} \frac{\partial^2 L}{\partial t^2}$$',
     description: '描述空间波动的传播规律，表明空间波动以光速传播，是统一场论中场传播的基础。',
     variables: [
       { name: '$L$', description: '空间波动函数', unit: 'm' },
@@ -141,7 +146,8 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     id: 'uf10',
     name: '电场定义方程',
     category: '电磁理论',
-    formula: '$$\vec{E} = -\frac{kk^{\prime}}{4\pi\epsilon_0\Omega^2}\frac{d\Omega}{dt}\frac{\vec{r}}{r^3}$$',
+    formula:
+      '$$\vec{E} = -\frac{kk^{\prime}}{4\pi\epsilon_0\Omega^2}\frac{d\Omega}{dt}\frac{\vec{r}}{r^3}$$',
     description: '定义电场为空间旋转运动的变化率，表明电场强度与电荷产生的空间旋转运动有关。',
     variables: [
       { name: '$\vec{E}$', description: '电场强度', unit: 'V/m' },
@@ -158,8 +164,10 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     id: 'uf11',
     name: '磁场定义方程',
     category: '电磁理论',
-    formula: '$$\vec{B} = \frac{\mu_{0} \gamma k k^{\prime}}{4 \pi \Omega^{2}} \frac{d \Omega}{d t} \frac{[(x-v t) \vec{i}+y \vec{j}+z \vec{k}]}{[\gamma^{2}(x-v t)^{2}+y^{2}+z^{2}]^{\frac{3}{2}}}$$',
-    description: '定义磁场为运动电荷产生的空间效应，考虑了相对论效应，表明磁场是电场的相对论变换结果。',
+    formula:
+      '$$\vec{B} = \frac{\mu_{0} \gamma k k^{\prime}}{4 \pi \Omega^{2}} \frac{d \Omega}{d t} \frac{[(x-v t) \vec{i}+y \vec{j}+z \vec{k}]}{[\gamma^{2}(x-v t)^{2}+y^{2}+z^{2}]^{\frac{3}{2}}}$$',
+    description:
+      '定义磁场为运动电荷产生的空间效应，考虑了相对论效应，表明磁场是电场的相对论变换结果。',
     variables: [
       { name: '$\vec{B}$', description: '磁感应强度', unit: 'T' },
       { name: '$\mu_{0}$', description: '真空磁导率', unit: 'H/m' },
@@ -178,7 +186,8 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     id: 'uf12',
     name: '变化的引力场产生电磁场',
     category: '场论',
-    formula: '$$\frac{\partial^{2}\overline{A}}{\partial t^{2}} = \frac{\overline{V}}{f}\left(\overline{\nabla}\cdot\overline{E}\right) - \frac{C^{2}}{f}\left(\overline{\nabla}\times\overline{B}\right)$$',
+    formula:
+      '$$\frac{\partial^{2}\overline{A}}{\partial t^{2}} = \frac{\overline{V}}{f}\left(\overline{\nabla}\cdot\overline{E}\right) - \frac{C^{2}}{f}\left(\overline{\nabla}\times\overline{B}\right)$$',
     description: '揭示引力场与电磁场的相互转化关系，表明变化的引力场可以产生电磁场。',
     variables: [
       { name: '$\overline{A}$', description: '引力场强度', unit: 'm/s²' },
@@ -210,7 +219,8 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     name: '变化的引力场产生电场',
     category: '场论',
     formula: '$$\vec{E} = -f\frac{d\vec{A}}{dt}$$',
-    description: '揭示引力场变化如何产生电场，表明变化的引力场可以直接产生电场，是引力电磁统一的重要方程。',
+    description:
+      '揭示引力场变化如何产生电场，表明变化的引力场可以直接产生电场，是引力电磁统一的重要方程。',
     variables: [
       { name: '$\vec{E}$', description: '电场强度', unit: 'V/m' },
       { name: '$f$', description: '常数', unit: '无' },
@@ -224,8 +234,10 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     id: 'uf15',
     name: '变化的磁场产生引力场和电场',
     category: '场论',
-    formula: '$$\frac{d\overrightarrow{B}}{dt} = \frac{-\overrightarrow{A}\times\overrightarrow{E}}{c^2} - \frac{\overrightarrow{V}}{c^{2}}\times\frac{d\overrightarrow{E}}{dt}$$',
-    description: '揭示磁场变化如何产生引力场和电场，表明磁场变化可以同时影响引力场和电场，是场论统一的关键方程。',
+    formula:
+      '$$\frac{d\overrightarrow{B}}{dt} = \frac{-\overrightarrow{A}\times\overrightarrow{E}}{c^2} - \frac{\overrightarrow{V}}{c^{2}}\times\frac{d\overrightarrow{E}}{dt}$$',
+    description:
+      '揭示磁场变化如何产生引力场和电场，表明磁场变化可以同时影响引力场和电场，是场论统一的关键方程。',
     variables: [
       { name: '$\frac{d\overrightarrow{B}}{dt}$', description: '磁感应强度变化率', unit: 'T/s' },
       { name: '$\overrightarrow{A}$', description: '引力场强度', unit: 'm/s²' },
@@ -241,7 +253,8 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     name: '统一场论能量方程',
     category: '能量理论',
     formula: '$$e = m_0 c^2 = mc^2\sqrt{1 - \frac{v^2}{c^2}}$$',
-    description: '描述能量与质量、速度的关系，是相对论能量方程的扩展，表明能量是质量与光速平方的乘积，考虑了速度对质量的影响。',
+    description:
+      '描述能量与质量、速度的关系，是相对论能量方程的扩展，表明能量是质量与光速平方的乘积，考虑了速度对质量的影响。',
     variables: [
       { name: '$e$', description: '能量', unit: 'J' },
       { name: '$m_0$', description: '静止质量', unit: 'kg' },
@@ -256,7 +269,8 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     name: '光速飞行器动力学方程',
     category: '航天技术',
     formula: '$$\vec{F} = (\vec{C} - \vec{V})\frac{dm}{dt}$$',
-    description: '为超光速飞行提供理论基础，表明推力可以通过质量变化率和速度差产生，是未来航天技术的理论支撑。',
+    description:
+      '为超光速飞行提供理论基础，表明推力可以通过质量变化率和速度差产生，是未来航天技术的理论支撑。',
     variables: [
       { name: '$\vec{F}$', description: '推力', unit: 'N' },
       { name: '$\vec{C}$', description: '时空同一化常数', unit: 'm/s' },
@@ -270,7 +284,8 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     name: '核力场定义方程',
     category: '核物理',
     formula: '$$\mathbf{D} = - G m \frac{ \mathbf{C} - 3 \frac{\mathbf{R}}{r} \dot{r} }{r^3}$$',
-    description: '定义核力场为质量物体在空间中产生的特殊场效应，考虑了物体的运动状态，是核力理论的基础。',
+    description:
+      '定义核力场为质量物体在空间中产生的特殊场效应，考虑了物体的运动状态，是核力理论的基础。',
     variables: [
       { name: '$\mathbf{D}$', description: '核力场强度', unit: 'N/kg' },
       { name: '$G$', description: '万有引力常数', unit: 'N·m²/kg²' },
@@ -287,7 +302,8 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     name: '引力光速统一方程',
     category: '基本常数',
     formula: '$$Z = Gc/2$$',
-    description: '揭示万有引力常数与光速的内在联系，表明引力常数和光速不是独立的，而是存在内在的数学关系。',
+    description:
+      '揭示万有引力常数与光速的内在联系，表明引力常数和光速不是独立的，而是存在内在的数学关系。',
     variables: [
       { name: '$Z$', description: '引力光速统一常数', unit: 'N·m²/(kg²·s)' },
       { name: '$G$', description: '万有引力常数', unit: 'N·m²/kg²' },
@@ -295,6 +311,6 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     ],
     applications: ['基本物理常数研究', '统一场论', '宇宙学']
   }
-];
+]
 
-export default unifiedFieldTheoryFormulas;
+export default unifiedFieldTheoryFormulas

@@ -3,12 +3,14 @@
 ## 已实施的修复
 
 ### 1. 增强的 MathFormula 组件
+
 - ✅ 添加了 MathJax 就绪等待机制
 - ✅ 改进了错误处理
 - ✅ 优化了公式包装逻辑
 - ✅ 保留了自动重试功能
 
 ### 2. 修复的 FormulaView 组件
+
 - ✅ 使用 `formulas.ts` 中的完整数据
 - ✅ 简化了数据结构
 - ✅ 移除了截断的公式数据
@@ -17,7 +19,9 @@
 ### 3. 新增的调试工具
 
 #### FormulaDebugPanel 组件
+
 一个浮动的调试面板，提供：
+
 - 实时状态检查
 - 一键重新渲染
 - 清除并重新渲染
@@ -25,10 +29,12 @@
 - 错误统计
 
 #### 测试页面
+
 - `test-formula-simple.html` - 简单的公式渲染测试
 - `formula-debug.html` - 详细的调试页面
 
 #### 诊断脚本
+
 - `fix-formula-rendering.js` - 浏览器控制台诊断脚本
 
 ## 使用方法
@@ -49,9 +55,9 @@
 ```javascript
 // 快速修复
 if (window.MathJax && window.MathJax.typesetPromise) {
-  window.MathJax.typesetClear();
-  await window.MathJax.typesetPromise();
-  console.log('✅ 渲染完成');
+  window.MathJax.typesetClear()
+  await window.MathJax.typesetPromise()
+  console.log('✅ 渲染完成')
 }
 ```
 
@@ -69,18 +75,21 @@ if (window.MathJax && window.MathJax.typesetPromise) {
 **原因**: MathJax 未完成渲染
 
 **解决方案**:
+
 1. 等待几秒让 MathJax 加载完成
 2. 点击调试面板的"重新渲染"按钮
 3. 或刷新页面 (Ctrl+F5)
 
 ### 问题 2: 显示"公式渲染失败"
 
-**原因**: 
+**原因**:
+
 - MathJax 未加载
 - 公式语法错误
 - 网络问题
 
 **解决方案**:
+
 1. 检查网络连接
 2. 打开调试面板查看详细状态
 3. 点击"清除并重新渲染"
@@ -91,13 +100,19 @@ if (window.MathJax && window.MathJax.typesetPromise) {
 **原因**: 特定公式的语法问题
 
 **解决方案**:
+
 1. 打开调试面板查看错误数量
 2. 在控制台运行:
+
 ```javascript
 document.querySelectorAll('.formula-error').forEach((el, i) => {
-  console.log(`错误 ${i + 1}:`, el.closest('.formula-card')?.querySelector('.formula-name')?.textContent);
-});
+  console.log(
+    `错误 ${i + 1}:`,
+    el.closest('.formula-card')?.querySelector('.formula-name')?.textContent
+  )
+})
 ```
+
 3. 检查对应公式的 LaTeX 语法
 
 ### 问题 4: 页面加载缓慢
@@ -105,6 +120,7 @@ document.querySelectorAll('.formula-error').forEach((el, i) => {
 **原因**: 大量公式需要渲染
 
 **优化方案**:
+
 - 已启用批量渲染
 - 已启用缓存机制
 - 可选启用懒加载
@@ -116,8 +132,14 @@ document.querySelectorAll('.formula-error').forEach((el, i) => {
 ```javascript
 window.MathJax = {
   tex: {
-    inlineMath: [['\\(', '\\)'], ['$', '$']],
-    displayMath: [['$', '$'], ['\\[', '\\]']],
+    inlineMath: [
+      ['\\(', '\\)'],
+      ['$', '$']
+    ],
+    displayMath: [
+      ['$', '$'],
+      ['\\[', '\\]']
+    ],
     processEscapes: true,
     macros: {
       vec: ['\\overrightarrow{#1}', 1]
@@ -130,11 +152,11 @@ window.MathJax = {
   startup: {
     pageReady: () => {
       return window.MathJax.startup.defaultPageReady().then(() => {
-        window.dispatchEvent(new Event('mathjax-ready'));
-      });
+        window.dispatchEvent(new Event('mathjax-ready'))
+      })
     }
   }
-};
+}
 ```
 
 ### 公式格式
@@ -151,6 +173,7 @@ formulas.ts 中的公式使用 `$...$` 格式：
 ```
 
 MathFormula 组件会自动：
+
 1. 移除外层的 `$` 符号
 2. 包装为 `\[...\]` (display) 或 `\(...\)` (inline)
 3. 调用 MathJax 渲染
@@ -180,11 +203,12 @@ MathFormula 组件会自动：
 ```javascript
 // 如果使用了 mathJaxManager
 if (window.mathJaxManager) {
-  console.log(window.mathJaxManager.getMetrics());
+  console.log(window.mathJaxManager.getMetrics())
 }
 ```
 
 输出示例：
+
 ```json
 {
   "totalRenders": 17,
@@ -202,6 +226,7 @@ if (window.mathJaxManager) {
 ### 添加新公式
 
 1. 在 `src/data/formulas.ts` 中添加：
+
 ```typescript
 {
   id: 18,
@@ -218,6 +243,7 @@ if (window.mathJaxManager) {
 ### 测试新公式
 
 1. 在 `test-formula-simple.html` 中添加测试：
+
 ```html
 <div class="formula">$你的公式$</div>
 ```
@@ -234,6 +260,7 @@ if (window.mathJaxManager) {
 ## 文件清单
 
 ### 核心文件
+
 - `src/components/MathFormula.vue` - 公式渲染组件
 - `src/views/FormulaView.vue` - 公式展示页面
 - `src/data/formulas.ts` - 公式数据
@@ -241,12 +268,14 @@ if (window.mathJaxManager) {
 - `index.html` - MathJax 配置
 
 ### 调试工具
+
 - `src/components/FormulaDebugPanel.vue` - 调试面板
 - `test-formula-simple.html` - 简单测试页面
 - `formula-debug.html` - 详细测试页面
 - `fix-formula-rendering.js` - 诊断脚本
 
 ### 文档
+
 - `FORMULA_FIX_GUIDE.md` - 修复指南
 - `FORMULA_RENDERING_SOLUTION.md` - 本文档
 

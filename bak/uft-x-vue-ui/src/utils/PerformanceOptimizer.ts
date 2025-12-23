@@ -221,10 +221,7 @@ export class TextureOptimizer {
   /**
    * 压缩纹理
    */
-  public static compressTexture(
-    texture: THREE.Texture,
-    maxSize: number = 2048
-  ): THREE.Texture {
+  public static compressTexture(texture: THREE.Texture, maxSize: number = 2048): THREE.Texture {
     const image = texture.image
 
     if (!image || (image.width <= maxSize && image.height <= maxSize)) {
@@ -308,7 +305,7 @@ export class MemoryManager {
    * 释放场景中的所有对象
    */
   public static disposeScene(scene: THREE.Scene): void {
-    scene.traverse((object) => {
+    scene.traverse(object => {
       if (object instanceof THREE.Mesh) {
         this.disposeMesh(object)
       }

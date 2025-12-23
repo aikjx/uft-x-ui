@@ -183,12 +183,12 @@ vi.mock('@/rendering/RenderEngine', () => {
     })),
     handleResize: vi.fn(),
     dispose: vi.fn()
-  };
-  
+  }
+
   return {
     RenderEngine: vi.fn(() => mockEngine)
-  };
-});
+  }
+})
 
 // 模拟 window 对象在测试后仍然存在
 Object.defineProperty(global, 'window', {
@@ -199,7 +199,7 @@ Object.defineProperty(global, 'window', {
     WebGLRenderingContext: vi.fn()
   },
   writable: true
-});
+})
 
 // 模拟 AutomatedPerformanceOptimizer
 vi.mock('@/performance/AutomatedPerformanceOptimizer', () => ({
@@ -212,15 +212,15 @@ vi.mock('@/performance/AutomatedPerformanceOptimizer', () => ({
 describe('ThreeJSVisualization - 3D 可视化组件', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // 模拟 requestAnimationFrame
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => {
       setTimeout(() => cb(performance.now()), 16)
       return 1
     })
-    
+
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {})
-    
+
     // 完整模拟 WebGL 环境，确保 checkWebGLSupport() 返回 true
     // 1. 模拟 WebGLRenderingContext
     window.WebGLRenderingContext = class MockWebGLRenderingContext {
@@ -254,10 +254,10 @@ describe('ThreeJSVisualization - 3D 可视化组件', () => {
         }
       }
     } as any
-    
+
     // 2. 模拟 experimental-webgl 支持
     window['experimental-webgl'] = window.WebGLRenderingContext
-    
+
     // 3. 模拟 canvas.getContext，确保返回有效的 WebGL 上下文
     const mockWebGLContext = {
       getExtension: vi.fn(),
@@ -286,7 +286,7 @@ describe('ThreeJSVisualization - 3D 可视化组件', () => {
       getAttribLocation: vi.fn(),
       getUniformLocation: vi.fn()
     }
-    
+
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((contextId: string) => {
       if (contextId === 'webgl' || contextId === 'experimental-webgl') {
         return mockWebGLContext
@@ -297,17 +297,17 @@ describe('ThreeJSVisualization - 3D 可视化组件', () => {
 
   it('应该正确初始化 Three.js 场景', () => {
     render(<ThreeJSVisualization />)
-    
+
     // 组件应该渲染成功，没有错误
     expect(screen.getByRole('region')).toBeInTheDocument()
   })
 
   it('应该处理场景大小变化', async () => {
     render(<ThreeJSVisualization />)
-    
+
     // 模拟窗口大小变化
     fireEvent(window, new Event('resize'))
-    
+
     // 组件应该仍然渲染成功
     await waitFor(() => {
       expect(screen.getByRole('region')).toBeInTheDocument()
@@ -316,57 +316,57 @@ describe('ThreeJSVisualization - 3D 可视化组件', () => {
 
   it('应该支持自定义渲染函数', () => {
     const mockRender = vi.fn()
-    
+
     render(<ThreeJSVisualization children={mockRender} />)
-    
+
     // 组件应该渲染成功，children prop 被传递
     expect(screen.getByRole('region')).toBeInTheDocument()
   })
 
   it('应该支持动画帧回调', () => {
     const mockOnAnimationFrame = vi.fn()
-    
+
     render(<ThreeJSVisualization onAnimationFrame={mockOnAnimationFrame} />)
-    
+
     // 组件应该渲染成功
     expect(screen.getByRole('region')).toBeInTheDocument()
   })
 
   it('应该支持初始化回调', () => {
     const mockOnInit = vi.fn()
-    
+
     render(<ThreeJSVisualization onInit={mockOnInit} />)
-    
+
     // 组件应该渲染成功
     expect(screen.getByRole('region')).toBeInTheDocument()
   })
 
   it('应该支持暂停状态', () => {
     render(<ThreeJSVisualization paused={true} />)
-    
+
     // 组件应该渲染成功
     expect(screen.getByRole('region')).toBeInTheDocument()
   })
 
   it('应该支持自定义相机配置', () => {
     render(<ThreeJSVisualization cameraConfig={{ position: { x: 1, y: 2, z: 3 } }} />)
-    
+
     // 组件应该渲染成功
     expect(screen.getByRole('region')).toBeInTheDocument()
   })
 
   it('应该支持自定义场景配置', () => {
     render(<ThreeJSVisualization sceneConfig={{ backgroundColor: '#000000' }} />)
-    
+
     // 组件应该渲染成功
     expect(screen.getByRole('region')).toBeInTheDocument()
   })
 
   it('应该清理资源', () => {
     const { unmount } = render(<ThreeJSVisualization />)
-    
+
     unmount()
-    
+
     // 组件应该被卸载，没有残留
     expect(screen.queryByRole('region')).not.toBeInTheDocument()
   })
@@ -374,9 +374,9 @@ describe('ThreeJSVisualization - 3D 可视化组件', () => {
   it('应该处理 WebGL 不支持的情况', () => {
     // 模拟 WebGL 不支持
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null)
-    
+
     render(<ThreeJSVisualization />)
-    
+
     expect(screen.getByText(/WebGL 不支持/)).toBeInTheDocument()
   })
 })

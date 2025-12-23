@@ -1,7 +1,7 @@
 // 规则管理系统 - 支持自定义优化规则配置
-import { 
-  OptimizationRule, 
-  RuleCondition, 
+import {
+  OptimizationRule,
+  RuleCondition,
   RuleLibrary,
   ProgrammingLanguage,
   IssueSeverity,
@@ -134,8 +134,8 @@ export class RuleManager {
    * 获取启用的规则
    */
   getEnabledRules(): OptimizationRule[] {
-    return this.getAllRules().filter(rule => 
-      rule.enabled && !this.ruleLibrary.disabled.includes(rule.id)
+    return this.getAllRules().filter(
+      rule => rule.enabled && !this.ruleLibrary.disabled.includes(rule.id)
     )
   }
 
@@ -161,7 +161,7 @@ export class RuleManager {
     if (this.getAllRules().some(r => r.id === rule.id)) {
       throw new Error(`规则ID ${rule.id} 已存在`)
     }
-    
+
     this.ruleLibrary.custom.push(rule)
   }
 
@@ -173,7 +173,7 @@ export class RuleManager {
     if (!rule) {
       throw new Error(`规则 ${ruleId} 不存在`)
     }
-    
+
     Object.assign(rule, updates)
   }
 
@@ -197,9 +197,9 @@ export class RuleManager {
     if (!rule) {
       throw new Error(`规则 ${ruleId} 不存在`)
     }
-    
+
     rule.enabled = enabled
-    
+
     // 更新禁用列表
     if (enabled) {
       this.ruleLibrary.disabled = this.ruleLibrary.disabled.filter(id => id !== ruleId)
@@ -235,27 +235,27 @@ export class RuleManager {
    */
   validateRule(rule: OptimizationRule): { isValid: boolean; errors: string[] } {
     const errors: string[] = []
-    
+
     if (!rule.id || rule.id.trim() === '') {
       errors.push('规则ID不能为空')
     }
-    
+
     if (!rule.name || rule.name.trim() === '') {
       errors.push('规则名称不能为空')
     }
-    
+
     if (!rule.description || rule.description.trim() === '') {
       errors.push('规则描述不能为空')
     }
-    
+
     if (rule.priority < 1 || rule.priority > 100) {
       errors.push('优先级必须在1-100之间')
     }
-    
+
     if (!rule.conditions || rule.conditions.length === 0) {
       errors.push('规则必须包含至少一个条件')
     }
-    
+
     return {
       isValid: errors.length === 0,
       errors
@@ -267,10 +267,11 @@ export class RuleManager {
    */
   searchRules(query: string): OptimizationRule[] {
     const lowerQuery = query.toLowerCase()
-    return this.getAllRules().filter(rule => 
-      rule.id.toLowerCase().includes(lowerQuery) ||
-      rule.name.toLowerCase().includes(lowerQuery) ||
-      rule.description.toLowerCase().includes(lowerQuery)
+    return this.getAllRules().filter(
+      rule =>
+        rule.id.toLowerCase().includes(lowerQuery) ||
+        rule.name.toLowerCase().includes(lowerQuery) ||
+        rule.description.toLowerCase().includes(lowerQuery)
     )
   }
 
@@ -295,15 +296,15 @@ export class RuleManager {
   } {
     const allRules = this.getAllRules()
     const enabledRules = this.getEnabledRules()
-    
+
     const byCategory: Record<string, number> = {}
     const byLanguage: Record<string, number> = {}
-    
+
     allRules.forEach(rule => {
       byCategory[rule.category] = (byCategory[rule.category] || 0) + 1
       byLanguage[rule.language] = (byLanguage[rule.language] || 0) + 1
     })
-    
+
     return {
       total: allRules.length,
       builtIn: this.ruleLibrary.builtIn.length,
@@ -404,9 +405,7 @@ export class RuleConditionEvaluator {
   private static calculateCyclomaticComplexity(code: string): number {
     // 简化的循环复杂度计算
     const patterns = ['if', 'for', 'while', 'case', 'catch', '&&', '||']
-    return patterns.reduce((count, pattern) => 
-      count + (code.split(pattern).length - 1), 1
-    )
+    return patterns.reduce((count, pattern) => count + (code.split(pattern).length - 1), 1)
   }
 
   /**

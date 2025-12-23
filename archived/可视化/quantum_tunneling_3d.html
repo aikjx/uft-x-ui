@@ -1,995 +1,1048 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>量子隧道效应 3D 可视化</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+        min-height: 100vh;
+        padding: 20px;
+        overflow-x: hidden;
+      }
+      .container {
+        max-width: 1600px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(10px);
+      }
+      h1 {
+        text-align: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
+        font-size: 2.8em;
+        font-weight: 800;
+        letter-spacing: -1px;
+      }
+      .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 35px;
+        font-size: 1.2em;
+        font-weight: 500;
+      }
+      .main-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+      }
+      .visualization-panel {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+      }
+      .visualization-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      }
+      .panel-title {
+        font-size: 1.4em;
+        color: #333;
+        margin-bottom: 20px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      canvas {
+        width: 100%;
+        height: 450px;
+        border-radius: 12px;
+        background: #0a0e27;
+        cursor: grab;
+        box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.5);
+      }
+      canvas:active {
+        cursor: grabbing;
+      }
+      .controls {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 25px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+      }
+      .control-group {
+        margin-bottom: 25px;
+      }
+      .control-group label {
+        display: block;
+        margin-bottom: 10px;
+        color: #333;
+        font-weight: 600;
+        font-size: 1em;
+        letter-spacing: 0.3px;
+      }
+      .slider-container {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      input[type='range'] {
+        flex: 1;
+        height: 10px;
+        border-radius: 5px;
+        background: linear-gradient(90deg, #e0e0e0 0%, #667eea 100%);
+        outline: none;
+        -webkit-appearance: none;
+        position: relative;
+      }
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+      input[type='range']::-webkit-slider-thumb:hover {
+        transform: scale(1.3);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+      }
+      .value-display {
+        min-width: 100px;
+        text-align: right;
+        color: #667eea;
+        font-weight: 700;
+        font-size: 1.3em;
+        font-family: 'Courier New', monospace;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-top: 20px;
+      }
+      .stat-box {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        padding: 18px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: 2px solid transparent;
+        transition: all 0.3s;
+      }
+      .stat-box:hover {
+        border-color: #667eea;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+      }
+      .stat-label {
+        color: #666;
+        font-size: 0.85em;
+        margin-bottom: 8px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .stat-value {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 2em;
+        font-weight: 800;
+      }
+      .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+      }
+      button {
+        flex: 1;
+        padding: 16px 32px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.05em;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        position: relative;
+        overflow: hidden;
+      }
+      button::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.6s,
+          height 0.6s;
+      }
+      button:hover::before {
+        width: 300px;
+        height: 300px;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+      }
+      .btn-primary:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6);
+      }
+      .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        box-shadow: 0 8px 20px rgba(108, 117, 125, 0.4);
+      }
+      .btn-secondary:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(108, 117, 125, 0.6);
+      }
+      .analysis {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+        border-left: 6px solid #ffc107;
+        padding: 25px;
+        border-radius: 16px;
+        margin-top: 30px;
+        box-shadow: 0 8px 25px rgba(255, 193, 7, 0.2);
+      }
+      .analysis h3 {
+        color: #856404;
+        margin-bottom: 20px;
+        font-size: 1.5em;
+        font-weight: 700;
+      }
+      .analysis-item {
+        background: white;
+        padding: 20px;
+        margin-bottom: 18px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s;
+      }
+      .analysis-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+      }
+      .analysis-item h4 {
+        color: #333;
+        margin-bottom: 12px;
+        font-size: 1.1em;
+        font-weight: 700;
+      }
+      .analysis-item p {
+        color: #555;
+        line-height: 1.8;
+        margin-bottom: 10px;
+      }
+      .verdict {
+        display: inline-block;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.9em;
+        letter-spacing: 0.5px;
+      }
+      .verdict-correct {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+      }
+      .verdict-incorrect {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+      }
+      .formula {
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        padding: 18px;
+        border-radius: 10px;
+        font-family: 'Courier New', monospace;
+        margin: 12px 0;
+        overflow-x: auto;
+        border-left: 4px solid #667eea;
+        font-size: 0.95em;
+      }
+      .particle-animation {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #ff6b6b 0%, #ee5a6f 100%);
+        box-shadow:
+          0 0 20px #ff6b6b,
+          0 0 40px #ff6b6b;
+        animation: pulse 1s infinite;
+        z-index: 10;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
         }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
-            min-height: 100vh;
-            padding: 20px;
-            overflow-x: hidden;
+        50% {
+          transform: scale(1.2);
         }
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 30px 90px rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-        }
-        h1 {
-            text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-            font-size: 2.8em;
-            font-weight: 800;
-            letter-spacing: -1px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 35px;
-            font-size: 1.2em;
-            font-weight: 500;
-        }
+      }
+      .glow-effect {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        background: radial-gradient(circle at center, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+      }
+      @media (max-width: 1200px) {
         .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
+          grid-template-columns: 1fr;
         }
-        .visualization-panel {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            position: relative;
-            overflow: hidden;
-        }
-        .visualization-panel::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        }
-        .panel-title {
-            font-size: 1.4em;
-            color: #333;
-            margin-bottom: 20px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        canvas {
-            width: 100%;
-            height: 450px;
-            border-radius: 12px;
-            background: #0a0e27;
-            cursor: grab;
-            box-shadow: inset 0 4px 20px rgba(0,0,0,0.5);
-        }
-        canvas:active {
-            cursor: grabbing;
-        }
-        .controls {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border: 1px solid rgba(102, 126, 234, 0.2);
-        }
-        .control-group {
-            margin-bottom: 25px;
-        }
-        .control-group label {
-            display: block;
-            margin-bottom: 10px;
-            color: #333;
-            font-weight: 600;
-            font-size: 1em;
-            letter-spacing: 0.3px;
-        }
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        input[type="range"] {
-            flex: 1;
-            height: 10px;
-            border-radius: 5px;
-            background: linear-gradient(90deg, #e0e0e0 0%, #667eea 100%);
-            outline: none;
-            -webkit-appearance: none;
-            position: relative;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-        input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.3);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-        .value-display {
-            min-width: 100px;
-            text-align: right;
-            color: #667eea;
-            font-weight: 700;
-            font-size: 1.3em;
-            font-family: 'Courier New', monospace;
-        }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .stat-box {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            padding: 18px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border: 2px solid transparent;
-            transition: all 0.3s;
-        }
-        .stat-box:hover {
-            border-color: #667eea;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-        }
-        .stat-label {
-            color: #666;
-            font-size: 0.85em;
-            margin-bottom: 8px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .stat-value {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 2em;
-            font-weight: 800;
-        }
-        .button-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        button {
-            flex: 1;
-            padding: 16px 32px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.05em;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
-        }
-        button::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-        button:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }
-        .btn-primary:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6);
-        }
-        .btn-secondary {
-            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-            color: white;
-            box-shadow: 0 8px 20px rgba(108, 117, 125, 0.4);
-        }
-        .btn-secondary:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(108, 117, 125, 0.6);
-        }
-        .analysis {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
-            border-left: 6px solid #ffc107;
-            padding: 25px;
-            border-radius: 16px;
-            margin-top: 30px;
-            box-shadow: 0 8px 25px rgba(255, 193, 7, 0.2);
-        }
-        .analysis h3 {
-            color: #856404;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-            font-weight: 700;
-        }
-        .analysis-item {
-            background: white;
-            padding: 20px;
-            margin-bottom: 18px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            transition: all 0.3s;
-        }
-        .analysis-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-        }
-        .analysis-item h4 {
-            color: #333;
-            margin-bottom: 12px;
-            font-size: 1.1em;
-            font-weight: 700;
-        }
-        .analysis-item p {
-            color: #555;
-            line-height: 1.8;
-            margin-bottom: 10px;
-        }
-        .verdict {
-            display: inline-block;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.9em;
-            letter-spacing: 0.5px;
-        }
-        .verdict-correct {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            color: #155724;
-        }
-        .verdict-incorrect {
-            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-            color: #721c24;
-        }
-        .formula {
-            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
-            padding: 18px;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            margin: 12px 0;
-            overflow-x: auto;
-            border-left: 4px solid #667eea;
-            font-size: 0.95em;
-        }
-        .particle-animation {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #ff6b6b 0%, #ee5a6f 100%);
-            box-shadow: 0 0 20px #ff6b6b, 0 0 40px #ff6b6b;
-            animation: pulse 1s infinite;
-            z-index: 10;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-        }
-        .glow-effect {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            background: radial-gradient(circle at center, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
-        }
-        @media (max-width: 1200px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>🔬 量子隧道效应 3D 可视化验证系统</h1>
-        <p class="subtitle">对比标准量子力学 vs "空间螺旋运动"伪科学理论</p>
-        
-        <div class="controls">
-            <div class="control-group">
-                <label>⚡ 势垒高度 (V₀) - eV</label>
-                <div class="slider-container">
-                    <input type="range" id="barrierHeight" min="1" max="10" step="0.1" value="5">
-                    <span class="value-display" id="barrierHeightValue">5.0</span>
-                </div>
-            </div>
-            
-            <div class="control-group">
-                <label>📏 势垒宽度 (a) - nm</label>
-                <div class="slider-container">
-                    <input type="range" id="barrierWidth" min="0.5" max="5" step="0.1" value="2">
-                    <span class="value-display" id="barrierWidthValue">2.0</span>
-                </div>
-            </div>
-            
-            <div class="control-group">
-                <label>🎯 粒子能量 (E) - eV</label>
-                <div class="slider-container">
-                    <input type="range" id="particleEnergy" min="0.5" max="9" step="0.1" value="3">
-                    <span class="value-display" id="particleEnergyValue">3.0</span>
-                </div>
-            </div>
+      <h1>🔬 量子隧道效应 3D 可视化验证系统</h1>
+      <p class="subtitle">对比标准量子力学 vs "空间螺旋运动"伪科学理论</p>
 
-            <div class="button-group">
-                <button class="btn-primary" id="animateBtn">🚀 发射粒子</button>
-                <button class="btn-secondary" id="resetBtn">🔄 重置系统</button>
-            </div>
+      <div class="controls">
+        <div class="control-group">
+          <label>⚡ 势垒高度 (V₀) - eV</label>
+          <div class="slider-container">
+            <input type="range" id="barrierHeight" min="1" max="10" step="0.1" value="5" />
+            <span class="value-display" id="barrierHeightValue">5.0</span>
+          </div>
         </div>
 
-        <div class="main-content">
-            <div class="visualization-panel">
-                <div class="glow-effect"></div>
-                <h3 class="panel-title">✅ 标准量子力学：波函数演化</h3>
-                <canvas id="quantumCanvas"></canvas>
-                <div class="stats">
-                    <div class="stat-box">
-                        <div class="stat-label">透射概率</div>
-                        <div class="stat-value" id="transmissionProb">0%</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-label">反射概率</div>
-                        <div class="stat-value" id="reflectionProb">0%</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-label">德布罗意波长</div>
-                        <div class="stat-value" id="wavelength">0 nm</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="visualization-panel">
-                <div class="glow-effect"></div>
-                <h3 class="panel-title">❌ 论文假设：空间螺旋运动</h3>
-                <canvas id="spiralCanvas"></canvas>
-                <div class="stats">
-                    <div class="stat-box">
-                        <div class="stat-label">螺旋半径</div>
-                        <div class="stat-value" id="spiralRadius" style="color: #999;">未定义</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-label">实验证据</div>
-                        <div class="stat-value" style="color: #dc3545;">无</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-label">可验证性</div>
-                        <div class="stat-value" style="color: #dc3545;">否</div>
-                    </div>
-                </div>
-            </div>
+        <div class="control-group">
+          <label>📏 势垒宽度 (a) - nm</label>
+          <div class="slider-container">
+            <input type="range" id="barrierWidth" min="0.5" max="5" step="0.1" value="2" />
+            <span class="value-display" id="barrierWidthValue">2.0</span>
+          </div>
         </div>
 
-        <div class="analysis">
-            <h3>📋 科学验证分析报告</h3>
-            
-            <div class="analysis-item">
-                <h4>1. 数学公式验证 <span class="verdict verdict-correct">✓ 公式本身正确</span></h4>
-                <p><strong>论文中的公式：</strong></p>
-                <div class="formula">
-                    T = 1 / [1 + (V₀²/4E(V₀-E))sin²(k₂a)]<br>
-                    P = exp(-2√(2m(V₀-E))a/ℏ)
-                </div>
-                <p><strong>✅ 验证结果：</strong>这些公式确实正确，但来自<strong>标准量子力学</strong>的薛定谔方程解。</p>
-                <p><strong>❌ 致命问题：</strong>论文没有从"空间螺旋运动"假设独立推导出这些公式，只是盗用了标准量子力学的成果并重新包装。</p>
-            </div>
-
-            <div class="analysis-item">
-                <h4>2. "空间螺旋运动"假设验证 <span class="verdict verdict-incorrect">✗ 完全无法验证</span></h4>
-                <p><strong>论文核心主张：</strong>"空间本身以光速c进行螺旋运动，这是空间的基本属性"</p>
-                <p><strong>❌ 致命缺陷：</strong></p>
-                <p>• 没有任何实验证据支持"空间螺旋运动"的存在</p>
-                <p>• 没有提供任何可以测量或检验这种运动的方法</p>
-                <p>• 使用循环论证：用未经验证的假设去"解释"已知现象</p>
-                <p>• 违反奥卡姆剃刀原则：引入不必要的复杂假设</p>
-                <p>• 右侧3D螺旋仅为艺术概念图，无任何物理依据</p>
-            </div>
-
-            <div class="analysis-item">
-                <h4>3. 隧道时间公式验证 <span class="verdict verdict-incorrect">✗ 严重错误</span></h4>
-                <p><strong>论文错误公式：</strong></p>
-                <div class="formula">τ = a/c (极度简化且错误)</div>
-                <p><strong>❌ 问题分析：</strong>量子隧道时间是量子力学中最复杂的概念之一，有多种不同定义：</p>
-                <p>• <strong>Larmor时间：</strong>通过自旋进动测量，τ_L = Δθ/ω_L</p>
-                <p>• <strong>驻留时间：</strong>基于概率密度积分</p>
-                <p>• <strong>相位时间：</strong>基于波包相位延迟</p>
-                <p>• <strong>Büttiker-Landauer时间：</strong>考虑能量-时间关系</p>
-                <p><strong>实验发现：</strong>隧道过程可能是"瞬时"的，不能简单用 a/c 表示。论文的公式过于简化，误导读者。</p>
-            </div>
-
-            <div class="analysis-item">
-                <h4>4. 理论必要性验证 <span class="verdict verdict-incorrect">✗ 完全不必要</span></h4>
-                <p><strong>标准量子力学已完美解释：</strong></p>
-                <p>✅ 基于实验验证的薛定谔方程</p>
-                <p>✅ 波函数的衰减与指数穿透可从第一性原理推导</p>
-                <p>✅ 不确定性原理提供直观物理图像：ΔxΔp ≥ ℏ/2</p>
-                <p>✅ 路径积分方法给出完整的量子隧道描述</p>
-                <p>✅ 所有预言都得到精确实验验证（STM、α衰变、约瑟夫森效应等）</p>
-                <p><strong>❌ 结论：</strong>"空间螺旋运动"假设没有增加任何解释力、预测力或新见解，纯属画蛇添足。</p>
-            </div>
-
-            <div class="analysis-item">
-                <h4>5. 可检验预言 <span class="verdict verdict-incorrect">✗ 完全缺失</span></h4>
-                <p><strong>科学理论的基本要求：</strong>必须提供可被实验证伪的具体预言（波普尔可证伪性原则）</p>
-                <p><strong>❌ 论文的致命缺陷：</strong></p>
-                <p>• 没有提出任何区别于标准量子力学的新预言</p>
-                <p>• 所有"验证"都是对已知现象的事后解释（后见之明）</p>
-                <p>• 无法设计实验来独立检验"空间螺旋运动"的存在</p>
-                <p>• 即使"空间螺旋运动"不存在，所有现象仍然成立</p>
-                <p><strong>类比：</strong>这就像说"所有物体下落是因为隐形天使推动"——虽然自洽，但完全无法检验，因此不是科学理论。</p>
-            </div>
-
-            <div class="analysis-item">
-                <h4>6. 逻辑自洽性分析 <span class="verdict verdict-incorrect">✗ 循环论证</span></h4>
-                <p><strong>论文的论证结构：</strong></p>
-                <p>1️⃣ 假设：空间进行螺旋运动（未经验证）</p>
-                <p>2️⃣ 推论：量子隧道效应是螺旋运动的结果</p>
-                <p>3️⃣ "证明"：量子隧道效应存在，所以螺旋运动存在</p>
-                <p><strong>❌ 这是典型的循环论证谬误！</strong>相当于：</p>
-                <p>• "上帝存在因为圣经这么说"</p>
-                <p>• "圣经正确因为上帝写的"</p>
-                <p>• "所以上帝存在"</p>
-            </div>
+        <div class="control-group">
+          <label>🎯 粒子能量 (E) - eV</label>
+          <div class="slider-container">
+            <input type="range" id="particleEnergy" min="0.5" max="9" step="0.1" value="3" />
+            <span class="value-display" id="particleEnergyValue">3.0</span>
+          </div>
         </div>
 
-        <div class="analysis" style="background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); border-color: #0c5460;">
-            <h3 style="color: #0c5460;">🎯 总体验证结论</h3>
-            <div class="analysis-item">
-                <p><strong style="color: #dc3545; font-size: 1.3em;">该论文属于典型的伪科学！</strong></p>
-                <br>
-                <p><strong>✓ 正确的部分：</strong></p>
-                <p>• 数学公式本身正确（因为抄袭自标准量子力学）</p>
-                <p>• 部分物理现象描述准确（但解释错误）</p>
-                <br>
-                <p><strong>✗ 严重的问题：</strong></p>
-                <p>❌ "空间螺旋运动"假设完全没有实验证据</p>
-                <p>❌ 使用循环论证和事后解释（hindsight bias）</p>
-                <p>❌ 没有任何新的、可检验的预言</p>
-                <p>❌ 盗用标准量子力学的成果并重新包装</p>
-                <p>❌ 违反奥卡姆剃刀原则（引入不必要的复杂性）</p>
-                <p>❌ 隧道时间公式严重错误和简化</p>
-                <p>❌ 不符合科学方法论的基本要求</p>
-                <br>
-                <p><strong style="color: #0c5460; font-size: 1.2em;">🎓 建议：</strong></p>
-                <p>如果您对量子隧道效应感兴趣，请学习正规的量子力学教材：</p>
-                <p>📚 <strong>Griffiths - 《量子力学导论》</strong></p>
-                <p>📚 <strong>Sakurai - 《现代量子力学》</strong></p>
-                <p>📚 <strong>Cohen-Tannoudji - 《量子力学》</strong></p>
-                <p>📚 <strong>Feynman - 《费曼物理学讲义·量子力学》</strong></p>
-                <br>
-                <p>这些教材提供了经过实验验证、逻辑严密、数学自洽的量子隧道效应解释，无需引入任何未经证实的额外假设。</p>
-            </div>
+        <div class="button-group">
+          <button class="btn-primary" id="animateBtn">🚀 发射粒子</button>
+          <button class="btn-secondary" id="resetBtn">🔄 重置系统</button>
         </div>
+      </div>
+
+      <div class="main-content">
+        <div class="visualization-panel">
+          <div class="glow-effect"></div>
+          <h3 class="panel-title">✅ 标准量子力学：波函数演化</h3>
+          <canvas id="quantumCanvas"></canvas>
+          <div class="stats">
+            <div class="stat-box">
+              <div class="stat-label">透射概率</div>
+              <div class="stat-value" id="transmissionProb">0%</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">反射概率</div>
+              <div class="stat-value" id="reflectionProb">0%</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">德布罗意波长</div>
+              <div class="stat-value" id="wavelength">0 nm</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="visualization-panel">
+          <div class="glow-effect"></div>
+          <h3 class="panel-title">❌ 论文假设：空间螺旋运动</h3>
+          <canvas id="spiralCanvas"></canvas>
+          <div class="stats">
+            <div class="stat-box">
+              <div class="stat-label">螺旋半径</div>
+              <div class="stat-value" id="spiralRadius" style="color: #999">未定义</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">实验证据</div>
+              <div class="stat-value" style="color: #dc3545">无</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">可验证性</div>
+              <div class="stat-value" style="color: #dc3545">否</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="analysis">
+        <h3>📋 科学验证分析报告</h3>
+
+        <div class="analysis-item">
+          <h4>1. 数学公式验证 <span class="verdict verdict-correct">✓ 公式本身正确</span></h4>
+          <p><strong>论文中的公式：</strong></p>
+          <div class="formula">
+            T = 1 / [1 + (V₀²/4E(V₀-E))sin²(k₂a)]<br />
+            P = exp(-2√(2m(V₀-E))a/ℏ)
+          </div>
+          <p>
+            <strong>✅ 验证结果：</strong
+            >这些公式确实正确，但来自<strong>标准量子力学</strong>的薛定谔方程解。
+          </p>
+          <p>
+            <strong>❌ 致命问题：</strong
+            >论文没有从"空间螺旋运动"假设独立推导出这些公式，只是盗用了标准量子力学的成果并重新包装。
+          </p>
+        </div>
+
+        <div class="analysis-item">
+          <h4>
+            2. "空间螺旋运动"假设验证 <span class="verdict verdict-incorrect">✗ 完全无法验证</span>
+          </h4>
+          <p><strong>论文核心主张：</strong>"空间本身以光速c进行螺旋运动，这是空间的基本属性"</p>
+          <p><strong>❌ 致命缺陷：</strong></p>
+          <p>• 没有任何实验证据支持"空间螺旋运动"的存在</p>
+          <p>• 没有提供任何可以测量或检验这种运动的方法</p>
+          <p>• 使用循环论证：用未经验证的假设去"解释"已知现象</p>
+          <p>• 违反奥卡姆剃刀原则：引入不必要的复杂假设</p>
+          <p>• 右侧3D螺旋仅为艺术概念图，无任何物理依据</p>
+        </div>
+
+        <div class="analysis-item">
+          <h4>3. 隧道时间公式验证 <span class="verdict verdict-incorrect">✗ 严重错误</span></h4>
+          <p><strong>论文错误公式：</strong></p>
+          <div class="formula">τ = a/c (极度简化且错误)</div>
+          <p>
+            <strong>❌ 问题分析：</strong>量子隧道时间是量子力学中最复杂的概念之一，有多种不同定义：
+          </p>
+          <p>• <strong>Larmor时间：</strong>通过自旋进动测量，τ_L = Δθ/ω_L</p>
+          <p>• <strong>驻留时间：</strong>基于概率密度积分</p>
+          <p>• <strong>相位时间：</strong>基于波包相位延迟</p>
+          <p>• <strong>Büttiker-Landauer时间：</strong>考虑能量-时间关系</p>
+          <p>
+            <strong>实验发现：</strong>隧道过程可能是"瞬时"的，不能简单用 a/c
+            表示。论文的公式过于简化，误导读者。
+          </p>
+        </div>
+
+        <div class="analysis-item">
+          <h4>4. 理论必要性验证 <span class="verdict verdict-incorrect">✗ 完全不必要</span></h4>
+          <p><strong>标准量子力学已完美解释：</strong></p>
+          <p>✅ 基于实验验证的薛定谔方程</p>
+          <p>✅ 波函数的衰减与指数穿透可从第一性原理推导</p>
+          <p>✅ 不确定性原理提供直观物理图像：ΔxΔp ≥ ℏ/2</p>
+          <p>✅ 路径积分方法给出完整的量子隧道描述</p>
+          <p>✅ 所有预言都得到精确实验验证（STM、α衰变、约瑟夫森效应等）</p>
+          <p>
+            <strong>❌ 结论：</strong
+            >"空间螺旋运动"假设没有增加任何解释力、预测力或新见解，纯属画蛇添足。
+          </p>
+        </div>
+
+        <div class="analysis-item">
+          <h4>5. 可检验预言 <span class="verdict verdict-incorrect">✗ 完全缺失</span></h4>
+          <p>
+            <strong>科学理论的基本要求：</strong
+            >必须提供可被实验证伪的具体预言（波普尔可证伪性原则）
+          </p>
+          <p><strong>❌ 论文的致命缺陷：</strong></p>
+          <p>• 没有提出任何区别于标准量子力学的新预言</p>
+          <p>• 所有"验证"都是对已知现象的事后解释（后见之明）</p>
+          <p>• 无法设计实验来独立检验"空间螺旋运动"的存在</p>
+          <p>• 即使"空间螺旋运动"不存在，所有现象仍然成立</p>
+          <p>
+            <strong>类比：</strong
+            >这就像说"所有物体下落是因为隐形天使推动"——虽然自洽，但完全无法检验，因此不是科学理论。
+          </p>
+        </div>
+
+        <div class="analysis-item">
+          <h4>6. 逻辑自洽性分析 <span class="verdict verdict-incorrect">✗ 循环论证</span></h4>
+          <p><strong>论文的论证结构：</strong></p>
+          <p>1️⃣ 假设：空间进行螺旋运动（未经验证）</p>
+          <p>2️⃣ 推论：量子隧道效应是螺旋运动的结果</p>
+          <p>3️⃣ "证明"：量子隧道效应存在，所以螺旋运动存在</p>
+          <p><strong>❌ 这是典型的循环论证谬误！</strong>相当于：</p>
+          <p>• "上帝存在因为圣经这么说"</p>
+          <p>• "圣经正确因为上帝写的"</p>
+          <p>• "所以上帝存在"</p>
+        </div>
+      </div>
+
+      <div
+        class="analysis"
+        style="background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); border-color: #0c5460"
+      >
+        <h3 style="color: #0c5460">🎯 总体验证结论</h3>
+        <div class="analysis-item">
+          <p><strong style="color: #dc3545; font-size: 1.3em">该论文属于典型的伪科学！</strong></p>
+          <br />
+          <p><strong>✓ 正确的部分：</strong></p>
+          <p>• 数学公式本身正确（因为抄袭自标准量子力学）</p>
+          <p>• 部分物理现象描述准确（但解释错误）</p>
+          <br />
+          <p><strong>✗ 严重的问题：</strong></p>
+          <p>❌ "空间螺旋运动"假设完全没有实验证据</p>
+          <p>❌ 使用循环论证和事后解释（hindsight bias）</p>
+          <p>❌ 没有任何新的、可检验的预言</p>
+          <p>❌ 盗用标准量子力学的成果并重新包装</p>
+          <p>❌ 违反奥卡姆剃刀原则（引入不必要的复杂性）</p>
+          <p>❌ 隧道时间公式严重错误和简化</p>
+          <p>❌ 不符合科学方法论的基本要求</p>
+          <br />
+          <p><strong style="color: #0c5460; font-size: 1.2em">🎓 建议：</strong></p>
+          <p>如果您对量子隧道效应感兴趣，请学习正规的量子力学教材：</p>
+          <p>📚 <strong>Griffiths - 《量子力学导论》</strong></p>
+          <p>📚 <strong>Sakurai - 《现代量子力学》</strong></p>
+          <p>📚 <strong>Cohen-Tannoudji - 《量子力学》</strong></p>
+          <p>📚 <strong>Feynman - 《费曼物理学讲义·量子力学》</strong></p>
+          <br />
+          <p>
+            这些教材提供了经过实验验证、逻辑严密、数学自洽的量子隧道效应解释，无需引入任何未经证实的额外假设。
+          </p>
+        </div>
+      </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // ==================== 量子力学可视化 ====================
-        const quantumCanvas = document.getElementById('quantumCanvas');
-        const qCtx = quantumCanvas.getContext('2d');
-        
-        // ==================== 3D螺旋可视化 ====================
-        const spiralCanvas = document.getElementById('spiralCanvas');
-        let spiralScene, spiralCamera, spiralRenderer, spiralParticle, spiralPath, spiralTrail;
-        let mouseX = 0, mouseY = 0;
-        let isAnimating = false;
-        let animationProgress = 0;
+      // ==================== 量子力学可视化 ====================
+      const quantumCanvas = document.getElementById('quantumCanvas')
+      const qCtx = quantumCanvas.getContext('2d')
 
-        // 设置canvas尺寸
-        function resizeCanvas(canvas) {
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width * window.devicePixelRatio;
-            canvas.height = rect.height * window.devicePixelRatio;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-            }
+      // ==================== 3D螺旋可视化 ====================
+      const spiralCanvas = document.getElementById('spiralCanvas')
+      let spiralScene, spiralCamera, spiralRenderer, spiralParticle, spiralPath, spiralTrail
+      let mouseX = 0,
+        mouseY = 0
+      let isAnimating = false
+      let animationProgress = 0
+
+      // 设置canvas尺寸
+      function resizeCanvas(canvas) {
+        const rect = canvas.getBoundingClientRect()
+        canvas.width = rect.width * window.devicePixelRatio
+        canvas.height = rect.height * window.devicePixelRatio
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
         }
-        resizeCanvas(quantumCanvas);
+      }
+      resizeCanvas(quantumCanvas)
 
-        // 初始化3D螺旋场景
-        function initSpiralScene() {
-            spiralScene = new THREE.Scene();
-            spiralScene.background = new THREE.Color(0x0a0e27);
-            spiralScene.fog = new THREE.Fog(0x0a0e27, 10, 50);
-            
-            const aspect = spiralCanvas.clientWidth / spiralCanvas.clientHeight;
-            spiralCamera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000);
-            spiralCamera.position.set(8, 6, 12);
-            spiralCamera.lookAt(0, 0, 0);
-            
-            spiralRenderer = new THREE.WebGLRenderer({ 
-                canvas: spiralCanvas, 
-                antialias: true,
-                alpha: true
-            });
-            spiralRenderer.setSize(spiralCanvas.clientWidth, spiralCanvas.clientHeight);
-            spiralRenderer.setPixelRatio(window.devicePixelRatio);
-            
-            // 增强光照系统
-            const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
-            spiralScene.add(ambientLight);
-            
-            const mainLight = new THREE.PointLight(0x667eea, 1.5, 100);
-            mainLight.position.set(10, 10, 10);
-            spiralScene.add(mainLight);
-            
-            const fillLight = new THREE.PointLight(0x764ba2, 1, 100);
-            fillLight.position.set(-10, 5, -10);
-            spiralScene.add(fillLight);
-            
-            const backLight = new THREE.PointLight(0xffffff, 0.5, 100);
-            backLight.position.set(0, -10, -10);
-            spiralScene.add(backLight);
-            
-            // 创建螺旋路径
-            const curve = new THREE.CatmullRomCurve3([]);
-            const points = 300;
-            const radius = 3;
-            const height = 12;
-            
-            for (let i = 0; i < points; i++) {
-                const t = (i / points);
-                const angle = t * 6 * Math.PI;
-                const x = radius * Math.cos(angle);
-                const y = radius * Math.sin(angle);
-                const z = t * height - height/2;
-                curve.points.push(new THREE.Vector3(x, y, z));
-            }
-            
-            // 创建发光的螺旋管道
-            const tubeGeometry = new THREE.TubeGeometry(curve, 300, 0.08, 16, false);
-            const tubeMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0x667eea,
-                emissive: 0x667eea,
-                emissiveIntensity: 0.5,
-                transparent: true,
-                opacity: 0.8,
-                shininess: 100
-            });
-            spiralPath = new THREE.Mesh(tubeGeometry, tubeMaterial);
-            spiralScene.add(spiralPath);
-            
-            // 创建粒子拖尾效果
-            const trailGeometry = new THREE.BufferGeometry();
-            const trailPositions = new Float32Array(300 * 3);
-            trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
-            const trailMaterial = new THREE.LineBasicMaterial({ 
-                color: 0xff6b6b,
-                transparent: true,
-                opacity: 0.6,
-                linewidth: 2
-            });
-            spiralTrail = new THREE.Line(trailGeometry, trailMaterial);
-            spiralScene.add(spiralTrail);
-            
-            // 创建发光粒子
-            const particleGeometry = new THREE.SphereGeometry(0.4, 32, 32);
-            const particleMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0xff6b6b,
-                emissive: 0xff3838,
-                emissiveIntensity: 1,
-                shininess: 100
-            });
-            spiralParticle = new THREE.Mesh(particleGeometry, particleMaterial);
-            
-            // 添加粒子光环
-            const glowGeometry = new THREE.SphereGeometry(0.6, 32, 32);
-            const glowMaterial = new THREE.MeshBasicMaterial({
-                color: 0xff6b6b,
-                transparent: true,
-                opacity: 0.3
-            });
-            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-            spiralParticle.add(glow);
-            spiralScene.add(spiralParticle);
-            
-            // 创建势垒（半透明玻璃效果）
-            const barrierGeometry = new THREE.PlaneGeometry(8, 8);
-            const barrierMaterial = new THREE.MeshPhongMaterial({ 
-                color: 0xffcc00,
-                transparent: true,
-                opacity: 0.4,
-                side: THREE.DoubleSide,
-                emissive: 0xffcc00,
-                emissiveIntensity: 0.2,
-                shininess: 100
-            });
-            const barrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
-            barrier.position.z = 0;
-            spiralScene.add(barrier);
-            
-            // 添加势垒边框
-            const edgesGeometry = new THREE.EdgesGeometry(barrierGeometry);
-            const edgesMaterial = new THREE.LineBasicMaterial({ color: 0xffd700, linewidth: 2 });
-            const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
-            barrier.add(edges);
-            
-            // 添加坐标网格
-            const gridHelper = new THREE.GridHelper(16, 16, 0x444444, 0x222222);
-            gridHelper.position.y = -4;
-            spiralScene.add(gridHelper);
-            
-            // 添加坐标轴
-            const axesHelper = new THREE.AxesHelper(5);
-            spiralScene.add(axesHelper);
-            
-            // 鼠标交互
-            spiralCanvas.addEventListener('mousemove', (e) => {
-                const rect = spiralCanvas.getBoundingClientRect();
-                mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-                mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-            });
-            
-            animateSpiralScene();
+      // 初始化3D螺旋场景
+      function initSpiralScene() {
+        spiralScene = new THREE.Scene()
+        spiralScene.background = new THREE.Color(0x0a0e27)
+        spiralScene.fog = new THREE.Fog(0x0a0e27, 10, 50)
+
+        const aspect = spiralCanvas.clientWidth / spiralCanvas.clientHeight
+        spiralCamera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000)
+        spiralCamera.position.set(8, 6, 12)
+        spiralCamera.lookAt(0, 0, 0)
+
+        spiralRenderer = new THREE.WebGLRenderer({
+          canvas: spiralCanvas,
+          antialias: true,
+          alpha: true
+        })
+        spiralRenderer.setSize(spiralCanvas.clientWidth, spiralCanvas.clientHeight)
+        spiralRenderer.setPixelRatio(window.devicePixelRatio)
+
+        // 增强光照系统
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.8)
+        spiralScene.add(ambientLight)
+
+        const mainLight = new THREE.PointLight(0x667eea, 1.5, 100)
+        mainLight.position.set(10, 10, 10)
+        spiralScene.add(mainLight)
+
+        const fillLight = new THREE.PointLight(0x764ba2, 1, 100)
+        fillLight.position.set(-10, 5, -10)
+        spiralScene.add(fillLight)
+
+        const backLight = new THREE.PointLight(0xffffff, 0.5, 100)
+        backLight.position.set(0, -10, -10)
+        spiralScene.add(backLight)
+
+        // 创建螺旋路径
+        const curve = new THREE.CatmullRomCurve3([])
+        const points = 300
+        const radius = 3
+        const height = 12
+
+        for (let i = 0; i < points; i++) {
+          const t = i / points
+          const angle = t * 6 * Math.PI
+          const x = radius * Math.cos(angle)
+          const y = radius * Math.sin(angle)
+          const z = t * height - height / 2
+          curve.points.push(new THREE.Vector3(x, y, z))
         }
 
-        // 3D场景动画循环
-        let spiralTime = 0;
-        const trailPoints = [];
-        
-        function animateSpiralScene() {
-            requestAnimationFrame(animateSpiralScene);
-            
-            spiralTime += 0.015;
-            
-            // 粒子沿螺旋路径运动
-            const t = (spiralTime % (6 * Math.PI)) / (6 * Math.PI);
-            const angle = t * 6 * Math.PI;
-            const radius = 3;
-            
-            spiralParticle.position.x = radius * Math.cos(angle);
-            spiralParticle.position.y = radius * Math.sin(angle);
-            spiralParticle.position.z = t * 12 - 6;
-            
-            // 粒子自旋
-            spiralParticle.rotation.x += 0.05;
-            spiralParticle.rotation.y += 0.03;
-            
-            // 更新拖尾
-            trailPoints.push(spiralParticle.position.clone());
-            if (trailPoints.length > 100) trailPoints.shift();
-            
-            const positions = spiralTrail.geometry.attributes.position.array;
-            for (let i = 0; i < trailPoints.length; i++) {
-                positions[i * 3] = trailPoints[i].x;
-                positions[i * 3 + 1] = trailPoints[i].y;
-                positions[i * 3 + 2] = trailPoints[i].z;
-            }
-            spiralTrail.geometry.attributes.position.needsUpdate = true;
-            
-            // 相机跟随鼠标
-            spiralCamera.position.x = 8 + mouseX * 3;
-            spiralCamera.position.y = 6 + mouseY * 3;
-            spiralCamera.lookAt(0, 0, 0);
-            
-            // 螺旋路径轻微旋转
-            spiralPath.rotation.z += 0.002;
-            
-            spiralRenderer.render(spiralScene, spiralCamera);
+        // 创建发光的螺旋管道
+        const tubeGeometry = new THREE.TubeGeometry(curve, 300, 0.08, 16, false)
+        const tubeMaterial = new THREE.MeshPhongMaterial({
+          color: 0x667eea,
+          emissive: 0x667eea,
+          emissiveIntensity: 0.5,
+          transparent: true,
+          opacity: 0.8,
+          shininess: 100
+        })
+        spiralPath = new THREE.Mesh(tubeGeometry, tubeMaterial)
+        spiralScene.add(spiralPath)
+
+        // 创建粒子拖尾效果
+        const trailGeometry = new THREE.BufferGeometry()
+        const trailPositions = new Float32Array(300 * 3)
+        trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3))
+        const trailMaterial = new THREE.LineBasicMaterial({
+          color: 0xff6b6b,
+          transparent: true,
+          opacity: 0.6,
+          linewidth: 2
+        })
+        spiralTrail = new THREE.Line(trailGeometry, trailMaterial)
+        spiralScene.add(spiralTrail)
+
+        // 创建发光粒子
+        const particleGeometry = new THREE.SphereGeometry(0.4, 32, 32)
+        const particleMaterial = new THREE.MeshPhongMaterial({
+          color: 0xff6b6b,
+          emissive: 0xff3838,
+          emissiveIntensity: 1,
+          shininess: 100
+        })
+        spiralParticle = new THREE.Mesh(particleGeometry, particleMaterial)
+
+        // 添加粒子光环
+        const glowGeometry = new THREE.SphereGeometry(0.6, 32, 32)
+        const glowMaterial = new THREE.MeshBasicMaterial({
+          color: 0xff6b6b,
+          transparent: true,
+          opacity: 0.3
+        })
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial)
+        spiralParticle.add(glow)
+        spiralScene.add(spiralParticle)
+
+        // 创建势垒（半透明玻璃效果）
+        const barrierGeometry = new THREE.PlaneGeometry(8, 8)
+        const barrierMaterial = new THREE.MeshPhongMaterial({
+          color: 0xffcc00,
+          transparent: true,
+          opacity: 0.4,
+          side: THREE.DoubleSide,
+          emissive: 0xffcc00,
+          emissiveIntensity: 0.2,
+          shininess: 100
+        })
+        const barrier = new THREE.Mesh(barrierGeometry, barrierMaterial)
+        barrier.position.z = 0
+        spiralScene.add(barrier)
+
+        // 添加势垒边框
+        const edgesGeometry = new THREE.EdgesGeometry(barrierGeometry)
+        const edgesMaterial = new THREE.LineBasicMaterial({ color: 0xffd700, linewidth: 2 })
+        const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial)
+        barrier.add(edges)
+
+        // 添加坐标网格
+        const gridHelper = new THREE.GridHelper(16, 16, 0x444444, 0x222222)
+        gridHelper.position.y = -4
+        spiralScene.add(gridHelper)
+
+        // 添加坐标轴
+        const axesHelper = new THREE.AxesHelper(5)
+        spiralScene.add(axesHelper)
+
+        // 鼠标交互
+        spiralCanvas.addEventListener('mousemove', e => {
+          const rect = spiralCanvas.getBoundingClientRect()
+          mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1
+          mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1
+        })
+
+        animateSpiralScene()
+      }
+
+      // 3D场景动画循环
+      let spiralTime = 0
+      const trailPoints = []
+
+      function animateSpiralScene() {
+        requestAnimationFrame(animateSpiralScene)
+
+        spiralTime += 0.015
+
+        // 粒子沿螺旋路径运动
+        const t = (spiralTime % (6 * Math.PI)) / (6 * Math.PI)
+        const angle = t * 6 * Math.PI
+        const radius = 3
+
+        spiralParticle.position.x = radius * Math.cos(angle)
+        spiralParticle.position.y = radius * Math.sin(angle)
+        spiralParticle.position.z = t * 12 - 6
+
+        // 粒子自旋
+        spiralParticle.rotation.x += 0.05
+        spiralParticle.rotation.y += 0.03
+
+        // 更新拖尾
+        trailPoints.push(spiralParticle.position.clone())
+        if (trailPoints.length > 100) trailPoints.shift()
+
+        const positions = spiralTrail.geometry.attributes.position.array
+        for (let i = 0; i < trailPoints.length; i++) {
+          positions[i * 3] = trailPoints[i].x
+          positions[i * 3 + 1] = trailPoints[i].y
+          positions[i * 3 + 2] = trailPoints[i].z
+        }
+        spiralTrail.geometry.attributes.position.needsUpdate = true
+
+        // 相机跟随鼠标
+        spiralCamera.position.x = 8 + mouseX * 3
+        spiralCamera.position.y = 6 + mouseY * 3
+        spiralCamera.lookAt(0, 0, 0)
+
+        // 螺旋路径轻微旋转
+        spiralPath.rotation.z += 0.002
+
+        spiralRenderer.render(spiralScene, spiralCamera)
+      }
+
+      // ==================== 参数控制 ====================
+      function getParams() {
+        const V0 = parseFloat(document.getElementById('barrierHeight').value)
+        const a = parseFloat(document.getElementById('barrierWidth').value)
+        const E = parseFloat(document.getElementById('particleEnergy').value)
+        return { V0, a, E }
+      }
+
+      // 计算透射概率（标准量子力学）
+      function calculateTransmission() {
+        const { V0, a, E } = getParams()
+
+        if (E >= V0) {
+          // 经典允许
+          const k1 = Math.sqrt(E)
+          const k2 = Math.sqrt(E - V0)
+          const R = Math.pow((k1 - k2) / (k1 + k2), 2) * Math.pow(Math.sin(k2 * a * 5), 2)
+          const T = 1 - R
+          const lambda = 1.24 / Math.sqrt(E)
+          return { T, R, lambda }
         }
 
-        // ==================== 参数控制 ====================
-        function getParams() {
-            const V0 = parseFloat(document.getElementById('barrierHeight').value);
-            const a = parseFloat(document.getElementById('barrierWidth').value);
-            const E = parseFloat(document.getElementById('particleEnergy').value);
-            return { V0, a, E };
+        // 量子隧穿（E < V0）
+        const hbar = 1.055e-34
+        const m = 9.109e-31
+        const eV_to_J = 1.602e-19
+        const nm_to_m = 1e-9
+
+        const kappa = Math.sqrt(2 * m * (V0 - E) * eV_to_J) / hbar
+        const decay = Math.exp(-2 * kappa * a * nm_to_m)
+
+        // 精确公式
+        const k1 = Math.sqrt(2 * m * E * eV_to_J) / hbar
+        const gamma = (V0 * V0) / (4 * E * (V0 - E))
+
+        let T
+        if (kappa * a * nm_to_m > 5) {
+          // 宽势垒近似
+          T = ((16 * E * (V0 - E)) / (V0 * V0)) * decay
+        } else {
+          // 精确公式
+          T = 1 / (1 + gamma * Math.pow(Math.sinh(kappa * a * nm_to_m), 2))
         }
 
-        // 计算透射概率（标准量子力学）
-        function calculateTransmission() {
-            const { V0, a, E } = getParams();
-            
-            if (E >= V0) {
-                // 经典允许
-                const k1 = Math.sqrt(E);
-                const k2 = Math.sqrt(E - V0);
-                const R = Math.pow((k1 - k2) / (k1 + k2), 2) * Math.pow(Math.sin(k2 * a * 5), 2);
-                const T = 1 - R;
-                const lambda = 1.24 / Math.sqrt(E);
-                return { T, R, lambda };
-            }
-            
-            // 量子隧穿（E < V0）
-            const hbar = 1.055e-34;
-            const m = 9.109e-31;
-            const eV_to_J = 1.602e-19;
-            const nm_to_m = 1e-9;
-            
-            const kappa = Math.sqrt(2 * m * (V0 - E) * eV_to_J) / hbar;
-            const decay = Math.exp(-2 * kappa * a * nm_to_m);
-            
-            // 精确公式
-            const k1 = Math.sqrt(2 * m * E * eV_to_J) / hbar;
-            const gamma = V0 * V0 / (4 * E * (V0 - E));
-            
-            let T;
-            if (kappa * a * nm_to_m > 5) {
-                // 宽势垒近似
-                T = 16 * E * (V0 - E) / (V0 * V0) * decay;
-            } else {
-                // 精确公式
-                T = 1 / (1 + gamma * Math.pow(Math.sinh(kappa * a * nm_to_m), 2));
-            }
-            
-            T = Math.max(0, Math.min(1, T));
-            const R = 1 - T;
-            const lambda = 1.24 / Math.sqrt(E);
-            
-            return { T, R, lambda };
+        T = Math.max(0, Math.min(1, T))
+        const R = 1 - T
+        const lambda = 1.24 / Math.sqrt(E)
+
+        return { T, R, lambda }
+      }
+
+      // 更新显示
+      function updateDisplay() {
+        const { T, R, lambda } = calculateTransmission()
+
+        document.getElementById('transmissionProb').textContent = (T * 100).toFixed(2) + '%'
+        document.getElementById('reflectionProb').textContent = (R * 100).toFixed(2) + '%'
+        document.getElementById('wavelength').textContent = lambda.toFixed(3) + ' nm'
+
+        drawQuantumVisualization(T, R, lambda)
+      }
+
+      // 绘制量子力学可视化（增强版）
+      let quantumAnimFrame = 0
+
+      function drawQuantumVisualization(T, R, lambda) {
+        const { V0, a, E } = getParams()
+        const width = quantumCanvas.width / window.devicePixelRatio
+        const height = quantumCanvas.height / window.devicePixelRatio
+
+        qCtx.clearRect(0, 0, width, height)
+
+        // 绘制背景网格
+        qCtx.strokeStyle = 'rgba(102, 126, 234, 0.1)'
+        qCtx.lineWidth = 0.5
+        for (let i = 0; i < width; i += 20) {
+          qCtx.beginPath()
+          qCtx.moveTo(i, 0)
+          qCtx.lineTo(i, height)
+          qCtx.stroke()
+        }
+        for (let i = 0; i < height; i += 20) {
+          qCtx.beginPath()
+          qCtx.moveTo(0, i)
+          qCtx.lineTo(width, i)
+          qCtx.stroke()
         }
 
-        // 更新显示
-        function updateDisplay() {
-            const { T, R, lambda } = calculateTransmission();
-            
-            document.getElementById('transmissionProb').textContent = (T * 100).toFixed(2) + '%';
-            document.getElementById('reflectionProb').textContent = (R * 100).toFixed(2) + '%';
-            document.getElementById('wavelength').textContent = lambda.toFixed(3) + ' nm';
-            
-            drawQuantumVisualization(T, R, lambda);
+        // 绘制势垒（发光效果）
+        const barrierStart = width * 0.4
+        const barrierWidth = width * 0.2
+        const barrierHeight = (V0 / 10) * height * 0.5
+        const barrierY = height - barrierHeight - 80
+
+        // 势垒阴影
+        const gradient = qCtx.createLinearGradient(
+          barrierStart,
+          barrierY,
+          barrierStart + barrierWidth,
+          barrierY
+        )
+        gradient.addColorStop(0, 'rgba(255, 204, 0, 0.1)')
+        gradient.addColorStop(0.5, 'rgba(255, 204, 0, 0.4)')
+        gradient.addColorStop(1, 'rgba(255, 204, 0, 0.1)')
+        qCtx.fillStyle = gradient
+        qCtx.fillRect(barrierStart, barrierY, barrierWidth, barrierHeight)
+
+        // 势垒边框（发光）
+        qCtx.shadowBlur = 15
+        qCtx.shadowColor = '#ffcc00'
+        qCtx.strokeStyle = '#ffcc00'
+        qCtx.lineWidth = 3
+        qCtx.strokeRect(barrierStart, barrierY, barrierWidth, barrierHeight)
+        qCtx.shadowBlur = 0
+
+        // 势垒标签
+        qCtx.fillStyle = '#ffcc00'
+        qCtx.font = 'bold 14px Arial'
+        qCtx.textAlign = 'center'
+        qCtx.fillText(`V₀ = ${V0.toFixed(1)} eV`, barrierStart + barrierWidth / 2, barrierY - 10)
+        qCtx.fillText(`a = ${a.toFixed(1)} nm`, barrierStart + barrierWidth / 2, height - 20)
+
+        // 绘制能量线（动画效果）
+        const energyY = height - (E / 10) * height * 0.5 - 80
+        qCtx.strokeStyle = '#4CAF50'
+        qCtx.lineWidth = 2
+        qCtx.setLineDash([10, 5])
+        qCtx.beginPath()
+        qCtx.moveTo(0, energyY)
+        qCtx.lineTo(width, energyY)
+        qCtx.stroke()
+        qCtx.setLineDash([])
+
+        // 能量标签
+        qCtx.fillStyle = '#4CAF50'
+        qCtx.font = 'bold 14px Arial'
+        qCtx.textAlign = 'left'
+        qCtx.fillText(`E = ${E.toFixed(1)} eV`, 10, energyY - 5)
+
+        // 绘制波函数（动画）
+        quantumAnimFrame += 0.05
+        const k = (2 * Math.PI) / (lambda * 15)
+
+        // 入射波区域
+        qCtx.strokeStyle = '#667eea'
+        qCtx.lineWidth = 3
+        qCtx.shadowBlur = 10
+        qCtx.shadowColor = '#667eea'
+        qCtx.beginPath()
+
+        for (let x = 0; x < barrierStart; x++) {
+          const incident = Math.sin(k * x + quantumAnimFrame) * 35
+          const reflected = Math.sin(-k * x + quantumAnimFrame) * 35 * Math.sqrt(R)
+          const amplitude = incident + reflected
+          const y = energyY + amplitude
+
+          if (x === 0) qCtx.moveTo(x, y)
+          else qCtx.lineTo(x, y)
+        }
+        qCtx.stroke()
+
+        // 势垒内波函数（衰减）
+        qCtx.strokeStyle = '#ff6b6b'
+        qCtx.shadowColor = '#ff6b6b'
+        qCtx.beginPath()
+
+        for (let x = barrierStart; x < barrierStart + barrierWidth; x++) {
+          const progress = (x - barrierStart) / barrierWidth
+          const decay = Math.exp(-8 * progress)
+          const amplitude = Math.sin(k * x * 0.5 + quantumAnimFrame) * 35 * decay
+          const y = energyY + amplitude
+
+          if (x === barrierStart) qCtx.moveTo(x, y)
+          else qCtx.lineTo(x, y)
+        }
+        qCtx.stroke()
+
+        // 透射波区域
+        qCtx.strokeStyle = '#4CAF50'
+        qCtx.shadowColor = '#4CAF50'
+        qCtx.beginPath()
+
+        for (let x = barrierStart + barrierWidth; x < width; x++) {
+          const amplitude = Math.sin(k * x + quantumAnimFrame) * 35 * Math.sqrt(T)
+          const y = energyY + amplitude
+
+          if (x === barrierStart + barrierWidth) qCtx.moveTo(x, y)
+          else qCtx.lineTo(x, y)
+        }
+        qCtx.stroke()
+        qCtx.shadowBlur = 0
+
+        // 添加标签
+        qCtx.fillStyle = '#667eea'
+        qCtx.font = 'bold 13px Arial'
+        qCtx.textAlign = 'center'
+        qCtx.fillText('入射波 + 反射波', barrierStart / 2, 30)
+
+        qCtx.fillStyle = '#ff6b6b'
+        qCtx.fillText('衰减波', barrierStart + barrierWidth / 2, 30)
+
+        qCtx.fillStyle = '#4CAF50'
+        qCtx.fillText(
+          '透射波',
+          barrierStart + barrierWidth + (width - barrierStart - barrierWidth) / 2,
+          30
+        )
+
+        // 如果正在动画，显示粒子
+        if (isAnimating && animationProgress < 1) {
+          const particleX = width * animationProgress
+          let particleY = energyY
+
+          // 粒子在势垒中的行为
+          if (particleX > barrierStart && particleX < barrierStart + barrierWidth) {
+            const inBarrier = (particleX - barrierStart) / barrierWidth
+            particleY += Math.sin(inBarrier * Math.PI) * 20
+          }
+
+          // 绘制粒子（发光球）
+          const particleGradient = qCtx.createRadialGradient(
+            particleX,
+            particleY,
+            0,
+            particleX,
+            particleY,
+            15
+          )
+          particleGradient.addColorStop(0, 'rgba(255, 107, 107, 1)')
+          particleGradient.addColorStop(0.5, 'rgba(255, 107, 107, 0.6)')
+          particleGradient.addColorStop(1, 'rgba(255, 107, 107, 0)')
+
+          qCtx.fillStyle = particleGradient
+          qCtx.beginPath()
+          qCtx.arc(particleX, particleY, 15, 0, Math.PI * 2)
+          qCtx.fill()
+
+          qCtx.fillStyle = '#ff6b6b'
+          qCtx.beginPath()
+          qCtx.arc(particleX, particleY, 6, 0, Math.PI * 2)
+          qCtx.fill()
+
+          animationProgress += 0.01
         }
 
-        // 绘制量子力学可视化（增强版）
-        let quantumAnimFrame = 0;
-        
-        function drawQuantumVisualization(T, R, lambda) {
-            const { V0, a, E } = getParams();
-            const width = quantumCanvas.width / window.devicePixelRatio;
-            const height = quantumCanvas.height / window.devicePixelRatio;
-            
-            qCtx.clearRect(0, 0, width, height);
-            
-            // 绘制背景网格
-            qCtx.strokeStyle = 'rgba(102, 126, 234, 0.1)';
-            qCtx.lineWidth = 0.5;
-            for (let i = 0; i < width; i += 20) {
-                qCtx.beginPath();
-                qCtx.moveTo(i, 0);
-                qCtx.lineTo(i, height);
-                qCtx.stroke();
-            }
-            for (let i = 0; i < height; i += 20) {
-                qCtx.beginPath();
-                qCtx.moveTo(0, i);
-                qCtx.lineTo(width, i);
-                qCtx.stroke();
-            }
-            
-            // 绘制势垒（发光效果）
-            const barrierStart = width * 0.4;
-            const barrierWidth = width * 0.2;
-            const barrierHeight = (V0 / 10) * height * 0.5;
-            const barrierY = height - barrierHeight - 80;
-            
-            // 势垒阴影
-            const gradient = qCtx.createLinearGradient(barrierStart, barrierY, barrierStart + barrierWidth, barrierY);
-            gradient.addColorStop(0, 'rgba(255, 204, 0, 0.1)');
-            gradient.addColorStop(0.5, 'rgba(255, 204, 0, 0.4)');
-            gradient.addColorStop(1, 'rgba(255, 204, 0, 0.1)');
-            qCtx.fillStyle = gradient;
-            qCtx.fillRect(barrierStart, barrierY, barrierWidth, barrierHeight);
-            
-            // 势垒边框（发光）
-            qCtx.shadowBlur = 15;
-            qCtx.shadowColor = '#ffcc00';
-            qCtx.strokeStyle = '#ffcc00';
-            qCtx.lineWidth = 3;
-            qCtx.strokeRect(barrierStart, barrierY, barrierWidth, barrierHeight);
-            qCtx.shadowBlur = 0;
-            
-            // 势垒标签
-            qCtx.fillStyle = '#ffcc00';
-            qCtx.font = 'bold 14px Arial';
-            qCtx.textAlign = 'center';
-            qCtx.fillText(`V₀ = ${V0.toFixed(1)} eV`, barrierStart + barrierWidth/2, barrierY - 10);
-            qCtx.fillText(`a = ${a.toFixed(1)} nm`, barrierStart + barrierWidth/2, height - 20);
-            
-            // 绘制能量线（动画效果）
-            const energyY = height - (E / 10) * height * 0.5 - 80;
-            qCtx.strokeStyle = '#4CAF50';
-            qCtx.lineWidth = 2;
-            qCtx.setLineDash([10, 5]);
-            qCtx.beginPath();
-            qCtx.moveTo(0, energyY);
-            qCtx.lineTo(width, energyY);
-            qCtx.stroke();
-            qCtx.setLineDash([]);
-            
-            // 能量标签
-            qCtx.fillStyle = '#4CAF50';
-            qCtx.font = 'bold 14px Arial';
-            qCtx.textAlign = 'left';
-            qCtx.fillText(`E = ${E.toFixed(1)} eV`, 10, energyY - 5);
-            
-            // 绘制波函数（动画）
-            quantumAnimFrame += 0.05;
-            const k = 2 * Math.PI / (lambda * 15);
-            
-            // 入射波区域
-            qCtx.strokeStyle = '#667eea';
-            qCtx.lineWidth = 3;
-            qCtx.shadowBlur = 10;
-            qCtx.shadowColor = '#667eea';
-            qCtx.beginPath();
-            
-            for (let x = 0; x < barrierStart; x++) {
-                const incident = Math.sin(k * x + quantumAnimFrame) * 35;
-                const reflected = Math.sin(-k * x + quantumAnimFrame) * 35 * Math.sqrt(R);
-                const amplitude = incident + reflected;
-                const y = energyY + amplitude;
-                
-                if (x === 0) qCtx.moveTo(x, y);
-                else qCtx.lineTo(x, y);
-            }
-            qCtx.stroke();
-            
-            // 势垒内波函数（衰减）
-            qCtx.strokeStyle = '#ff6b6b';
-            qCtx.shadowColor = '#ff6b6b';
-            qCtx.beginPath();
-            
-            for (let x = barrierStart; x < barrierStart + barrierWidth; x++) {
-                const progress = (x - barrierStart) / barrierWidth;
-                const decay = Math.exp(-8 * progress);
-                const amplitude = Math.sin(k * x * 0.5 + quantumAnimFrame) * 35 * decay;
-                const y = energyY + amplitude;
-                
-                if (x === barrierStart) qCtx.moveTo(x, y);
-                else qCtx.lineTo(x, y);
-            }
-            qCtx.stroke();
-            
-            // 透射波区域
-            qCtx.strokeStyle = '#4CAF50';
-            qCtx.shadowColor = '#4CAF50';
-            qCtx.beginPath();
-            
-            for (let x = barrierStart + barrierWidth; x < width; x++) {
-                const amplitude = Math.sin(k * x + quantumAnimFrame) * 35 * Math.sqrt(T);
-                const y = energyY + amplitude;
-                
-                if (x === barrierStart + barrierWidth) qCtx.moveTo(x, y);
-                else qCtx.lineTo(x, y);
-            }
-            qCtx.stroke();
-            qCtx.shadowBlur = 0;
-            
-            // 添加标签
-            qCtx.fillStyle = '#667eea';
-            qCtx.font = 'bold 13px Arial';
-            qCtx.textAlign = 'center';
-            qCtx.fillText('入射波 + 反射波', barrierStart/2, 30);
-            
-            qCtx.fillStyle = '#ff6b6b';
-            qCtx.fillText('衰减波', barrierStart + barrierWidth/2, 30);
-            
-            qCtx.fillStyle = '#4CAF50';
-            qCtx.fillText('透射波', barrierStart + barrierWidth + (width - barrierStart - barrierWidth)/2, 30);
-            
-            // 如果正在动画，显示粒子
-            if (isAnimating && animationProgress < 1) {
-                const particleX = width * animationProgress;
-                let particleY = energyY;
-                
-                // 粒子在势垒中的行为
-                if (particleX > barrierStart && particleX < barrierStart + barrierWidth) {
-                    const inBarrier = (particleX - barrierStart) / barrierWidth;
-                    particleY += Math.sin(inBarrier * Math.PI) * 20;
-                }
-                
-                // 绘制粒子（发光球）
-                const particleGradient = qCtx.createRadialGradient(particleX, particleY, 0, particleX, particleY, 15);
-                particleGradient.addColorStop(0, 'rgba(255, 107, 107, 1)');
-                particleGradient.addColorStop(0.5, 'rgba(255, 107, 107, 0.6)');
-                particleGradient.addColorStop(1, 'rgba(255, 107, 107, 0)');
-                
-                qCtx.fillStyle = particleGradient;
-                qCtx.beginPath();
-                qCtx.arc(particleX, particleY, 15, 0, Math.PI * 2);
-                qCtx.fill();
-                
-                qCtx.fillStyle = '#ff6b6b';
-                qCtx.beginPath();
-                qCtx.arc(particleX, particleY, 6, 0, Math.PI * 2);
-                qCtx.fill();
-                
-                animationProgress += 0.01;
-            }
-            
-            // 持续动画波函数
-            requestAnimationFrame(() => drawQuantumVisualization(T, R, lambda));
+        // 持续动画波函数
+        requestAnimationFrame(() => drawQuantumVisualization(T, R, lambda))
+      }
+
+      // ==================== 粒子动画 ====================
+      function animateParticle() {
+        isAnimating = true
+        animationProgress = 0
+      }
+
+      function resetVisualization() {
+        isAnimating = false
+        animationProgress = 0
+        updateDisplay()
+      }
+
+      // ==================== 事件监听 ====================
+      document.getElementById('barrierHeight').addEventListener('input', e => {
+        document.getElementById('barrierHeightValue').textContent = e.target.value
+        updateDisplay()
+      })
+
+      document.getElementById('barrierWidth').addEventListener('input', e => {
+        document.getElementById('barrierWidthValue').textContent = e.target.value
+        updateDisplay()
+      })
+
+      document.getElementById('particleEnergy').addEventListener('input', e => {
+        document.getElementById('particleEnergyValue').textContent = e.target.value
+        updateDisplay()
+      })
+
+      document.getElementById('animateBtn').addEventListener('click', animateParticle)
+      document.getElementById('resetBtn').addEventListener('click', resetVisualization)
+
+      // ==================== 初始化 ====================
+      window.addEventListener('load', () => {
+        initSpiralScene()
+        updateDisplay()
+      })
+
+      window.addEventListener('resize', () => {
+        resizeCanvas(quantumCanvas)
+
+        if (spiralRenderer && spiralCamera) {
+          const aspect = spiralCanvas.clientWidth / spiralCanvas.clientHeight
+          spiralCamera.aspect = aspect
+          spiralCamera.updateProjectionMatrix()
+          spiralRenderer.setSize(spiralCanvas.clientWidth, spiralCanvas.clientHeight)
         }
 
-        // ==================== 粒子动画 ====================
-        function animateParticle() {
-            isAnimating = true;
-            animationProgress = 0;
-        }
-
-        function resetVisualization() {
-            isAnimating = false;
-            animationProgress = 0;
-            updateDisplay();
-        }
-
-        // ==================== 事件监听 ====================
-        document.getElementById('barrierHeight').addEventListener('input', (e) => {
-            document.getElementById('barrierHeightValue').textContent = e.target.value;
-            updateDisplay();
-        });
-
-        document.getElementById('barrierWidth').addEventListener('input', (e) => {
-            document.getElementById('barrierWidthValue').textContent = e.target.value;
-            updateDisplay();
-        });
-
-        document.getElementById('particleEnergy').addEventListener('input', (e) => {
-            document.getElementById('particleEnergyValue').textContent = e.target.value;
-            updateDisplay();
-        });
-
-        document.getElementById('animateBtn').addEventListener('click', animateParticle);
-        document.getElementById('resetBtn').addEventListener('click', resetVisualization);
-
-        // ==================== 初始化 ====================
-        window.addEventListener('load', () => {
-            initSpiralScene();
-            updateDisplay();
-        });
-
-        window.addEventListener('resize', () => {
-            resizeCanvas(quantumCanvas);
-            
-            if (spiralRenderer && spiralCamera) {
-                const aspect = spiralCanvas.clientWidth / spiralCanvas.clientHeight;
-                spiralCamera.aspect = aspect;
-                spiralCamera.updateProjectionMatrix();
-                spiralRenderer.setSize(spiralCanvas.clientWidth, spiralCanvas.clientHeight);
-            }
-            
-            updateDisplay();
-        });
+        updateDisplay()
+      })
     </script>
-</body>
+  </body>
 </html>

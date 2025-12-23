@@ -105,11 +105,7 @@ export class VectorMath {
    * 向量叉积
    */
   static cross(a: THREE.Vector3, b: THREE.Vector3): THREE.Vector3 {
-    return new THREE.Vector3(
-      a.y * b.z - a.z * b.y,
-      a.z * b.x - a.x * b.z,
-      a.x * b.y - a.y * b.x
-    )
+    return new THREE.Vector3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x)
   }
 
   /**
@@ -141,11 +137,7 @@ export class VectorMath {
    * 向量插值
    */
   static lerp(a: THREE.Vector3, b: THREE.Vector3, t: number): THREE.Vector3 {
-    return new THREE.Vector3(
-      a.x + (b.x - a.x) * t,
-      a.y + (b.y - a.y) * t,
-      a.z + (b.z - a.z) * t
-    )
+    return new THREE.Vector3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t)
   }
 
   /**
@@ -179,7 +171,9 @@ export class MatrixMath {
     const cols = b[0].length
     const inner = b.length
 
-    const result: number[][] = Array(rows).fill(0).map(() => Array(cols).fill(0))
+    const result: number[][] = Array(rows)
+      .fill(0)
+      .map(() => Array(cols).fill(0))
 
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < cols; j++) {
@@ -199,7 +193,9 @@ export class MatrixMath {
     const rows = matrix.length
     const cols = matrix[0].length
 
-    const result: number[][] = Array(cols).fill(0).map(() => Array(rows).fill(0))
+    const result: number[][] = Array(cols)
+      .fill(0)
+      .map(() => Array(rows).fill(0))
 
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < cols; j++) {
@@ -232,7 +228,9 @@ export class MatrixMath {
    * 单位矩阵
    */
   static identity(size: number): number[][] {
-    const result: number[][] = Array(size).fill(0).map(() => Array(size).fill(0))
+    const result: number[][] = Array(size)
+      .fill(0)
+      .map(() => Array(size).fill(0))
     for (let i = 0; i < size; i++) {
       result[i][i] = 1
     }
@@ -370,12 +368,7 @@ export class NumericalIntegration {
   /**
    * 梯形法则
    */
-  static trapezoid(
-    f: (x: number) => number,
-    a: number,
-    b: number,
-    n: number
-  ): number {
+  static trapezoid(f: (x: number) => number, a: number, b: number, n: number): number {
     const h = (b - a) / n
     let sum = (f(a) + f(b)) / 2
 
@@ -389,12 +382,7 @@ export class NumericalIntegration {
   /**
    * 辛普森法则
    */
-  static simpson(
-    f: (x: number) => number,
-    a: number,
-    b: number,
-    n: number
-  ): number {
+  static simpson(f: (x: number) => number, a: number, b: number, n: number): number {
     if (n % 2 !== 0) n++
 
     const h = (b - a) / n
@@ -567,13 +555,7 @@ export const MathUtils = {
   /**
    * 线性映射
    */
-  map(
-    value: number,
-    inMin: number,
-    inMax: number,
-    outMin: number,
-    outMax: number
-  ): number {
+  map(value: number, inMin: number, inMax: number, outMin: number, outMax: number): number {
     return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin
   },
 

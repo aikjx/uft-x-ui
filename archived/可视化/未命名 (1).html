@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>张祥前统一场论核心公式 - 3D 可视化 v3.0</title>
     <!-- Tailwind CSS 样式库 -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,260 +13,352 @@
     <!-- Three.js 轨道控制器 -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
     <!-- MathJax 公式渲染库 -->
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+
     <script>
-        // MathJax 核心配置
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                processEscapes: true,
-                packages: {'[+]': ['physics', 'ams']}, // 增强物理/数学符号支持
-                macros: { // 自定义宏解决符号兼容问题
-                    vec: ['\\boldsymbol{#1}', 1],
-                    overrightarrow: ['\\boldsymbol{#1}', 1],
-                    overline: ['\\boldsymbol{#1}', 1],
-                    nabla: '\\boldsymbol{\\nabla}',
-                    Omega: '\\Omega',
-                    gamma: '\\gamma',
-                    epsilon_0: '\\varepsilon_0',
-                    mu_0: '\\mu_0'
-                }
-            },
-            svg: { fontCache: 'global' },
-            startup: {
-                pageReady: () => {
-                    return MathJax.startup.defaultPageReady().then(() => {
-                        // 隐藏加载提示，初始化3D场景
-                        document.getElementById('loading').style.display = 'none';
-                        init3DScene();
-                    });
-                }
-            }
-        };
-
-        // 公式数据（完整修正版）
-        const formulaData = [
-            { id: 1, name: "时空同一化方程", latex: "\\vec{r}(t) = \\vec{C}t = x\\vec{i} + y\\vec{j} + z\\vec{k}" },
-            { id: 2, name: "三维螺旋时空方程", latex: "\\vec{r}(t) = r\\cos\\omega t \\cdot \\vec{i} + r\\sin\\omega t \\cdot \\vec{j} + ht \\cdot \\vec{k}" },
-            { id: 3, name: "质量定义方程", latex: "m = k \\cdot \\frac{dn}{d\\Omega}" },
-            { id: 4, name: "引力场定义方程", latex: "\\overrightarrow{A} = -Gk\\frac{\\Delta n}{\\Delta s}\\frac{\\overrightarrow{r}}{r}" },
-            { id: 5, name: "静止动量方程", latex: "\\overrightarrow{p}_{0} = m_{0}\\overrightarrow{C}_{0}" },
-            { id: 6, name: "运动动量方程", latex: "\\overrightarrow{P} = m(\\overrightarrow{C} - \\overrightarrow{V})" },
-            { id: 7, name: "宇宙大统一方程（力方程）", latex: "F = \\frac{d\\vec{P}}{dt} = \\vec{C}\\frac{dm}{dt} - \\vec{V}\\frac{dm}{dt} + m\\frac{d\\vec{C}}{dt} - m\\frac{d\\vec{V}}{dt}" },
-            { id: 8, name: "空间波动方程", latex: "\\frac{\\partial^2 L}{\\partial x^2} + \\frac{\\partial^2 L}{\\partial y^2} + \\frac{\\partial^2 L}{\\partial z^2} = \\frac{1}{c^2} \\frac{\\partial^2 L}{\\partial t^2}" },
-            { id: 9, name: "电荷定义方程", latex: "q = k'k\\frac{1}{\\Omega^{2}}\\frac{d\\Omega}{dt}" },
-            { id: 10, name: "电场定义方程", latex: "\\vec{E} = -\\frac{kk'}{4\\pi\\epsilon_0\\Omega^2}\\frac{d\\Omega}{dt}\\frac{\\vec{r}}{r^3}" },
-            { id: 11, name: "磁场定义方程", latex: "\\vec{B} = \\frac{\\mu_{0} \\gamma k k'}{4 \\pi \\Omega^{2}} \\frac{d \\Omega}{d t} \\frac{[(x-v t) \\vec{i}+y \\vec{j}+z \\vec{k}]}{\\left[\\gamma^{2}(x-v t)^{2}+y^{2}+z^{2}\\right]^{\\frac{3}{2}}}" },
-            { id: 12, name: "变化的引力场产生电磁场", latex: "\\frac{\\partial^{2}\\overline{A}}{\\partial t^{2}} = \\frac{\\overline{V}}{f}\\left(\\overline{\\nabla}\\cdot\\overline{E}\\right) - \\frac{C^{2}}{f}\\left(\\overline{\\nabla}\\times\\overline{B}\\right)" },
-            { id: 13, name: "磁矢势方程", latex: "\\vec{\\nabla} \\times \\vec{A} = \\frac{\\vec{B}}{f}" },
-            { id: 14, name: "变化的引力场产生电场", latex: "\\vec{E} = -f\\frac{d\\vec{A}}{dt}" },
-            { id: 15, name: "变化的磁场产生引力场和电场", latex: "\\frac{d\\overrightarrow{B}}{dt} = \\frac{-\\overrightarrow{A}\\times\\overrightarrow{E}}{c^2} - \\frac{\\overrightarrow{V}}{c^{2}}\\times\\frac{d\\overrightarrow{E}}{dt}" },
-            { id: 16, name: "统一场论能量方程", latex: "e = m_0 c^2 = mc^2\\sqrt{1 - \\frac{v^2}{c^2}}" },
-            { id: 17, name: "光速飞行器动力学方程", latex: "\\vec{F} = (\\vec{C} - \\vec{V})\\frac{dm}{dt}" },
-            { id: 18, name: "核力场定义方程", latex: "\\mathbf{D} = - G m \\frac{ \\mathbf{C} - 3 \\frac{\\mathbf{R}}{r} \\dot{r} }{r^3}" },
-            { id: 19, name: "引力光速统一方程", latex: "Z = Gc/2" }
-        ];
-
-        // 全局核心变量
-        let scene, camera, renderer, css2DRenderer, controls;
-        let formulaCards = [];
-        let raycaster, mouse; // 射线检测（修复点击功能）
-        let autoRotate = false;
-
-        // 初始化3D场景（核心修复版）
-        function init3DScene() {
-            // ========== 基础场景创建 ==========
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a1a);
-            scene.fog = new THREE.Fog(0x0a0a1a, 50, 200);
-
-            // 相机优化：适配移动端视角
-            camera = new THREE.PerspectiveCamera(
-                window.innerWidth < 768 ? 70 : 60, // 移动端更大视角
-                window.innerWidth / window.innerHeight,
-                0.1,
-                1000
-            );
-            camera.position.set(0, 10, 60);
-
-            // 渲染器优化：抗锯齿+像素比适配
-            renderer = new THREE.WebGLRenderer({ 
-                antialias: true,
-                powerPreference: "high-performance" // 性能优先
-            });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 限制像素比防性能问题
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            document.getElementById('3d-container').appendChild(renderer.domElement);
-
-            // CSS2D渲染器修复：层级+尺寸适配
-            css2DRenderer = new THREE.CSS2DRenderer();
-            css2DRenderer.setSize(window.innerWidth, window.innerHeight);
-            css2DRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            css2DRenderer.domElement.style.position = 'absolute';
-            css2DRenderer.domElement.style.top = '0';
-            css2DRenderer.domElement.style.left = '0';
-            css2DRenderer.domElement.style.pointerEvents = 'none';
-            css2DRenderer.domElement.style.zIndex = '10'; // 确保在最上层
-            document.getElementById('3d-container').appendChild(css2DRenderer.domElement);
-
-            // ========== 光源优化 ==========
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            scene.add(ambientLight);
-
-            const directionalLight = new THREE.DirectionalLight(0x4080ff, 1.2);
-            directionalLight.position.set(50, 50, 50);
-            directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 2048;
-            directionalLight.shadow.mapSize.height = 2048;
-            scene.add(directionalLight);
-
-            const pointLight = new THREE.PointLight(0xff4080, 0.8, 100);
-            pointLight.position.set(-50, 30, -50);
-            scene.add(pointLight);
-
-            // ========== 控制器优化 ==========
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.08; // 更顺滑的阻尼
-            controls.minDistance = 15;
-            controls.maxDistance = 180;
-            controls.maxPolarAngle = Math.PI / 1.8;
-            controls.enablePan = window.innerWidth >= 768; // 移动端禁用平移（防止误触）
-            controls.autoRotate = false;
-            controls.autoRotateSpeed = 1.5;
-
-            // ========== 射线检测（核心修复：点击功能） ==========
-            raycaster = new THREE.Raycaster();
-            mouse = new THREE.Vector2();
-            // 绑定点击/触摸事件
-            renderer.domElement.addEventListener('click', onMouseClick);
-            renderer.domElement.addEventListener('touchstart', onTouchStart);
-
-            // ========== 创建公式卡片 ==========
-            createFormulaCards();
-
-            // ========== 窗口适配修复 ==========
-            window.addEventListener('resize', onWindowResize);
-
-            // ========== 初始化移动端公式列表 ==========
-            initMobileFormulaList();
-
-            // ========== 启动渲染循环 ==========
-            animate();
+      // MathJax 核心配置
+      window.MathJax = {
+        tex: {
+          inlineMath: [
+            ['$', '$'],
+            ['\\(', '\\)']
+          ],
+          displayMath: [
+            ['$$', '$$'],
+            ['\\[', '\\]']
+          ],
+          processEscapes: true,
+          packages: { '[+]': ['physics', 'ams'] }, // 增强物理/数学符号支持
+          macros: {
+            // 自定义宏解决符号兼容问题
+            vec: ['\\boldsymbol{#1}', 1],
+            overrightarrow: ['\\boldsymbol{#1}', 1],
+            overline: ['\\boldsymbol{#1}', 1],
+            nabla: '\\boldsymbol{\\nabla}',
+            Omega: '\\Omega',
+            gamma: '\\gamma',
+            epsilon_0: '\\varepsilon_0',
+            mu_0: '\\mu_0'
+          }
+        },
+        svg: { fontCache: 'global' },
+        startup: {
+          pageReady: () => {
+            return MathJax.startup.defaultPageReady().then(() => {
+              // 隐藏加载提示，初始化3D场景
+              document.getElementById('loading').style.display = 'none'
+              init3DScene()
+            })
+          }
         }
+      }
 
-        // 创建公式卡片（修复碰撞体+朝向逻辑）
-        function createFormulaCards() {
-            const radius = window.innerWidth < 768 ? 35 : 45; // 移动端缩小球体半径
-            const count = formulaData.length;
+      // 公式数据（完整修正版）
+      const formulaData = [
+        {
+          id: 1,
+          name: '时空同一化方程',
+          latex: '\\vec{r}(t) = \\vec{C}t = x\\vec{i} + y\\vec{j} + z\\vec{k}'
+        },
+        {
+          id: 2,
+          name: '三维螺旋时空方程',
+          latex:
+            '\\vec{r}(t) = r\\cos\\omega t \\cdot \\vec{i} + r\\sin\\omega t \\cdot \\vec{j} + ht \\cdot \\vec{k}'
+        },
+        { id: 3, name: '质量定义方程', latex: 'm = k \\cdot \\frac{dn}{d\\Omega}' },
+        {
+          id: 4,
+          name: '引力场定义方程',
+          latex:
+            '\\overrightarrow{A} = -Gk\\frac{\\Delta n}{\\Delta s}\\frac{\\overrightarrow{r}}{r}'
+        },
+        {
+          id: 5,
+          name: '静止动量方程',
+          latex: '\\overrightarrow{p}_{0} = m_{0}\\overrightarrow{C}_{0}'
+        },
+        {
+          id: 6,
+          name: '运动动量方程',
+          latex: '\\overrightarrow{P} = m(\\overrightarrow{C} - \\overrightarrow{V})'
+        },
+        {
+          id: 7,
+          name: '宇宙大统一方程（力方程）',
+          latex:
+            'F = \\frac{d\\vec{P}}{dt} = \\vec{C}\\frac{dm}{dt} - \\vec{V}\\frac{dm}{dt} + m\\frac{d\\vec{C}}{dt} - m\\frac{d\\vec{V}}{dt}'
+        },
+        {
+          id: 8,
+          name: '空间波动方程',
+          latex:
+            '\\frac{\\partial^2 L}{\\partial x^2} + \\frac{\\partial^2 L}{\\partial y^2} + \\frac{\\partial^2 L}{\\partial z^2} = \\frac{1}{c^2} \\frac{\\partial^2 L}{\\partial t^2}'
+        },
+        { id: 9, name: '电荷定义方程', latex: "q = k'k\\frac{1}{\\Omega^{2}}\\frac{d\\Omega}{dt}" },
+        {
+          id: 10,
+          name: '电场定义方程',
+          latex:
+            "\\vec{E} = -\\frac{kk'}{4\\pi\\epsilon_0\\Omega^2}\\frac{d\\Omega}{dt}\\frac{\\vec{r}}{r^3}"
+        },
+        {
+          id: 11,
+          name: '磁场定义方程',
+          latex:
+            "\\vec{B} = \\frac{\\mu_{0} \\gamma k k'}{4 \\pi \\Omega^{2}} \\frac{d \\Omega}{d t} \\frac{[(x-v t) \\vec{i}+y \\vec{j}+z \\vec{k}]}{\\left[\\gamma^{2}(x-v t)^{2}+y^{2}+z^{2}\\right]^{\\frac{3}{2}}}"
+        },
+        {
+          id: 12,
+          name: '变化的引力场产生电磁场',
+          latex:
+            '\\frac{\\partial^{2}\\overline{A}}{\\partial t^{2}} = \\frac{\\overline{V}}{f}\\left(\\overline{\\nabla}\\cdot\\overline{E}\\right) - \\frac{C^{2}}{f}\\left(\\overline{\\nabla}\\times\\overline{B}\\right)'
+        },
+        {
+          id: 13,
+          name: '磁矢势方程',
+          latex: '\\vec{\\nabla} \\times \\vec{A} = \\frac{\\vec{B}}{f}'
+        },
+        { id: 14, name: '变化的引力场产生电场', latex: '\\vec{E} = -f\\frac{d\\vec{A}}{dt}' },
+        {
+          id: 15,
+          name: '变化的磁场产生引力场和电场',
+          latex:
+            '\\frac{d\\overrightarrow{B}}{dt} = \\frac{-\\overrightarrow{A}\\times\\overrightarrow{E}}{c^2} - \\frac{\\overrightarrow{V}}{c^{2}}\\times\\frac{d\\overrightarrow{E}}{dt}'
+        },
+        {
+          id: 16,
+          name: '统一场论能量方程',
+          latex: 'e = m_0 c^2 = mc^2\\sqrt{1 - \\frac{v^2}{c^2}}'
+        },
+        {
+          id: 17,
+          name: '光速飞行器动力学方程',
+          latex: '\\vec{F} = (\\vec{C} - \\vec{V})\\frac{dm}{dt}'
+        },
+        {
+          id: 18,
+          name: '核力场定义方程',
+          latex:
+            '\\mathbf{D} = - G m \\frac{ \\mathbf{C} - 3 \\frac{\\mathbf{R}}{r} \\dot{r} }{r^3}'
+        },
+        { id: 19, name: '引力光速统一方程', latex: 'Z = Gc/2' }
+      ]
 
-            formulaData.forEach((formula, index) => {
-                // 球形分布角度优化：更均匀的分布
-                const phi = Math.acos(-1 + (2 * index + 1) / count);
-                const theta = Math.sqrt(count * Math.PI) * phi + Math.PI / 4;
+      // 全局核心变量
+      let scene, camera, renderer, css2DRenderer, controls
+      let formulaCards = []
+      let raycaster, mouse // 射线检测（修复点击功能）
+      let autoRotate = false
 
-                // 3D位置计算
-                const x = radius * Math.sin(phi) * Math.cos(theta);
-                const y = radius * Math.sin(phi) * Math.sin(theta);
-                const z = radius * Math.cos(phi);
+      // 初始化3D场景（核心修复版）
+      function init3DScene() {
+        // ========== 基础场景创建 ==========
+        scene = new THREE.Scene()
+        scene.background = new THREE.Color(0x0a0a1a)
+        scene.fog = new THREE.Fog(0x0a0a1a, 50, 200)
 
-                // 1. 创建HTML卡片（样式优化）
-                const cardElement = document.createElement('div');
-                cardElement.className = 'bg-black/85 backdrop-blur-md rounded-lg p-3 w-64 sm:w-72 border border-blue-500/30 text-white shadow-xl hover:border-blue-400 transition-all duration-300 transform hover:scale-102';
-                cardElement.innerHTML = `
+        // 相机优化：适配移动端视角
+        camera = new THREE.PerspectiveCamera(
+          window.innerWidth < 768 ? 70 : 60, // 移动端更大视角
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000
+        )
+        camera.position.set(0, 10, 60)
+
+        // 渲染器优化：抗锯齿+像素比适配
+        renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          powerPreference: 'high-performance' // 性能优先
+        })
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)) // 限制像素比防性能问题
+        renderer.shadowMap.enabled = true
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap
+        document.getElementById('3d-container').appendChild(renderer.domElement)
+
+        // CSS2D渲染器修复：层级+尺寸适配
+        css2DRenderer = new THREE.CSS2DRenderer()
+        css2DRenderer.setSize(window.innerWidth, window.innerHeight)
+        css2DRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        css2DRenderer.domElement.style.position = 'absolute'
+        css2DRenderer.domElement.style.top = '0'
+        css2DRenderer.domElement.style.left = '0'
+        css2DRenderer.domElement.style.pointerEvents = 'none'
+        css2DRenderer.domElement.style.zIndex = '10' // 确保在最上层
+        document.getElementById('3d-container').appendChild(css2DRenderer.domElement)
+
+        // ========== 光源优化 ==========
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7)
+        scene.add(ambientLight)
+
+        const directionalLight = new THREE.DirectionalLight(0x4080ff, 1.2)
+        directionalLight.position.set(50, 50, 50)
+        directionalLight.castShadow = true
+        directionalLight.shadow.mapSize.width = 2048
+        directionalLight.shadow.mapSize.height = 2048
+        scene.add(directionalLight)
+
+        const pointLight = new THREE.PointLight(0xff4080, 0.8, 100)
+        pointLight.position.set(-50, 30, -50)
+        scene.add(pointLight)
+
+        // ========== 控制器优化 ==========
+        controls = new THREE.OrbitControls(camera, renderer.domElement)
+        controls.enableDamping = true
+        controls.dampingFactor = 0.08 // 更顺滑的阻尼
+        controls.minDistance = 15
+        controls.maxDistance = 180
+        controls.maxPolarAngle = Math.PI / 1.8
+        controls.enablePan = window.innerWidth >= 768 // 移动端禁用平移（防止误触）
+        controls.autoRotate = false
+        controls.autoRotateSpeed = 1.5
+
+        // ========== 射线检测（核心修复：点击功能） ==========
+        raycaster = new THREE.Raycaster()
+        mouse = new THREE.Vector2()
+        // 绑定点击/触摸事件
+        renderer.domElement.addEventListener('click', onMouseClick)
+        renderer.domElement.addEventListener('touchstart', onTouchStart)
+
+        // ========== 创建公式卡片 ==========
+        createFormulaCards()
+
+        // ========== 窗口适配修复 ==========
+        window.addEventListener('resize', onWindowResize)
+
+        // ========== 初始化移动端公式列表 ==========
+        initMobileFormulaList()
+
+        // ========== 启动渲染循环 ==========
+        animate()
+      }
+
+      // 创建公式卡片（修复碰撞体+朝向逻辑）
+      function createFormulaCards() {
+        const radius = window.innerWidth < 768 ? 35 : 45 // 移动端缩小球体半径
+        const count = formulaData.length
+
+        formulaData.forEach((formula, index) => {
+          // 球形分布角度优化：更均匀的分布
+          const phi = Math.acos(-1 + (2 * index + 1) / count)
+          const theta = Math.sqrt(count * Math.PI) * phi + Math.PI / 4
+
+          // 3D位置计算
+          const x = radius * Math.sin(phi) * Math.cos(theta)
+          const y = radius * Math.sin(phi) * Math.sin(theta)
+          const z = radius * Math.cos(phi)
+
+          // 1. 创建HTML卡片（样式优化）
+          const cardElement = document.createElement('div')
+          cardElement.className =
+            'bg-black/85 backdrop-blur-md rounded-lg p-3 w-64 sm:w-72 border border-blue-500/30 text-white shadow-xl hover:border-blue-400 transition-all duration-300 transform hover:scale-102'
+          cardElement.innerHTML = `
                     <div class="flex justify-between items-center mb-2">
                         <span class="bg-blue-600/80 px-2 py-1 rounded text-xs">序号 ${formula.id}</span>
                         <h3 class="text-xs font-medium text-blue-300">${formula.name}</h3>
                     </div>
                     <div class="formula-content text-center py-1 min-h-[80px]">$$${formula.latex}$$</div>
-                `;
+                `
 
-                // 2. CSS2D对象（修复朝向逻辑）
-                const css2DObject = new THREE.CSS2DObject(cardElement);
-                css2DObject.position.set(x, y, z);
-                scene.add(css2DObject);
+          // 2. CSS2D对象（修复朝向逻辑）
+          const css2DObject = new THREE.CSS2DObject(cardElement)
+          css2DObject.position.set(x, y, z)
+          scene.add(css2DObject)
 
-                // 3. 碰撞体优化：适配卡片尺寸
-                const geometry = new THREE.PlaneGeometry(18, 10); // 更精准的碰撞区域
-                const material = new THREE.MeshBasicMaterial({ 
-                    transparent: true, 
-                    opacity: 0,
-                    side: THREE.DoubleSide 
-                });
-                const mesh = new THREE.Mesh(geometry, material);
-                mesh.position.set(x, y, z);
-                mesh.userData = { 
-                    formula: formula, 
-                    card: css2DObject,
-                    index: index
-                };
-                scene.add(mesh);
+          // 3. 碰撞体优化：适配卡片尺寸
+          const geometry = new THREE.PlaneGeometry(18, 10) // 更精准的碰撞区域
+          const material = new THREE.MeshBasicMaterial({
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide
+          })
+          const mesh = new THREE.Mesh(geometry, material)
+          mesh.position.set(x, y, z)
+          mesh.userData = {
+            formula: formula,
+            card: css2DObject,
+            index: index
+          }
+          scene.add(mesh)
 
-                // 存储卡片数据
-                formulaCards.push({ mesh, css2DObject, formula });
-            });
+          // 存储卡片数据
+          formulaCards.push({ mesh, css2DObject, formula })
+        })
 
-            // 强制MathJax渲染动态公式
-            setTimeout(() => MathJax.typeset(), 300);
+        // 强制MathJax渲染动态公式
+        setTimeout(() => MathJax.typeset(), 300)
+      }
+
+      // ========== 核心修复：点击/触摸事件 ==========
+      function onMouseClick(event) {
+        // 计算鼠标坐标（归一化）
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+
+        // 更新射线
+        raycaster.setFromCamera(mouse, camera)
+
+        // 检测碰撞
+        const intersects = raycaster.intersectObjects(formulaCards.map(c => c.mesh))
+
+        if (intersects.length > 0) {
+          const clickedMesh = intersects[0].object
+          highlightCard(clickedMesh.userData.index)
+          updateDetailPanel(clickedMesh.userData.formula)
         }
+      }
 
-        // ========== 核心修复：点击/触摸事件 ==========
-        function onMouseClick(event) {
-            // 计算鼠标坐标（归一化）
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
-            
-            // 更新射线
-            raycaster.setFromCamera(mouse, camera);
-            
-            // 检测碰撞
-            const intersects = raycaster.intersectObjects(formulaCards.map(c => c.mesh));
-            
-            if (intersects.length > 0) {
-                const clickedMesh = intersects[0].object;
-                highlightCard(clickedMesh.userData.index);
-                updateDetailPanel(clickedMesh.userData.formula);
-            }
+      // 移动端触摸事件适配
+      function onTouchStart(event) {
+        if (event.touches.length === 1) {
+          // 单指点击
+          event.preventDefault()
+          const touch = event.touches[0]
+          mouse.x = (touch.clientX / window.innerWidth) * 2 - 1
+          mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1
+
+          raycaster.setFromCamera(mouse, camera)
+          const intersects = raycaster.intersectObjects(formulaCards.map(c => c.mesh))
+
+          if (intersects.length > 0) {
+            const clickedMesh = intersects[0].object
+            highlightCard(clickedMesh.userData.index)
+            updateDetailPanel(clickedMesh.userData.formula)
+          }
         }
+      }
 
-        // 移动端触摸事件适配
-        function onTouchStart(event) {
-            if (event.touches.length === 1) { // 单指点击
-                event.preventDefault();
-                const touch = event.touches[0];
-                mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
-                mouse.y = - (touch.clientY / window.innerHeight) * 2 + 1;
-                
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObjects(formulaCards.map(c => c.mesh));
-                
-                if (intersects.length > 0) {
-                    const clickedMesh = intersects[0].object;
-                    highlightCard(clickedMesh.userData.index);
-                    updateDetailPanel(clickedMesh.userData.formula);
-                }
-            }
-        }
+      // 高亮选中的卡片
+      function highlightCard(index) {
+        formulaCards.forEach((card, i) => {
+          if (i === index) {
+            card.css2DObject.element.classList.add(
+              'ring-2',
+              'ring-blue-400',
+              'scale-105',
+              'bg-blue-900/20'
+            )
+          } else {
+            card.css2DObject.element.classList.remove(
+              'ring-2',
+              'ring-blue-400',
+              'scale-105',
+              'bg-blue-900/20'
+            )
+          }
+        })
+      }
 
-        // 高亮选中的卡片
-        function highlightCard(index) {
-            formulaCards.forEach((card, i) => {
-                if (i === index) {
-                    card.css2DObject.element.classList.add('ring-2', 'ring-blue-400', 'scale-105', 'bg-blue-900/20');
-                } else {
-                    card.css2DObject.element.classList.remove('ring-2', 'ring-blue-400', 'scale-105', 'bg-blue-900/20');
-                }
-            });
-        }
-
-        // 更新详情面板
-        function updateDetailPanel(formula) {
-            const panel = document.getElementById('detail-panel');
-            panel.innerHTML = `
+      // 更新详情面板
+      function updateDetailPanel(formula) {
+        const panel = document.getElementById('detail-panel')
+        panel.innerHTML = `
                 <h2 class="text-2xl font-bold text-blue-400 mb-4">${formula.id}. ${formula.name}</h2>
                 <div class="p-4 bg-black/60 rounded-lg border border-blue-500/20">
                     $$${formula.latex}$$
@@ -275,168 +367,208 @@
                     <p>统一场论核心公式 v3.0</p>
                     <p>公式编号：${formula.id}</p>
                 </div>
-            `;
-            setTimeout(() => MathJax.typeset([panel]), 100);
-        }
+            `
+        setTimeout(() => MathJax.typeset([panel]), 100)
+      }
 
-        // 初始化移动端公式列表（修复模板字符串问题）
-        function initMobileFormulaList() {
-            const listContainer = document.getElementById('mobile-formula-list');
-            let listHtml = '';
-            formulaData.forEach(f => {
-                listHtml += `
+      // 初始化移动端公式列表（修复模板字符串问题）
+      function initMobileFormulaList() {
+        const listContainer = document.getElementById('mobile-formula-list')
+        let listHtml = ''
+        formulaData.forEach(f => {
+          listHtml += `
                     <div class="bg-black/70 p-2 rounded border border-blue-500/20 text-xs mb-1">
                         <span class="text-blue-400">${f.id}.</span> ${f.name}
                         <div class="mt-1">$$${f.latex}$$</div>
                     </div>
-                `;
-            });
-            listContainer.innerHTML = listHtml;
-            // 绑定移动端列表点击事件
-            listContainer.querySelectorAll('div').forEach((item, index) => {
-                item.addEventListener('click', () => {
-                    highlightCard(index);
-                    updateDetailPanel(formulaData[index]);
-                    // 自动收起列表（移动端）
-                    if (window.innerWidth < 768) {
-                        document.getElementById('mobile-formula-list').classList.add('hidden');
-                    }
-                });
-            });
-            setTimeout(() => MathJax.typeset([listContainer]), 300);
-        }
+                `
+        })
+        listContainer.innerHTML = listHtml
+        // 绑定移动端列表点击事件
+        listContainer.querySelectorAll('div').forEach((item, index) => {
+          item.addEventListener('click', () => {
+            highlightCard(index)
+            updateDetailPanel(formulaData[index])
+            // 自动收起列表（移动端）
+            if (window.innerWidth < 768) {
+              document.getElementById('mobile-formula-list').classList.add('hidden')
+            }
+          })
+        })
+        setTimeout(() => MathJax.typeset([listContainer]), 300)
+      }
 
-        // 窗口大小适配修复
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            css2DRenderer.setSize(window.innerWidth, window.innerHeight);
-            
-            // 适配移动端控制器
-            controls.enablePan = window.innerWidth >= 768;
-        }
+      // 窗口大小适配修复
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight
+        camera.updateProjectionMatrix()
 
-        // 自动旋转切换（优化逻辑）
-        function toggleAutoRotate() {
-            autoRotate = !autoRotate;
-            controls.autoRotate = autoRotate;
-            document.getElementById('auto-rotate-btn').textContent = autoRotate ? '停止自动旋转' : '开启自动旋转';
-            controls.autoRotateSpeed = autoRotate ? 1.8 : 0;
-        }
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        css2DRenderer.setSize(window.innerWidth, window.innerHeight)
 
-        // 重置视角（优化）
-        function resetView() {
-            camera.position.set(0, 10, 60);
-            controls.reset();
-            // 取消所有卡片高亮
-            formulaCards.forEach(card => {
-                card.css2DObject.element.classList.remove('ring-2', 'ring-blue-400', 'scale-105', 'bg-blue-900/20');
-            });
-            // 重置详情面板
-            updateDetailPanel(formulaData[0]);
-        }
+        // 适配移动端控制器
+        controls.enablePan = window.innerWidth >= 768
+      }
 
-        // 渲染循环（性能优化）
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            // 卡片朝向相机+缓慢自转（优化性能）
-            formulaCards.forEach((card, index) => {
-                // 每帧更新朝向（修复卡片朝向错误）
-                card.css2DObject.lookAt(camera.position);
-                card.mesh.lookAt(camera.position);
-                
-                // 低速自转（性能优化：间隔帧执行）
-                if (index % 3 === 0) { // 每3个卡片一帧更新，降低计算量
-                    card.mesh.rotation.y += 0.0008;
-                    card.css2DObject.rotation.y += 0.0008;
-                }
-            });
+      // 自动旋转切换（优化逻辑）
+      function toggleAutoRotate() {
+        autoRotate = !autoRotate
+        controls.autoRotate = autoRotate
+        document.getElementById('auto-rotate-btn').textContent = autoRotate
+          ? '停止自动旋转'
+          : '开启自动旋转'
+        controls.autoRotateSpeed = autoRotate ? 1.8 : 0
+      }
 
-            controls.update();
-            renderer.render(scene, camera);
-            css2DRenderer.render(scene, camera);
-        }
+      // 重置视角（优化）
+      function resetView() {
+        camera.position.set(0, 10, 60)
+        controls.reset()
+        // 取消所有卡片高亮
+        formulaCards.forEach(card => {
+          card.css2DObject.element.classList.remove(
+            'ring-2',
+            'ring-blue-400',
+            'scale-105',
+            'bg-blue-900/20'
+          )
+        })
+        // 重置详情面板
+        updateDetailPanel(formulaData[0])
+      }
+
+      // 渲染循环（性能优化）
+      function animate() {
+        requestAnimationFrame(animate)
+
+        // 卡片朝向相机+缓慢自转（优化性能）
+        formulaCards.forEach((card, index) => {
+          // 每帧更新朝向（修复卡片朝向错误）
+          card.css2DObject.lookAt(camera.position)
+          card.mesh.lookAt(camera.position)
+
+          // 低速自转（性能优化：间隔帧执行）
+          if (index % 3 === 0) {
+            // 每3个卡片一帧更新，降低计算量
+            card.mesh.rotation.y += 0.0008
+            card.css2DObject.rotation.y += 0.0008
+          }
+        })
+
+        controls.update()
+        renderer.render(scene, camera)
+        css2DRenderer.render(scene, camera)
+      }
     </script>
 
     <style type="text/tailwindcss">
-        @layer utilities {
-            .content-auto { content-visibility: auto; }
-            .text-shadow { text-shadow: 0 0 8px rgba(64, 128, 255, 0.8); }
-            .backdrop-blur-md { backdrop-filter: blur(12px); }
+      @layer utilities {
+        .content-auto {
+          content-visibility: auto;
         }
-        
-        /* 修复移动端滚动条样式 */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: #111; }
-        ::-webkit-scrollbar-thumb { background: #4080ff; border-radius: 2px; }
+        .text-shadow {
+          text-shadow: 0 0 8px rgba(64, 128, 255, 0.8);
+        }
+        .backdrop-blur-md {
+          backdrop-filter: blur(12px);
+        }
+      }
+
+      /* 修复移动端滚动条样式 */
+      ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #111;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #4080ff;
+        border-radius: 2px;
+      }
     </style>
-</head>
-<body class="bg-black text-white h-screen overflow-hidden">
+  </head>
+  <body class="h-screen overflow-hidden bg-black text-white">
     <!-- 加载提示 -->
-    <div id="loading" class="fixed inset-0 flex items-center justify-center bg-black z-50">
-        <div class="text-center">
-            <div class="inline-block w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <h2 class="text-xl text-blue-400">加载3D场景与公式渲染引擎...</h2>
-            <p class="text-gray-400 mt-2">请稍候（首次加载可能需要几秒）</p>
-        </div>
+    <div id="loading" class="fixed inset-0 z-50 flex items-center justify-center bg-black">
+      <div class="text-center">
+        <div
+          class="mb-4 inline-block h-16 w-16 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"
+        ></div>
+        <h2 class="text-xl text-blue-400">加载3D场景与公式渲染引擎...</h2>
+        <p class="mt-2 text-gray-400">请稍候（首次加载可能需要几秒）</p>
+      </div>
     </div>
 
     <!-- 顶部标题栏 -->
-    <header class="absolute top-0 left-0 w-full z-20 p-3 bg-black/70 backdrop-blur-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <div>
-                <h1 class="text-xl md:text-3xl font-bold text-blue-400 text-shadow">
-                    张祥前统一场论核心公式
-                </h1>
-                <p class="text-xs text-gray-400">版本：v3.0 | 3D 可视化版</p>
-            </div>
-            <div class="flex gap-2">
-                <button id="reset-btn" onclick="resetView()" class="px-3 py-1 bg-blue-600/80 hover:bg-blue-500 rounded text-sm transition">
-                    重置视角
-                </button>
-                <button id="auto-rotate-btn" onclick="toggleAutoRotate()" class="px-3 py-1 bg-purple-600/80 hover:bg-purple-500 rounded text-sm transition">
-                    开启自动旋转
-                </button>
-            </div>
+    <header class="absolute left-0 top-0 z-20 w-full bg-black/70 p-3 backdrop-blur-md">
+      <div class="container mx-auto flex items-center justify-between">
+        <div>
+          <h1 class="text-shadow text-xl font-bold text-blue-400 md:text-3xl">
+            张祥前统一场论核心公式
+          </h1>
+          <p class="text-xs text-gray-400">版本：v3.0 | 3D 可视化版</p>
         </div>
+        <div class="flex gap-2">
+          <button
+            id="reset-btn"
+            onclick="resetView()"
+            class="rounded bg-blue-600/80 px-3 py-1 text-sm transition hover:bg-blue-500"
+          >
+            重置视角
+          </button>
+          <button
+            id="auto-rotate-btn"
+            onclick="toggleAutoRotate()"
+            class="rounded bg-purple-600/80 px-3 py-1 text-sm transition hover:bg-purple-500"
+          >
+            开启自动旋转
+          </button>
+        </div>
+      </div>
     </header>
 
     <!-- 主容器 -->
     <div class="flex h-screen pt-16">
-        <!-- 3D场景容器 -->
-        <div id="3d-container" class="flex-1 relative">
-            <!-- 3D内容由JS生成 -->
-        </div>
+      <!-- 3D场景容器 -->
+      <div id="3d-container" class="relative flex-1">
+        <!-- 3D内容由JS生成 -->
+      </div>
 
-        <!-- 侧边详情面板（响应式） -->
-        <div id="detail-panel" class="w-0 md:w-80 lg:w-96 xl:w-[30rem] bg-black/80 backdrop-blur-md border-l border-blue-500/20 p-4 md:p-6 overflow-y-auto transition-all duration-300">
-            <h2 class="text-2xl font-bold text-blue-400 mb-4">统一场论核心公式</h2>
-            <p class="text-gray-300 mb-4 text-sm">
-                点击3D空间中的公式卡片查看详情，支持：<br>
-                • 鼠标拖拽旋转视角（移动端触屏）<br>
-                • 滚轮缩放场景（移动端双指缩放）<br>
-                • 点击卡片高亮查看详情
-            </p>
-            <div class="p-4 bg-black/60 rounded-lg border border-blue-500/20">
-                $$\vec{r}(t) = \vec{C}t = x\vec{i} + y\vec{j} + z\vec{k}$$
-            </div>
-            <p class="mt-4 text-xs text-gray-400">
-                时空同一化方程是统一场论的基础核心，揭示了时间与空间的本质联系。
-            </p>
+      <!-- 侧边详情面板（响应式） -->
+      <div
+        id="detail-panel"
+        class="w-0 overflow-y-auto border-l border-blue-500/20 bg-black/80 p-4 backdrop-blur-md transition-all duration-300 md:w-80 md:p-6 lg:w-96 xl:w-[30rem]"
+      >
+        <h2 class="mb-4 text-2xl font-bold text-blue-400">统一场论核心公式</h2>
+        <p class="mb-4 text-sm text-gray-300">
+          点击3D空间中的公式卡片查看详情，支持：<br />
+          • 鼠标拖拽旋转视角（移动端触屏）<br />
+          • 滚轮缩放场景（移动端双指缩放）<br />
+          • 点击卡片高亮查看详情
+        </p>
+        <div class="rounded-lg border border-blue-500/20 bg-black/60 p-4">
+          $$\vec{r}(t) = \vec{C}t = x\vec{i} + y\vec{j} + z\vec{k}$$
         </div>
+        <p class="mt-4 text-xs text-gray-400">
+          时空同一化方程是统一场论的基础核心，揭示了时间与空间的本质联系。
+        </p>
+      </div>
     </div>
 
     <!-- 移动端公式列表 -->
-    <div class="absolute bottom-0 left-0 w-full md:hidden bg-black/90 backdrop-blur-md border-t border-blue-500/20 p-2 z-20">
-        <button onclick="document.getElementById('mobile-formula-list').classList.toggle('hidden')" class="w-full py-2 bg-blue-600/80 hover:bg-blue-500 rounded text-sm">
-            查看全部公式列表 (${formulaData.length}个)
-        </button>
-        <div id="mobile-formula-list" class="hidden max-h-80 overflow-y-auto mt-2 pr-1">
-            <!-- 由JS动态生成内容 -->
-        </div>
+    <div
+      class="absolute bottom-0 left-0 z-20 w-full border-t border-blue-500/20 bg-black/90 p-2 backdrop-blur-md md:hidden"
+    >
+      <button
+        onclick="document.getElementById('mobile-formula-list').classList.toggle('hidden')"
+        class="w-full rounded bg-blue-600/80 py-2 text-sm hover:bg-blue-500"
+      >
+        查看全部公式列表 (${formulaData.length}个)
+      </button>
+      <div id="mobile-formula-list" class="mt-2 hidden max-h-80 overflow-y-auto pr-1">
+        <!-- 由JS动态生成内容 -->
+      </div>
     </div>
-</body>
+  </body>
 </html>

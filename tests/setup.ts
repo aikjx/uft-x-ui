@@ -7,25 +7,28 @@ import { act } from 'react'
 // 性能监控和测试统计
 class TestPerformanceMonitor {
   private static instance: TestPerformanceMonitor
-  private testStats: Map<string, {
-    startTime: number
-    endTime: number
-    duration: number
-    errors: string[]
-    warnings: string[]
-  }>
-  
+  private testStats: Map<
+    string,
+    {
+      startTime: number
+      endTime: number
+      duration: number
+      errors: string[]
+      warnings: string[]
+    }
+  >
+
   private constructor() {
     this.testStats = new Map()
   }
-  
+
   static getInstance() {
     if (!TestPerformanceMonitor.instance) {
       TestPerformanceMonitor.instance = new TestPerformanceMonitor()
     }
     return TestPerformanceMonitor.instance
   }
-  
+
   startTest(testName: string) {
     // 使用 Date.now() 替代 performance.now() 以避免 NaN 问题
     this.testStats.set(testName, {
@@ -36,7 +39,7 @@ class TestPerformanceMonitor {
       warnings: []
     })
   }
-  
+
   endTest(testName: string) {
     const test = this.testStats.get(testName)
     if (test) {
@@ -44,21 +47,21 @@ class TestPerformanceMonitor {
       test.duration = test.endTime - test.startTime
     }
   }
-  
+
   addError(testName: string, error: string) {
     const test = this.testStats.get(testName)
     if (test) {
       test.errors.push(error)
     }
   }
-  
+
   addWarning(testName: string, warning: string) {
     const test = this.testStats.get(testName)
     if (test) {
       test.warnings.push(warning)
     }
   }
-  
+
   getStats() {
     return this.testStats
   }
@@ -79,19 +82,25 @@ const errorFilterSystem = {
     { pattern: /useLayoutEffect does nothing on the server/i, reason: 'SSR 特定警告' },
     { pattern: /Warning: Failed prop type/i, reason: 'Prop 类型检查警告' },
     { pattern: /Warning: ReactDOM\.render is no longer supported/i, reason: 'React API 弃用警告' },
-    { pattern: /Warning: componentWillMount|componentWillReceiveProps|componentWillUpdate/i, reason: '遗留生命周期方法警告' },
+    {
+      pattern: /Warning: componentWillMount|componentWillReceiveProps|componentWillUpdate/i,
+      reason: '遗留生命周期方法警告'
+    },
     { pattern: /Error: Unable to find an element/i, reason: '元素查找失败错误' }
   ],
-  
+
   warningFilters: [
     { pattern: /Deprecation warning/i, reason: '弃用警告' },
-    { pattern: /Warning: Each child in a list should have a unique "key" prop/i, reason: 'Key prop 警告' }
+    {
+      pattern: /Warning: Each child in a list should have a unique "key" prop/i,
+      reason: 'Key prop 警告'
+    }
   ],
-  
+
   shouldFilterError(message: string): boolean {
     return this.errorFilters.some(filter => filter.pattern.test(message))
   },
-  
+
   shouldFilterWarning(message: string): boolean {
     return this.warningFilters.some(filter => filter.pattern.test(message))
   }
@@ -100,7 +109,7 @@ const errorFilterSystem = {
 // 增强的控制台模拟
 vi.spyOn(console, 'error').mockImplementation((message, ...args) => {
   const messageStr = message.toString()
-  
+
   if (!errorFilterSystem.shouldFilterError(messageStr)) {
     const testName = expect.getState().currentTestName || 'unknown_test'
     perfMonitor.addError(testName, messageStr)
@@ -110,7 +119,7 @@ vi.spyOn(console, 'error').mockImplementation((message, ...args) => {
 
 vi.spyOn(console, 'warn').mockImplementation((message, ...args) => {
   const messageStr = message.toString()
-  
+
   if (!errorFilterSystem.shouldFilterWarning(messageStr)) {
     const testName = expect.getState().currentTestName || 'unknown_test'
     perfMonitor.addWarning(testName, messageStr)
@@ -134,21 +143,21 @@ function setupAdvancedDomMocks() {
         this.height = height
         Object.defineProperty(window, 'innerWidth', { writable: true, value: width })
         Object.defineProperty(window, 'innerHeight', { writable: true, value: height })
-        
+
         // 模拟 resize 事件
         if (window.dispatchEvent) {
           window.dispatchEvent(new Event('resize'))
         }
       }
     }
-    
+
     viewportManager.setSize(1024, 768)
-    
-    Object.defineProperty(window, 'devicePixelRatio', { 
-      writable: true, 
-      value: 1 
+
+    Object.defineProperty(window, 'devicePixelRatio', {
+      writable: true,
+      value: 1
     })
-    
+
     // 增强的 matchMedia 模拟
     const mediaQueries = new Map<string, boolean>()
     Object.defineProperty(window, 'matchMedia', {
@@ -160,9 +169,9 @@ function setupAdvancedDomMocks() {
         else if (query.includes('min-width: 768px')) matches = viewportManager.width >= 768
         else if (query.includes('max-width: 1024px')) matches = viewportManager.width <= 1024
         else if (query.includes('min-width: 1024px')) matches = viewportManager.width >= 1024
-        
+
         mediaQueries.set(query, matches)
-        
+
         return {
           matches,
           media: query,
@@ -171,11 +180,11 @@ function setupAdvancedDomMocks() {
           removeListener: vi.fn(),
           addEventListener: vi.fn(),
           removeEventListener: vi.fn(),
-          dispatchEvent: vi.fn(),
+          dispatchEvent: vi.fn()
         }
-      }),
+      })
     })
-    
+
     // 高精度性能 API 模拟
     let performanceNowOffset = 0
     Object.defineProperty(window, 'performance', {
@@ -193,15 +202,15 @@ function setupAdvancedDomMocks() {
         timeOrigin: Date.now()
       }
     })
-    
+
     // 动画帧 API 优化模拟
     const rafCallbacks = new Map<number, Function>()
     let rafIdCounter = 0
-    
+
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => {
       const id = ++rafIdCounter
       rafCallbacks.set(id, cb)
-      
+
       // 立即执行以加速测试，但保持异步特性
       setTimeout(() => {
         if (rafCallbacks.has(id)) {
@@ -211,51 +220,62 @@ function setupAdvancedDomMocks() {
           rafCallbacks.delete(id)
         }
       }, 0)
-      
+
       return id
     })
-    
+
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(id => {
       rafCallbacks.delete(id)
     })
-    
+
     // 增强的 IntersectionObserver 模拟
     global.IntersectionObserver = class IntersectionObserver {
       private callback: Function
       private options: any
       private targets: Map<any, { isIntersecting: boolean; ratio: number }>
-      
+
       constructor(callback: Function, options: any = {}) {
         this.callback = callback
         this.options = options
         this.targets = new Map()
       }
-      
+
       disconnect() {
         this.targets.clear()
       }
-      
+
       observe(target: any) {
         // 智能检测目标是否可见
-        const isVisible = !(target.style?.display === 'none' || target.style?.visibility === 'hidden')
+        const isVisible = !(
+          target.style?.display === 'none' || target.style?.visibility === 'hidden'
+        )
         const ratio = isVisible ? 1 : 0
-        
+
         this.targets.set(target, { isIntersecting: isVisible, ratio })
-        
+
         // 使用 act 包裹以避免 React 警告
         act(() => {
-          this.callback([{
-            isIntersecting,
-            intersectionRatio: ratio,
-            target,
-            boundingClientRect: { width: 100, height: 100, top: 0, left: 0, bottom: 100, right: 100 },
-            intersectionRect: { width: isVisible ? 100 : 0, height: isVisible ? 100 : 0 },
-            rootBounds: { width: viewportManager.width, height: viewportManager.height },
-            time: performance.now()
-          }])
+          this.callback([
+            {
+              isIntersecting,
+              intersectionRatio: ratio,
+              target,
+              boundingClientRect: {
+                width: 100,
+                height: 100,
+                top: 0,
+                left: 0,
+                bottom: 100,
+                right: 100
+              },
+              intersectionRect: { width: isVisible ? 100 : 0, height: isVisible ? 100 : 0 },
+              rootBounds: { width: viewportManager.width, height: viewportManager.height },
+              time: performance.now()
+            }
+          ])
         })
       }
-      
+
       takeRecords() {
         return Array.from(this.targets.entries()).map(([target, info]) => ({
           isIntersecting: info.isIntersecting,
@@ -263,54 +283,56 @@ function setupAdvancedDomMocks() {
           target
         }))
       }
-      
+
       unobserve(target: any) {
         this.targets.delete(target)
       }
     } as any
-    
+
     // 增强的 ResizeObserver 模拟
     global.ResizeObserver = class ResizeObserver {
       private callback: Function
       private targets: Set<any>
-      
+
       constructor(callback: Function) {
         this.callback = callback
         this.targets = new Set()
       }
-      
+
       disconnect() {
         this.targets.clear()
       }
-      
+
       observe(target: any) {
         this.targets.add(target)
-        
+
         // 获取实际尺寸或使用默认值
         const width = target.offsetWidth || target.style?.width || 300
         const height = target.offsetHeight || target.style?.height || 200
-        
+
         // 使用 act 包裹
         act(() => {
-          this.callback([{
-            target,
-            contentRect: { 
-              width: Number(width), 
-              height: Number(height),
-              top: 0,
-              left: 0,
-              bottom: Number(height),
-              right: Number(width)
+          this.callback([
+            {
+              target,
+              contentRect: {
+                width: Number(width),
+                height: Number(height),
+                top: 0,
+                left: 0,
+                bottom: Number(height),
+                right: Number(width)
+              }
             }
-          }])
+          ])
         })
       }
-      
+
       unobserve(target: any) {
         this.targets.delete(target)
       }
     } as any
-    
+
     // 存储 API 增强模拟
     const createStorageMock = () => {
       const storage = new Map<string, string>()
@@ -329,25 +351,25 @@ function setupAdvancedDomMocks() {
         key: vi.fn((index: number) => Array.from(storage.keys())[index] || null)
       }
     }
-    
+
     if (!('localStorage' in window)) {
       Object.defineProperty(window, 'localStorage', {
         value: createStorageMock(),
         writable: true
       })
     }
-    
+
     if (!('sessionStorage' in window)) {
       Object.defineProperty(window, 'sessionStorage', {
         value: createStorageMock(),
         writable: true
       })
     }
-    
+
     // 网络请求模拟增强
     if (!('fetch' in window)) {
       Object.defineProperty(window, 'fetch', {
-        value: vi.fn().mockImplementation(() => 
+        value: vi.fn().mockImplementation(() =>
           Promise.resolve({
             json: () => Promise.resolve({}),
             text: () => Promise.resolve(''),
@@ -360,7 +382,7 @@ function setupAdvancedDomMocks() {
         writable: true
       })
     }
-    
+
     // URL API 模拟
     if (!('URL' in window)) {
       Object.defineProperty(window, 'URL', {
@@ -372,7 +394,7 @@ function setupAdvancedDomMocks() {
           pathname: string
           search: string
           hash: string
-          
+
           constructor(url: string, base?: string) {
             const parsed = new URL(url, base)
             this.href = parsed.href
@@ -383,7 +405,7 @@ function setupAdvancedDomMocks() {
             this.search = parsed.search
             this.hash = parsed.hash
           }
-          
+
           searchParams = new URLSearchParams()
         },
         writable: true
@@ -396,163 +418,163 @@ function setupAdvancedDomMocks() {
 vi.mock('three', () => {
   // 创建基本的Three.js类模拟
   class MockVector3 {
-    x: number;
-    y: number;
-    z: number;
-    
+    x: number
+    y: number
+    z: number
+
     constructor(x = 0, y = 0, z = 0) {
-      this.x = x;
-      this.y = y;
-      this.z = z;
+      this.x = x
+      this.y = y
+      this.z = z
     }
-    
+
     set(x: number, y: number, z: number): MockVector3 {
-      this.x = x;
-      this.y = y;
-      this.z = z;
-      return this;
+      this.x = x
+      this.y = y
+      this.z = z
+      return this
     }
-    
+
     copy(v: MockVector3): MockVector3 {
-      this.x = v.x;
-      this.y = v.y;
-      this.z = v.z;
-      return this;
+      this.x = v.x
+      this.y = v.y
+      this.z = v.z
+      return this
     }
-    
+
     length(): number {
-      return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+      return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z)
     }
-    
+
     lengthSq(): number {
-      return this.x * this.x + this.y * this.y + this.z * this.z;
+      return this.x * this.x + this.y * this.y + this.z * this.z
     }
-    
+
     clone(): MockVector3 {
-      return new MockVector3(this.x, this.y, this.z);
+      return new MockVector3(this.x, this.y, this.z)
     }
-    
+
     add(v: MockVector3): MockVector3 {
-      this.x += v.x;
-      this.y += v.y;
-      this.z += v.z;
-      return this;
+      this.x += v.x
+      this.y += v.y
+      this.z += v.z
+      return this
     }
-    
+
     multiplyScalar(s: number): MockVector3 {
-      this.x *= s;
-      this.y *= s;
-      this.z *= s;
-      return this;
+      this.x *= s
+      this.y *= s
+      this.z *= s
+      return this
     }
-    
+
     divideScalar(s: number): MockVector3 {
       if (s !== 0) {
-        this.x /= s;
-        this.y /= s;
-        this.z /= s;
+        this.x /= s
+        this.y /= s
+        this.z /= s
       }
-      return this;
+      return this
     }
-    
+
     normalize(): MockVector3 {
-      const length = this.length();
+      const length = this.length()
       if (length !== 0) {
-        this.divideScalar(length);
+        this.divideScalar(length)
       }
-      return this;
+      return this
     }
-    
+
     cross(v: MockVector3): MockVector3 {
-      const x = this.y * v.z - this.z * v.y;
-      const y = this.z * v.x - this.x * v.z;
-      const z = this.x * v.y - this.y * v.x;
-      this.x = x;
-      this.y = y;
-      this.z = z;
-      return this;
+      const x = this.y * v.z - this.z * v.y
+      const y = this.z * v.x - this.x * v.z
+      const z = this.x * v.y - this.y * v.x
+      this.x = x
+      this.y = y
+      this.z = z
+      return this
     }
   }
-  
+
   class MockRay {
-    origin: any;
-    direction: any;
-    
+    origin: any
+    direction: any
+
     constructor(origin = new MockVector3(), direction = new MockVector3()) {
-      this.origin = origin;
-      this.direction = direction;
+      this.origin = origin
+      this.direction = direction
     }
   }
-  
+
   class MockScene {
-    add = vi.fn();
-    remove = vi.fn();
-    children: any[] = [];
-    background = null;
+    add = vi.fn()
+    remove = vi.fn()
+    children: any[] = []
+    background = null
   }
-  
+
   class MockPerspectiveCamera {
-    position = new MockVector3();
-    lookAt = vi.fn();
-    updateProjectionMatrix = vi.fn();
-    aspect = 1;
-    fov = 75;
-    near = 0.1;
-    far = 1000;
+    position = new MockVector3()
+    lookAt = vi.fn()
+    updateProjectionMatrix = vi.fn()
+    aspect = 1
+    fov = 75
+    near = 0.1
+    far = 1000
   }
-  
+
   class MockWebGLRenderer {
-    setSize = vi.fn();
-    setPixelRatio = vi.fn();
-    render = vi.fn();
-    dispose = vi.fn();
-    setClearColor = vi.fn();
-    shadowMap = { enabled: false };
+    setSize = vi.fn()
+    setPixelRatio = vi.fn()
+    render = vi.fn()
+    dispose = vi.fn()
+    setClearColor = vi.fn()
+    shadowMap = { enabled: false }
   }
-  
+
   class MockPoints {
-    geometry: MockBufferGeometry;
-    material: any;
-    rotation = { x: 0, y: 0, z: 0 };
-    
+    geometry: MockBufferGeometry
+    material: any
+    rotation = { x: 0, y: 0, z: 0 }
+
     constructor(geometry?: MockBufferGeometry, material?: any) {
-      this.geometry = geometry || new MockBufferGeometry();
-      this.material = material || { dispose: () => {} };
+      this.geometry = geometry || new MockBufferGeometry()
+      this.material = material || { dispose: () => {} }
     }
   }
-  
+
   class MockBufferGeometry {
-    attributes: Record<string, any> = {};
-    
+    attributes: Record<string, any> = {}
+
     setAttribute(name: string, attribute: any): MockBufferGeometry {
-      this.attributes[name] = attribute;
-      return this;
+      this.attributes[name] = attribute
+      return this
     }
-    
+
     dispose(): void {
       // 模拟清理
     }
   }
-  
+
   class MockPointsMaterial {
-    dispose = vi.fn();
+    dispose = vi.fn()
   }
-  
+
   class MockBufferAttribute {
-    needsUpdate = false;
-    
+    needsUpdate = false
+
     setUsage(usage: number): this {
-      return this;
+      return this
     }
   }
-  
+
   return {
     // 导出模拟的Three.js类
     Vector3: MockVector3,
     Ray: MockRay,
     Raycaster: class {
-      setFromCamera = vi.fn();
-      intersectObjects = vi.fn(() => []);
+      setFromCamera = vi.fn()
+      intersectObjects = vi.fn(() => [])
     },
     Scene: MockScene,
     PerspectiveCamera: MockPerspectiveCamera,
@@ -562,7 +584,7 @@ vi.mock('three', () => {
     PointsMaterial: MockPointsMaterial,
     BufferAttribute: MockBufferAttribute,
     CatmullRomCurve3: class {
-      getPoints = vi.fn(() => []);
+      getPoints = vi.fn(() => [])
     },
     AdditiveBlending: 2,
     DynamicDrawUsage: 1,
@@ -570,78 +592,78 @@ vi.mock('three', () => {
     StreamDrawUsage: 2,
     // 添加更多Three.js导出
     Object3D: class {
-      add = vi.fn();
-      remove = vi.fn();
-      position = new MockVector3();
-      rotation = { x: 0, y: 0, z: 0 };
-      scale = { x: 1, y: 1, z: 1 };
+      add = vi.fn()
+      remove = vi.fn()
+      position = new MockVector3()
+      rotation = { x: 0, y: 0, z: 0 }
+      scale = { x: 1, y: 1, z: 1 }
     },
     AmbientLight: class {
       constructor(color = 0xffffff, intensity = 1) {}
     },
     DirectionalLight: class {
       constructor(color = 0xffffff, intensity = 1) {
-        this.position = new MockVector3();
+        this.position = new MockVector3()
       }
-      position: any;
+      position: any
     },
     Mesh: class {
-      geometry = { dispose: vi.fn() };
-      material = { dispose: vi.fn() };
-      position = new MockVector3();
-      rotation = { x: 0, y: 0, z: 0 };
+      geometry = { dispose: vi.fn() }
+      material = { dispose: vi.fn() }
+      position = new MockVector3()
+      rotation = { x: 0, y: 0, z: 0 }
     },
     MeshBasicMaterial: class {
-      dispose = vi.fn();
+      dispose = vi.fn()
     },
     BoxGeometry: class {
-      dispose = vi.fn();
+      dispose = vi.fn()
     },
     Line: class {
-      geometry = { dispose: vi.fn() };
-      material = { dispose: vi.fn() };
-      position = new MockVector3();
-      rotation = { x: 0, y: 0, z: 0 };
+      geometry = { dispose: vi.fn() }
+      material = { dispose: vi.fn() }
+      position = new MockVector3()
+      rotation = { x: 0, y: 0, z: 0 }
     },
     LineBasicMaterial: class {
-      dispose = vi.fn();
+      dispose = vi.fn()
     },
     CurvePath: class {
-      getPoints = vi.fn(() => []);
+      getPoints = vi.fn(() => [])
     },
     LineCurve3: class {
       constructor(start = new MockVector3(), end = new MockVector3()) {}
     },
     Color: class {
-      r: number;
-      g: number;
-      b: number;
-      
+      r: number
+      g: number
+      b: number
+
       constructor(color = 0xffffff) {
         // 初始化为白色
-        this.r = 1;
-        this.g = 1;
-        this.b = 1;
-        
+        this.r = 1
+        this.g = 1
+        this.b = 1
+
         if (color) {
-          this.setHex(color);
+          this.setHex(color)
         }
       }
-      
+
       setHex(hex: number): this {
         // 转换十六进制颜色值为RGB
-        hex = Math.floor(hex);
-        this.r = (hex >> 16 & 255) / 255;
-        this.g = (hex >> 8 & 255) / 255;
-        this.b = (hex & 255) / 255;
-        return this;
+        hex = Math.floor(hex)
+        this.r = ((hex >> 16) & 255) / 255
+        this.g = ((hex >> 8) & 255) / 255
+        this.b = (hex & 255) / 255
+        return this
       }
-      
+
       setRGB(r: number, g: number, b: number): this {
-        this.r = r;
-        this.g = g;
-        this.b = b;
-        return this;
+        this.r = r
+        this.g = g
+        this.b = b
+        return this
       }
     },
     Vector2: class {
@@ -651,32 +673,32 @@ vi.mock('three', () => {
       constructor(x = 0, y = 0, z = 0, w = 0) {}
     },
     Matrix4: class {
-      identity = vi.fn();
-      lookAt = vi.fn();
-      multiply = vi.fn();
-      inverse = vi.fn();
+      identity = vi.fn()
+      lookAt = vi.fn()
+      multiply = vi.fn()
+      inverse = vi.fn()
     },
     Euler: class {
       constructor(x = 0, y = 0, z = 0) {}
     },
     Quaternion: class {
-      setFromEuler = vi.fn();
+      setFromEuler = vi.fn()
     },
     Raycaster: class {
-      setFromCamera = vi.fn();
-      intersectObjects = vi.fn(() => []);
+      setFromCamera = vi.fn()
+      intersectObjects = vi.fn(() => [])
     },
     Plane: class {
-      setFromNormalAndCoplanarPoint = vi.fn();
-      intersectLine = vi.fn();
-    },
-  };
-});
+      setFromNormalAndCoplanarPoint = vi.fn()
+      intersectLine = vi.fn()
+    }
+  }
+})
 
 // 模拟react-router-dom的所有常用钩子
 vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<any>('react-router-dom');
-  
+  const actual = await vi.importActual<any>('react-router-dom')
+
   return {
     ...actual,
     // 确保所有常用钩子返回正确的对象
@@ -688,19 +710,19 @@ vi.mock('react-router-dom', async () => {
     useOutlet: vi.fn(() => null),
     useOutletContext: vi.fn(() => null),
     useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
-    useInRouterContext: vi.fn(() => true),
-  };
-});
+    useInRouterContext: vi.fn(() => true)
+  }
+})
 
 // 模拟framer-motion模块，解决motion() is deprecated警告
 vi.mock('framer-motion', () => {
   // 创建一个基础的motion函数
   const baseMotion = (Component: any) => {
     return ({ children, ...props }: any) => {
-      return React.createElement(Component, props, children);
-    };
-  };
-  
+      return React.createElement(Component, props, children)
+    }
+  }
+
   // 创建motion对象，支持作为函数调用和属性访问
   const motion = Object.assign(baseMotion, {
     // 支持HTML元素
@@ -711,14 +733,14 @@ vi.mock('framer-motion', () => {
     a: ({ children, ...props }: any) => React.createElement('a', props, children),
     // 支持create方法
     create: (Component: any) => {
-      return ({ children, ...props }: any) => React.createElement(Component, props, children);
+      return ({ children, ...props }: any) => React.createElement(Component, props, children)
     }
-  });
-  
+  })
+
   return {
     motion,
     AnimatePresence: ({ children }: any) => {
-      return React.createElement('div', null, children);
+      return React.createElement('div', null, children)
     },
     useAnimation: () => ({
       start: vi.fn(),
@@ -738,24 +760,24 @@ vi.mock('framer-motion', () => {
     usePresence: () => [true, vi.fn()],
     useDragControls: () => ({ start: vi.fn() }),
     useMotionTemplate: () => '',
-    useReducedMotion: () => false,
-  };
-});
+    useReducedMotion: () => false
+  }
+})
 
 // 全局测试套件钩子
 beforeAll(() => {
   // 初始化测试环境
   setupAdvancedDomMocks()
-  
+
   // 添加全局测试工具函数
   globalThis.act = act
-  
+
   // 启用测试加速模式
   vi.setConfig({
     mockReset: true,
     clearMocks: true
   })
-  
+
   console.log('🚀 测试环境初始化完成')
 })
 
@@ -765,13 +787,13 @@ afterAll(() => {
   let totalDuration = 0
   let totalErrors = 0
   let totalWarnings = 0
-  
+
   stats.forEach(test => {
     totalDuration += test.duration
     totalErrors += test.errors.length
     totalWarnings += test.warnings.length
   })
-  
+
   console.log(`📊 测试套件统计：`)
   console.log(`  • 总测试数: ${stats.size}`)
   console.log(`  • 总耗时: ${totalDuration.toFixed(2)}ms`)
@@ -784,13 +806,13 @@ afterAll(() => {
 beforeEach(() => {
   // 获取当前测试名称
   const testName = expect.getState().currentTestName || 'unknown_test'
-  
+
   // 开始测试计时
   perfMonitor.startTest(testName)
-  
+
   // 重置所有模拟，但保留实现
   vi.resetAllMocks()
-  
+
   // 重置 DOM 状态
   if (typeof document !== 'undefined') {
     document.body.innerHTML = ''
@@ -802,13 +824,13 @@ afterEach(() => {
   // 获取当前测试名称并结束计时
   const testName = expect.getState().currentTestName || 'unknown_test'
   perfMonitor.endTest(testName)
-  
+
   // 清理测试库生成的 DOM 元素
   cleanup()
-  
+
   // 恢复所有原始实现
   vi.restoreAllMocks()
-  
+
   // 检查内存泄漏
   const currentStats = perfMonitor.getStats().get(testName)
   if (currentStats) {
@@ -834,17 +856,17 @@ export const testUtils = {
       window.dispatchEvent(new Event('resize'))
     }
   },
-  
+
   // 等待所有异步操作完成
   waitForAsync: (timeout: number = 500) => new Promise(resolve => setTimeout(resolve, timeout)),
-  
+
   // 强制渲染组件
   forceUpdate: () => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('resize'))
     }
   },
-  
+
   // 模拟网络延迟
   simulateNetworkDelay: (ms: number = 100) => new Promise(resolve => setTimeout(resolve, ms))
 }

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>向量符号测试</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)'], ['$', '$']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        macros: {
+          vec: ['\\overrightarrow{#1}', 1]
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .formula {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 5px;
+    }
+    h1, h2 {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>向量符号渲染测试</h1>
+  
+  <div class="formula">
+    <h2>测试公式</h2>
+    <p>$$\vec{r}(t) = \vec{C}t = x\vec{i} + y\vec{j} + z\vec{k}$$</p>
+  </div>
+
+  <div class="formula">
+    <h2>向量符号</h2>
+    <p>$$\vec{a} \cdot \vec{b} = |a||b|\cos\theta$$</p>
+  </div>
+
+  <div class="formula">
+    <h2>向量叉乘</h2>
+    <p>$$\vec{a} \times \vec{b} = |a||b|\sin\theta\vec{n}$$</p>
+  </div>
+
+  <button onclick="window.MathJax.typeset()">重新渲染</button>
+</body>
+</html>

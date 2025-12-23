@@ -2,9 +2,9 @@
  * 代码优化引擎核心服务
  * 企业级优化引擎架构
  */
-import type { 
-  CodeAnalysisResult, 
-  OptimizationRule, 
+import type {
+  CodeAnalysisResult,
+  OptimizationRule,
   OptimizationLevel,
   OptimizationReport,
   PerformanceMetrics,
@@ -87,11 +87,11 @@ export class OptimizationEngine {
       for (const step of this.optimizationSteps.sort((a, b) => b.priority - a.priority)) {
         if (this.shouldExecuteStep(step, context)) {
           const stepStartTime = performance.now()
-          
+
           try {
             optimizedAST = await this.executeStep(step, context, optimizedAST)
             appliedRules.push(step.name)
-            
+
             // 记录步骤性能
             const stepTime = performance.now() - stepStartTime
             console.log(`✅ 优化步骤 "${step.name}" 完成，耗时: ${stepTime.toFixed(2)}ms`)
@@ -136,7 +136,6 @@ export class OptimizationEngine {
       }
 
       return report
-
     } catch (error) {
       throw new Error(`代码优化失败: ${error}`)
     }
@@ -151,49 +150,49 @@ export class OptimizationEngine {
         name: 'unused-code-elimination',
         description: '移除未使用的代码',
         priority: 100,
-        execute: async (context) => this.eliminateUnusedCode(context)
+        execute: async context => this.eliminateUnusedCode(context)
       },
       {
         name: 'dead-code-elimination',
         description: '移除死代码',
         priority: 95,
-        execute: async (context) => this.eliminateDeadCode(context)
+        execute: async context => this.eliminateDeadCode(context)
       },
       {
         name: 'loop-optimization',
         description: '循环优化',
         priority: 90,
-        execute: async (context) => this.optimizeLoops(context)
+        execute: async context => this.optimizeLoops(context)
       },
       {
         name: 'function-inlining',
         description: '函数内联',
         priority: 85,
-        execute: async (context) => this.inlineFunctions(context)
+        execute: async context => this.inlineFunctions(context)
       },
       {
         name: 'constant-folding',
         description: '常量折叠',
         priority: 80,
-        execute: async (context) => this.foldConstants(context)
+        execute: async context => this.foldConstants(context)
       },
       {
         name: 'variable-rename',
         description: '变量重命名',
         priority: 70,
-        execute: async (context) => this.optimizeVariableNames(context)
+        execute: async context => this.optimizeVariableNames(context)
       },
       {
         name: 'expression-simplification',
         description: '表达式简化',
         priority: 65,
-        execute: async (context) => this.simplifyExpressions(context)
+        execute: async context => this.simplifyExpressions(context)
       },
       {
         name: 'code-structuring',
         description: '代码结构优化',
         priority: 50,
-        execute: async (context) => this.optimizeCodeStructure(context)
+        execute: async context => this.optimizeCodeStructure(context)
       }
     ]
   }
@@ -201,7 +200,10 @@ export class OptimizationEngine {
   /**
    * 获取优化规则
    */
-  private getOptimizationRules(level: OptimizationLevel, customRules: OptimizationRule[]): OptimizationRule[] {
+  private getOptimizationRules(
+    level: OptimizationLevel,
+    customRules: OptimizationRule[]
+  ): OptimizationRule[] {
     const baseRules: OptimizationRule[] = [
       {
         id: 'remove-unused-vars',
@@ -227,9 +229,9 @@ export class OptimizationEngine {
 
     // 根据优化级别调整规则
     if (level === 'aggressive') {
-      baseRules.forEach(rule => rule.enabled = true)
+      baseRules.forEach(rule => (rule.enabled = true))
     } else if (level === 'conservative') {
-      baseRules.forEach(rule => rule.severity = 'warning')
+      baseRules.forEach(rule => (rule.severity = 'warning'))
     }
 
     return [...baseRules, ...customRules]
@@ -258,8 +260,8 @@ export class OptimizationEngine {
    */
   private shouldExecuteStep(step: OptimizationStep, context: OptimizationContext): boolean {
     // 检查是否有相关规则
-    const hasRelevantRule = context.rules.some(rule => 
-      step.name.includes(rule.id) || rule.id.includes(step.name.replace('-', ''))
+    const hasRelevantRule = context.rules.some(
+      rule => step.name.includes(rule.id) || rule.id.includes(step.name.replace('-', ''))
     )
 
     return hasRelevantRule
@@ -269,8 +271,8 @@ export class OptimizationEngine {
    * 执行优化步骤
    */
   private async executeStep(
-    step: OptimizationStep, 
-    context: OptimizationContext, 
+    step: OptimizationStep,
+    context: OptimizationContext,
     ast: t.File
   ): Promise<t.File> {
     // 检查缓存
@@ -280,7 +282,10 @@ export class OptimizationEngine {
     }
 
     // 执行步骤
-    const result = await step.execute({ ...context, analysisResult: { ...context.analysisResult, ast } })
+    const result = await step.execute({
+      ...context,
+      analysisResult: { ...context.analysisResult, ast }
+    })
 
     // 缓存结果
     if (this.options.enableCaching) {
@@ -326,9 +331,11 @@ export class OptimizationEngine {
 
     return this.transformAST(ast, {
       IfStatement(path) {
-        if (path.node.test.type === 'BooleanLiteral' || 
-            path.node.test.type === 'NumericLiteral' ||
-            path.node.test.type === 'StringLiteral') {
+        if (
+          path.node.test.type === 'BooleanLiteral' ||
+          path.node.test.type === 'NumericLiteral' ||
+          path.node.test.type === 'StringLiteral'
+        ) {
           const value = this.evaluateConstant(path.node.test)
           if (value) {
             path.replaceWith(path.node.consequent || path.node.alternate)
@@ -350,7 +357,7 @@ export class OptimizationEngine {
       ForStatement(path) {
         // 优化for循环中的length属性访问
         this.optimizeLoopLengthAccess(path)
-        
+
         // 转换为更高效的循环形式
         this.convertToOptimizedLoop(path)
       }
@@ -489,13 +496,13 @@ export class OptimizationEngine {
     const complexity = analysis.complexityMetrics
 
     let score = 100
-    
+
     // 循环影响
     score -= metrics.loopCount * 5
-    
+
     // 复杂度影响
     score -= complexity.cyclomaticComplexity * 2
-    
+
     // 函数数量影响
     score -= Math.max(0, metrics.functionCount - 10) * 1
 
@@ -543,12 +550,22 @@ export class OptimizationEngine {
   // 简化的优化方法实现
   private optimizeLoopLengthAccess(path: any): void {}
   private convertToOptimizedLoop(path: any): void {}
-  private findInlineCandidates(ast: t.File): Set<t.CallExpression> { return new Set() }
+  private findInlineCandidates(ast: t.File): Set<t.CallExpression> {
+    return new Set()
+  }
   private inlineFunctionCall(path: any): void {}
-  private foldBinaryExpression(node: t.BinaryExpression): t.Expression | null { return null }
-  private foldUnaryExpression(node: t.UnaryExpression): t.Expression | null { return null }
-  private simplifyConditional(node: t.ConditionalExpression): t.Expression | null { return null }
-  private simplifyLogical(node: t.LogicalExpression): t.Expression | null { return null }
+  private foldBinaryExpression(node: t.BinaryExpression): t.Expression | null {
+    return null
+  }
+  private foldUnaryExpression(node: t.UnaryExpression): t.Expression | null {
+    return null
+  }
+  private simplifyConditional(node: t.ConditionalExpression): t.Expression | null {
+    return null
+  }
+  private simplifyLogical(node: t.LogicalExpression): t.Expression | null {
+    return null
+  }
 }
 
 // 导出便捷函数

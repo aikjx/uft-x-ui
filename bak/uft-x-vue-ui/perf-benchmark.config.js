@@ -8,14 +8,14 @@ export default {
       timeout: 30000,
       metrics: ['fps', 'frameTime', 'drawCalls']
     },
-    
+
     // 内存使用测试
     memory: {
       iterations: 100,
       timeout: 60000,
       metrics: ['usedHeap', 'totalHeap', 'heapLimit']
     },
-    
+
     // 加载性能测试
     loading: {
       iterations: 50,
@@ -23,7 +23,7 @@ export default {
       metrics: ['loadTime', 'firstContentfulPaint', 'largestContentfulPaint']
     }
   },
-  
+
   // 性能阈值
   thresholds: {
     // 渲染性能阈值
@@ -35,8 +35,8 @@ export default {
       },
       frameTime: {
         critical: 33, // 对应30fps
-        warning: 22,  // 对应45fps
-        target: 16    // 对应60fps
+        warning: 22, // 对应45fps
+        target: 16 // 对应60fps
       },
       drawCalls: {
         critical: 1000,
@@ -44,7 +44,7 @@ export default {
         target: 200
       }
     },
-    
+
     // 内存使用阈值
     memory: {
       usedHeap: {
@@ -58,7 +58,7 @@ export default {
         target: 50
       }
     },
-    
+
     // 加载性能阈值
     loading: {
       loadTime: {
@@ -78,7 +78,7 @@ export default {
       }
     }
   },
-  
+
   // 测试场景配置
   scenarios: {
     // 简单场景测试
@@ -87,21 +87,21 @@ export default {
       complexity: 'low',
       description: '基本渲染场景测试'
     },
-    
+
     // 中等复杂度场景
     medium: {
       objects: 500,
       complexity: 'medium',
       description: '中等复杂度渲染测试'
     },
-    
+
     // 高复杂度场景
     complex: {
       objects: 2000,
       complexity: 'high',
       description: '高复杂度压力测试'
     },
-    
+
     // 极端场景测试
     extreme: {
       objects: 5000,
@@ -109,7 +109,7 @@ export default {
       description: '极限性能压力测试'
     }
   },
-  
+
   // 浏览器配置
   browsers: {
     chrome: {
@@ -123,28 +123,28 @@ export default {
       headless: true
     }
   },
-  
+
   // 报告配置
   reporting: {
     // 输出格式
     formats: ['json', 'html', 'csv'],
-    
+
     // 报告目录
     outputDir: './reports/performance',
-    
+
     // 比较基准
     baseline: {
       enabled: true,
       file: './reports/baseline.json'
     },
-    
+
     // 趋势分析
     trends: {
       enabled: true,
       days: 30
     }
   },
-  
+
   // 通知配置
   notifications: {
     // Slack通知
@@ -152,13 +152,13 @@ export default {
       enabled: false,
       webhookUrl: process.env.SLACK_WEBHOOK_URL
     },
-    
+
     // 邮件通知
     email: {
       enabled: false,
       recipients: ['team@example.com']
     },
-    
+
     // 阈值告警
     alerts: {
       // 性能下降告警
@@ -166,7 +166,7 @@ export default {
         enabled: true,
         threshold: 20 // 性能下降20%触发告警
       },
-      
+
       // 内存泄漏告警
       memoryLeak: {
         enabled: true,

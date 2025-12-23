@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统一场论·圆柱螺旋发散</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.2;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(to bottom, black, #0f172a, #1e293b);
+            color: white;
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* 背景星星 */
+        .stars {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: pulse var(--duration) infinite var(--delay);
+        }
+
+        /* 标题区域 */
+        .title-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 24px;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.7), transparent);
+            z-index: 10;
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(to right, orange, yellow, cyan);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: rgba(129, 140, 248, 0.9);
+            font-size: 1.125rem;
+            margin-bottom: 4px;
+        }
+
+        .description {
+            color: rgba(96, 165, 250, 0.7);
+            font-size: 0.875rem;
+        }
+
+        /* 控制面板 */
+        .control-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 24px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.8), transparent);
+            max-height: 45vh;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        .control-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .sliders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .slider-group {
+            padding: 12px;
+            background: linear-gradient(135deg, rgba(234, 88, 12, 0.3), rgba(220, 38, 38, 0.3));
+            border: 2px solid rgba(251, 146, 60, 0.7);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .slider-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: rgba(251, 146, 60, 0.8);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            margin-bottom: 4px;
+            background: rgba(251, 146, 60, 0.2);
+            border-radius: 4px;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, orange, yellow);
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(251, 146, 60, 0.8);
+        }
+
+        .slider-values {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+        }
+
+        .min-value, .max-value {
+            color: rgba(251, 146, 60, 0.5);
+        }
+
+        .current-value {
+            color: rgba(251, 146, 60, 0.9);
+            font-weight: bold;
+        }
+
+        /* 控制按钮 */
+        .control-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(6, 182, 212, 0.5);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .play-button {
+            padding: 12px 40px;
+            font-size: 1.125rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(to right, orange, yellow, cyan);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .play-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+        }
+
+        /* 状态信息 */
+        .status-info {
+            display: flex;
+            gap: 24px;
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-value {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .status-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 技术信息 */
+        .tech-info {
+            text-align: right;
+        }
+
+        .tech-title {
+            color: rgba(6, 182, 212, 0.9);
+            font-family: monospace;
+            font-size: 0.875rem;
+            margin-bottom: 4px;
+        }
+
+        .tech-description {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.75rem;
+        }
+
+        /* 滚动条样式 */
+        .control-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .control-panel::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 3px;
+        }
+
+        .control-panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, orange, yellow, cyan);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <!-- 背景星星 -->
+        <div class="stars" id="stars"></div>
+
+        <!-- 标题区域 -->
+        <div class="title-area">
+            <h1 class="title">统一场论·圆柱螺旋发散</h1>
+            <p class="subtitle">Unified Field - Cylindrical Spiral Divergence from Origin</p>
+            <p class="description">从原点(0,0,0)向空间四面八方发散，每个方向保持恒定半径的圆柱螺旋运动</p>
+        </div>
+
+        <!-- Three.js 渲染容器 -->
+        <div id="renderer-container"></div>
+
+        <!-- 控制面板 -->
+        <div class="control-panel">
+            <div class="control-container">
+                <div class="sliders-grid">
+                    <!-- 螺旋数量 -->
+                    <div class="slider-group">
+                        <label class="slider-label">🌐 发散方向数</label>
+                        <input type="range" id="spiralCount" min="8" max="64" step="4" value="12">
+                        <div class="slider-values">
+                            <span class="min-value">8</span>
+                            <span class="current-value" id="spiralCountValue">12</span>
+                            <span class="max-value">64</span>
+                        </div>
+                    </div>
+
+                    <!-- 半径 -->
+                    <div class="slider-group">
+                        <label class="slider-label">⭕ 圆柱半径</label>
+                        <input type="range" id="radius" min="1" max="8" step="0.5" value="3">
+                        <div class="slider-values">
+                            <span class="min-value">1</span>
+                            <span class="current-value" id="radiusValue">3</span>
+                            <span class="max-value">8</span>
+                        </div>
+                    </div>
+
+                    <!-- 长度 -->
+                    <div class="slider-group">
+                        <label class="slider-label">📏 发散长度</label>
+                        <input type="range" id="length" min="15" max="50" step="5" value="30">
+                        <div class="slider-values">
+                            <span class="min-value">15</span>
+                            <span class="current-value" id="lengthValue">30</span>
+                            <span class="max-value">50</span>
+                        </div>
+                    </div>
+
+                    <!-- 旋转圈数 -->
+                    <div class="slider-group">
+                        <label class="slider-label">🌀 旋转圈数</label>
+                        <input type="range" id="rotations" min="2" max="20" step="1" value="8">
+                        <div class="slider-values">
+                            <span class="min-value">2</span>
+                            <span class="current-value" id="rotationsValue">8</span>
+                            <span class="max-value">20</span>
+                        </div>
+                    </div>
+
+                    <!-- 角速度 -->
+                    <div class="slider-group">
+                        <label class="slider-label">⚡ 角速度 ω</label>
+                        <input type="range" id="angularSpeed" min="0.2" max="3" step="0.2" value="1.0">
+                        <div class="slider-values">
+                            <span class="min-value">0.2</span>
+                            <span class="current-value" id="angularSpeedValue">1.0</span>
+                            <span class="max-value">3.0</span>
+                        </div>
+                    </div>
+
+                    <!-- 螺旋紧密度 -->
+                    <div class="slider-group">
+                        <label class="slider-label">🔧 螺旋紧密度</label>
+                        <input type="range" id="helixTightness" min="0.5" max="2" step="0.1" value="1.0">
+                        <div class="slider-values">
+                            <span class="min-value">0.5</span>
+                            <span class="current-value" id="helixTightnessValue">1.0</span>
+                            <span class="max-value">2.0</span>
+                        </div>
+                    </div>
+
+                    <!-- 粒子密度 -->
+                    <div class="slider-group">
+                        <label class="slider-label">✨ 粒子密度</label>
+                        <input type="range" id="particleDensity" min="50" max="250" step="25" value="150">
+                        <div class="slider-values">
+                            <span class="min-value">50</span>
+                            <span class="current-value" id="particleDensityValue">150</span>
+                            <span class="max-value">250</span>
+                        </div>
+                    </div>
+
+                    <!-- 场强度 -->
+                    <div class="slider-group">
+                        <label class="slider-label">🔥 场强度</label>
+                        <input type="range" id="fieldIntensity" min="1" max="10" step="1" value="5">
+                        <div class="slider-values">
+                            <span class="min-value">1</span>
+                            <span class="current-value" id="fieldIntensityValue">5</span>
+                            <span class="max-value">10</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-buttons">
+                    <button class="play-button" id="playButton">⏸ 暂停</button>
+
+                    <div class="status-info">
+                        <div class="status-item">
+                            <div class="status-value" id="statusSpiralCount">12</div>
+                            <div class="status-label">螺旋方向</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-value" id="statusRadius">r = 3</div>
+                            <div class="status-label">恒定半径</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-value" id="statusRotations">8圈</div>
+                            <div class="status-label">螺旋旋转</div>
+                        </div>
+                    </div>
+
+                    <div class="tech-info">
+                        <div class="tech-title">Three.js + WebGL Shaders</div>
+                        <div class="tech-description">从原点(0,0,0)球面发散 | 圆柱螺旋轨迹</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入 Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // 全局变量
+        let scene, camera, renderer;
+        let config = {
+            spiralCount: 12,
+            radius: 3,
+            length: 30,
+            rotations: 8,
+            angularSpeed: 1.0,
+            particleDensity: 150,
+            fieldIntensity: 5,
+            helixTightness: 1.0
+        };
+        let isPlaying = true;
+        let spiralData = [];
+        let animationId;
+
+        // 初始化背景星星
+        function initStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 2 + 0.5;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.opacity = Math.random() * 0.8 + 0.2;
+                const duration = Math.random() * 4 + 2;
+                const delay = Math.random() * 2;
+                star.style.setProperty('--duration', duration + 's');
+                star.style.setProperty('--delay', delay + 's');
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // 初始化Three.js场景
+        function initThreeJS() {
+            // 创建场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000208);
+            scene.fog = new THREE.FogExp2(0x000208, 0.008);
+
+            // 创建相机
+            camera = new THREE.PerspectiveCamera(
+                70,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(45, 30, 45);
+            camera.lookAt(0, 0, 0);
+
+            // 创建渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.getElementById('renderer-container').appendChild(renderer.domElement);
+
+            // 添加光源
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+            scene.add(ambientLight);
+
+            const pointLight1 = new THREE.PointLight(0xffaa00, 3, 100);
+            pointLight1.position.set(0, 0, 0);
+            scene.add(pointLight1);
+
+            const pointLight2 = new THREE.PointLight(0x00ffff, 1.5, 100);
+            pointLight2.position.set(0, 20, 0);
+            scene.add(pointLight2);
+
+            const pointLight3 = new THREE.PointLight(0xff00ff, 1.5, 100);
+            pointLight3.position.set(0, -20, 0);
+            scene.add(pointLight3);
+
+            // 创建中心核心
+            const coreGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+            const coreMaterial = new THREE.MeshPhongMaterial({
+                color: 0xffff00,
+                emissive: 0xff6600,
+                emissiveIntensity: 3,
+                transparent: true,
+                opacity: 0.95
+            });
+            const core = new THREE.Mesh(coreGeometry, coreMaterial);
+            scene.add(core);
+
+            // 创建环绕环
+            for (let i = 1; i <= 3; i++) {
+                const ringGeometry = new THREE.TorusGeometry(1.5 * i, 0.1, 16, 100);
+                const ringMaterial = new THREE.MeshPhongMaterial({
+                    color: 0xff8800,
+                    emissive: 0xff4400,
+                    emissiveIntensity: 2 / i,
+                    transparent: true,
+                    opacity: 0.3 / i,
+                    side: THREE.DoubleSide
+                });
+                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                ring.rotation.x = Math.PI / 2;
+                ring.userData.rotSpeed = 0.01 * i;
+                scene.add(ring);
+                spiralData.push({ ring, isRing: true });
+            }
+
+            // 创建发光效果
+            const glowGeometry = new THREE.SphereGeometry(3, 32, 32);
+            const glowMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    time: { value: 0 },
+                    intensity: { value: 1.0 }
+                },
+                vertexShader: `
+                    varying vec3 vNormal;
+                    void main() {
+                        vNormal = normalize(normalMatrix * normal);
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float time;
+                    uniform float intensity;
+                    varying vec3 vNormal;
+                    
+                    void main() {
+                        float pulse = 0.7 + 0.3 * sin(time * 3.0);
+                        float glow = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
+                        vec3 color = vec3(1.0, 0.5, 0.1) * glow * intensity * pulse;
+                        gl_FragColor = vec4(color, glow * 0.5);
+                    }
+                `,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                side: THREE.BackSide
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            scene.add(glow);
+
+            // 添加坐标轴
+            const axesHelper = new THREE.AxesHelper(20);
+            scene.add(axesHelper);
+
+            // 添加网格
+            const gridXZ = new THREE.GridHelper(80, 40, 0x00ffff, 0x002244);
+            gridXZ.material.opacity = 0.1;
+            gridXZ.material.transparent = true;
+            scene.add(gridXZ);
+
+            // 创建螺旋场
+            createCylindricalSpiralField();
+
+            // 开始动画
+            animate();
+
+            // 处理窗口大小变化
+            window.addEventListener('resize', handleResize);
+        }
+
+        // 创建圆柱螺旋场
+        function createCylindricalSpiralField() {
+            // 清除旧的螺旋数据
+            spiralData.forEach(data => {
+                if (!data.isRing && data.line) {
+                    scene.remove(data.line);
+                    scene.remove(data.tube);
+                    scene.remove(data.particles);
+                    data.line?.geometry.dispose();
+                    data.line?.material.dispose();
+                    data.tube?.geometry.dispose();
+                    data.tube?.material.dispose();
+                    data.particles?.geometry.dispose();
+                    data.particles?.material.dispose();
+                }
+            });
+            spiralData = spiralData.filter(d => d.isRing);
+
+            // 生成方向向量
+            const directions = [];
+            const phi_count = Math.ceil(Math.sqrt(config.spiralCount));
+            const theta_count = Math.ceil(config.spiralCount / phi_count);
+            
+            for (let i = 0; i < phi_count; i++) {
+                for (let j = 0; j < theta_count; j++) {
+                    if (directions.length >= config.spiralCount) break;
+                    
+                    const phi = Math.acos(1 - 2 * (i + 0.5) / phi_count);
+                    const theta = 2 * Math.PI * (j / theta_count);
+                    
+                    const x = Math.sin(phi) * Math.cos(theta);
+                    const y = Math.cos(phi);
+                    const z = Math.sin(phi) * Math.sin(theta);
+                    
+                    directions.push([x, y, z]);
+                }
+            }
+
+            // 为每个方向创建螺旋
+            directions.forEach((dir, spiralIdx) => {
+                const [dx, dy, dz] = dir;
+                
+                const mag = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                const ndx = dx / mag;
+                const ndy = dy / mag;
+                const ndz = dz / mag;
+
+                let perpX, perpY, perpZ;
+                if (Math.abs(ndy) < 0.9) {
+                    perpX = 0;
+                    perpY = 1;
+                    perpZ = 0;
+                } else {
+                    perpX = 1;
+                    perpY = 0;
+                    perpZ = 0;
+                }
+                
+                const temp1X = ndy * perpZ - ndz * perpY;
+                const temp1Y = ndz * perpX - ndx * perpZ;
+                const temp1Z = ndx * perpY - ndy * perpX;
+                const temp1Mag = Math.sqrt(temp1X * temp1X + temp1Y * temp1Y + temp1Z * temp1Z);
+                const perp1X = temp1X / temp1Mag;
+                const perp1Y = temp1Y / temp1Mag;
+                const perp1Z = temp1Z / temp1Mag;
+                
+                const perp2X = ndy * perp1Z - ndz * perp1Y;
+                const perp2Y = ndz * perp1X - ndx * perp1Z;
+                const perp2Z = ndx * perp1Y - ndy * perp1X;
+
+                // 生成螺旋点
+                const points = [];
+                const colors = [];
+                const particlePositions = [];
+                const particleColors = [];
+                const particleSizes = [];
+
+                // 增加粒子密度以增强螺旋效果
+                const actualDensity = Math.floor(config.particleDensity * 1.5);
+                
+                for (let i = 0; i <= actualDensity; i++) {
+                    const t = i / actualDensity;
+                    
+                    // 增加距离，使螺旋更长，更明显地向外延伸
+                    const distance = t * config.length * 1.2;
+                    
+                    // 增加旋转角度，使螺旋旋转更多圈，更明显地转圈圈
+                    const angle = t * config.rotations * Math.PI * 2 * config.angularSpeed * config.helixTightness * 1.5;
+                    
+                    const circleX = config.radius * Math.cos(angle);
+                    const circleY = config.radius * Math.sin(angle);
+                    
+                    const x = distance * ndx + circleX * perp1X + circleY * perp2X;
+                    const y = distance * ndy + circleX * perp1Y + circleY * perp2Y;
+                    const z = distance * ndz + circleX * perp1Z + circleY * perp2Z;
+
+                    points.push(new THREE.Vector3(x, y, z));
+
+                    // 生成颜色
+                    const hue = 0.05 + t * 0.5;
+                    const sat = 1.0 - t * 0.2;
+                    const light = 0.6 - t * 0.2;
+                    const color = new THREE.Color().setHSL(hue, sat, light);
+                    colors.push(color.r, color.g, color.b);
+
+                    if (i % 2 === 0) {
+                        particlePositions.push(x, y, z);
+                        particleColors.push(color.r, color.g, color.b);
+                        particleSizes.push(0.25 + Math.random() * 0.35);
+                    }
+                }
+
+                // 创建螺旋线
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+                lineGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+                const lineMaterial = new THREE.LineBasicMaterial({
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.7,
+                    blending: THREE.AdditiveBlending
+                });
+
+                const line = new THREE.Line(lineGeometry, lineMaterial);
+
+                // 创建管状结构
+                const curve = new THREE.CatmullRomCurve3(points);
+                const tubeGeometry = new THREE.TubeGeometry(curve, config.particleDensity, 0.12, 8, false);
+                const tubeMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x00aaff,
+                    transparent: true,
+                    opacity: 0.25,
+                    emissive: 0x0066ff,
+                    emissiveIntensity: 0.6,
+                    side: THREE.DoubleSide
+                });
+                const tube = new THREE.Mesh(tubeGeometry, tubeMaterial);
+
+                // 创建粒子系统
+                const particleGeometry = new THREE.BufferGeometry();
+                particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(particlePositions, 3));
+                particleGeometry.setAttribute('color', new THREE.Float32BufferAttribute(particleColors, 3));
+                particleGeometry.setAttribute('size', new THREE.Float32BufferAttribute(particleSizes, 1));
+
+                const particleMaterial = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: { value: 0 }
+                    },
+                    vertexShader: `
+                        attribute float size;
+                        attribute vec3 color;
+                        varying vec3 vColor;
+                        uniform float time;
+                        
+                        void main() {
+                            vColor = color;
+                            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                            float dist = length(position);
+                            // 移除可能导致收缩的脉动效果，使用稳定的大小
+                            float pulse = 1.0 + 0.4 * abs(sin(time * 2.5 + dist * 0.3));
+                            gl_PointSize = size * pulse * (350.0 / -mvPosition.z);
+                            gl_Position = projectionMatrix * mvPosition;
+                        }
+                    `,
+                    fragmentShader: `
+                        varying vec3 vColor;
+                        
+                        void main() {
+                            vec2 center = gl_PointCoord - vec2(0.5);
+                            float dist = length(center);
+                            if (dist > 0.5) discard;
+                            float alpha = 1.0 - smoothstep(0.25, 0.5, dist);
+                            gl_FragColor = vec4(vColor, alpha * 0.9);
+                        }
+                    `,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+
+                const particles = new THREE.Points(particleGeometry, particleMaterial);
+
+                // 添加到场景
+                scene.add(line);
+                scene.add(tube);
+                scene.add(particles);
+
+                // 保存螺旋数据
+                spiralData.push({
+                    line,
+                    tube,
+                    particles,
+                    points,
+                    direction: dir,
+                    colors,
+                    spiralIdx
+                });
+            });
+        }
+
+        // 动画循环
+        function animate() {
+            if (!isPlaying) return;
+            
+            animationId = requestAnimationFrame(animate);
+            const time = performance.now() * 0.001;
+
+            // 更新核心旋转
+            const core = scene.children.find(child => child.geometry && child.geometry.type === 'SphereGeometry');
+            if (core) {
+                core.rotation.y += 0.02;
+                core.rotation.x += 0.01;
+                core.material.emissiveIntensity = 2.5 + Math.sin(time * 4) * 1.5;
+            }
+
+            // 更新发光效果
+            const glow = scene.children.find(child => child.material && child.material.type === 'ShaderMaterial');
+            if (glow) {
+                glow.material.uniforms.time.value = time;
+                glow.material.uniforms.intensity.value = config.fieldIntensity / 5;
+            }
+
+            // 更新螺旋效果
+            spiralData.forEach((data) => {
+                if (data.isRing) {
+                    data.ring.rotation.z += data.ring.userData.rotSpeed;
+                    return;
+                }
+
+                // 移除收缩效果，保持稳定大小
+                // 移除脉动缩放，保持恒定大小
+                // const pulsePhase = time * 2 + data.spiralIdx * 0.3;
+                // const scale = 1 + Math.sin(pulsePhase) * 0.08;
+                // data.line.scale.setScalar(scale);
+                // data.tube.scale.setScalar(scale);
+                // data.particles.scale.setScalar(scale);
+
+                if (data.particles.material.uniforms) {
+                    data.particles.material.uniforms.time.value = time;
+                }
+
+                // 移除收缩波动，保持稳定的螺旋形状
+                // 只保留粒子的脉动效果，不修改螺旋轨迹
+                // const positions = data.line.geometry.attributes.position.array;
+                // for (let i = 0; i < data.points.length; i++) {
+                //     const t = i / data.points.length;
+                //     const wave = Math.sin(time * 4 + t * Math.PI * 6) * 0.15;
+                //     
+                //     positions[i * 3] = data.points[i].x * (1 + wave);
+                //     positions[i * 3 + 1] = data.points[i].y * (1 + wave);
+                //     positions[i * 3 + 2] = data.points[i].z * (1 + wave);
+                // }
+                // data.line.geometry.attributes.position.needsUpdate = true;
+            });
+
+            // 更新相机位置
+            const radius = 60;
+            camera.position.x = Math.cos(time * 0.1) * radius;
+            camera.position.z = Math.sin(time * 0.1) * radius;
+            camera.position.y = 30 + Math.sin(time * 0.06) * 15;
+            camera.lookAt(0, 0, 0);
+
+            // 渲染场景
+            renderer.render(scene, camera);
+        }
+
+        // 处理窗口大小变化
+        function handleResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // 更新配置
+        function updateConfig(key, value) {
+            config[key] = Number(value);
+            // 更新UI显示
+            document.getElementById(key + 'Value').textContent = value;
+            // 更新状态信息
+            if (key === 'spiralCount') {
+                document.getElementById('statusSpiralCount').textContent = value;
+            } else if (key === 'radius') {
+                document.getElementById('statusRadius').textContent = 'r = ' + value;
+            } else if (key === 'rotations') {
+                document.getElementById('statusRotations').textContent = value + '圈';
+            }
+            // 重新创建螺旋场
+            createCylindricalSpiralField();
+        }
+
+        // 初始化UI事件
+        function initUI() {
+            // 播放/暂停按钮
+            const playButton = document.getElementById('playButton');
+            playButton.addEventListener('click', () => {
+                isPlaying = !isPlaying;
+                playButton.textContent = isPlaying ? '⏸ 暂停' : '▶ 播放';
+                if (isPlaying) {
+                    animate();
+                }
+            });
+
+            // 滑块事件
+            const sliders = [
+                'spiralCount', 'radius', 'length', 'rotations',
+                'angularSpeed', 'particleDensity', 'fieldIntensity', 'helixTightness'
+            ];
+
+            sliders.forEach(sliderId => {
+                const slider = document.getElementById(sliderId);
+                slider.addEventListener('input', (e) => {
+                    updateConfig(sliderId, e.target.value);
+                });
+            });
+        }
+
+        // 初始化所有内容
+        function init() {
+            initStars();
+            initThreeJS();
+            initUI();
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

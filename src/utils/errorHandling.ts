@@ -2,8 +2,8 @@
  * 增强的错误处理和恢复机制
  */
 
-import { eventSystem, APP_EVENTS } from './eventSystem';
-import { useVisualizationActions } from '../state/VisualizationState';
+import { eventSystem, APP_EVENTS } from './eventSystem'
+import { useVisualizationActions } from '../state/VisualizationState'
 
 // 错误类型定义
 export enum ErrorType {
@@ -39,66 +39,66 @@ export enum ErrorSeverity {
 
 // 错误上下文
 export interface ErrorContext {
-  componentName?: string;
-  functionName?: string;
-  fileName?: string;
-  lineNumber?: number;
-  columnNumber?: number;
-  stackTrace?: string;
-  timestamp: number;
-  userAgent: string;
-  url: string;
+  componentName?: string
+  functionName?: string
+  fileName?: string
+  lineNumber?: number
+  columnNumber?: number
+  stackTrace?: string
+  timestamp: number
+  userAgent: string
+  url: string
   deviceInfo: {
-    type: 'desktop' | 'mobile' | 'tablet';
-    performanceScore: number;
-  };
-  additionalData?: Record<string, any>;
+    type: 'desktop' | 'mobile' | 'tablet'
+    performanceScore: number
+  }
+  additionalData?: Record<string, any>
 }
 
 // 错误信息
 export interface ErrorInfo {
-  id: string;
-  type: ErrorType;
-  severity: ErrorSeverity;
-  message: string;
-  context: ErrorContext;
-  isRecovered: boolean;
-  recoveryAttempts: number;
-  recoveryStrategy?: string;
-  recoveryTime?: number;
+  id: string
+  type: ErrorType
+  severity: ErrorSeverity
+  message: string
+  context: ErrorContext
+  isRecovered: boolean
+  recoveryAttempts: number
+  recoveryStrategy?: string
+  recoveryTime?: number
 }
 
 // 错误恢复策略类型
-export type RecoveryStrategy = 'reload' | 'reset' | 'fallback' | 'ignore' | 'custom';
+export type RecoveryStrategy = 'reload' | 'reset' | 'fallback' | 'ignore' | 'custom'
 
 // 错误处理配置
 export interface ErrorHandlingConfig {
-  enableErrorLogging: boolean;
-  enableErrorReporting: boolean;
-  enableAutoRecovery: boolean;
-  maxRecoveryAttempts: number;
-  recoveryDelay: number;
-  errorReportUrl?: string;
-  ignoredErrorPatterns: RegExp[];
-  severityThreshold: ErrorSeverity;
+  enableErrorLogging: boolean
+  enableErrorReporting: boolean
+  enableAutoRecovery: boolean
+  maxRecoveryAttempts: number
+  recoveryDelay: number
+  errorReportUrl?: string
+  ignoredErrorPatterns: RegExp[]
+  severityThreshold: ErrorSeverity
 }
 
 // 错误处理器类型
-export type ErrorHandler = (error: Error, errorInfo: Partial<ErrorInfo>) => void;
+export type ErrorHandler = (error: Error, errorInfo: Partial<ErrorInfo>) => void
 
 /**
  * 错误处理管理器
  */
 export class ErrorHandlingManager {
-  private static instance: ErrorHandlingManager;
-  private config: ErrorHandlingConfig;
-  private errorHandlers: Map<ErrorType, ErrorHandler[]> = new Map();
-  private globalErrorHandler: ErrorHandler | null = null;
-  private errorHistory: ErrorInfo[] = [];
-  private recoveryAttempts: Map<string, number> = new Map();
-  private errorCounts: Map<string, number> = new Map();
+  private static instance: ErrorHandlingManager
+  private config: ErrorHandlingConfig
+  private errorHandlers: Map<ErrorType, ErrorHandler[]> = new Map()
+  private globalErrorHandler: ErrorHandler | null = null
+  private errorHistory: ErrorInfo[] = []
+  private recoveryAttempts: Map<string, number> = new Map()
+  private errorCounts: Map<string, number> = new Map()
 
-  private constructor(config: ErrorHandlingConfig = {}) {
+  private constructor(config: Partial<ErrorHandlingConfig> = {}) {
     this.config = {
       enableErrorLogging: true,
       enableErrorReporting: true,
@@ -115,10 +115,10 @@ export class ErrorHandlingManager {
       ],
       severityThreshold: ErrorSeverity.MEDIUM,
       ...config
-    };
+    }
 
-    this.setupGlobalErrorHandlers();
-    this.setupEventListeners();
+    this.setupGlobalErrorHandlers()
+    this.setupEventListeners()
   }
 
   /**
@@ -126,9 +126,9 @@ export class ErrorHandlingManager {
    */
   public static getInstance(config?: ErrorHandlingConfig): ErrorHandlingManager {
     if (!ErrorHandlingManager.instance) {
-      ErrorHandlingManager.instance = new ErrorHandlingManager(config);
+      ErrorHandlingManager.instance = new ErrorHandlingManager(config)
     }
-    return ErrorHandlingManager.instance;
+    return ErrorHandlingManager.instance
   }
 
   /**
@@ -136,52 +136,52 @@ export class ErrorHandlingManager {
    */
   private setupGlobalErrorHandlers(): void {
     // 监听全局错误
-    window.addEventListener('error', (event) => {
-      this.handleGlobalError(event);
-    });
+    window.addEventListener('error', event => {
+      this.handleGlobalError(event)
+    })
 
     // 监听未捕获的Promise错误
-    window.addEventListener('unhandledrejection', (event) => {
-      this.handleUnhandledRejection(event);
-    });
+    window.addEventListener('unhandledrejection', event => {
+      this.handleUnhandledRejection(event)
+    })
 
     // 监听资源加载错误
     window.addEventListener('load', () => {
       // 监听图片加载错误
       document.querySelectorAll('img').forEach(img => {
-        img.addEventListener('error', (event) => {
+        img.addEventListener('error', event => {
           this.handleResourceError(event as unknown as Error, ErrorType.RESOURCE_LOAD_ERROR, {
             resourceUrl: (event.target as HTMLImageElement).src
-          });
-        });
-      });
-    });
+          })
+        })
+      })
+    })
 
     // 监听Canvas错误
     if (typeof HTMLCanvasElement !== 'undefined') {
-      const originalGetContext = HTMLCanvasElement.prototype.getContext;
-      HTMLCanvasElement.prototype.getContext = function(...args) {
+      const originalGetContext = HTMLCanvasElement.prototype.getContext
+      HTMLCanvasElement.prototype.getContext = function (...args) {
         try {
-          const context = originalGetContext.apply(this, args);
+          const context = originalGetContext.apply(this, args)
           if (context) {
             // 保存原始的错误回调
-            const originalError = (context as any).onerror;
-            const self = this;
-            (context as any).onerror = (error: any) => {
+            const originalError = (context as any).onerror
+            const self = this
+            ;(context as any).onerror = (error: any) => {
               // 使用箭头函数或保存this上下文
-              ErrorHandlingManager.getInstance().handleCanvasError(error);
+              ErrorHandlingManager.getInstance().handleCanvasError(error)
               if (originalError) {
-                originalError.call(context, error);
+                originalError.call(context, error)
               }
-            };
+            }
           }
-          return context;
+          return context
         } catch (error) {
           // 捕获getContext调用本身的错误
-          ErrorHandlingManager.getInstance().handleCanvasError(error);
-          return null;
+          ErrorHandlingManager.getInstance().handleCanvasError(error)
+          return null
         }
-      };
+      }
     }
   }
 
@@ -199,8 +199,8 @@ export class ErrorHandlingManager {
           componentName: 'ThreeJSVisualization',
           additionalData: data
         }
-      );
-    });
+      )
+    })
 
     // 监听资源加载错误事件
     eventSystem.on(APP_EVENTS.RESOURCE_ERROR, (data: any) => {
@@ -212,8 +212,8 @@ export class ErrorHandlingManager {
           componentName: 'ResourceManager',
           additionalData: data
         }
-      );
-    });
+      )
+    })
 
     // 监听性能下降事件
     eventSystem.on(APP_EVENTS.PERFORMANCE_DROP, (data: any) => {
@@ -225,8 +225,8 @@ export class ErrorHandlingManager {
           componentName: 'PerformanceMonitor',
           additionalData: data
         }
-      );
-    });
+      )
+    })
   }
 
   /**
@@ -235,7 +235,7 @@ export class ErrorHandlingManager {
   private handleGlobalError(event: ErrorEvent): void {
     // 检查是否应该忽略该错误
     if (this.shouldIgnoreError(event.message)) {
-      return;
+      return
     }
 
     const errorInfo: Partial<ErrorInfo> = {
@@ -254,9 +254,9 @@ export class ErrorHandlingManager {
           performanceScore: this.getPerformanceScore()
         }
       }
-    };
+    }
 
-    this.handleError(event.error || new Error(event.message), errorInfo);
+    this.handleError(event.error || new Error(event.message), errorInfo)
   }
 
   /**
@@ -265,7 +265,7 @@ export class ErrorHandlingManager {
   private handleUnhandledRejection(event: PromiseRejectionEvent): void {
     // 检查是否应该忽略该错误
     if (this.shouldIgnoreError(event.reason?.message || '')) {
-      return;
+      return
     }
 
     const errorInfo: Partial<ErrorInfo> = {
@@ -280,18 +280,22 @@ export class ErrorHandlingManager {
           performanceScore: this.getPerformanceScore()
         }
       }
-    };
+    }
 
     this.handleError(
       event.reason instanceof Error ? event.reason : new Error(String(event.reason)),
       errorInfo
-    );
+    )
   }
 
   /**
    * 处理资源加载错误
    */
-  private handleResourceError(error: Error, type: ErrorType, additionalData: Record<string, any>): void {
+  private handleResourceError(
+    error: Error,
+    type: ErrorType,
+    additionalData: Record<string, any>
+  ): void {
     const errorInfo: Partial<ErrorInfo> = {
       type,
       severity: ErrorSeverity.MEDIUM,
@@ -305,9 +309,9 @@ export class ErrorHandlingManager {
         },
         additionalData
       }
-    };
+    }
 
-    this.handleError(error, errorInfo);
+    this.handleError(error, errorInfo)
   }
 
   /**
@@ -326,30 +330,24 @@ export class ErrorHandlingManager {
           performanceScore: this.getPerformanceScore()
         }
       }
-    };
+    }
 
-    this.handleError(
-      error instanceof Error ? error : new Error(String(error)),
-      errorInfo
-    );
+    this.handleError(error instanceof Error ? error : new Error(String(error)), errorInfo)
   }
 
   /**
    * 处理错误
    */
-  public handleError(
-    error: Error,
-    errorInfo: Partial<ErrorInfo>
-  ): ErrorInfo {
+  public handleError(error: Error, errorInfo: Partial<ErrorInfo>): ErrorInfo {
     // 生成唯一错误ID
-    const errorId = this.generateErrorId();
-    
+    const errorId = this.generateErrorId()
+
     // 确定错误类型
-    const type = errorInfo.type || this.determineErrorType(error.message);
-    
+    const type = errorInfo.type || this.determineErrorType(error.message)
+
     // 确定错误严重程度
-    const severity = errorInfo.severity || this.determineSeverity(error);
-    
+    const severity = errorInfo.severity || this.determineSeverity(error)
+
     // 创建完整的错误上下文
     const context: ErrorContext = {
       componentName: errorInfo.context?.componentName,
@@ -366,7 +364,7 @@ export class ErrorHandlingManager {
         performanceScore: this.getPerformanceScore()
       },
       additionalData: errorInfo.context?.additionalData
-    };
+    }
 
     // 创建完整的错误信息
     const fullErrorInfo: ErrorInfo = {
@@ -378,62 +376,62 @@ export class ErrorHandlingManager {
       isRecovered: false,
       recoveryAttempts: 0,
       recoveryStrategy: errorInfo.recoveryStrategy
-    };
+    }
 
     // 检查是否应该忽略该错误
     if (this.shouldIgnoreError(fullErrorInfo.message)) {
-      return fullErrorInfo;
+      return fullErrorInfo
     }
 
     // 更新错误计数
-    const errorKey = `${type}:${fullErrorInfo.message}`;
-    this.errorCounts.set(errorKey, (this.errorCounts.get(errorKey) || 0) + 1);
+    const errorKey = `${type}:${fullErrorInfo.message}`
+    this.errorCounts.set(errorKey, (this.errorCounts.get(errorKey) || 0) + 1)
 
     // 添加到错误历史
-    this.errorHistory.push(fullErrorInfo);
+    this.errorHistory.push(fullErrorInfo)
     // 只保留最近100个错误
     if (this.errorHistory.length > 100) {
-      this.errorHistory.shift();
+      this.errorHistory.shift()
     }
 
     // 触发全局错误事件
-    eventSystem.emit(APP_EVENTS.APP_ERROR, fullErrorInfo);
+    eventSystem.emit(APP_EVENTS.APP_ERROR, fullErrorInfo)
 
     // 调用类型特定的错误处理器
-    const typeHandlers = this.errorHandlers.get(type) || [];
+    const typeHandlers = this.errorHandlers.get(type) || []
     typeHandlers.forEach(handler => {
       try {
-        handler(error, fullErrorInfo);
+        handler(error, fullErrorInfo)
       } catch (handlerError) {
-        console.error('Error in error handler:', handlerError);
+        console.error('Error in error handler:', handlerError)
       }
-    });
+    })
 
     // 调用全局错误处理器
     if (this.globalErrorHandler) {
       try {
-        this.globalErrorHandler(error, fullErrorInfo);
+        this.globalErrorHandler(error, fullErrorInfo)
       } catch (handlerError) {
-        console.error('Error in global error handler:', handlerError);
+        console.error('Error in global error handler:', handlerError)
       }
     }
 
     // 自动恢复
     if (this.config.enableAutoRecovery) {
-      this.attemptAutoRecovery(fullErrorInfo);
+      this.attemptAutoRecovery(fullErrorInfo)
     }
 
     // 记录错误
     if (this.config.enableErrorLogging) {
-      this.logError(fullErrorInfo);
+      this.logError(fullErrorInfo)
     }
 
     // 报告错误
     if (this.config.enableErrorReporting && this.shouldReportError(fullErrorInfo)) {
-      this.reportError(fullErrorInfo);
+      this.reportError(fullErrorInfo)
     }
 
-    return fullErrorInfo;
+    return fullErrorInfo
   }
 
   /**
@@ -441,27 +439,27 @@ export class ErrorHandlingManager {
    */
   public registerErrorHandler(type: ErrorType, handler: ErrorHandler): void {
     if (!this.errorHandlers.has(type)) {
-      this.errorHandlers.set(type, []);
+      this.errorHandlers.set(type, [])
     }
-    this.errorHandlers.get(type)?.push(handler);
+    this.errorHandlers.get(type)?.push(handler)
   }
 
   /**
    * 注册全局错误处理器
    */
   public registerGlobalErrorHandler(handler: ErrorHandler): void {
-    this.globalErrorHandler = handler;
+    this.globalErrorHandler = handler
   }
 
   /**
    * 移除特定类型的错误处理器
    */
   public removeErrorHandler(type: ErrorType, handler: ErrorHandler): void {
-    const handlers = this.errorHandlers.get(type);
+    const handlers = this.errorHandlers.get(type)
     if (handlers) {
-      const index = handlers.indexOf(handler);
+      const index = handlers.indexOf(handler)
       if (index > -1) {
-        handlers.splice(index, 1);
+        handlers.splice(index, 1)
       }
     }
   }
@@ -470,7 +468,7 @@ export class ErrorHandlingManager {
    * 移除全局错误处理器
    */
   public removeGlobalErrorHandler(): void {
-    this.globalErrorHandler = null;
+    this.globalErrorHandler = null
   }
 
   /**
@@ -478,22 +476,22 @@ export class ErrorHandlingManager {
    */
   private attemptAutoRecovery(errorInfo: ErrorInfo): void {
     // 检查是否已超过最大恢复尝试次数
-    const attemptCount = this.recoveryAttempts.get(errorInfo.id) || 0;
+    const attemptCount = this.recoveryAttempts.get(errorInfo.id) || 0
     if (attemptCount >= this.config.maxRecoveryAttempts) {
-      return;
+      return
     }
 
     // 增加恢复尝试次数
-    this.recoveryAttempts.set(errorInfo.id, attemptCount + 1);
+    this.recoveryAttempts.set(errorInfo.id, attemptCount + 1)
 
     // 根据错误类型选择恢复策略
-    const strategy = this.getRecoveryStrategy(errorInfo);
-    errorInfo.recoveryStrategy = strategy;
+    const strategy = this.getRecoveryStrategy(errorInfo)
+    errorInfo.recoveryStrategy = strategy
 
     // 延迟执行恢复策略
     setTimeout(() => {
-      this.executeRecoveryStrategy(strategy, errorInfo);
-    }, this.config.recoveryDelay);
+      this.executeRecoveryStrategy(strategy, errorInfo)
+    }, this.config.recoveryDelay)
   }
 
   /**
@@ -504,35 +502,35 @@ export class ErrorHandlingManager {
       case ErrorType.RENDER_ERROR:
       case ErrorType.THREEJS_ERROR:
       case ErrorType.POST_PROCESSING_ERROR:
-        return 'reset';
+        return 'reset'
       case ErrorType.RESOURCE_LOAD_ERROR:
       case ErrorType.API_ERROR:
-        return 'reload';
+        return 'reload'
       case ErrorType.PERFORMANCE_ERROR:
       case ErrorType.GPU_ERROR:
       case ErrorType.WEBGL_ERROR:
-        return 'fallback';
+        return 'fallback'
       case ErrorType.CONFIG_ERROR:
-        return 'reset';
+        return 'reset'
       case ErrorType.NETWORK_ERROR:
       case ErrorType.EVENT_ERROR:
-        return 'ignore';
+        return 'ignore'
       case ErrorType.SHADER_ERROR:
-        return 'fallback';
+        return 'fallback'
       case ErrorType.PARTICLE_SYSTEM_ERROR:
-        return 'reload';
+        return 'reload'
       case ErrorType.CONTROLS_ERROR:
-        return 'reset';
+        return 'reset'
       case ErrorType.CANVAS_ERROR:
-        return 'reset';
+        return 'reset'
       case ErrorType.REACT_ERROR:
-        return 'fallback';
+        return 'fallback'
       case ErrorType.STATE_ERROR:
-        return 'reset';
+        return 'reset'
       case ErrorType.UTILITY_ERROR:
-        return 'ignore';
+        return 'ignore'
       default:
-        return 'fallback';
+        return 'fallback'
     }
   }
 
@@ -544,39 +542,38 @@ export class ErrorHandlingManager {
       switch (strategy) {
         case 'reload':
           // 重新加载资源或组件
-          this.handleReloadRecovery(errorInfo);
-          break;
+          this.handleReloadRecovery(errorInfo)
+          break
         case 'reset':
           // 重置状态或组件
-          this.handleResetRecovery(errorInfo);
-          break;
+          this.handleResetRecovery(errorInfo)
+          break
         case 'fallback':
           // 使用降级方案
-          this.handleFallbackRecovery(errorInfo);
-          break;
+          this.handleFallbackRecovery(errorInfo)
+          break
         case 'ignore':
           // 忽略错误，继续执行
-          this.handleIgnoreRecovery(errorInfo);
-          break;
+          this.handleIgnoreRecovery(errorInfo)
+          break
         case 'custom':
           // 自定义恢复策略
-          this.handleCustomRecovery(errorInfo);
-          break;
+          this.handleCustomRecovery(errorInfo)
+          break
       }
 
       // 更新错误状态
-      errorInfo.isRecovered = true;
-      errorInfo.recoveryTime = Date.now();
+      errorInfo.isRecovered = true
+      errorInfo.recoveryTime = Date.now()
 
       // 触发恢复事件
       eventSystem.emit(APP_EVENTS.PERFORMANCE_RECOVER, {
         error: errorInfo,
         strategy
-      });
-
+      })
     } catch (recoveryError) {
-      console.error('Recovery failed:', recoveryError);
-      errorInfo.isRecovered = false;
+      console.error('Recovery failed:', recoveryError)
+      errorInfo.isRecovered = false
     }
   }
 
@@ -589,7 +586,7 @@ export class ErrorHandlingManager {
       id: errorInfo.context.additionalData?.id,
       url: errorInfo.context.additionalData?.url,
       type: errorInfo.context.additionalData?.type
-    });
+    })
   }
 
   /**
@@ -600,13 +597,13 @@ export class ErrorHandlingManager {
     eventSystem.emit(APP_EVENTS.SCENE_CLEAR, {
       reason: 'error_recovery',
       errorId: errorInfo.id
-    });
+    })
 
     // 触发可视化状态重置事件，由React组件处理
     eventSystem.emit(APP_EVENTS.APP_ERROR, {
       ...errorInfo,
       action: 'reset_visualization_state'
-    });
+    })
   }
 
   /**
@@ -617,7 +614,7 @@ export class ErrorHandlingManager {
     eventSystem.emit(APP_EVENTS.PERFORMANCE_DROP, {
       type: 'fallback_mode',
       error: errorInfo
-    });
+    })
   }
 
   /**
@@ -625,7 +622,7 @@ export class ErrorHandlingManager {
    */
   private handleIgnoreRecovery(errorInfo: ErrorInfo): void {
     // 忽略错误，继续执行
-    console.warn('Ignoring error:', errorInfo.message);
+    console.warn('Ignoring error:', errorInfo.message)
   }
 
   /**
@@ -636,26 +633,26 @@ export class ErrorHandlingManager {
     eventSystem.emit(APP_EVENTS.APP_ERROR, {
       ...errorInfo,
       action: 'recover'
-    });
+    })
   }
 
   /**
    * 记录错误
    */
   private logError(errorInfo: ErrorInfo): void {
-    const logMessage = `[${errorInfo.type.toUpperCase()}] ${errorInfo.severity.toUpperCase()}: ${errorInfo.message}`;
-    
+    const logMessage = `[${errorInfo.type.toUpperCase()}] ${errorInfo.severity.toUpperCase()}: ${errorInfo.message}`
+
     switch (errorInfo.severity) {
       case ErrorSeverity.CRITICAL:
       case ErrorSeverity.HIGH:
-        console.error(logMessage, errorInfo);
-        break;
+        console.error(logMessage, errorInfo)
+        break
       case ErrorSeverity.MEDIUM:
-        console.warn(logMessage, errorInfo);
-        break;
+        console.warn(logMessage, errorInfo)
+        break
       case ErrorSeverity.LOW:
-        console.info(logMessage, errorInfo);
-        break;
+        console.info(logMessage, errorInfo)
+        break
     }
   }
 
@@ -674,10 +671,10 @@ export class ErrorHandlingManager {
           body: JSON.stringify(errorInfo),
           keepalive: true
         }).catch(reportError => {
-          console.error('Failed to report error:', reportError);
-        });
+          console.error('Failed to report error:', reportError)
+        })
       } catch (reportError) {
-        console.error('Failed to report error:', reportError);
+        console.error('Failed to report error:', reportError)
       }
     }
   }
@@ -686,111 +683,149 @@ export class ErrorHandlingManager {
    * 确定错误类型
    */
   private determineErrorType(message: string): ErrorType {
-    const lowerMessage = message.toLowerCase();
-    
+    const lowerMessage = message.toLowerCase()
+
     // 检查Three.js相关错误
     if (lowerMessage.includes('three.') || lowerMessage.includes('threejs')) {
-      return ErrorType.THREEJS_ERROR;
+      return ErrorType.THREEJS_ERROR
     }
-    
+
     // 检查WebGL相关错误
-    if (lowerMessage.includes('webgl') || lowerMessage.includes('gl_') || lowerMessage.includes('opengl')) {
-      return ErrorType.WEBGL_ERROR;
+    if (
+      lowerMessage.includes('webgl') ||
+      lowerMessage.includes('gl_') ||
+      lowerMessage.includes('opengl')
+    ) {
+      return ErrorType.WEBGL_ERROR
     }
-    
+
     // 检查GPU相关错误
-    if (lowerMessage.includes('gpu') || lowerMessage.includes('out of memory') || lowerMessage.includes('memory')) {
-      return ErrorType.GPU_ERROR;
+    if (
+      lowerMessage.includes('gpu') ||
+      lowerMessage.includes('out of memory') ||
+      lowerMessage.includes('memory')
+    ) {
+      return ErrorType.GPU_ERROR
     }
-    
+
     // 检查着色器相关错误
-    if (lowerMessage.includes('shader') || lowerMessage.includes('vertex') || lowerMessage.includes('fragment')) {
-      return ErrorType.SHADER_ERROR;
+    if (
+      lowerMessage.includes('shader') ||
+      lowerMessage.includes('vertex') ||
+      lowerMessage.includes('fragment')
+    ) {
+      return ErrorType.SHADER_ERROR
     }
-    
+
     // 检查粒子系统相关错误
     if (lowerMessage.includes('particle')) {
-      return ErrorType.PARTICLE_SYSTEM_ERROR;
+      return ErrorType.PARTICLE_SYSTEM_ERROR
     }
-    
+
     // 检查后处理相关错误
     if (lowerMessage.includes('post') || lowerMessage.includes('processing')) {
-      return ErrorType.POST_PROCESSING_ERROR;
+      return ErrorType.POST_PROCESSING_ERROR
     }
-    
+
     // 检查控制器相关错误
     if (lowerMessage.includes('control') || lowerMessage.includes('orbit')) {
-      return ErrorType.CONTROLS_ERROR;
+      return ErrorType.CONTROLS_ERROR
     }
-    
+
     // 检查Canvas相关错误
     if (lowerMessage.includes('canvas')) {
-      return ErrorType.CANVAS_ERROR;
+      return ErrorType.CANVAS_ERROR
     }
-    
+
     // 检查渲染相关错误
     if (lowerMessage.includes('render')) {
-      return ErrorType.RENDER_ERROR;
+      return ErrorType.RENDER_ERROR
     }
-    
+
     // 检查资源加载相关错误
-    if (lowerMessage.includes('load') || lowerMessage.includes('resource') || lowerMessage.includes('texture') || lowerMessage.includes('model')) {
-      return ErrorType.RESOURCE_LOAD_ERROR;
+    if (
+      lowerMessage.includes('load') ||
+      lowerMessage.includes('resource') ||
+      lowerMessage.includes('texture') ||
+      lowerMessage.includes('model')
+    ) {
+      return ErrorType.RESOURCE_LOAD_ERROR
     }
-    
+
     // 检查性能相关错误
-    if (lowerMessage.includes('performance') || lowerMessage.includes('fps') || lowerMessage.includes('frame')) {
-      return ErrorType.PERFORMANCE_ERROR;
+    if (
+      lowerMessage.includes('performance') ||
+      lowerMessage.includes('fps') ||
+      lowerMessage.includes('frame')
+    ) {
+      return ErrorType.PERFORMANCE_ERROR
     }
-    
+
     // 检查配置相关错误
     if (lowerMessage.includes('config')) {
-      return ErrorType.CONFIG_ERROR;
+      return ErrorType.CONFIG_ERROR
     }
-    
+
     // 检查API相关错误
     if (lowerMessage.includes('api')) {
-      return ErrorType.API_ERROR;
+      return ErrorType.API_ERROR
     }
-    
+
     // 检查网络相关错误
-    if (lowerMessage.includes('network') || lowerMessage.includes('fetch') || lowerMessage.includes('xhr') || lowerMessage.includes('http')) {
-      return ErrorType.NETWORK_ERROR;
+    if (
+      lowerMessage.includes('network') ||
+      lowerMessage.includes('fetch') ||
+      lowerMessage.includes('xhr') ||
+      lowerMessage.includes('http')
+    ) {
+      return ErrorType.NETWORK_ERROR
     }
-    
+
     // 检查状态相关错误
     if (lowerMessage.includes('state')) {
-      return ErrorType.STATE_ERROR;
+      return ErrorType.STATE_ERROR
     }
-    
+
     // 检查事件相关错误
     if (lowerMessage.includes('event')) {
-      return ErrorType.EVENT_ERROR;
+      return ErrorType.EVENT_ERROR
     }
-    
+
     // 检查工具函数相关错误
     if (lowerMessage.includes('util')) {
-      return ErrorType.UTILITY_ERROR;
+      return ErrorType.UTILITY_ERROR
     }
-    
+
     // 默认未知错误
-    return ErrorType.UNKNOWN_ERROR;
+    return ErrorType.UNKNOWN_ERROR
   }
 
   /**
    * 确定错误严重程度
    */
   private determineSeverity(error: Error): ErrorSeverity {
-    const message = error.message.toLowerCase();
-    
-    if (message.includes('fatal') || message.includes('critical') || message.includes('out of memory')) {
-      return ErrorSeverity.CRITICAL;
-    } else if (message.includes('error') || message.includes('failed') || message.includes('cannot')) {
-      return ErrorSeverity.HIGH;
-    } else if (message.includes('warning') || message.includes('deprecated') || message.includes('obsolete')) {
-      return ErrorSeverity.MEDIUM;
+    const message = error.message.toLowerCase()
+
+    if (
+      message.includes('fatal') ||
+      message.includes('critical') ||
+      message.includes('out of memory')
+    ) {
+      return ErrorSeverity.CRITICAL
+    } else if (
+      message.includes('error') ||
+      message.includes('failed') ||
+      message.includes('cannot')
+    ) {
+      return ErrorSeverity.HIGH
+    } else if (
+      message.includes('warning') ||
+      message.includes('deprecated') ||
+      message.includes('obsolete')
+    ) {
+      return ErrorSeverity.MEDIUM
     } else {
-      return ErrorSeverity.LOW;
+      return ErrorSeverity.LOW
     }
   }
 
@@ -798,7 +833,7 @@ export class ErrorHandlingManager {
    * 检查是否应该忽略该错误
    */
   private shouldIgnoreError(message: string): boolean {
-    return this.config.ignoredErrorPatterns.some(pattern => pattern.test(message));
+    return this.config.ignoredErrorPatterns.some(pattern => pattern.test(message))
   }
 
   /**
@@ -810,33 +845,33 @@ export class ErrorHandlingManager {
       [ErrorSeverity.MEDIUM]: 1,
       [ErrorSeverity.HIGH]: 2,
       [ErrorSeverity.CRITICAL]: 3
-    };
-    
-    const thresholdOrder = severityOrder[this.config.severityThreshold];
-    const errorOrder = severityOrder[errorInfo.severity];
-    
-    return errorOrder >= thresholdOrder;
+    }
+
+    const thresholdOrder = severityOrder[this.config.severityThreshold]
+    const errorOrder = severityOrder[errorInfo.severity]
+
+    return errorOrder >= thresholdOrder
   }
 
   /**
    * 生成唯一错误ID
    */
   private generateErrorId(): string {
-    return `error_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    return `error_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
   }
 
   /**
    * 获取设备类型
    */
   private getDeviceType(): 'desktop' | 'mobile' | 'tablet' {
-    const userAgent = navigator.userAgent;
+    const userAgent = navigator.userAgent
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) {
       if (/iPad/i.test(userAgent)) {
-        return 'tablet';
+        return 'tablet'
       }
-      return 'mobile';
+      return 'mobile'
     }
-    return 'desktop';
+    return 'desktop'
   }
 
   /**
@@ -845,21 +880,21 @@ export class ErrorHandlingManager {
   private getPerformanceScore(): number {
     try {
       if (typeof performance !== 'undefined' && performance.timing) {
-        const timing = performance.timing;
-        const loadTime = timing.loadEventEnd - timing.navigationStart;
-        return Math.max(0, Math.min(100, 100 - loadTime / 10));
+        const timing = performance.timing
+        const loadTime = timing.loadEventEnd - timing.navigationStart
+        return Math.max(0, Math.min(100, 100 - loadTime / 10))
       }
     } catch (error) {
-      console.error('Failed to get performance score:', error);
+      console.error('Failed to get performance score:', error)
     }
-    return 50; // 默认分数
+    return 50 // 默认分数
   }
 
   /**
    * 获取错误历史
    */
   public getErrorHistory(): ErrorInfo[] {
-    return [...this.errorHistory];
+    return [...this.errorHistory]
   }
 
   /**
@@ -868,41 +903,47 @@ export class ErrorHandlingManager {
   public getErrorStats() {
     return {
       totalErrors: this.errorHistory.length,
-      byType: this.errorHistory.reduce((acc, error) => {
-        acc[error.type] = (acc[error.type] || 0) + 1;
-        return acc;
-      }, {} as Record<ErrorType, number>),
-      bySeverity: this.errorHistory.reduce((acc, error) => {
-        acc[error.severity] = (acc[error.severity] || 0) + 1;
-        return acc;
-      }, {} as Record<ErrorSeverity, number>),
+      byType: this.errorHistory.reduce(
+        (acc, error) => {
+          acc[error.type] = (acc[error.type] || 0) + 1
+          return acc
+        },
+        {} as Record<ErrorType, number>
+      ),
+      bySeverity: this.errorHistory.reduce(
+        (acc, error) => {
+          acc[error.severity] = (acc[error.severity] || 0) + 1
+          return acc
+        },
+        {} as Record<ErrorSeverity, number>
+      ),
       recoveredErrors: this.errorHistory.filter(error => error.isRecovered).length,
       unrecoveredErrors: this.errorHistory.filter(error => !error.isRecovered).length,
       errorCounts: this.errorCounts
-    };
+    }
   }
 
   /**
    * 清空错误历史
    */
   public clearErrorHistory(): void {
-    this.errorHistory = [];
-    this.recoveryAttempts.clear();
-    this.errorCounts.clear();
+    this.errorHistory = []
+    this.recoveryAttempts.clear()
+    this.errorCounts.clear()
   }
 
   /**
    * 更新配置
    */
   public updateConfig(config: Partial<ErrorHandlingConfig>): void {
-    this.config = { ...this.config, ...config };
+    this.config = { ...this.config, ...config }
   }
 
   /**
    * 获取当前配置
    */
   public getConfig(): ErrorHandlingConfig {
-    return { ...this.config };
+    return { ...this.config }
   }
 }
 
@@ -919,7 +960,7 @@ export const errorHandlingManager = ErrorHandlingManager.getInstance({
     /Script error\./
   ],
   severityThreshold: ErrorSeverity.MEDIUM
-});
+})
 
 /**
  * React错误边界工具函数
@@ -935,14 +976,14 @@ export const handleReactError = (error: Error, errorInfo: React.ErrorInfo): Erro
       type: errorHandlingManager['getDeviceType'](),
       performanceScore: errorHandlingManager['getPerformanceScore']()
     }
-  };
+  }
 
   return errorHandlingManager.handleError(error, {
     type: ErrorType.RENDER_ERROR,
     severity: ErrorSeverity.HIGH,
     context: errorContext
-  });
-};
+  })
+}
 
 /**
  * 错误捕获装饰器
@@ -950,15 +991,15 @@ export const handleReactError = (error: Error, errorInfo: React.ErrorInfo): Erro
 export const withErrorHandling = <T extends (...args: any[]) => any>(
   fn: T,
   options?: {
-    type?: ErrorType;
-    severity?: ErrorSeverity;
-    componentName?: string;
-    fallbackValue?: ReturnType<T>;
+    type?: ErrorType
+    severity?: ErrorSeverity
+    componentName?: string
+    fallbackValue?: ReturnType<T>
   }
 ): T => {
   return ((...args: any[]) => {
     try {
-      return fn(...args);
+      return fn(...args)
     } catch (error) {
       const errorInfo: Partial<ErrorInfo> = {
         type: options?.type || ErrorType.UNKNOWN_ERROR,
@@ -974,13 +1015,16 @@ export const withErrorHandling = <T extends (...args: any[]) => any>(
             performanceScore: errorHandlingManager['getPerformanceScore']()
           }
         }
-      };
+      }
 
-      errorHandlingManager.handleError(error instanceof Error ? error : new Error(String(error)), errorInfo);
-      return options?.fallbackValue as ReturnType<T>;
+      errorHandlingManager.handleError(
+        error instanceof Error ? error : new Error(String(error)),
+        errorInfo
+      )
+      return options?.fallbackValue as ReturnType<T>
     }
-  }) as T;
-};
+  }) as T
+}
 
 /**
  * 异步错误捕获函数
@@ -988,14 +1032,14 @@ export const withErrorHandling = <T extends (...args: any[]) => any>(
 export const catchAsyncError = async <T>(
   promise: Promise<T>,
   options?: {
-    type?: ErrorType;
-    severity?: ErrorSeverity;
-    componentName?: string;
-    fallbackValue?: T;
+    type?: ErrorType
+    severity?: ErrorSeverity
+    componentName?: string
+    fallbackValue?: T
   }
 ): Promise<T> => {
   try {
-    return await promise;
+    return await promise
   } catch (error) {
     const errorInfo: Partial<ErrorInfo> = {
       type: options?.type || ErrorType.UNKNOWN_ERROR,
@@ -1010,9 +1054,12 @@ export const catchAsyncError = async <T>(
           performanceScore: errorHandlingManager['getPerformanceScore']()
         }
       }
-    };
+    }
 
-    errorHandlingManager.handleError(error instanceof Error ? error : new Error(String(error)), errorInfo);
-    return options?.fallbackValue as T;
+    errorHandlingManager.handleError(
+      error instanceof Error ? error : new Error(String(error)),
+      errorInfo
+    )
+    return options?.fallbackValue as T
   }
-};
+}

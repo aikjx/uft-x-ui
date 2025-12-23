@@ -37,10 +37,11 @@ ls dist/
 ### Vercel 部署 (推荐)
 
 1. **一键部署**
+
    ```bash
    # 安装 Vercel CLI
    npm i -g vercel
-   
+
    # 部署到 Vercel
    vercel --prod
    ```
@@ -53,10 +54,11 @@ ls dist/
 ### Netlify 部署
 
 1. **手动部署**
+
    ```bash
    # 构建项目
    npm run build
-   
+
    # 上传 dist/ 目录到 Netlify
    ```
 
@@ -134,17 +136,17 @@ spec:
         app: unified-field-theory
     spec:
       containers:
-      - name: app
-        image: unified-field-theory-app:latest
-        ports:
-        - containerPort: 80
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "200m"
+        - name: app
+          image: unified-field-theory-app:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: '128Mi'
+              cpu: '100m'
+            limits:
+              memory: '256Mi'
+              cpu: '200m'
 ---
 apiVersion: v1
 kind: Service
@@ -190,7 +192,7 @@ export default defineConfig({
         }
       }
     },
-    
+
     // 压缩优化
     minify: 'terser',
     terserOptions: {
@@ -209,11 +211,11 @@ export default defineConfig({
 
 ```typescript
 // src/main.tsx
-import * as Sentry from "@sentry/react"
-import { BrowserTracing } from "@sentry/tracing"
+import * as Sentry from '@sentry/react'
+import { BrowserTracing } from '@sentry/tracing'
 
 Sentry.init({
-  dsn: "YOUR_SENTRY_DSN",
+  dsn: 'YOUR_SENTRY_DSN',
   integrations: [new BrowserTracing()],
   tracesSampleRate: 1.0,
   environment: process.env.NODE_ENV
@@ -250,16 +252,16 @@ server {
 server {
     listen 443 ssl http2;
     server_name yourdomain.com;
-    
+
     ssl_certificate /path/to/certificate.crt;
     ssl_certificate_key /path/to/private.key;
-    
+
     # 安全头部
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
-    
+
     location / {
         root /usr/share/nginx/html;
         index index.html;
@@ -272,12 +274,14 @@ server {
 
 ```html
 <!-- public/index.html -->
-<meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self'; 
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self'; 
                script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
                style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
                img-src 'self' data: https:;
-               connect-src 'self' https://api.example.com;">
+               connect-src 'self' https://api.example.com;"
+/>
 ```
 
 ## 🚢 持续部署流程
@@ -303,7 +307,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      
+
   deploy:
     needs: test
     runs-on: ubuntu-latest
@@ -420,16 +424,16 @@ metadata:
   name: app-service
 spec:
   selector:
-    version: v1.2.0  # 当前版本
+    version: v1.2.0 # 当前版本
   ports:
     - port: 80
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app-v1.3.0  # 新版本
+  name: app-v1.3.0 # 新版本
 spec:
-  replicas: 0  # 初始为0，逐步切换
+  replicas: 0 # 初始为0，逐步切换
 ```
 
 ## 📚 部署文档

@@ -1,0 +1,7 @@
+import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import FormulaVisualizationPage from '@/pages/FormulaVisualizationPage'
+
+// 在模块级别模拟react-router-dom，确保所有组件都能访问到mock
+vi.mock('react-router-dom', () => {
+  const actual = vi.importActual<any>('react-router

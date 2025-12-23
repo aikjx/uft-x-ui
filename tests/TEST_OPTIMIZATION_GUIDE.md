@@ -5,12 +5,14 @@
 ## 📊 优化概览
 
 ### 当前优化状态
+
 - ✅ 测试配置优化完成
 - ✅ 性能监控工具已实现
 - ✅ 智能测试运行器已部署
 - ✅ 单元测试结构已优化
 
 ### 性能目标
+
 - 测试执行时间减少 30-50%
 - 内存使用降低 20-30%
 - 测试覆盖率提高至 85%+
@@ -90,12 +92,12 @@ tests/
 
 ### 测试类型划分
 
-| 测试类型 | 位置 | 超时时间 | 并行度 | 用途 |
-|---------|------|---------|--------|------|
-| 单元测试 | `tests/unit/` | 2秒 | 高 | 测试单个函数/组件 |
-| 组件测试 | `tests/components/` | 4秒 | 中 | 测试 React 组件 |
-| 集成测试 | `tests/integration/` | 8秒 | 低 | 测试模块集成 |
-| E2E 测试 | `tests/e2e/` | 15秒 | 串行 | 端到端测试 |
+| 测试类型 | 位置                 | 超时时间 | 并行度 | 用途              |
+| -------- | -------------------- | -------- | ------ | ----------------- |
+| 单元测试 | `tests/unit/`        | 2秒      | 高     | 测试单个函数/组件 |
+| 组件测试 | `tests/components/`  | 4秒      | 中     | 测试 React 组件   |
+| 集成测试 | `tests/integration/` | 8秒      | 低     | 测试模块集成      |
+| E2E 测试 | `tests/e2e/`         | 15秒     | 串行   | 端到端测试        |
 
 ## 🎯 性能优化技巧
 
@@ -164,12 +166,14 @@ console.log('测试性能趋势:', trends.trend) // 'improving' | 'declining' | 
 ### 常见问题
 
 #### 1. 测试超时
+
 ```bash
 # 解决方案：增加超时时间或优化测试代码
 pnpm test --testTimeout=10000
 ```
 
 #### 2. 内存泄漏
+
 ```typescript
 // 在 afterEach 中清理
 afterEach(() => {
@@ -179,6 +183,7 @@ afterEach(() => {
 ```
 
 #### 3. 并行测试冲突
+
 ```typescript
 // 使用独立的测试环境
 vi.setConfig({ isolate: true })
@@ -187,16 +192,19 @@ vi.setConfig({ isolate: true })
 ### 调试技巧
 
 1. **启用详细日志**
+
 ```bash
 pnpm test --reporter=verbose
 ```
 
 2. **使用 Vitest UI**
+
 ```bash
 pnpm test:ui
 ```
 
 3. **性能分析**
+
 ```bash
 # 生成性能报告
 pnpm test:performance
@@ -207,11 +215,13 @@ pnpm test:performance
 ### 监控建议
 
 1. **定期运行性能测试**
+
    ```bash
    pnpm test:benchmark
    ```
 
 2. **分析覆盖率报告**
+
    ```bash
    pnpm test:coverage
    ```

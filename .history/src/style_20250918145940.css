@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 全局样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+}
+
+/* 主题变量 */
+:root {
+  --accent-color: #00f5ff;
+  --accent-secondary: #64ffda;
+}
+
+/* 按钮样式 */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold transition-all duration-300 rounded-lg;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, var(--accent-color), var(--accent-secondary));
+  color: #0a0a0f;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 245, 255, 0.3);
+}
+
+/* 动画 */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

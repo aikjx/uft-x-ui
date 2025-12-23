@@ -1,691 +1,723 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>张祥前统一场论：质量几何化与质速关系可视化</title>
     <script src=" https://polyfill.io/v3/polyfill.min.js?features=es6 "></script>
-    <script id="MathJax-script" async src=" https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js "></script>
+    <script
+      id="MathJax-script"
+      async
+      src=" https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js "
+    ></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        
-        header {
-            background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-        
-        .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-        
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      header {
+        background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+      }
+
+      .subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+      }
+
+      .content {
+        padding: 30px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+      }
+
+      @media (max-width: 768px) {
         .content {
-            padding: 30px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+          grid-template-columns: 1fr;
         }
-        
-        @media (max-width: 768px) {
-            .content {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        .section {
-            margin-bottom: 30px;
-        }
-        
-        h2 {
-            color: #4b6cb7;
-            border-bottom: 2px solid #eaeaea;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-            font-size: 1.8rem;
-        }
-        
-        h3 {
-            color: #182848;
-            margin: 15px 0 10px;
-            font-size: 1.4rem;
-        }
-        
-        p {
-            margin-bottom: 15px;
-            text-align: justify;
-        }
-        
-        .formula-box {
-            background: #f8f9fa;
-            border-left: 4px solid #4b6cb7;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 0 5px 5px 0;
-        }
-        
-        .formula {
-            font-size: 1.2rem;
-            text-align: center;
-            margin: 10px 0;
-        }
-        
-        .interactive-section {
-            background: #f0f4f8;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-        
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin: 15px 0;
-        }
-        
-        .control-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        label {
-            font-weight: 600;
-        }
-        
-        input[type="range"] {
-            width: 200px;
-        }
-        
-        .value-display {
-            min-width: 60px;
-            font-weight: 600;
-            color: #4b6cb7;
-        }
-        
-        .visualization {
-            height: 300px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-top: 15px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .conclusion {
-            background: #e8f4f8;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 30px;
-            border-left: 4px solid #2e86ab;
-        }
-        
-        footer {
-            text-align: center;
-            padding: 20px;
-            background: #f8f9fa;
-            color: #666;
-            font-size: 0.9rem;
-        }
-        
-        .math-container {
-            text-align: center;
-            margin: 20px 0;
-            padding: 15px;
-            background: #f9f9f9;
-            border-radius: 5px;
-        }
+      }
+
+      .section {
+        margin-bottom: 30px;
+      }
+
+      h2 {
+        color: #4b6cb7;
+        border-bottom: 2px solid #eaeaea;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+        font-size: 1.8rem;
+      }
+
+      h3 {
+        color: #182848;
+        margin: 15px 0 10px;
+        font-size: 1.4rem;
+      }
+
+      p {
+        margin-bottom: 15px;
+        text-align: justify;
+      }
+
+      .formula-box {
+        background: #f8f9fa;
+        border-left: 4px solid #4b6cb7;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 0 5px 5px 0;
+      }
+
+      .formula {
+        font-size: 1.2rem;
+        text-align: center;
+        margin: 10px 0;
+      }
+
+      .interactive-section {
+        background: #f0f4f8;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin: 15px 0;
+      }
+
+      .control-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      label {
+        font-weight: 600;
+      }
+
+      input[type='range'] {
+        width: 200px;
+      }
+
+      .value-display {
+        min-width: 60px;
+        font-weight: 600;
+        color: #4b6cb7;
+      }
+
+      .visualization {
+        height: 300px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-top: 15px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .conclusion {
+        background: #e8f4f8;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 30px;
+        border-left: 4px solid #2e86ab;
+      }
+
+      footer {
+        text-align: center;
+        padding: 20px;
+        background: #f8f9fa;
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      .math-container {
+        text-align: center;
+        margin: 20px 0;
+        padding: 15px;
+        background: #f9f9f9;
+        border-radius: 5px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <header>
-            <h1>张祥前统一场论可视化</h1>
-            <div class="subtitle">质量几何化与质速关系推导的交互式演示</div>
-        </header>
-        
-        <div class="content">
-            <div class="left-column">
-                <section class="section">
-                    <h2>质量几何化定义</h2>
-                    
-                    <p>根据张祥前统一场论，质量不是物体内在的"物质的量"，而是物体对其周围空间运动状态扰动程度的几何度量。</p>
-                    
-                    <div class="formula-box">
-                        <h3>积分形式</h3>
-                        <div class="math-container">
-                            \[ m = k \cdot \frac{n}{\Omega} \]
-                        </div>
-                        <p>其中：</p>
-                        <ul>
-                            <li>\( m \)：物体的总质量</li>
-                            <li>\( k \)：比例常数</li>
-                            <li>\( n \)：空间位移矢量的总条数</li>
-                            <li>\( \Omega \)：总立体角（通常为 \( 4\pi \)）</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="formula-box">
-                        <h3>微分形式</h3>
-                        <div class="math-container">
-                            \[ dm = k \cdot \frac{dn}{d\Omega} \]
-                        </div>
-                        <p>微分形式更基本，描述了质量在空间中的分布密度。</p>
-                    </div>
-                    
-                    <p>物理意义：质量越大，意味着单位立体角内空间位移矢量的条数密度越高，即物体周围空间的运动越剧烈。</p>
-                </section>
-                
-                <section class="section">
-                    <h2>"无限大也有大小"的解释</h2>
-                    
-                    <p>在统一场论中，质量可以趋于无限大，这源于相对论效应：</p>
-                    
-                    <div class="interactive-section">
-                        <h3>质量随速度变化可视化</h3>
-                        
-                        <div class="controls">
-                            <div class="control-group">
-                                <label for="velocity">速度 (v/c):</label>
-                                <input type="range" id="velocity" min="0" max="0.999" step="0.001" value="0">
-                                <span class="value-display" id="velocity-value">0</span>
-                            </div>
-                            
-                            <div class="control-group">
-                                <label for="rest-mass">静止质量 m₀:</label>
-                                <input type="range" id="rest-mass" min="1" max="10" step="1" value="5">
-                                <span class="value-display" id="rest-mass-value">5</span>
-                            </div>
-                        </div>
-                        
-                        <div class="visualization" id="mass-visualization">
-                            <!-- 可视化将通过JavaScript动态生成 -->
-                        </div>
-                        
-                        <div class="math-container" id="current-equation">
-                            \[ m = \frac{m_0}{\sqrt{1 - 0^2/c^2}} = m_0 \]
-                        </div>
-                    </div>
-                    
-                    <p>当物体以接近光速运动时，其周围空间的立体角 \( \Omega \) 由于洛伦兹收缩而趋于零：</p>
-                    <div class="math-container">
-                        \[ \Omega = \frac{\Omega_0}{\gamma} = \Omega_0 \sqrt{1 - v^2/c^2} \]
-                    </div>
-                    <p>由于条数 \( n \) 是洛伦兹不变量，根据质量公式 \( m = k \cdot n/\Omega \)，当 \( \Omega \to 0 \) 时，\( m \to \infty \)。</p>
-                </section>
+      <header>
+        <h1>张祥前统一场论可视化</h1>
+        <div class="subtitle">质量几何化与质速关系推导的交互式演示</div>
+      </header>
+
+      <div class="content">
+        <div class="left-column">
+          <section class="section">
+            <h2>质量几何化定义</h2>
+
+            <p>
+              根据张祥前统一场论，质量不是物体内在的"物质的量"，而是物体对其周围空间运动状态扰动程度的几何度量。
+            </p>
+
+            <div class="formula-box">
+              <h3>积分形式</h3>
+              <div class="math-container">\[ m = k \cdot \frac{n}{\Omega} \]</div>
+              <p>其中：</p>
+              <ul>
+                <li>\( m \)：物体的总质量</li>
+                <li>\( k \)：比例常数</li>
+                <li>\( n \)：空间位移矢量的总条数</li>
+                <li>\( \Omega \)：总立体角（通常为 \( 4\pi \)）</li>
+              </ul>
             </div>
-            
-            <div class="right-column">
-                <section class="section">
-                    <h2>质速关系的推导验证</h2>
-                    
-                    <p>从质量几何化定义出发，可以自然推导出相对论的质速关系公式：</p>
-                    
-                    <div class="formula-box">
-                        <h3>推导过程</h3>
-                        
-                        <p>1. 静止状态的质量定义：</p>
-                        <div class="math-container">
-                            \[ m_0 = k \cdot \frac{n}{\Omega_0} \]
-                        </div>
-                        
-                        <p>2. 运动状态的质量定义：</p>
-                        <div class="math-container">
-                            \[ m = k \cdot \frac{n}{\Omega} \]
-                        </div>
-                        
-                        <p>3. 立体角的洛伦兹收缩：</p>
-                        <div class="math-container">
-                            \[ \Omega = \frac{\Omega_0}{\gamma} = \Omega_0 \sqrt{1 - v^2/c^2} \]
-                        </div>
-                        
-                        <p>4. 代入质量公式：</p>
-                        <div class="math-container">
-                            \[ m = k \cdot \frac{n}{\Omega_0 \sqrt{1 - v^2/c^2}} = \frac{m_0}{\sqrt{1 - v^2/c^2}} \]
-                        </div>
-                    </div>
-                    
-                    <div class="interactive-section">
-                        <h3>质速关系曲线</h3>
-                        
-                        <div class="controls">
-                            <div class="control-group">
-                                <label for="curve-precision">曲线精度:</label>
-                                <input type="range" id="curve-precision" min="10" max="100" step="10" value="50">
-                                <span class="value-display" id="precision-value">50</span>
-                            </div>
-                        </div>
-                        
-                        <div class="visualization" id="curve-visualization">
-                            <!-- 质速关系曲线将通过JavaScript绘制 -->
-                        </div>
-                    </div>
-                </section>
-                
-                <section class="section">
-                    <h2>立体角收缩的可视化</h2>
-                    
-                    <p>当物体运动时，从静止观察者视角看，其周围空间的立体角会发生洛伦兹收缩：</p>
-                    
-                    <div class="interactive-section">
-                        <h3>立体角随速度变化</h3>
-                        
-                        <div class="controls">
-                            <div class="control-group">
-                                <label for="angle-velocity">速度 (v/c):</label>
-                                <input type="range" id="angle-velocity" min="0" max="0.99" step="0.01" value="0">
-                                <span class="value-display" id="angle-velocity-value">0</span>
-                            </div>
-                        </div>
-                        
-                        <div class="visualization" id="angle-visualization">
-                            <!-- 立体角可视化将通过JavaScript生成 -->
-                        </div>
-                        
-                        <div class="math-container" id="angle-equation">
-                            \[ \Omega = \Omega_0 \sqrt{1 - 0^2/c^2} = \Omega_0 \]
-                        </div>
-                    </div>
-                    
-                    <p>立体角收缩源于洛伦兹长度收缩。考虑一个以物体为中心的球面，从静止观察者看，运动方向上的尺寸收缩为原来的 \( 1/\gamma \)，而横向尺寸不变，导致球面的有效面积收缩为原来的 \( 1/\gamma \)，立体角也相应收缩。</p>
-                </section>
+
+            <div class="formula-box">
+              <h3>微分形式</h3>
+              <div class="math-container">\[ dm = k \cdot \frac{dn}{d\Omega} \]</div>
+              <p>微分形式更基本，描述了质量在空间中的分布密度。</p>
             </div>
-        </div>
-        
-        <div class="conclusion">
-            <h2>结论</h2>
-            <p>张祥前统一场论的质量几何化定义提供了一个全新的视角来理解质量的本质。该理论不仅将质量还原为空间运动的几何属性，还自然推导出了相对论的质速关系，体现了其内在的自洽性。</p>
-            <p>"无限大也有大小"在这一框架下可以理解为：当物体趋近光速时，其周围空间的立体角趋于零，导致质量趋于无限大。这是一种数学极限情况，反映了相对论效应，并不违背物理本质。</p>
+
+            <p>
+              物理意义：质量越大，意味着单位立体角内空间位移矢量的条数密度越高，即物体周围空间的运动越剧烈。
+            </p>
+          </section>
+
+          <section class="section">
+            <h2>"无限大也有大小"的解释</h2>
+
+            <p>在统一场论中，质量可以趋于无限大，这源于相对论效应：</p>
+
+            <div class="interactive-section">
+              <h3>质量随速度变化可视化</h3>
+
+              <div class="controls">
+                <div class="control-group">
+                  <label for="velocity">速度 (v/c):</label>
+                  <input type="range" id="velocity" min="0" max="0.999" step="0.001" value="0" />
+                  <span class="value-display" id="velocity-value">0</span>
+                </div>
+
+                <div class="control-group">
+                  <label for="rest-mass">静止质量 m₀:</label>
+                  <input type="range" id="rest-mass" min="1" max="10" step="1" value="5" />
+                  <span class="value-display" id="rest-mass-value">5</span>
+                </div>
+              </div>
+
+              <div class="visualization" id="mass-visualization">
+                <!-- 可视化将通过JavaScript动态生成 -->
+              </div>
+
+              <div class="math-container" id="current-equation">
+                \[ m = \frac{m_0}{\sqrt{1 - 0^2/c^2}} = m_0 \]
+              </div>
+            </div>
+
+            <p>当物体以接近光速运动时，其周围空间的立体角 \( \Omega \) 由于洛伦兹收缩而趋于零：</p>
             <div class="math-container">
-                \[ \lim_{v \to c} m = \lim_{v \to c} \frac{m_0}{\sqrt{1 - v^2/c^2}} = \infty \]
+              \[ \Omega = \frac{\Omega_0}{\gamma} = \Omega_0 \sqrt{1 - v^2/c^2} \]
             </div>
+            <p>
+              由于条数 \( n \) 是洛伦兹不变量，根据质量公式 \( m = k \cdot n/\Omega \)，当 \( \Omega
+              \to 0 \) 时，\( m \to \infty \)。
+            </p>
+          </section>
         </div>
-        
-        <footer>
-            <p>张祥前统一场论可视化演示 | 基于几何化质量定义与质速关系推导</p>
-        </footer>
+
+        <div class="right-column">
+          <section class="section">
+            <h2>质速关系的推导验证</h2>
+
+            <p>从质量几何化定义出发，可以自然推导出相对论的质速关系公式：</p>
+
+            <div class="formula-box">
+              <h3>推导过程</h3>
+
+              <p>1. 静止状态的质量定义：</p>
+              <div class="math-container">\[ m_0 = k \cdot \frac{n}{\Omega_0} \]</div>
+
+              <p>2. 运动状态的质量定义：</p>
+              <div class="math-container">\[ m = k \cdot \frac{n}{\Omega} \]</div>
+
+              <p>3. 立体角的洛伦兹收缩：</p>
+              <div class="math-container">
+                \[ \Omega = \frac{\Omega_0}{\gamma} = \Omega_0 \sqrt{1 - v^2/c^2} \]
+              </div>
+
+              <p>4. 代入质量公式：</p>
+              <div class="math-container">
+                \[ m = k \cdot \frac{n}{\Omega_0 \sqrt{1 - v^2/c^2}} = \frac{m_0}{\sqrt{1 -
+                v^2/c^2}} \]
+              </div>
+            </div>
+
+            <div class="interactive-section">
+              <h3>质速关系曲线</h3>
+
+              <div class="controls">
+                <div class="control-group">
+                  <label for="curve-precision">曲线精度:</label>
+                  <input
+                    type="range"
+                    id="curve-precision"
+                    min="10"
+                    max="100"
+                    step="10"
+                    value="50"
+                  />
+                  <span class="value-display" id="precision-value">50</span>
+                </div>
+              </div>
+
+              <div class="visualization" id="curve-visualization">
+                <!-- 质速关系曲线将通过JavaScript绘制 -->
+              </div>
+            </div>
+          </section>
+
+          <section class="section">
+            <h2>立体角收缩的可视化</h2>
+
+            <p>当物体运动时，从静止观察者视角看，其周围空间的立体角会发生洛伦兹收缩：</p>
+
+            <div class="interactive-section">
+              <h3>立体角随速度变化</h3>
+
+              <div class="controls">
+                <div class="control-group">
+                  <label for="angle-velocity">速度 (v/c):</label>
+                  <input
+                    type="range"
+                    id="angle-velocity"
+                    min="0"
+                    max="0.99"
+                    step="0.01"
+                    value="0"
+                  />
+                  <span class="value-display" id="angle-velocity-value">0</span>
+                </div>
+              </div>
+
+              <div class="visualization" id="angle-visualization">
+                <!-- 立体角可视化将通过JavaScript生成 -->
+              </div>
+
+              <div class="math-container" id="angle-equation">
+                \[ \Omega = \Omega_0 \sqrt{1 - 0^2/c^2} = \Omega_0 \]
+              </div>
+            </div>
+
+            <p>
+              立体角收缩源于洛伦兹长度收缩。考虑一个以物体为中心的球面，从静止观察者看，运动方向上的尺寸收缩为原来的
+              \( 1/\gamma \)，而横向尺寸不变，导致球面的有效面积收缩为原来的 \( 1/\gamma
+              \)，立体角也相应收缩。
+            </p>
+          </section>
+        </div>
+      </div>
+
+      <div class="conclusion">
+        <h2>结论</h2>
+        <p>
+          张祥前统一场论的质量几何化定义提供了一个全新的视角来理解质量的本质。该理论不仅将质量还原为空间运动的几何属性，还自然推导出了相对论的质速关系，体现了其内在的自洽性。
+        </p>
+        <p>
+          "无限大也有大小"在这一框架下可以理解为：当物体趋近光速时，其周围空间的立体角趋于零，导致质量趋于无限大。这是一种数学极限情况，反映了相对论效应，并不违背物理本质。
+        </p>
+        <div class="math-container">
+          \[ \lim_{v \to c} m = \lim_{v \to c} \frac{m_0}{\sqrt{1 - v^2/c^2}} = \infty \]
+        </div>
+      </div>
+
+      <footer>
+        <p>张祥前统一场论可视化演示 | 基于几何化质量定义与质速关系推导</p>
+      </footer>
     </div>
 
     <script>
-        // 初始化MathJax
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            },
-            svg: {
-                fontCache: 'global'
+      // 初始化MathJax
+      window.MathJax = {
+        tex: {
+          inlineMath: [
+            ['$', '$'],
+            ['\\(', '\\)']
+          ],
+          displayMath: [
+            ['$$', '$$'],
+            ['\\[', '\\]']
+          ]
+        },
+        svg: {
+          fontCache: 'global'
+        }
+      }
+
+      // 等待MathJax加载完成
+      document.addEventListener('DOMContentLoaded', function () {
+        // 获取所有交互元素
+        const velocitySlider = document.getElementById('velocity')
+        const velocityValue = document.getElementById('velocity-value')
+        const restMassSlider = document.getElementById('rest-mass')
+        const restMassValue = document.getElementById('rest-mass-value')
+        const massVisualization = document.getElementById('mass-visualization')
+        const currentEquation = document.getElementById('current-equation')
+
+        const precisionSlider = document.getElementById('curve-precision')
+        const precisionValue = document.getElementById('precision-value')
+        const curveVisualization = document.getElementById('curve-visualization')
+
+        const angleVelocitySlider = document.getElementById('angle-velocity')
+        const angleVelocityValue = document.getElementById('angle-velocity-value')
+        const angleVisualization = document.getElementById('angle-visualization')
+        const angleEquation = document.getElementById('angle-equation')
+
+        // 初始化值显示
+        velocityValue.textContent = velocitySlider.value
+        restMassValue.textContent = restMassSlider.value
+        precisionValue.textContent = precisionSlider.value
+        angleVelocityValue.textContent = angleVelocitySlider.value
+
+        // 绘制质量随速度变化可视化
+        function drawMassVisualization(v, m0) {
+          const ctx = massVisualization.getContext('2d')
+          const width = massVisualization.width
+          const height = massVisualization.height
+
+          // 清除画布
+          ctx.clearRect(0, 0, width, height)
+
+          // 绘制背景网格
+          ctx.strokeStyle = '#e0e0e0'
+          ctx.lineWidth = 0.5
+
+          // 垂直网格线
+          for (let x = 0; x <= width; x += width / 10) {
+            ctx.beginPath()
+            ctx.moveTo(x, 0)
+            ctx.lineTo(x, height)
+            ctx.stroke()
+          }
+
+          // 水平网格线
+          for (let y = 0; y <= height; y += height / 10) {
+            ctx.beginPath()
+            ctx.moveTo(0, y)
+            ctx.lineTo(width, y)
+            ctx.stroke()
+          }
+
+          // 绘制坐标轴
+          ctx.strokeStyle = '#333'
+          ctx.lineWidth = 2
+
+          // X轴 (速度)
+          ctx.beginPath()
+          ctx.moveTo(50, height - 50)
+          ctx.lineTo(width - 20, height - 50)
+          ctx.stroke()
+
+          // Y轴 (质量)
+          ctx.beginPath()
+          ctx.moveTo(50, 20)
+          ctx.lineTo(50, height - 50)
+          ctx.stroke()
+
+          // 绘制轴标签
+          ctx.fillStyle = '#333'
+          ctx.font = '14px Arial'
+          ctx.fillText('速度 (v/c)', width / 2 - 30, height - 20)
+          ctx.save()
+          ctx.translate(20, height / 2)
+          ctx.rotate(-Math.PI / 2)
+          ctx.fillText('质量 (m/m₀)', 0, 0)
+          ctx.restore()
+
+          // 绘制质速关系曲线
+          ctx.strokeStyle = '#4b6cb7'
+          ctx.lineWidth = 3
+          ctx.beginPath()
+
+          for (let i = 0; i <= width - 70; i++) {
+            const x = i + 50
+            const vRatio = i / (width - 70)
+
+            if (vRatio >= 1) continue
+
+            const mRatio = 1 / Math.sqrt(1 - vRatio * vRatio)
+            const y = height - 50 - (mRatio * (height - 70)) / 10 // 缩放因子使曲线适合画布
+
+            if (i === 0) {
+              ctx.moveTo(x, y)
+            } else {
+              ctx.lineTo(x, y)
             }
-        };
-        
-        // 等待MathJax加载完成
-        document.addEventListener('DOMContentLoaded', function() {
-            // 获取所有交互元素
-            const velocitySlider = document.getElementById('velocity');
-            const velocityValue = document.getElementById('velocity-value');
-            const restMassSlider = document.getElementById('rest-mass');
-            const restMassValue = document.getElementById('rest-mass-value');
-            const massVisualization = document.getElementById('mass-visualization');
-            const currentEquation = document.getElementById('current-equation');
-            
-            const precisionSlider = document.getElementById('curve-precision');
-            const precisionValue = document.getElementById('precision-value');
-            const curveVisualization = document.getElementById('curve-visualization');
-            
-            const angleVelocitySlider = document.getElementById('angle-velocity');
-            const angleVelocityValue = document.getElementById('angle-velocity-value');
-            const angleVisualization = document.getElementById('angle-visualization');
-            const angleEquation = document.getElementById('angle-equation');
-            
-            // 初始化值显示
-            velocityValue.textContent = velocitySlider.value;
-            restMassValue.textContent = restMassSlider.value;
-            precisionValue.textContent = precisionSlider.value;
-            angleVelocityValue.textContent = angleVelocitySlider.value;
-            
-            // 绘制质量随速度变化可视化
-            function drawMassVisualization(v, m0) {
-                const ctx = massVisualization.getContext('2d');
-                const width = massVisualization.width;
-                const height = massVisualization.height;
-                
-                // 清除画布
-                ctx.clearRect(0, 0, width, height);
-                
-                // 绘制背景网格
-                ctx.strokeStyle = '#e0e0e0';
-                ctx.lineWidth = 0.5;
-                
-                // 垂直网格线
-                for (let x = 0; x <= width; x += width / 10) {
-                    ctx.beginPath();
-                    ctx.moveTo(x, 0);
-                    ctx.lineTo(x, height);
-                    ctx.stroke();
-                }
-                
-                // 水平网格线
-                for (let y = 0; y <= height; y += height / 10) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, y);
-                    ctx.lineTo(width, y);
-                    ctx.stroke();
-                }
-                
-                // 绘制坐标轴
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 2;
-                
-                // X轴 (速度)
-                ctx.beginPath();
-                ctx.moveTo(50, height - 50);
-                ctx.lineTo(width - 20, height - 50);
-                ctx.stroke();
-                
-                // Y轴 (质量)
-                ctx.beginPath();
-                ctx.moveTo(50, 20);
-                ctx.lineTo(50, height - 50);
-                ctx.stroke();
-                
-                // 绘制轴标签
-                ctx.fillStyle = '#333';
-                ctx.font = '14px Arial';
-                ctx.fillText('速度 (v/c)', width / 2 - 30, height - 20);
-                ctx.save();
-                ctx.translate(20, height / 2);
-                ctx.rotate(-Math.PI / 2);
-                ctx.fillText('质量 (m/m₀)', 0, 0);
-                ctx.restore();
-                
-                // 绘制质速关系曲线
-                ctx.strokeStyle = '#4b6cb7';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                
-                for (let i = 0; i <= width - 70; i++) {
-                    const x = i + 50;
-                    const vRatio = i / (width - 70);
-                    
-                    if (vRatio >= 1) continue;
-                    
-                    const mRatio = 1 / Math.sqrt(1 - vRatio * vRatio);
-                    const y = height - 50 - (mRatio * (height - 70)) / 10; // 缩放因子使曲线适合画布
-                    
-                    if (i === 0) {
-                        ctx.moveTo(x, y);
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
-                }
-                
-                ctx.stroke();
-                
-                // 标记当前速度点
-                const currentX = 50 + v * (width - 70);
-                const currentMRatio = 1 / Math.sqrt(1 - v * v);
-                const currentY = height - 50 - (currentMRatio * (height - 70)) / 10;
-                
-                ctx.fillStyle = '#e74c3c';
-                ctx.beginPath();
-                ctx.arc(currentX, currentY, 8, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // 添加当前点标签
-                ctx.fillStyle = '#e74c3c';
-                ctx.font = 'bold 16px Arial';
-                ctx.fillText(`v/c = ${v.toFixed(3)}`, currentX - 40, currentY - 15);
-                ctx.fillText(`m/m₀ = ${currentMRatio.toFixed(3)}`, currentX - 40, currentY - 35);
+          }
+
+          ctx.stroke()
+
+          // 标记当前速度点
+          const currentX = 50 + v * (width - 70)
+          const currentMRatio = 1 / Math.sqrt(1 - v * v)
+          const currentY = height - 50 - (currentMRatio * (height - 70)) / 10
+
+          ctx.fillStyle = '#e74c3c'
+          ctx.beginPath()
+          ctx.arc(currentX, currentY, 8, 0, Math.PI * 2)
+          ctx.fill()
+
+          // 添加当前点标签
+          ctx.fillStyle = '#e74c3c'
+          ctx.font = 'bold 16px Arial'
+          ctx.fillText(`v/c = ${v.toFixed(3)}`, currentX - 40, currentY - 15)
+          ctx.fillText(`m/m₀ = ${currentMRatio.toFixed(3)}`, currentX - 40, currentY - 35)
+        }
+
+        // 绘制质速关系曲线
+        function drawCurveVisualization(precision) {
+          const ctx = curveVisualization.getContext('2d')
+          const width = curveVisualization.width
+          const height = curveVisualization.height
+
+          // 清除画布
+          ctx.clearRect(0, 0, width, height)
+
+          // 绘制背景
+          ctx.fillStyle = '#f8f9fa'
+          ctx.fillRect(0, 0, width, height)
+
+          // 绘制坐标轴
+          ctx.strokeStyle = '#333'
+          ctx.lineWidth = 2
+
+          // X轴
+          ctx.beginPath()
+          ctx.moveTo(50, height - 50)
+          ctx.lineTo(width - 20, height - 50)
+          ctx.stroke()
+
+          // Y轴
+          ctx.beginPath()
+          ctx.moveTo(50, 20)
+          ctx.lineTo(50, height - 50)
+          ctx.stroke()
+
+          // 绘制轴标签和刻度
+          ctx.fillStyle = '#333'
+          ctx.font = '14px Arial'
+
+          // X轴刻度
+          for (let i = 0; i <= 10; i++) {
+            const x = 50 + (i * (width - 70)) / 10
+            ctx.beginPath()
+            ctx.moveTo(x, height - 50)
+            ctx.lineTo(x, height - 45)
+            ctx.stroke()
+
+            ctx.fillText((i / 10).toFixed(1), x - 5, height - 30)
+          }
+
+          // Y轴刻度
+          for (let i = 0; i <= 10; i++) {
+            const y = height - 50 - (i * (height - 70)) / 10
+            ctx.beginPath()
+            ctx.moveTo(50, y)
+            ctx.lineTo(55, y)
+            ctx.stroke()
+
+            ctx.fillText(i.toString(), 30, y + 5)
+          }
+
+          ctx.fillText('速度 (v/c)', width / 2 - 30, height - 20)
+          ctx.save()
+          ctx.translate(20, height / 2)
+          ctx.rotate(-Math.PI / 2)
+          ctx.fillText('质量 (m/m₀)', 0, 0)
+          ctx.restore()
+
+          // 绘制质速关系曲线
+          ctx.strokeStyle = '#4b6cb7'
+          ctx.lineWidth = 3
+          ctx.beginPath()
+
+          const step = 1 / precision
+          for (let vRatio = 0; vRatio < 1; vRatio += step) {
+            const x = 50 + vRatio * (width - 70)
+            const mRatio = 1 / Math.sqrt(1 - vRatio * vRatio)
+            const y = height - 50 - (mRatio * (height - 70)) / 10 // 缩放因子
+
+            if (vRatio === 0) {
+              ctx.moveTo(x, y)
+            } else {
+              ctx.lineTo(x, y)
             }
-            
-            // 绘制质速关系曲线
-            function drawCurveVisualization(precision) {
-                const ctx = curveVisualization.getContext('2d');
-                const width = curveVisualization.width;
-                const height = curveVisualization.height;
-                
-                // 清除画布
-                ctx.clearRect(0, 0, width, height);
-                
-                // 绘制背景
-                ctx.fillStyle = '#f8f9fa';
-                ctx.fillRect(0, 0, width, height);
-                
-                // 绘制坐标轴
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 2;
-                
-                // X轴
-                ctx.beginPath();
-                ctx.moveTo(50, height - 50);
-                ctx.lineTo(width - 20, height - 50);
-                ctx.stroke();
-                
-                // Y轴
-                ctx.beginPath();
-                ctx.moveTo(50, 20);
-                ctx.lineTo(50, height - 50);
-                ctx.stroke();
-                
-                // 绘制轴标签和刻度
-                ctx.fillStyle = '#333';
-                ctx.font = '14px Arial';
-                
-                // X轴刻度
-                for (let i = 0; i <= 10; i++) {
-                    const x = 50 + i * (width - 70) / 10;
-                    ctx.beginPath();
-                    ctx.moveTo(x, height - 50);
-                    ctx.lineTo(x, height - 45);
-                    ctx.stroke();
-                    
-                    ctx.fillText((i / 10).toFixed(1), x - 5, height - 30);
-                }
-                
-                // Y轴刻度
-                for (let i = 0; i <= 10; i++) {
-                    const y = height - 50 - i * (height - 70) / 10;
-                    ctx.beginPath();
-                    ctx.moveTo(50, y);
-                    ctx.lineTo(55, y);
-                    ctx.stroke();
-                    
-                    ctx.fillText(i.toString(), 30, y + 5);
-                }
-                
-                ctx.fillText('速度 (v/c)', width / 2 - 30, height - 20);
-                ctx.save();
-                ctx.translate(20, height / 2);
-                ctx.rotate(-Math.PI / 2);
-                ctx.fillText('质量 (m/m₀)', 0, 0);
-                ctx.restore();
-                
-                // 绘制质速关系曲线
-                ctx.strokeStyle = '#4b6cb7';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                
-                const step = 1 / precision;
-                for (let vRatio = 0; vRatio < 1; vRatio += step) {
-                    const x = 50 + vRatio * (width - 70);
-                    const mRatio = 1 / Math.sqrt(1 - vRatio * vRatio);
-                    const y = height - 50 - (mRatio * (height - 70)) / 10; // 缩放因子
-                    
-                    if (vRatio === 0) {
-                        ctx.moveTo(x, y);
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
-                }
-                
-                ctx.stroke();
-                
-                // 添加渐近线说明
-                ctx.strokeStyle = '#e74c3c';
-                ctx.setLineDash([5, 5]);
-                ctx.beginPath();
-                ctx.moveTo(50, 20);
-                ctx.lineTo(width - 20, 20);
-                ctx.stroke();
-                ctx.setLineDash([]);
-                
-                ctx.fillStyle = '#e74c3c';
-                ctx.font = 'italic 14px Arial';
-                ctx.fillText('渐近线: v → c, m → ∞', width - 180, 35);
-            }
-            
-            // 绘制立体角收缩可视化
-            function drawAngleVisualization(v) {
-                const ctx = angleVisualization.getContext('2d');
-                const width = angleVisualization.width;
-                const height = angleVisualization.height;
-                
-                // 清除画布
-                ctx.clearRect(0, 0, width, height);
-                
-                // 绘制背景
-                ctx.fillStyle = '#f8f9fa';
-                ctx.fillRect(0, 0, width, height);
-                
-                // 计算收缩比例
-                const gamma = 1 / Math.sqrt(1 - v * v);
-                const contraction = 1 / gamma;
-                
-                // 绘制静止状态的球体（参考）
-                ctx.strokeStyle = '#95a5a6';
-                ctx.setLineDash([5, 3]);
-                ctx.beginPath();
-                ctx.ellipse(width / 2, height / 2, 120, 120, 0, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.setLineDash([]);
-                
-                // 绘制运动状态的椭球（洛伦兹收缩）
-                ctx.strokeStyle = '#e74c3c';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.ellipse(width / 2, height / 2, 120 * contraction, 120, 0, 0, Math.PI * 2);
-                ctx.stroke();
-                
-                // 添加标签
-                ctx.fillStyle = '#333';
-                ctx.font = '14px Arial';
-                ctx.fillText('静止参考球体', width / 2 - 100, height / 2 - 130);
-                ctx.fillStyle = '#e74c3c';
-                ctx.fillText('运动收缩椭球', width / 2 - 100, height / 2 + 140);
-                
-                // 添加收缩比例说明
-                ctx.fillStyle = '#333';
-                ctx.font = 'bold 16px Arial';
-                ctx.fillText(`洛伦兹收缩因子: ${contraction.toFixed(3)}`, width / 2 - 100, 30);
-                
-                // 绘制从中心到表面的线，表示立体角
-                ctx.strokeStyle = '#3498db';
-                ctx.lineWidth = 1;
-                
-                // 绘制几条代表性射线
-                const angles = [0, Math.PI/4, Math.PI/2, 3*Math.PI/4];
-                angles.forEach(angle => {
-                    ctx.beginPath();
-                    ctx.moveTo(width / 2, height / 2);
-                    ctx.lineTo(
-                        width / 2 + 120 * contraction * Math.cos(angle),
-                        height / 2 + 120 * Math.sin(angle)
-                    );
-                    ctx.stroke();
-                });
-            }
-            
-            // 设置Canvas尺寸
-            function setupCanvasSize() {
-                const canvases = document.querySelectorAll('.visualization');
-                canvases.forEach(canvas => {
-                    canvas.width = canvas.clientWidth;
-                    canvas.height = canvas.clientHeight;
-                });
-            }
-            
-            // 初始化可视化
-            function initVisualizations() {
-                setupCanvasSize();
-                
-                const v = parseFloat(velocitySlider.value);
-                const m0 = parseFloat(restMassSlider.value);
-                const precision = parseInt(precisionSlider.value);
-                const angleV = parseFloat(angleVelocitySlider.value);
-                
-                drawMassVisualization(v, m0);
-                drawCurveVisualization(precision);
-                drawAngleVisualization(angleV);
-                
-                // 更新方程显示
-                currentEquation.innerHTML = `\\[ m = \\frac{m_0}{\\sqrt{1 - ${v.toFixed(3)}^2/c^2}} = ${(m0 / Math.sqrt(1 - v*v)).toFixed(3)} \\]`;
-                angleEquation.innerHTML = `\\[ \\Omega = \\Omega_0 \\sqrt{1 - ${angleV.toFixed(3)}^2/c^2} = ${Math.sqrt(1 - angleV*angleV).toFixed(3)} \\Omega_0 \\]`;
-                
-                // 重新渲染MathJax
-                if (window.MathJax) {
-                    MathJax.typesetPromise([currentEquation, angleEquation]);
-                }
-            }
-            
-            // 事件监听器
-            velocitySlider.addEventListener('input', function() {
-                velocityValue.textContent = this.value;
-                initVisualizations();
-            });
-            
-            restMassSlider.addEventListener('input', function() {
-                restMassValue.textContent = this.value;
-                initVisualizations();
-            });
-            
-            precisionSlider.addEventListener('input', function() {
-                precisionValue.textContent = this.value;
-                initVisualizations();
-            });
-            
-            angleVelocitySlider.addEventListener('input', function() {
-                angleVelocityValue.textContent = this.value;
-                initVisualizations();
-            });
-            
-            // 窗口大小改变时调整Canvas尺寸
-            window.addEventListener('resize', function() {
-                setupCanvasSize();
-                initVisualizations();
-            });
-            
-            // 初始渲染
-            initVisualizations();
-        });
+          }
+
+          ctx.stroke()
+
+          // 添加渐近线说明
+          ctx.strokeStyle = '#e74c3c'
+          ctx.setLineDash([5, 5])
+          ctx.beginPath()
+          ctx.moveTo(50, 20)
+          ctx.lineTo(width - 20, 20)
+          ctx.stroke()
+          ctx.setLineDash([])
+
+          ctx.fillStyle = '#e74c3c'
+          ctx.font = 'italic 14px Arial'
+          ctx.fillText('渐近线: v → c, m → ∞', width - 180, 35)
+        }
+
+        // 绘制立体角收缩可视化
+        function drawAngleVisualization(v) {
+          const ctx = angleVisualization.getContext('2d')
+          const width = angleVisualization.width
+          const height = angleVisualization.height
+
+          // 清除画布
+          ctx.clearRect(0, 0, width, height)
+
+          // 绘制背景
+          ctx.fillStyle = '#f8f9fa'
+          ctx.fillRect(0, 0, width, height)
+
+          // 计算收缩比例
+          const gamma = 1 / Math.sqrt(1 - v * v)
+          const contraction = 1 / gamma
+
+          // 绘制静止状态的球体（参考）
+          ctx.strokeStyle = '#95a5a6'
+          ctx.setLineDash([5, 3])
+          ctx.beginPath()
+          ctx.ellipse(width / 2, height / 2, 120, 120, 0, 0, Math.PI * 2)
+          ctx.stroke()
+          ctx.setLineDash([])
+
+          // 绘制运动状态的椭球（洛伦兹收缩）
+          ctx.strokeStyle = '#e74c3c'
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.ellipse(width / 2, height / 2, 120 * contraction, 120, 0, 0, Math.PI * 2)
+          ctx.stroke()
+
+          // 添加标签
+          ctx.fillStyle = '#333'
+          ctx.font = '14px Arial'
+          ctx.fillText('静止参考球体', width / 2 - 100, height / 2 - 130)
+          ctx.fillStyle = '#e74c3c'
+          ctx.fillText('运动收缩椭球', width / 2 - 100, height / 2 + 140)
+
+          // 添加收缩比例说明
+          ctx.fillStyle = '#333'
+          ctx.font = 'bold 16px Arial'
+          ctx.fillText(`洛伦兹收缩因子: ${contraction.toFixed(3)}`, width / 2 - 100, 30)
+
+          // 绘制从中心到表面的线，表示立体角
+          ctx.strokeStyle = '#3498db'
+          ctx.lineWidth = 1
+
+          // 绘制几条代表性射线
+          const angles = [0, Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4]
+          angles.forEach(angle => {
+            ctx.beginPath()
+            ctx.moveTo(width / 2, height / 2)
+            ctx.lineTo(
+              width / 2 + 120 * contraction * Math.cos(angle),
+              height / 2 + 120 * Math.sin(angle)
+            )
+            ctx.stroke()
+          })
+        }
+
+        // 设置Canvas尺寸
+        function setupCanvasSize() {
+          const canvases = document.querySelectorAll('.visualization')
+          canvases.forEach(canvas => {
+            canvas.width = canvas.clientWidth
+            canvas.height = canvas.clientHeight
+          })
+        }
+
+        // 初始化可视化
+        function initVisualizations() {
+          setupCanvasSize()
+
+          const v = parseFloat(velocitySlider.value)
+          const m0 = parseFloat(restMassSlider.value)
+          const precision = parseInt(precisionSlider.value)
+          const angleV = parseFloat(angleVelocitySlider.value)
+
+          drawMassVisualization(v, m0)
+          drawCurveVisualization(precision)
+          drawAngleVisualization(angleV)
+
+          // 更新方程显示
+          currentEquation.innerHTML = `\\[ m = \\frac{m_0}{\\sqrt{1 - ${v.toFixed(3)}^2/c^2}} = ${(m0 / Math.sqrt(1 - v * v)).toFixed(3)} \\]`
+          angleEquation.innerHTML = `\\[ \\Omega = \\Omega_0 \\sqrt{1 - ${angleV.toFixed(3)}^2/c^2} = ${Math.sqrt(1 - angleV * angleV).toFixed(3)} \\Omega_0 \\]`
+
+          // 重新渲染MathJax
+          if (window.MathJax) {
+            MathJax.typesetPromise([currentEquation, angleEquation])
+          }
+        }
+
+        // 事件监听器
+        velocitySlider.addEventListener('input', function () {
+          velocityValue.textContent = this.value
+          initVisualizations()
+        })
+
+        restMassSlider.addEventListener('input', function () {
+          restMassValue.textContent = this.value
+          initVisualizations()
+        })
+
+        precisionSlider.addEventListener('input', function () {
+          precisionValue.textContent = this.value
+          initVisualizations()
+        })
+
+        angleVelocitySlider.addEventListener('input', function () {
+          angleVelocityValue.textContent = this.value
+          initVisualizations()
+        })
+
+        // 窗口大小改变时调整Canvas尺寸
+        window.addEventListener('resize', function () {
+          setupCanvasSize()
+          initVisualizations()
+        })
+
+        // 初始渲染
+        initVisualizations()
+      })
     </script>
-</body>
+  </body>
 </html>

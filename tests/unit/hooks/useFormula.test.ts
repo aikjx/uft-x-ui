@@ -14,7 +14,7 @@ describe('useFormula Hook', () => {
     vi.clearAllMocks()
     mockedUseParams.mockReturnValue({})
   })
-  
+
   it('should initialize with correct default values', () => {
     const { result } = renderHook(() => useFormula())
 
@@ -27,20 +27,20 @@ describe('useFormula Hook', () => {
 
   it('should get formula by id correctly', () => {
     const { result } = renderHook(() => useFormula())
-    
+
     // 使用实际数据中的第一个公式ID
     const formulaId = result.current.formulas[0]?.id
     if (formulaId) {
       const formula = result.current.getFormulaById(formulaId)
-      
+
       expect(formula).toBeDefined()
       expect(formula?.id).toBe(formulaId)
     }
   })
-  
+
   it('should select formula correctly', () => {
     const { result } = renderHook(() => useFormula())
-    
+
     if (result.current.formulas.length > 0) {
       act(() => {
         const cleanup = result.current.selectFormula(result.current.formulas[0])
@@ -48,17 +48,17 @@ describe('useFormula Hook', () => {
       })
     }
   })
-  
+
   it('should handle params with formula id', () => {
     // 使用实际数据中的第一个公式ID
     const { result: firstRender } = renderHook(() => useFormula())
     const firstFormulaId = firstRender.current.formulas[0]?.id
-    
+
     if (firstFormulaId) {
       mockedUseParams.mockReturnValue({ id: firstFormulaId })
-      
+
       const { result } = renderHook(() => useFormula())
-      
+
       expect(result.current.selectedFormula).toBeDefined()
     }
   })

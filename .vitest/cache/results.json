@@ -1,1 +1,21 @@
-{"version":"1.6.1","results":[[":tests/unit/core/PhysicsEngine.test.ts",{"duration":13,"failed":false}],[":tests/unit/components/ThreeJSVisualization.test.tsx",{"duration":10,"failed":false}],[":tests/unit/pages/HomePage.test.tsx",{"duration":13,"failed":false}],[":tests/unit/hooks/useThreeScene.test.ts",{"duration":12,"failed":false}],[":tests/unit/composables/useMathJax.test.ts",{"duration":13,"failed":false}],[":tests/unit/rendering/ParticleSystem.test.ts",{"duration":32,"failed":false}],[":tests/unit/rendering/PostProcessing.test.ts",{"duration":41,"failed":false}],[":tests/unit/utils/ResourceManager.test.ts",{"duration":26,"failed":false}],[":tests/unit/rendering/GPUParticleSystem.test.ts",{"duration":109,"failed":false}],[":tests/unit/hooks/useFormula.test.ts",{"duration":68,"failed":false}],[":tests/unit/data/FormulaDataProvider.test.ts",{"duration":622,"failed":false}],[":tests/components/AdvancedPerformancePanel.test.tsx",{"duration":315,"failed":false}],[":tests/components/Navbar.test.tsx",{"duration":197,"failed":false}],[":tests/components/ThreeJSVisualization.test.tsx",{"duration":104,"failed":true}],[":tests/integration/FormulaVisualization.test.tsx",{"duration":104,"failed":false}],[":tests/unit/basic.test.ts",{"duration":9,"failed":false}]]}
+{
+  "version": "1.6.1",
+  "results": [
+    [":tests/unit/core/PhysicsEngine.test.ts", { "duration": 13, "failed": false }],
+    [":tests/unit/components/ThreeJSVisualization.test.tsx", { "duration": 10, "failed": false }],
+    [":tests/unit/pages/HomePage.test.tsx", { "duration": 13, "failed": false }],
+    [":tests/unit/hooks/useThreeScene.test.ts", { "duration": 12, "failed": false }],
+    [":tests/unit/composables/useMathJax.test.ts", { "duration": 13, "failed": false }],
+    [":tests/unit/rendering/ParticleSystem.test.ts", { "duration": 32, "failed": false }],
+    [":tests/unit/rendering/PostProcessing.test.ts", { "duration": 41, "failed": false }],
+    [":tests/unit/utils/ResourceManager.test.ts", { "duration": 26, "failed": false }],
+    [":tests/unit/rendering/GPUParticleSystem.test.ts", { "duration": 109, "failed": false }],
+    [":tests/unit/hooks/useFormula.test.ts", { "duration": 68, "failed": false }],
+    [":tests/unit/data/FormulaDataProvider.test.ts", { "duration": 622, "failed": false }],
+    [":tests/components/AdvancedPerformancePanel.test.tsx", { "duration": 315, "failed": false }],
+    [":tests/components/Navbar.test.tsx", { "duration": 197, "failed": false }],
+    [":tests/components/ThreeJSVisualization.test.tsx", { "duration": 104, "failed": true }],
+    [":tests/integration/FormulaVisualization.test.tsx", { "duration": 104, "failed": false }],
+    [":tests/unit/basic.test.ts", { "duration": 9, "failed": false }]
+  ]
+}

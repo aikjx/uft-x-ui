@@ -1,66 +1,64 @@
-import { toast } from 'sonner';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { toast } from 'sonner'
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
 
 // 合并CSS类名的工具函数
 export const cn = (...inputs: ClassValue[]) => {
-  return twMerge(clsx(inputs));
-};
+  return twMerge(clsx(inputs))
+}
 
 // 格式化公式显示
 export const formatFormula = (expression: string): string => {
   // 确保公式格式正确，处理一些常见的转义问题
-  return expression
-    .replace(/\\\\/g, '\\')
-    .trim();
-};
+  return expression.replace(/\\\\/g, '\\').trim()
+}
 
 // 生成随机颜色
 export const generateRandomColor = (baseColor: number = 0x3b82f6): number => {
-  const hue = (baseColor >> 16) & 0xff;
-  const saturation = (baseColor >> 8) & 0xff;
-  const lightness = baseColor & 0xff;
-  
+  const hue = (baseColor >> 16) & 0xff
+  const saturation = (baseColor >> 8) & 0xff
+  const lightness = baseColor & 0xff
+
   // 在基础颜色附近随机变化
-  const newHue = Math.max(0, Math.min(255, hue + (Math.random() - 0.5) * 50));
-  const newSaturation = Math.max(0, Math.min(255, saturation + (Math.random() - 0.5) * 30));
-  const newLightness = Math.max(0, Math.min(255, lightness + (Math.random() - 0.5) * 40));
-  
-  return (Math.round(newHue) << 16) | (Math.round(newSaturation) << 8) | Math.round(newLightness);
-};
+  const newHue = Math.max(0, Math.min(255, hue + (Math.random() - 0.5) * 50))
+  const newSaturation = Math.max(0, Math.min(255, saturation + (Math.random() - 0.5) * 30))
+  const newLightness = Math.max(0, Math.min(255, lightness + (Math.random() - 0.5) * 40))
+
+  return (Math.round(newHue) << 16) | (Math.round(newSaturation) << 8) | Math.round(newLightness)
+}
 
 // 防抖函数
 export const debounce = <T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): ((...args: Parameters<T>) => void) => {
-  let timeout: number | null = null;
-  
+  let timeout: number | null = null
+
   return (...args: Parameters<T>) => {
     if (timeout) {
-      clearTimeout(timeout);
+      clearTimeout(timeout)
     }
-    timeout = setTimeout(() => func(...args), wait);
-  };
-};
+    timeout = setTimeout(() => func(...args), wait)
+  }
+}
 
 // 节流函数
 export const throttle = <T extends (...args: any[]) => any>(
   func: T,
   limit: number
 ): ((...args: Parameters<T>) => void) => {
-  let inThrottle = false;
-  
+  let inThrottle = false
+
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
-      func(...args);
-      inThrottle = true;
+      func(...args)
+      inThrottle = true
       setTimeout(() => {
-        inThrottle = false;
-      }, limit);
+        inThrottle = false
+      }, limit)
     }
-  };
-};
+  }
+}
 
 // 显示通知
 export const showNotification = {
@@ -73,7 +71,7 @@ export const showNotification = {
         color: '#93c5fd',
         borderColor: '#1d4ed8'
       }
-    });
+    })
   },
   error: (message: string) => {
     toast.error(message, {
@@ -84,7 +82,7 @@ export const showNotification = {
         color: '#fca5a5',
         borderColor: '#b91c1c'
       }
-    });
+    })
   },
   info: (message: string) => {
     toast.info(message, {
@@ -95,128 +93,135 @@ export const showNotification = {
         color: '#93c5fd',
         borderColor: '#3b82f6'
       }
-    });
+    })
   }
-};
+}
 
 // 验证公式格式
 export const validateFormula = (formula: string): boolean => {
   // 简单的公式验证逻辑
   if (!formula || formula.trim().length === 0) {
-    return false;
+    return false
   }
   // 检查括号是否匹配
-  const brackets = formula.match(/[\\[\\]\\(\\)\\{\\}]/g);
+  const brackets = formula.match(/[\\[\\]\\(\\)\\{\\}]/g)
   if (brackets) {
-    const stack: string[] = [];
+    const stack: string[] = []
     const pairs: Record<string, string> = {
       '\\[': '\\]',
       '\\(': '\\)',
       '{': '}'
-    };
-    
+    }
+
     for (const bracket of brackets) {
       if (pairs[bracket]) {
-        stack.push(bracket);
+        stack.push(bracket)
       } else {
-        const last = stack.pop();
+        const last = stack.pop()
         if (!last || pairs[last] !== bracket) {
-          return false;
+          return false
         }
       }
     }
-    
+
     if (stack.length > 0) {
-      return false;
+      return false
     }
   }
-  
-  return true;
-};
+
+  return true
+}
 
 // 深度合并对象
-export const deepMerge = <T extends Record<string, any>, U extends Record<string, any>>(target: T, source: U): T & U => {
+export const deepMerge = <T extends Record<string, any>, U extends Record<string, any>>(
+  target: T,
+  source: U
+): T & U => {
   // 使用类型断言确保output是T & U类型
-  const output = { ...target } as T & U;
-  
+  const output = { ...target } as T & U
+
   if (isObject(target) && isObject(source)) {
     Object.keys(source).forEach(key => {
       if (isObject(source[key])) {
         if (!(key in target)) {
-          Object.assign(output, { [key]: source[key] });
+          Object.assign(output, { [key]: source[key] })
         } else {
           // 使用Object.assign来避免索引赋值的类型问题
-          Object.assign(output, { [key]: deepMerge(target[key] as Record<string, any>, source[key] as Record<string, any>) });
+          Object.assign(output, {
+            [key]: deepMerge(target[key] as Record<string, any>, source[key] as Record<string, any>)
+          })
         }
       } else {
-        Object.assign(output, { [key]: source[key] });
+        Object.assign(output, { [key]: source[key] })
       }
-    });
+    })
   }
-  
-  return output;
-};
+
+  return output
+}
 
 // 判断是否为对象
 const isObject = (item: any): boolean => {
-  return item && typeof item === 'object' && !Array.isArray(item);
-};
+  return item && typeof item === 'object' && !Array.isArray(item)
+}
 
 // 生成模拟数据点
-export const generateSimulationData = (count: number, amplitude: number = 1, frequency: number = 0.1) => {
+export const generateSimulationData = (
+  count: number,
+  amplitude: number = 1,
+  frequency: number = 0.1
+) => {
   return Array.from({ length: count }, (_, i) => ({
     index: i,
     value: Math.sin(i * frequency) * amplitude + (Math.random() - 0.5) * 0.2
-  }));
-};
-
-
+  }))
+}
 
 // 生成唯一ID
 export function generateId(): string {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
 }
 
 // 延迟函数
 export function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 // 格式化数字显示
 export function formatNumber(num: number, decimals: number = 2): string {
   if (Math.abs(num) >= 1000000) {
-    return (num / 1000000).toFixed(decimals) + 'M';
+    return (num / 1000000).toFixed(decimals) + 'M'
   } else if (Math.abs(num) >= 1000) {
-    return (num / 1000).toFixed(decimals) + 'K';
+    return (num / 1000).toFixed(decimals) + 'K'
   }
-  return num.toFixed(decimals);
+  return num.toFixed(decimals)
 }
 
 // 安全地解析JSON
 export function safeJsonParse<T>(str: string, fallback: T): T {
   try {
-    return JSON.parse(str) as T;
+    return JSON.parse(str) as T
   } catch (error) {
-    console.error('JSON解析错误:', error);
-    return fallback;
+    console.error('JSON解析错误:', error)
+    return fallback
   }
 }
 
 // 检查是否在浏览器环境中
 export function isBrowser(): boolean {
-  return typeof window !== 'undefined' && typeof document !== 'undefined';
+  return typeof window !== 'undefined' && typeof document !== 'undefined'
 }
 
 // 资源管理系统
-import { ResourceManager as ResourceManagerClass } from './ResourceManager';
+import { ResourceManager as ResourceManagerClass } from './ResourceManager'
 
-export * from './ResourceManager';
+export * from './ResourceManager'
 
 // 性能监控系统
-export * from './PerformanceMonitor';
+export * from './PerformanceMonitor'
 
 // 事件系统
-export * from './eventSystem';
+export * from './eventSystem'
 
 // 错误处理工具
-export * from './errorHandling';
+export * from './errorHandling'

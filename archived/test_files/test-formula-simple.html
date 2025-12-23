@@ -1,207 +1,235 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>公式渲染简单测试</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>公式渲染简单测试</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 50px auto;
-      padding: 20px;
-      background: #f5f5f5;
-    }
+      .test-box {
+        background: white;
+        padding: 30px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
 
-    .test-box {
-      background: white;
-      padding: 30px;
-      margin: 20px 0;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
+      .formula {
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        margin: 15px 0;
+        min-height: 50px;
+        text-align: center;
+      }
 
-    .formula {
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 4px;
-      margin: 15px 0;
-      min-height: 50px;
-      text-align: center;
-    }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+        font-weight: bold;
+      }
 
-    .status {
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 4px;
-      font-weight: bold;
-    }
+      .success {
+        background: #d4edda;
+        color: #155724;
+      }
 
-    .success {
-      background: #d4edda;
-      color: #155724;
-    }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+      }
 
-    .error {
-      background: #f8d7da;
-      color: #721c24;
-    }
+      .loading {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
 
-    .loading {
-      background: #d1ecf1;
-      color: #0c5460;
-    }
+      button {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 5px;
+      }
 
-    button {
-      background: #667eea;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-      margin: 5px;
-    }
+      button:hover {
+        background: #5568d3;
+      }
+    </style>
+  </head>
 
-    button:hover {
-      background: #5568d3;
-    }
-  </style>
-</head>
+  <body>
+    <h1>公式渲染测试</h1>
+    <div id="status" class="status loading">正在加载 MathJax...</div>
 
-<body>
-  <h1>公式渲染测试</h1>
-  <div id="status" class="status loading">正在加载 MathJax...</div>
+    <div class="test-box">
+      <h3>测试 1: 简单公式（带 $ 符号）</h3>
+      <div class="formula" id="test1">$E = mc^2$</div>
+      <button onclick="renderTest1()">重新渲染</button>
+    </div>
 
-  <div class="test-box">
-    <h3>测试 1: 简单公式（带 $ 符号）</h3>
-    <div class="formula" id="test1">$E = mc^2$</div>
-    <button onclick="renderTest1()">重新渲染</button>
-  </div>
+    <div class="test-box">
+      <h3>测试 2: 向量公式</h3>
+      <div class="formula" id="test2">$\vec{r}(t) = \vec{C}t = x\vec{i} + y\vec{j} + z\vec{k}$</div>
+      <button onclick="renderTest2()">重新渲染</button>
+    </div>
 
-  <div class="test-box">
-    <h3>测试 2: 向量公式</h3>
-    <div class="formula" id="test2">$\vec{r}(t) = \vec{C}t = x\vec{i} + y\vec{j} + z\vec{k}$</div>
-    <button onclick="renderTest2()">重新渲染</button>
-  </div>
+    <div class="test-box">
+      <h3>测试 3: 复杂公式</h3>
+      <div class="formula" id="test3">
+        $\vec{F} = \frac{d\vec{P}}{dt} = \vec{C}\frac{dm}{dt} - \vec{V}\frac{dm}{dt}$
+      </div>
+      <button onclick="renderTest3()">重新渲染</button>
+    </div>
 
-  <div class="test-box">
-    <h3>测试 3: 复杂公式</h3>
-    <div class="formula" id="test3">$\vec{F} = \frac{d\vec{P}}{dt} = \vec{C}\frac{dm}{dt} - \vec{V}\frac{dm}{dt}$</div>
-    <button onclick="renderTest3()">重新渲染</button>
-  </div>
+    <div class="test-box">
+      <h3>测试 4: 使用 \[ \] 定界符</h3>
+      <div class="formula" id="test4">
+        \[\frac{\partial^2 L}{\partial x^2} + \frac{\partial^2 L}{\partial y^2} = \frac{1}{c^2}
+        \frac{\partial^2 L}{\partial t^2}\]
+      </div>
+      <button onclick="renderTest4()">重新渲染</button>
+    </div>
 
-  <div class="test-box">
-    <h3>测试 4: 使用 \[ \] 定界符</h3>
-    <div class="formula" id="test4">\[\frac{\partial^2 L}{\partial x^2} + \frac{\partial^2 L}{\partial y^2} =
-      \frac{1}{c^2} \frac{\partial^2 L}{\partial t^2}\]</div>
-    <button onclick="renderTest4()">重新渲染</button>
-  </div>
+    <div class="test-box">
+      <button onclick="renderAll()">重新渲染所有公式</button>
+      <button onclick="checkMathJax()">检查 MathJax 状态</button>
+    </div>
 
-  <div class="test-box">
-    <button onclick="renderAll()">重新渲染所有公式</button>
-    <button onclick="checkMathJax()">检查 MathJax 状态</button>
-  </div>
+    <div
+      id="debug-info"
+      style="
+        background: #f0f0f0;
+        padding: 15px;
+        margin-top: 20px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+      "
+    ></div>
 
-  <div id="debug-info"
-    style="background: #f0f0f0; padding: 15px; margin-top: 20px; border-radius: 4px; font-family: monospace; font-size: 12px;">
-  </div>
-
-  <script>
-    window.MathJax = {
-      tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        processEscapes: true,
-        macros: {
-          vec: ['\\overrightarrow{#1}', 1]
-        }
-      },
-      svg: {
-        scale: 1.2,
-        fontCache: 'global'
-      },
-      startup: {
-        pageReady: () => {
-          return window.MathJax.startup.defaultPageReady().then(() => {
-            console.log('✅ MathJax 加载成功');
-            document.getElementById('status').className = 'status success';
-            document.getElementById('status').textContent = '✅ MathJax 加载成功';
-            updateDebugInfo();
-          }).catch((err) => {
-            console.error('❌ MathJax 加载失败:', err);
-            document.getElementById('status').className = 'status error';
-            document.getElementById('status').textContent = '❌ MathJax 加载失败: ' + err.message;
-          });
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [
+            ['$', '$'],
+            ['\\(', '\\)']
+          ],
+          displayMath: [
+            ['$$', '$$'],
+            ['\\[', '\\]']
+          ],
+          processEscapes: true,
+          macros: {
+            vec: ['\\overrightarrow{#1}', 1]
+          }
+        },
+        svg: {
+          scale: 1.2,
+          fontCache: 'global'
+        },
+        startup: {
+          pageReady: () => {
+            return window.MathJax.startup
+              .defaultPageReady()
+              .then(() => {
+                console.log('✅ MathJax 加载成功')
+                document.getElementById('status').className = 'status success'
+                document.getElementById('status').textContent = '✅ MathJax 加载成功'
+                updateDebugInfo()
+              })
+              .catch(err => {
+                console.error('❌ MathJax 加载失败:', err)
+                document.getElementById('status').className = 'status error'
+                document.getElementById('status').textContent =
+                  '❌ MathJax 加载失败: ' + err.message
+              })
+          }
         }
       }
-    };
 
-    function updateDebugInfo () {
-      const info = document.getElementById('debug-info');
-      info.innerHTML = `
+      function updateDebugInfo() {
+        const info = document.getElementById('debug-info')
+        info.innerHTML = `
         <strong>MathJax 状态:</strong><br>
         - MathJax 对象存在: ${!!window.MathJax}<br>
         - typesetPromise 可用: ${!!(window.MathJax && window.MathJax.typesetPromise)}<br>
         - startup 存在: ${!!(window.MathJax && window.MathJax.startup)}<br>
         - 当前时间: ${new Date().toLocaleTimeString()}
-      `;
-    }
-
-    function checkMathJax () {
-      updateDebugInfo();
-      alert('请查看下方的调试信息');
-    }
-
-    async function renderElement (id) {
-      const element = document.getElementById(id);
-      if (!element) return;
-
-      try {
-        console.log(`开始渲染 ${id}...`);
-
-        // 清除之前的渲染
-        if (window.MathJax && window.MathJax.typesetClear) {
-          window.MathJax.typesetClear([element]);
-        }
-
-        // 重新渲染
-        if (window.MathJax && window.MathJax.typesetPromise) {
-          await window.MathJax.typesetPromise([element]);
-          console.log(`✅ ${id} 渲染成功`);
-        } else {
-          throw new Error('MathJax.typesetPromise 不可用');
-        }
-      } catch (error) {
-        console.error(`❌ ${id} 渲染失败:`, error);
-        alert(`渲染失败: ${error.message}`);
+      `
       }
-    }
 
-    function renderTest1 () { renderElement('test1'); }
-    function renderTest2 () { renderElement('test2'); }
-    function renderTest3 () { renderElement('test3'); }
-    function renderTest4 () { renderElement('test4'); }
-
-    async function renderAll () {
-      try {
-        console.log('开始渲染所有公式...');
-        if (window.MathJax && window.MathJax.typesetPromise) {
-          await window.MathJax.typesetPromise();
-          console.log('✅ 所有公式渲染成功');
-          alert('所有公式渲染成功！');
-        } else {
-          throw new Error('MathJax.typesetPromise 不可用');
-        }
-      } catch (error) {
-        console.error('❌ 渲染失败:', error);
-        alert(`渲染失败: ${error.message}`);
+      function checkMathJax() {
+        updateDebugInfo()
+        alert('请查看下方的调试信息')
       }
-    }
-  </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
-</body>
+      async function renderElement(id) {
+        const element = document.getElementById(id)
+        if (!element) return
 
+        try {
+          console.log(`开始渲染 ${id}...`)
+
+          // 清除之前的渲染
+          if (window.MathJax && window.MathJax.typesetClear) {
+            window.MathJax.typesetClear([element])
+          }
+
+          // 重新渲染
+          if (window.MathJax && window.MathJax.typesetPromise) {
+            await window.MathJax.typesetPromise([element])
+            console.log(`✅ ${id} 渲染成功`)
+          } else {
+            throw new Error('MathJax.typesetPromise 不可用')
+          }
+        } catch (error) {
+          console.error(`❌ ${id} 渲染失败:`, error)
+          alert(`渲染失败: ${error.message}`)
+        }
+      }
+
+      function renderTest1() {
+        renderElement('test1')
+      }
+      function renderTest2() {
+        renderElement('test2')
+      }
+      function renderTest3() {
+        renderElement('test3')
+      }
+      function renderTest4() {
+        renderElement('test4')
+      }
+
+      async function renderAll() {
+        try {
+          console.log('开始渲染所有公式...')
+          if (window.MathJax && window.MathJax.typesetPromise) {
+            await window.MathJax.typesetPromise()
+            console.log('✅ 所有公式渲染成功')
+            alert('所有公式渲染成功！')
+          } else {
+            throw new Error('MathJax.typesetPromise 不可用')
+          }
+        } catch (error) {
+          console.error('❌ 渲染失败:', error)
+          alert(`渲染失败: ${error.message}`)
+        }
+      }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  </body>
 </html>

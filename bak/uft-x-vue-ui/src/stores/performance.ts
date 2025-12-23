@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { PerformanceMetrics, PerformanceThresholds, OptimizationSuggestion } from '@/types/performance'
+import type {
+  PerformanceMetrics,
+  PerformanceThresholds,
+  OptimizationSuggestion
+} from '@/types/performance'
 
 export const usePerformanceStore = defineStore('performance', () => {
   // 状态
@@ -134,7 +138,7 @@ export const usePerformanceStore = defineStore('performance', () => {
   // 方法
   const startMonitoring = () => {
     if (isMonitoring.value) return
-    
+
     isMonitoring.value = true
     monitoringInterval.value = setInterval(() => {
       // 模拟实时数据更新
@@ -195,11 +199,11 @@ export const usePerformanceStore = defineStore('performance', () => {
     metrics,
     thresholds,
     isMonitoring,
-    
+
     // 计算属性
     score,
     suggestions,
-    
+
     // 方法
     startMonitoring,
     stopMonitoring,

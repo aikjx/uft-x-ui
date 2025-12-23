@@ -1,264 +1,272 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MathJax 修复测试 - 时空同一化方程</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
-      color: #e0e0e0;
-      padding: 2rem;
-      min-height: 100vh;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      text-align: center;
-      color: #64ffda;
-      margin-bottom: 2rem;
-      font-size: 2.5rem;
-      text-shadow: 0 0 20px rgba(100, 255, 218, 0.5);
-    }
-
-    .status {
-      background: rgba(100, 255, 218, 0.1);
-      border: 2px solid #64ffda;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-      text-align: center;
-    }
-
-    .status.loading {
-      border-color: #ffd700;
-      background: rgba(255, 215, 0, 0.1);
-    }
-
-    .status.error {
-      border-color: #ff6b6b;
-      background: rgba(255, 107, 107, 0.1);
-    }
-
-    .formula-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(100, 255, 218, 0.3);
-      border-radius: 16px;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      backdrop-filter: blur(10px);
-    }
-
-    .formula-title {
-      color: #64ffda;
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-      font-weight: 600;
-    }
-
-    .formula-description {
-      color: #b0b0b0;
-      margin-bottom: 1.5rem;
-      line-height: 1.6;
-    }
-
-    .formula-display {
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 8px;
-      padding: 2rem;
-      text-align: center;
-      min-height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(100, 255, 218, 0.3);
-      border-top: 4px solid #64ffda;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% {
-        transform: rotate(0deg);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MathJax 修复测试 - 时空同一化方程</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
 
-      100% {
-        transform: rotate(360deg);
+      body {
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+        color: #e0e0e0;
+        padding: 2rem;
+        min-height: 100vh;
       }
-    }
 
-    .test-info {
-      background: rgba(100, 255, 218, 0.05);
-      border-left: 4px solid #64ffda;
-      padding: 1rem;
-      margin-top: 1rem;
-      border-radius: 4px;
-    }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
 
-    .test-info code {
-      background: rgba(0, 0, 0, 0.3);
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
-      color: #64ffda;
-    }
-  </style>
+      h1 {
+        text-align: center;
+        color: #64ffda;
+        margin-bottom: 2rem;
+        font-size: 2.5rem;
+        text-shadow: 0 0 20px rgba(100, 255, 218, 0.5);
+      }
 
-  <!-- MathJax 配置 -->
-  <script>
-    window.MathJax = {
-      tex: {
-        inlineMath: [['\\(', '\\)'], ['$', '$']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        processEscapes: true,
-        processEnvironments: true,
-        macros: {
-          vec: ['\\overrightarrow{#1}', 1],
-          R: '\\mathbb{R}',
-          C: '\\mathbb{C}'
+      .status {
+        background: rgba(100, 255, 218, 0.1);
+        border: 2px solid #64ffda;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+      }
+
+      .status.loading {
+        border-color: #ffd700;
+        background: rgba(255, 215, 0, 0.1);
+      }
+
+      .status.error {
+        border-color: #ff6b6b;
+        background: rgba(255, 107, 107, 0.1);
+      }
+
+      .formula-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(100, 255, 218, 0.3);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+      }
+
+      .formula-title {
+        color: #64ffda;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+      }
+
+      .formula-description {
+        color: #b0b0b0;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+      }
+
+      .formula-display {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        min-height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(100, 255, 218, 0.3);
+        border-top: 4px solid #64ffda;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .test-info {
+        background: rgba(100, 255, 218, 0.05);
+        border-left: 4px solid #64ffda;
+        padding: 1rem;
+        margin-top: 1rem;
+        border-radius: 4px;
+      }
+
+      .test-info code {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        color: #64ffda;
+      }
+    </style>
+
+    <!-- MathJax 配置 -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [
+            ['\\(', '\\)'],
+            ['$', '$']
+          ],
+          displayMath: [
+            ['$$', '$$'],
+            ['\\[', '\\]']
+          ],
+          processEscapes: true,
+          processEnvironments: true,
+          macros: {
+            vec: ['\\overrightarrow{#1}', 1],
+            R: '\\mathbb{R}',
+            C: '\\mathbb{C}'
+          },
+          packages: { '[+]': ['ams', 'physics', 'color'] }
         },
-        packages: { '[+]': ['ams', 'physics', 'color'] }
-      },
-      loader: {
-        load: ['[tex]/ams', '[tex]/physics', '[tex]/color']
-      },
-      svg: {
-        scale: 1.2,
-        minScale: 0.5,
-        mtextInheritFont: true,
-        merrorInheritFont: true
-      },
-      startup: {
-        pageReady: () => {
-          return window.MathJax.startup.defaultPageReady().then(() => {
-            console.log('✅ MathJax 已成功加载');
-            document.getElementById('status').textContent = '✅ MathJax 已就绪';
-            document.getElementById('status').classList.remove('loading');
-            renderAllFormulas();
-          }).catch((err) => {
-            console.error('❌ MathJax 初始化失败:', err);
-            document.getElementById('status').textContent = '❌ MathJax 加载失败';
-            document.getElementById('status').classList.add('error');
-          });
-        }
-      }
-    };
-  </script>
-</head>
-
-<body>
-  <div class="container">
-    <h1>🔬 MathJax 修复测试</h1>
-
-    <div id="status" class="status loading">
-      <div class="spinner"></div>
-      <p style="margin-top: 1rem;">正在加载 MathJax...</p>
-    </div>
-
-    <!-- 时空同一化方程 -->
-    <div class="formula-card">
-      <div class="formula-title">时空同一化方程</div>
-      <div class="formula-description">
-        描述时空的统一性，将时间与空间坐标统一表示
-      </div>
-      <div class="formula-display" id="formula1">
-        <div class="spinner"></div>
-      </div>
-      <div class="test-info">
-        <strong>公式：</strong> <code>x^0 = ct, \quad x^i = (x, y, z)</code>
-      </div>
-    </div>
-
-    <!-- 场方程 -->
-    <div class="formula-card">
-      <div class="formula-title">统一场方程</div>
-      <div class="formula-description">
-        张祥前统一场论的核心方程
-      </div>
-      <div class="formula-display" id="formula2">
-        <div class="spinner"></div>
-      </div>
-      <div class="test-info">
-        <strong>公式：</strong> <code>\nabla^2 \phi = 4\pi G\rho</code>
-      </div>
-    </div>
-
-    <!-- 向量方程 -->
-    <div class="formula-card">
-      <div class="formula-title">向量场方程</div>
-      <div class="formula-description">
-        包含向量符号的复杂方程
-      </div>
-      <div class="formula-display" id="formula3">
-        <div class="spinner"></div>
-      </div>
-      <div class="test-info">
-        <strong>公式：</strong> <code>\vec{F} = m\vec{a}</code>
-      </div>
-    </div>
-
-    <!-- 复杂方程 -->
-    <div class="formula-card">
-      <div class="formula-title">爱因斯坦场方程</div>
-      <div class="formula-description">
-        广义相对论的核心方程
-      </div>
-      <div class="formula-display" id="formula4">
-        <div class="spinner"></div>
-      </div>
-      <div class="test-info">
-        <strong>公式：</strong> <code>R_{\mu\nu} - \frac{1}{2}Rg_{\mu\nu} = \frac{8\pi G}{c^4}T_{\mu\nu}</code>
-      </div>
-    </div>
-  </div>
-
-  <!-- 加载 MathJax -->
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
-
-  <script>
-    async function renderAllFormulas () {
-      const formulas = [
-        { id: 'formula1', tex: 'x^0 = ct, \\quad x^i = (x, y, z)' },
-        { id: 'formula2', tex: '\\nabla^2 \\phi = 4\\pi G\\rho' },
-        { id: 'formula3', tex: '\\vec{F} = m\\vec{a}' },
-        { id: 'formula4', tex: 'R_{\\mu\\nu} - \\frac{1}{2}Rg_{\\mu\\nu} = \\frac{8\\pi G}{c^4}T_{\\mu\\nu}' }
-      ];
-
-      for (const formula of formulas) {
-        try {
-          const element = document.getElementById(formula.id);
-          element.textContent = `\\[${formula.tex}\\]`;
-
-          if (window.MathJax && window.MathJax.typesetPromise) {
-            await window.MathJax.typesetPromise([element]);
-            console.log(`✅ 公式 ${formula.id} 渲染成功`);
+        loader: {
+          load: ['[tex]/ams', '[tex]/physics', '[tex]/color']
+        },
+        svg: {
+          scale: 1.2,
+          minScale: 0.5,
+          mtextInheritFont: true,
+          merrorInheritFont: true
+        },
+        startup: {
+          pageReady: () => {
+            return window.MathJax.startup
+              .defaultPageReady()
+              .then(() => {
+                console.log('✅ MathJax 已成功加载')
+                document.getElementById('status').textContent = '✅ MathJax 已就绪'
+                document.getElementById('status').classList.remove('loading')
+                renderAllFormulas()
+              })
+              .catch(err => {
+                console.error('❌ MathJax 初始化失败:', err)
+                document.getElementById('status').textContent = '❌ MathJax 加载失败'
+                document.getElementById('status').classList.add('error')
+              })
           }
-        } catch (error) {
-          console.error(`❌ 公式 ${formula.id} 渲染失败:`, error);
-          const element = document.getElementById(formula.id);
-          element.innerHTML = '<span style="color: #ff6b6b;">⚠️ 渲染失败</span>';
         }
       }
-    }
-  </script>
-</body>
+    </script>
+  </head>
 
+  <body>
+    <div class="container">
+      <h1>🔬 MathJax 修复测试</h1>
+
+      <div id="status" class="status loading">
+        <div class="spinner"></div>
+        <p style="margin-top: 1rem">正在加载 MathJax...</p>
+      </div>
+
+      <!-- 时空同一化方程 -->
+      <div class="formula-card">
+        <div class="formula-title">时空同一化方程</div>
+        <div class="formula-description">描述时空的统一性，将时间与空间坐标统一表示</div>
+        <div class="formula-display" id="formula1">
+          <div class="spinner"></div>
+        </div>
+        <div class="test-info">
+          <strong>公式：</strong> <code>x^0 = ct, \quad x^i = (x, y, z)</code>
+        </div>
+      </div>
+
+      <!-- 场方程 -->
+      <div class="formula-card">
+        <div class="formula-title">统一场方程</div>
+        <div class="formula-description">张祥前统一场论的核心方程</div>
+        <div class="formula-display" id="formula2">
+          <div class="spinner"></div>
+        </div>
+        <div class="test-info"><strong>公式：</strong> <code>\nabla^2 \phi = 4\pi G\rho</code></div>
+      </div>
+
+      <!-- 向量方程 -->
+      <div class="formula-card">
+        <div class="formula-title">向量场方程</div>
+        <div class="formula-description">包含向量符号的复杂方程</div>
+        <div class="formula-display" id="formula3">
+          <div class="spinner"></div>
+        </div>
+        <div class="test-info"><strong>公式：</strong> <code>\vec{F} = m\vec{a}</code></div>
+      </div>
+
+      <!-- 复杂方程 -->
+      <div class="formula-card">
+        <div class="formula-title">爱因斯坦场方程</div>
+        <div class="formula-description">广义相对论的核心方程</div>
+        <div class="formula-display" id="formula4">
+          <div class="spinner"></div>
+        </div>
+        <div class="test-info">
+          <strong>公式：</strong>
+          <code>R_{\mu\nu} - \frac{1}{2}Rg_{\mu\nu} = \frac{8\pi G}{c^4}T_{\mu\nu}</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- 加载 MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+    ></script>
+
+    <script>
+      async function renderAllFormulas() {
+        const formulas = [
+          { id: 'formula1', tex: 'x^0 = ct, \\quad x^i = (x, y, z)' },
+          { id: 'formula2', tex: '\\nabla^2 \\phi = 4\\pi G\\rho' },
+          { id: 'formula3', tex: '\\vec{F} = m\\vec{a}' },
+          {
+            id: 'formula4',
+            tex: 'R_{\\mu\\nu} - \\frac{1}{2}Rg_{\\mu\\nu} = \\frac{8\\pi G}{c^4}T_{\\mu\\nu}'
+          }
+        ]
+
+        for (const formula of formulas) {
+          try {
+            const element = document.getElementById(formula.id)
+            element.textContent = `\\[${formula.tex}\\]`
+
+            if (window.MathJax && window.MathJax.typesetPromise) {
+              await window.MathJax.typesetPromise([element])
+              console.log(`✅ 公式 ${formula.id} 渲染成功`)
+            }
+          } catch (error) {
+            console.error(`❌ 公式 ${formula.id} 渲染失败:`, error)
+            const element = document.getElementById(formula.id)
+            element.innerHTML = '<span style="color: #ff6b6b;">⚠️ 渲染失败</span>'
+          }
+        }
+      }
+    </script>
+  </body>
 </html>

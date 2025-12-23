@@ -1,8 +1,8 @@
-import type { 
-  PerformanceMetrics, 
-  PerformanceThresholds, 
+import type {
+  PerformanceMetrics,
+  PerformanceThresholds,
   OptimizationSuggestion,
-  PerformanceAlert 
+  PerformanceAlert
 } from '@/types/performance'
 
 export class PerformanceMonitor {
@@ -35,10 +35,10 @@ export class PerformanceMonitor {
 
     this.isMonitoring = true
     this.lastFrameTime = performance.now()
-    
+
     // 高精度FPS监控
     this.monitorHighPrecisionFPS()
-    
+
     // 主监控循环
     this.monitoringInterval = setInterval(() => {
       this.updateAllMetrics()
@@ -215,29 +215,31 @@ export class PerformanceMonitor {
   private monitorHighPrecisionFPS(): void {
     const updateFPS = () => {
       if (!this.isMonitoring) return
-      
+
       const now = performance.now()
       const delta = now - this.lastFrameTime
       this.lastFrameTime = now
-      
+
       if (delta > 0) {
         const currentFPS = 1000 / delta
         this.fpsFrames.push(currentFPS)
-        
+
         // 保持最近60帧数据
         if (this.fpsFrames.length > 60) {
           this.fpsFrames.shift()
         }
-        
+
         // 计算平均FPS
         if (this.fpsFrames.length > 0) {
-          this.metrics.fps = Math.round(this.fpsFrames.reduce((a, b) => a + b, 0) / this.fpsFrames.length)
+          this.metrics.fps = Math.round(
+            this.fpsFrames.reduce((a, b) => a + b, 0) / this.fpsFrames.length
+          )
         }
       }
-      
+
       requestAnimationFrame(updateFPS)
     }
-    
+
     requestAnimationFrame(updateFPS)
   }
 

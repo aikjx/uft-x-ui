@@ -1,5 +1,5 @@
 {
-  "name": "unified-field-theory-visualization",
+  "name": "project_template_react",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -7,56 +7,29 @@
     "dev:client": "vite --host --port 3000",
     "dev": "pnpm dev:client",
     "build:client": "vite build --outDir dist/static",
-    "build": "rd /s /q dist 2>nul || mkdir dist && pnpm build:client && copy package.json dist && echo. > dist/build.flag",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:unit": "vitest run tests/unit",
-    "test:components": "vitest run tests/components",
-    "test:integration": "vitest run tests/integration",
-    "test:services": "vitest run tests/services",
-    "test:utils": "vitest run tests/utils",
-    "test:benchmark": "vitest run tests/benchmark",
-    "test:e2e": "vitest run tests/e2e",
-    "test:ui": "vitest --ui",
-    "test:report": "vitest run --reporter=verbose --reporter=html",
-    "test:performance": "vitest run tests/benchmark --reporter=verbose",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts,.tsx,.js,.jsx"
+    "build": "rm -rf dist && pnpm build:client && cp package.json dist && touch dist/build.flag"
   },
   "dependencies": {
-    "@types/three": "^0.160.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.9.2",
-    "mathjax": "^4.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.3.0",
     "recharts": "^2.15.1",
-    "reflect-metadata": "^0.2.2",
     "sonner": "^2.0.2",
     "tailwind-merge": "^3.0.2",
-    "three": "^0.160.0",
     "zod": "^3.24.2",
-    "zustand": "^5.0.9"
+    "three": "^0.164.1"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.4.0",
-    "@testing-library/react": "^14.2.0",
-    "@testing-library/user-event": "^14.5.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
-    "@vitest/coverage-v8": "^1.2.2",
     "autoprefixer": "^10.4.21",
-    "jsdom": "^24.0.0",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
-    "terser": "^5.44.1",
     "typescript": "~5.7.2",
     "vite": "^6.2.0",
-    "vite-plugin-compression": "^0.5.1",
-    "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^1.2.2"
+    "vite-tsconfig-paths": "^5.1.4"
   }
 }

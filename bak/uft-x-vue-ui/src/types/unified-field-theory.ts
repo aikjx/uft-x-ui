@@ -11,25 +11,25 @@ import * as THREE from 'three'
  * 统一场论19个核心公式枚举
  */
 export enum FormulaType {
-  SPACETIME_UNITY = 1,           // 时空同一化方程
-  SPIRAL_SPACETIME = 2,          // 三维螺旋时空方程
-  MASS_DEFINITION = 3,           // 质量定义方程
-  GRAVITY_FIELD = 4,             // 引力场定义方程
-  STATIC_MOMENTUM = 5,           // 静止动量方程
-  MOTION_MOMENTUM = 6,           // 运动动量方程
-  UNIFIED_FORCE = 7,             // 宇宙大统一方程
-  SPACE_WAVE = 8,                // 空间波动方程
-  CHARGE_DEFINITION = 9,         // 电荷定义方程
-  ELECTRIC_FIELD = 10,           // 电场定义方程
-  MAGNETIC_FIELD = 11,           // 磁场定义方程
-  GRAVITY_TO_EM = 12,            // 变化的引力场产生电磁场
-  MAGNETIC_VECTOR = 13,          // 磁矢势方程
-  GRAVITY_TO_E = 14,             // 变化的引力场产生电场
-  MAGNETIC_TO_FIELDS = 15,       // 变化的磁场产生引力场和电场
-  ENERGY_EQUATION = 16,          // 统一场论能量方程
-  LIGHTSPEED_DYNAMICS = 17,      // 光速飞行器动力学方程
-  NUCLEAR_FORCE = 18,            // 核力场定义方程
-  GRAVITY_LIGHTSPEED = 19        // 引力光速统一方程
+  SPACETIME_UNITY = 1, // 时空同一化方程
+  SPIRAL_SPACETIME = 2, // 三维螺旋时空方程
+  MASS_DEFINITION = 3, // 质量定义方程
+  GRAVITY_FIELD = 4, // 引力场定义方程
+  STATIC_MOMENTUM = 5, // 静止动量方程
+  MOTION_MOMENTUM = 6, // 运动动量方程
+  UNIFIED_FORCE = 7, // 宇宙大统一方程
+  SPACE_WAVE = 8, // 空间波动方程
+  CHARGE_DEFINITION = 9, // 电荷定义方程
+  ELECTRIC_FIELD = 10, // 电场定义方程
+  MAGNETIC_FIELD = 11, // 磁场定义方程
+  GRAVITY_TO_EM = 12, // 变化的引力场产生电磁场
+  MAGNETIC_VECTOR = 13, // 磁矢势方程
+  GRAVITY_TO_E = 14, // 变化的引力场产生电场
+  MAGNETIC_TO_FIELDS = 15, // 变化的磁场产生引力场和电场
+  ENERGY_EQUATION = 16, // 统一场论能量方程
+  LIGHTSPEED_DYNAMICS = 17, // 光速飞行器动力学方程
+  NUCLEAR_FORCE = 18, // 核力场定义方程
+  GRAVITY_LIGHTSPEED = 19 // 引力光速统一方程
 }
 
 /**
@@ -37,39 +37,39 @@ export enum FormulaType {
  */
 export interface FormulaParameters {
   // 时空参数
-  c?: number              // 光速
-  t?: number              // 时间
-  r?: number              // 半径
-  omega?: number          // 角速度
-  h?: number              // 螺旋高度参数
+  c?: number // 光速
+  t?: number // 时间
+  r?: number // 半径
+  omega?: number // 角速度
+  h?: number // 螺旋高度参数
 
   // 质量与密度参数
-  m?: number              // 质量
-  m0?: number             // 静止质量
-  k?: number              // 比例常数
-  n?: number              // 空间位移条数
-  Omega?: number          // 立体角
+  m?: number // 质量
+  m0?: number // 静止质量
+  k?: number // 比例常数
+  n?: number // 空间位移条数
+  Omega?: number // 立体角
 
   // 场参数
-  G?: number              // 引力常数
-  A?: THREE.Vector3       // 引力场/磁矢势
-  E?: THREE.Vector3       // 电场
-  B?: THREE.Vector3       // 磁场
+  G?: number // 引力常数
+  A?: THREE.Vector3 // 引力场/磁矢势
+  E?: THREE.Vector3 // 电场
+  B?: THREE.Vector3 // 磁场
 
   // 电磁参数
-  q?: number              // 电荷
-  epsilon0?: number       // 真空介电常数
-  mu0?: number            // 真空磁导率
+  q?: number // 电荷
+  epsilon0?: number // 真空介电常数
+  mu0?: number // 真空磁导率
 
   // 运动参数
-  v?: number              // 速度
-  V?: THREE.Vector3       // 速度矢量
-  C?: THREE.Vector3       // 光速矢量
+  v?: number // 速度
+  V?: THREE.Vector3 // 速度矢量
+  C?: THREE.Vector3 // 光速矢量
 
   // 其他参数
-  gamma?: number          // 洛伦兹因子
-  f?: number              // 频率/因子
-  Z?: number              // 引力光速统一常数
+  gamma?: number // 洛伦兹因子
+  f?: number // 频率/因子
+  Z?: number // 引力光速统一常数
 }
 
 /**
@@ -165,11 +165,11 @@ export interface ParticleSystemData {
  * 交互模式
  */
 export enum InteractionMode {
-  ORBIT = 'orbit',           // 轨道控制
-  FLY = 'fly',              // 飞行控制
-  GRAVITY = 'gravity',       // 引力交互
-  QUANTUM = 'quantum',       // 量子交互
-  SPACETIME = 'spacetime'    // 时空扭曲
+  ORBIT = 'orbit', // 轨道控制
+  FLY = 'fly', // 飞行控制
+  GRAVITY = 'gravity', // 引力交互
+  QUANTUM = 'quantum', // 量子交互
+  SPACETIME = 'spacetime' // 时空扭曲
 }
 
 /**
@@ -389,13 +389,13 @@ export interface XRControllerState {
  * 物理常数
  */
 export const PHYSICS_CONSTANTS = {
-  LIGHT_SPEED: 299792458,           // 光速 m/s
-  GRAVITY_CONSTANT: 6.67430e-11,    // 引力常数 m³/(kg·s²)
-  PLANCK_CONSTANT: 6.62607015e-34,  // 普朗克常数 J·s
+  LIGHT_SPEED: 299792458, // 光速 m/s
+  GRAVITY_CONSTANT: 6.6743e-11, // 引力常数 m³/(kg·s²)
+  PLANCK_CONSTANT: 6.62607015e-34, // 普朗克常数 J·s
   ELECTRON_CHARGE: 1.602176634e-19, // 电子电荷 C
   VACUUM_PERMITTIVITY: 8.854187817e-12, // 真空介电常数 F/m
   VACUUM_PERMEABILITY: 1.25663706212e-6, // 真空磁导率 H/m
-  BOLTZMANN_CONSTANT: 1.380649e-23  // 玻尔兹曼常数 J/K
+  BOLTZMANN_CONSTANT: 1.380649e-23 // 玻尔兹曼常数 J/K
 } as const
 
 /**

@@ -113,9 +113,9 @@ export class QuantumRenderer {
     // 辉光效果
     this.bloomPass = new UnrealBloomPass(
       new THREE.Vector2(this.container.clientWidth, this.container.clientHeight),
-      1.5,  // 强度
-      0.4,  // 半径
-      0.85  // 阈值
+      1.5, // 强度
+      0.4, // 半径
+      0.85 // 阈值
     )
     this.composer.addPass(this.bloomPass)
   }
@@ -223,9 +223,7 @@ export class QuantumRenderer {
     const colors: number[] = []
 
     // 根据场类型选择颜色
-    const color = new THREE.Color(
-      config.colorScheme?.fieldColors?.[fieldData.type] || '#00d4ff'
-    )
+    const color = new THREE.Color(config.colorScheme?.fieldColors?.[fieldData.type] || '#00d4ff')
 
     // 生成场线
     for (let i = 0; i < fieldData.points.length; i++) {
@@ -240,8 +238,16 @@ export class QuantumRenderer {
         // 根据强度调整颜色
         const intensity = fieldData.intensity[i]
         const normalizedIntensity = Math.min(Math.abs(intensity) * 10, 1)
-        colors.push(color.r * normalizedIntensity, color.g * normalizedIntensity, color.b * normalizedIntensity)
-        colors.push(color.r * normalizedIntensity, color.g * normalizedIntensity, color.b * normalizedIntensity)
+        colors.push(
+          color.r * normalizedIntensity,
+          color.g * normalizedIntensity,
+          color.b * normalizedIntensity
+        )
+        colors.push(
+          color.r * normalizedIntensity,
+          color.g * normalizedIntensity,
+          color.b * normalizedIntensity
+        )
       }
     }
 
@@ -305,12 +311,12 @@ export class QuantumRenderer {
     const elapsed = this.clock.getElapsedTime()
 
     // 更新粒子系统动画
-    this.particleSystems.forEach((system) => {
+    this.particleSystems.forEach(system => {
       system.rotation.y += delta * 0.1
     })
 
     // 更新场可视化动画
-    this.fieldMeshes.forEach((mesh) => {
+    this.fieldMeshes.forEach(mesh => {
       if (mesh.material && 'opacity' in mesh.material) {
         const material = mesh.material as THREE.Material & { opacity: number }
         material.opacity = 0.6 + Math.sin(elapsed * 2) * 0.2
@@ -421,7 +427,7 @@ export class QuantumRenderer {
     }
 
     // 清理粒子系统
-    this.particleSystems.forEach((system) => {
+    this.particleSystems.forEach(system => {
       system.geometry.dispose()
       if (Array.isArray(system.material)) {
         system.material.forEach(m => m.dispose())
@@ -432,7 +438,7 @@ export class QuantumRenderer {
     this.particleSystems.clear()
 
     // 清理场网格
-    this.fieldMeshes.forEach((mesh) => {
+    this.fieldMeshes.forEach(mesh => {
       mesh.geometry.dispose()
       if (Array.isArray(mesh.material)) {
         mesh.material.forEach(m => m.dispose())

@@ -7,7 +7,7 @@ import { createHtmlPlugin } from 'vite-plugin-html'
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const isProduction = mode === 'production'
-  
+
   return {
     plugins: [
       vue({
@@ -16,7 +16,7 @@ export default defineConfig(({ command, mode }) => {
           propsDestructure: true
         }
       }),
-      
+
       // HTML 模板处理
       createHtmlPlugin({
         minify: isProduction,
@@ -27,15 +27,16 @@ export default defineConfig(({ command, mode }) => {
           }
         }
       }),
-      
+
       // 打包分析
-      isProduction && visualizer({
-        filename: 'dist/stats.html',
-        open: true,
-        gzipSize: true
-      })
+      isProduction &&
+        visualizer({
+          filename: 'dist/stats.html',
+          open: true,
+          gzipSize: true
+        })
     ].filter(Boolean),
-    
+
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src'),
@@ -48,7 +49,7 @@ export default defineConfig(({ command, mode }) => {
         '@styles': resolve(__dirname, 'src/styles')
       }
     },
-    
+
     // 开发服务器配置
     server: {
       port: 3000,
@@ -58,17 +59,17 @@ export default defineConfig(({ command, mode }) => {
         '/api': {
           target: env.VITE_API_BASE_URL || 'http://localhost:8080',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, '')
+          rewrite: path => path.replace(/^\/api/, '')
         }
       }
     },
-    
+
     // 构建配置
     build: {
       target: 'esnext',
       minify: 'esbuild',
       sourcemap: !isProduction,
-      
+
       // 代码分割
       rollupOptions: {
         output: {
@@ -79,11 +80,11 @@ export default defineConfig(({ command, mode }) => {
             'vendor-math': ['mathjax'],
             'vendor-utils': ['lodash-es', 'dayjs']
           },
-          
+
           // 文件命名
           chunkFileNames: 'js/[name]-[hash].js',
           entryFileNames: 'js/[name]-[hash].js',
-          assetFileNames: (assetInfo) => {
+          assetFileNames: assetInfo => {
             const info = assetInfo.name.split('.')
             const ext = info[info.length - 1]
             if (/\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/i.test(assetInfo.name)) {
@@ -99,7 +100,7 @@ export default defineConfig(({ command, mode }) => {
           }
         }
       },
-      
+
       // 压缩配置
       terserOptions: {
         compress: {
@@ -107,26 +108,20 @@ export default defineConfig(({ command, mode }) => {
           drop_debugger: isProduction
         }
       },
-      
+
       // 资源内联阈值
       assetsInlineLimit: 4096,
-      
+
       // CSS 代码分割
       cssCodeSplit: true
     },
-    
+
     // 优化配置
     optimizeDeps: {
-      include: [
-        'vue',
-        'vue-router',
-        'pinia',
-        'lodash-es',
-        'dayjs'
-      ],
+      include: ['vue', 'vue-router', 'pinia', 'lodash-es', 'dayjs'],
       exclude: ['@vueuse/core']
     },
-    
+
     // CSS 配置
     css: {
       preprocessorOptions: {
@@ -142,14 +137,14 @@ export default defineConfig(({ command, mode }) => {
         ]
       }
     },
-    
+
     // 环境变量
     define: {
       __VUE_OPTIONS_API__: false,
       __VUE_PROD_DEVTOOLS__: !isProduction,
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version)
     },
-    
+
     // 预览配置
     preview: {
       port: 4173,

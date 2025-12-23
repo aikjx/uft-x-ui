@@ -1,570 +1,581 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MathJax 性能压力测试</title>
-    
+
     <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                packages: {'[+]': ['base', 'ams', 'newcommand', 'mathtools', 'physics']}
-            },
-            startup: {
-                ready() {
-                    console.log('MathJax 性能测试准备就绪');
-                    MathJax.startup.defaultReady();
-                }
-            }
-        };
+      window.MathJax = {
+        tex: {
+          inlineMath: [
+            ['$', '$'],
+            ['\\(', '\\)']
+          ],
+          displayMath: [
+            ['$$', '$$'],
+            ['\\[', '\\]']
+          ],
+          packages: { '[+]': ['base', 'ams', 'newcommand', 'mathtools', 'physics'] }
+        },
+        startup: {
+          ready() {
+            console.log('MathJax 性能测试准备就绪')
+            MathJax.startup.defaultReady()
+          }
+        }
+      }
     </script>
-    
+
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
-    
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+    ></script>
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .controls {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .control-group {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        
-        button {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
-        }
-        
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .metric-card {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        
-        .metric-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #4ecdc4;
-            margin-bottom: 10px;
-        }
-        
-        .metric-label {
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
-        
-        .test-area {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .progress-bar {
-            width: 100%;
-            height: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 15px 0;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4ecdc4, #44a08d);
-            transition: width 0.3s ease;
-            border-radius: 10px;
-        }
-        
-        .log {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 15px;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-            margin-top: 20px;
-        }
-        
-        input[type="range"] {
-            width: 200px;
-            margin: 0 10px;
-        }
-        
-        label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .controls {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+      }
+
+      .control-group {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .metric-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+      }
+
+      .metric-value {
+        font-size: 2em;
+        font-weight: bold;
+        color: #4ecdc4;
+        margin-bottom: 10px;
+      }
+
+      .metric-label {
+        font-size: 0.9em;
+        opacity: 0.8;
+      }
+
+      .test-area {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 20px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 15px 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4ecdc4, #44a08d);
+        transition: width 0.3s ease;
+        border-radius: 10px;
+      }
+
+      .log {
+        background: rgba(0, 0, 0, 0.5);
+        padding: 15px;
+        border-radius: 10px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        max-height: 200px;
+        overflow-y: auto;
+        margin-top: 20px;
+      }
+
+      input[type='range'] {
+        width: 200px;
+        margin: 0 10px;
+      }
+
+      label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <div class="header">
-            <h1>⚡ MathJax 性能压力测试</h1>
-            <p>测试大量数学公式的渲染性能和内存使用</p>
+      <div class="header">
+        <h1>⚡ MathJax 性能压力测试</h1>
+        <p>测试大量数学公式的渲染性能和内存使用</p>
+      </div>
+
+      <div class="controls">
+        <div class="control-group">
+          <button onclick="runBasicPerformanceTest()">🚀 基础性能测试</button>
+          <button onclick="runStressTest()">💪 压力测试</button>
+          <button onclick="runMemoryTest()">🧠 内存测试</button>
+          <button onclick="runRealTimeTest()">⏱️ 实时渲染测试</button>
+          <button onclick="clearTests()">🧹 清除测试</button>
         </div>
-        
-        <div class="controls">
-            <div class="control-group">
-                <button onclick="runBasicPerformanceTest()">🚀 基础性能测试</button>
-                <button onclick="runStressTest()">💪 压力测试</button>
-                <button onclick="runMemoryTest()">🧠 内存测试</button>
-                <button onclick="runRealTimeTest()">⏱️ 实时渲染测试</button>
-                <button onclick="clearTests()">🧹 清除测试</button>
-            </div>
-            
-            <div class="control-group">
-                <label>
-                    公式数量:
-                    <input type="range" id="formula-count" min="10" max="1000" value="100" step="10">
-                    <span id="count-display">100</span>
-                </label>
-                
-                <label>
-                    复杂度:
-                    <select id="complexity-level">
-                        <option value="simple">简单</option>
-                        <option value="medium" selected>中等</option>
-                        <option value="complex">复杂</option>
-                        <option value="extreme">极限</option>
-                    </select>
-                </label>
-            </div>
-            
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress-bar" style="width: 0%"></div>
-            </div>
+
+        <div class="control-group">
+          <label>
+            公式数量:
+            <input type="range" id="formula-count" min="10" max="1000" value="100" step="10" />
+            <span id="count-display">100</span>
+          </label>
+
+          <label>
+            复杂度:
+            <select id="complexity-level">
+              <option value="simple">简单</option>
+              <option value="medium" selected>中等</option>
+              <option value="complex">复杂</option>
+              <option value="extreme">极限</option>
+            </select>
+          </label>
         </div>
-        
-        <div class="metrics">
-            <div class="metric-card">
-                <div class="metric-value" id="render-time">0</div>
-                <div class="metric-label">渲染时间 (ms)</div>
-            </div>
-            
-            <div class="metric-card">
-                <div class="metric-value" id="formulas-per-second">0</div>
-                <div class="metric-label">公式/秒</div>
-            </div>
-            
-            <div class="metric-card">
-                <div class="metric-value" id="memory-usage">0</div>
-                <div class="metric-label">内存使用 (MB)</div>
-            </div>
-            
-            <div class="metric-card">
-                <div class="metric-value" id="dom-nodes">0</div>
-                <div class="metric-label">DOM 节点数</div>
-            </div>
+
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-bar" style="width: 0%"></div>
         </div>
-        
-        <div class="test-area" id="test-area">
-            <p>测试结果将在这里显示...</p>
+      </div>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-value" id="render-time">0</div>
+          <div class="metric-label">渲染时间 (ms)</div>
         </div>
-        
-        <div class="log" id="performance-log">
-            性能测试日志...
+
+        <div class="metric-card">
+          <div class="metric-value" id="formulas-per-second">0</div>
+          <div class="metric-label">公式/秒</div>
         </div>
+
+        <div class="metric-card">
+          <div class="metric-value" id="memory-usage">0</div>
+          <div class="metric-label">内存使用 (MB)</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-value" id="dom-nodes">0</div>
+          <div class="metric-label">DOM 节点数</div>
+        </div>
+      </div>
+
+      <div class="test-area" id="test-area">
+        <p>测试结果将在这里显示...</p>
+      </div>
+
+      <div class="log" id="performance-log">性能测试日志...</div>
     </div>
 
     <script>
-        // 全局变量
-        let testRunning = false;
-        let testResults = [];
-        let memoryBaseline = 0;
-        
-        // 公式模板
-        const formulaTemplates = {
-            simple: [
-                'x^2 + y^2 = r^2',
-                'E = mc^2',
-                'a^2 + b^2 = c^2',
-                'f(x) = ax + b',
-                '\\sin^2\\theta + \\cos^2\\theta = 1'
-            ],
-            medium: [
-                '\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}',
-                '\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}',
-                '\\frac{d}{dx}[f(x)g(x)] = f\'(x)g(x) + f(x)g\'(x)',
-                '\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1',
-                '\\nabla \\times \\vec{F} = \\left(\\frac{\\partial F_z}{\\partial y} - \\frac{\\partial F_y}{\\partial z}\\right)\\hat{i}'
-            ],
-            complex: [
-                '\\begin{pmatrix} a & b & c \\\\ d & e & f \\\\ g & h & i \\end{pmatrix} \\begin{pmatrix} x \\\\ y \\\\ z \\end{pmatrix} = \\begin{pmatrix} ax+by+cz \\\\ dx+ey+fz \\\\ gx+hy+iz \\end{pmatrix}',
-                '\\oint_C \\vec{F} \\cdot d\\vec{r} = \\iint_S (\\nabla \\times \\vec{F}) \\cdot d\\vec{S}',
-                '\\begin{align} \\nabla \\cdot \\vec{E} &= \\frac{\\rho}{\\epsilon_0} \\\\ \\nabla \\times \\vec{E} &= -\\frac{\\partial \\vec{B}}{\\partial t} \\\\ \\nabla \\cdot \\vec{B} &= 0 \\\\ \\nabla \\times \\vec{B} &= \\mu_0\\vec{J} + \\mu_0\\epsilon_0\\frac{\\partial \\vec{E}}{\\partial t} \\end{align}',
-                '\\sum_{n=0}^{\\infty} \\frac{f^{(n)}(a)}{n!}(x-a)^n = f(a) + f\'(a)(x-a) + \\frac{f\'\'(a)}{2!}(x-a)^2 + \\cdots',
-                '\\int_0^{2\\pi} \\int_0^{\\pi} \\int_0^R r^2 \\sin\\theta \\, dr \\, d\\theta \\, d\\phi = \\frac{4\\pi R^3}{3}'
-            ],
-            extreme: [
-                '\\begin{pmatrix} \\sum_{i=1}^n a_{1i}x_i \\\\ \\sum_{i=1}^n a_{2i}x_i \\\\ \\vdots \\\\ \\sum_{i=1}^n a_{mi}x_i \\end{pmatrix} = \\begin{pmatrix} b_1 \\\\ b_2 \\\\ \\vdots \\\\ b_m \\end{pmatrix}',
-                '\\prod_{p \\text{ prime}} \\left(1 - p^{-s}\\right)^{-1} = \\sum_{n=1}^{\\infty} n^{-s} = \\zeta(s)',
-                '\\int_{-\\infty}^{\\infty} \\int_{-\\infty}^{\\infty} e^{-\\frac{1}{2}(x^2 + y^2)} \\frac{1}{\\sqrt{2\\pi}} \\frac{1}{\\sqrt{2\\pi}} dx dy = 1',
-                '\\begin{cases} \\frac{\\partial u}{\\partial t} = \\alpha \\nabla^2 u + f(x,y,z,t) \\\\ u(x,y,z,0) = u_0(x,y,z) \\\\ \\frac{\\partial u}{\\partial n}\\bigg|_{\\partial \\Omega} = g(x,y,z,t) \\end{cases}',
-                '\\mathcal{L}\\{f(t)\\} = F(s) = \\int_0^{\\infty} e^{-st} f(t) dt \\quad \\text{where} \\quad \\mathcal{L}^{-1}\\{F(s)\\} = f(t)'
-            ]
-        };
-        
-        // 日志函数
-        function log(message) {
-            const timestamp = new Date().toLocaleTimeString();
-            const logElement = document.getElementById('performance-log');
-            logElement.innerHTML += `<div>[${timestamp}] ${message}</div>`;
-            logElement.scrollTop = logElement.scrollHeight;
-            console.log(`[Performance Test] ${message}`);
+      // 全局变量
+      let testRunning = false
+      let testResults = []
+      let memoryBaseline = 0
+
+      // 公式模板
+      const formulaTemplates = {
+        simple: [
+          'x^2 + y^2 = r^2',
+          'E = mc^2',
+          'a^2 + b^2 = c^2',
+          'f(x) = ax + b',
+          '\\sin^2\\theta + \\cos^2\\theta = 1'
+        ],
+        medium: [
+          '\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}',
+          '\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}',
+          "\\frac{d}{dx}[f(x)g(x)] = f'(x)g(x) + f(x)g'(x)",
+          '\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1',
+          '\\nabla \\times \\vec{F} = \\left(\\frac{\\partial F_z}{\\partial y} - \\frac{\\partial F_y}{\\partial z}\\right)\\hat{i}'
+        ],
+        complex: [
+          '\\begin{pmatrix} a & b & c \\\\ d & e & f \\\\ g & h & i \\end{pmatrix} \\begin{pmatrix} x \\\\ y \\\\ z \\end{pmatrix} = \\begin{pmatrix} ax+by+cz \\\\ dx+ey+fz \\\\ gx+hy+iz \\end{pmatrix}',
+          '\\oint_C \\vec{F} \\cdot d\\vec{r} = \\iint_S (\\nabla \\times \\vec{F}) \\cdot d\\vec{S}',
+          '\\begin{align} \\nabla \\cdot \\vec{E} &= \\frac{\\rho}{\\epsilon_0} \\\\ \\nabla \\times \\vec{E} &= -\\frac{\\partial \\vec{B}}{\\partial t} \\\\ \\nabla \\cdot \\vec{B} &= 0 \\\\ \\nabla \\times \\vec{B} &= \\mu_0\\vec{J} + \\mu_0\\epsilon_0\\frac{\\partial \\vec{E}}{\\partial t} \\end{align}',
+          "\\sum_{n=0}^{\\infty} \\frac{f^{(n)}(a)}{n!}(x-a)^n = f(a) + f'(a)(x-a) + \\frac{f''(a)}{2!}(x-a)^2 + \\cdots",
+          '\\int_0^{2\\pi} \\int_0^{\\pi} \\int_0^R r^2 \\sin\\theta \\, dr \\, d\\theta \\, d\\phi = \\frac{4\\pi R^3}{3}'
+        ],
+        extreme: [
+          '\\begin{pmatrix} \\sum_{i=1}^n a_{1i}x_i \\\\ \\sum_{i=1}^n a_{2i}x_i \\\\ \\vdots \\\\ \\sum_{i=1}^n a_{mi}x_i \\end{pmatrix} = \\begin{pmatrix} b_1 \\\\ b_2 \\\\ \\vdots \\\\ b_m \\end{pmatrix}',
+          '\\prod_{p \\text{ prime}} \\left(1 - p^{-s}\\right)^{-1} = \\sum_{n=1}^{\\infty} n^{-s} = \\zeta(s)',
+          '\\int_{-\\infty}^{\\infty} \\int_{-\\infty}^{\\infty} e^{-\\frac{1}{2}(x^2 + y^2)} \\frac{1}{\\sqrt{2\\pi}} \\frac{1}{\\sqrt{2\\pi}} dx dy = 1',
+          '\\begin{cases} \\frac{\\partial u}{\\partial t} = \\alpha \\nabla^2 u + f(x,y,z,t) \\\\ u(x,y,z,0) = u_0(x,y,z) \\\\ \\frac{\\partial u}{\\partial n}\\bigg|_{\\partial \\Omega} = g(x,y,z,t) \\end{cases}',
+          '\\mathcal{L}\\{f(t)\\} = F(s) = \\int_0^{\\infty} e^{-st} f(t) dt \\quad \\text{where} \\quad \\mathcal{L}^{-1}\\{F(s)\\} = f(t)'
+        ]
+      }
+
+      // 日志函数
+      function log(message) {
+        const timestamp = new Date().toLocaleTimeString()
+        const logElement = document.getElementById('performance-log')
+        logElement.innerHTML += `<div>[${timestamp}] ${message}</div>`
+        logElement.scrollTop = logElement.scrollHeight
+        console.log(`[Performance Test] ${message}`)
+      }
+
+      // 更新指标
+      function updateMetrics(renderTime, formulaCount, memoryUsage, domNodes) {
+        document.getElementById('render-time').textContent = renderTime.toFixed(2)
+        document.getElementById('formulas-per-second').textContent = (
+          formulaCount /
+          (renderTime / 1000)
+        ).toFixed(1)
+        document.getElementById('memory-usage').textContent = memoryUsage.toFixed(2)
+        document.getElementById('dom-nodes').textContent = domNodes
+      }
+
+      // 获取内存使用情况
+      function getMemoryUsage() {
+        if (performance.memory) {
+          return performance.memory.usedJSHeapSize / 1024 / 1024 // MB
         }
-        
-        // 更新指标
-        function updateMetrics(renderTime, formulaCount, memoryUsage, domNodes) {
-            document.getElementById('render-time').textContent = renderTime.toFixed(2);
-            document.getElementById('formulas-per-second').textContent = (formulaCount / (renderTime / 1000)).toFixed(1);
-            document.getElementById('memory-usage').textContent = memoryUsage.toFixed(2);
-            document.getElementById('dom-nodes').textContent = domNodes;
+        return 0
+      }
+
+      // 获取DOM节点数
+      function getDOMNodeCount() {
+        return document.querySelectorAll('*').length
+      }
+
+      // 生成测试公式
+      function generateFormulas(count, complexity) {
+        const templates = formulaTemplates[complexity]
+        const formulas = []
+
+        for (let i = 0; i < count; i++) {
+          const template = templates[i % templates.length]
+          // 添加一些变化
+          let formula = template.replace(/x/g, `x_{${i}}`)
+          formula = formula.replace(/n/g, `n_{${i % 10}}`)
+          formulas.push(`$$${formula}$$`)
         }
-        
-        // 获取内存使用情况
-        function getMemoryUsage() {
-            if (performance.memory) {
-                return performance.memory.usedJSHeapSize / 1024 / 1024; // MB
-            }
-            return 0;
+
+        return formulas
+      }
+
+      // 基础性能测试
+      async function runBasicPerformanceTest() {
+        if (testRunning) return
+        testRunning = true
+
+        const count = parseInt(document.getElementById('formula-count').value)
+        const complexity = document.getElementById('complexity-level').value
+
+        log(`开始基础性能测试: ${count} 个 ${complexity} 公式`)
+
+        const testArea = document.getElementById('test-area')
+        const progressBar = document.getElementById('progress-bar')
+
+        // 清除之前的内容
+        testArea.innerHTML = ''
+
+        // 记录基线内存
+        memoryBaseline = getMemoryUsage()
+        const startDOMNodes = getDOMNodeCount()
+
+        // 生成公式
+        const formulas = generateFormulas(count, complexity)
+
+        // 创建测试元素
+        const testElement = document.createElement('div')
+        testElement.innerHTML = formulas.join('\\n')
+        testArea.appendChild(testElement)
+
+        // 开始计时
+        const startTime = performance.now()
+
+        try {
+          // 渲染数学公式
+          await MathJax.typesetPromise([testElement])
+
+          const endTime = performance.now()
+          const renderTime = endTime - startTime
+          const memoryUsage = getMemoryUsage() - memoryBaseline
+          const endDOMNodes = getDOMNodeCount() - startDOMNodes
+
+          // 更新指标
+          updateMetrics(renderTime, count, memoryUsage, endDOMNodes)
+
+          // 更新进度条
+          progressBar.style.width = '100%'
+
+          log(
+            `✅ 基础性能测试完成: ${renderTime.toFixed(2)}ms, ${(count / (renderTime / 1000)).toFixed(1)} 公式/秒`
+          )
+
+          // 保存结果
+          testResults.push({
+            type: 'basic',
+            count: count,
+            complexity: complexity,
+            renderTime: renderTime,
+            memoryUsage: memoryUsage,
+            domNodes: endDOMNodes,
+            formulasPerSecond: count / (renderTime / 1000)
+          })
+        } catch (error) {
+          log(`❌ 基础性能测试失败: ${error.message}`)
         }
-        
-        // 获取DOM节点数
-        function getDOMNodeCount() {
-            return document.querySelectorAll('*').length;
+
+        testRunning = false
+      }
+
+      // 压力测试
+      async function runStressTest() {
+        if (testRunning) return
+        testRunning = true
+
+        log('开始压力测试...')
+
+        const testCases = [
+          { count: 50, complexity: 'simple' },
+          { count: 100, complexity: 'medium' },
+          { count: 200, complexity: 'medium' },
+          { count: 50, complexity: 'complex' },
+          { count: 20, complexity: 'extreme' }
+        ]
+
+        const progressBar = document.getElementById('progress-bar')
+        const testArea = document.getElementById('test-area')
+
+        for (let i = 0; i < testCases.length; i++) {
+          const testCase = testCases[i]
+          const progress = ((i + 1) / testCases.length) * 100
+
+          log(
+            `压力测试 ${i + 1}/${testCases.length}: ${testCase.count} 个 ${testCase.complexity} 公式`
+          )
+
+          // 清除之前的内容
+          testArea.innerHTML = ''
+
+          // 生成公式
+          const formulas = generateFormulas(testCase.count, testCase.complexity)
+          const testElement = document.createElement('div')
+          testElement.innerHTML = formulas.join('\\n')
+          testArea.appendChild(testElement)
+
+          const startTime = performance.now()
+          const startMemory = getMemoryUsage()
+
+          try {
+            await MathJax.typesetPromise([testElement])
+
+            const endTime = performance.now()
+            const renderTime = endTime - startTime
+            const memoryUsage = getMemoryUsage() - startMemory
+
+            log(`  ✅ 完成: ${renderTime.toFixed(2)}ms, 内存: ${memoryUsage.toFixed(2)}MB`)
+
+            // 更新进度条
+            progressBar.style.width = progress + '%'
+
+            // 短暂延迟以避免浏览器冻结
+            await new Promise(resolve => setTimeout(resolve, 100))
+          } catch (error) {
+            log(`  ❌ 失败: ${error.message}`)
+          }
         }
-        
-        // 生成测试公式
-        function generateFormulas(count, complexity) {
-            const templates = formulaTemplates[complexity];
-            const formulas = [];
-            
-            for (let i = 0; i < count; i++) {
-                const template = templates[i % templates.length];
-                // 添加一些变化
-                let formula = template.replace(/x/g, `x_{${i}}`);
-                formula = formula.replace(/n/g, `n_{${i % 10}}`);
-                formulas.push(`$$${formula}$$`);
-            }
-            
-            return formulas;
+
+        log('🎉 压力测试完成')
+        testRunning = false
+      }
+
+      // 内存测试
+      async function runMemoryTest() {
+        if (testRunning) return
+        testRunning = true
+
+        log('开始内存测试...')
+
+        const testArea = document.getElementById('test-area')
+        const progressBar = document.getElementById('progress-bar')
+
+        // 记录初始内存
+        const initialMemory = getMemoryUsage()
+        log(`初始内存使用: ${initialMemory.toFixed(2)}MB`)
+
+        // 逐步增加公式数量
+        const steps = [10, 50, 100, 200, 500]
+
+        for (let i = 0; i < steps.length; i++) {
+          const count = steps[i]
+          const progress = ((i + 1) / steps.length) * 100
+
+          log(`内存测试步骤 ${i + 1}: ${count} 个公式`)
+
+          // 生成公式
+          const formulas = generateFormulas(count, 'medium')
+          const testElement = document.createElement('div')
+          testElement.innerHTML = formulas.join('\\n')
+          testArea.appendChild(testElement) // 累积添加
+
+          const beforeRender = getMemoryUsage()
+
+          try {
+            await MathJax.typesetPromise([testElement])
+
+            const afterRender = getMemoryUsage()
+            const memoryIncrease = afterRender - beforeRender
+            const totalMemory = afterRender - initialMemory
+
+            log(`  内存增加: ${memoryIncrease.toFixed(2)}MB, 总计: ${totalMemory.toFixed(2)}MB`)
+
+            // 更新指标
+            updateMetrics(0, count, totalMemory, getDOMNodeCount())
+            progressBar.style.width = progress + '%'
+
+            // 延迟以观察内存变化
+            await new Promise(resolve => setTimeout(resolve, 500))
+          } catch (error) {
+            log(`  ❌ 内存测试失败: ${error.message}`)
+          }
         }
-        
-        // 基础性能测试
-        async function runBasicPerformanceTest() {
-            if (testRunning) return;
-            testRunning = true;
-            
-            const count = parseInt(document.getElementById('formula-count').value);
-            const complexity = document.getElementById('complexity-level').value;
-            
-            log(`开始基础性能测试: ${count} 个 ${complexity} 公式`);
-            
-            const testArea = document.getElementById('test-area');
-            const progressBar = document.getElementById('progress-bar');
-            
-            // 清除之前的内容
-            testArea.innerHTML = '';
-            
-            // 记录基线内存
-            memoryBaseline = getMemoryUsage();
-            const startDOMNodes = getDOMNodeCount();
-            
-            // 生成公式
-            const formulas = generateFormulas(count, complexity);
-            
-            // 创建测试元素
-            const testElement = document.createElement('div');
-            testElement.innerHTML = formulas.join('\\n');
-            testArea.appendChild(testElement);
-            
-            // 开始计时
-            const startTime = performance.now();
-            
-            try {
-                // 渲染数学公式
-                await MathJax.typesetPromise([testElement]);
-                
-                const endTime = performance.now();
-                const renderTime = endTime - startTime;
-                const memoryUsage = getMemoryUsage() - memoryBaseline;
-                const endDOMNodes = getDOMNodeCount() - startDOMNodes;
-                
-                // 更新指标
-                updateMetrics(renderTime, count, memoryUsage, endDOMNodes);
-                
-                // 更新进度条
-                progressBar.style.width = '100%';
-                
-                log(`✅ 基础性能测试完成: ${renderTime.toFixed(2)}ms, ${(count / (renderTime / 1000)).toFixed(1)} 公式/秒`);
-                
-                // 保存结果
-                testResults.push({
-                    type: 'basic',
-                    count: count,
-                    complexity: complexity,
-                    renderTime: renderTime,
-                    memoryUsage: memoryUsage,
-                    domNodes: endDOMNodes,
-                    formulasPerSecond: count / (renderTime / 1000)
-                });
-                
-            } catch (error) {
-                log(`❌ 基础性能测试失败: ${error.message}`);
-            }
-            
-            testRunning = false;
+
+        log('🧠 内存测试完成')
+        testRunning = false
+      }
+
+      // 实时渲染测试
+      async function runRealTimeTest() {
+        if (testRunning) return
+        testRunning = true
+
+        log('开始实时渲染测试...')
+
+        const testArea = document.getElementById('test-area')
+        const progressBar = document.getElementById('progress-bar')
+
+        testArea.innerHTML = '<div id="realtime-container"></div>'
+        const container = document.getElementById('realtime-container')
+
+        const formulas = generateFormulas(50, 'medium')
+        let totalTime = 0
+
+        for (let i = 0; i < formulas.length; i++) {
+          const progress = ((i + 1) / formulas.length) * 100
+
+          // 创建新的公式元素
+          const formulaDiv = document.createElement('div')
+          formulaDiv.innerHTML = formulas[i]
+          container.appendChild(formulaDiv)
+
+          const startTime = performance.now()
+
+          try {
+            await MathJax.typesetPromise([formulaDiv])
+
+            const endTime = performance.now()
+            const renderTime = endTime - startTime
+            totalTime += renderTime
+
+            // 更新进度
+            progressBar.style.width = progress + '%'
+
+            // 实时更新指标
+            const avgTime = totalTime / (i + 1)
+            updateMetrics(avgTime, i + 1, getMemoryUsage() - memoryBaseline, getDOMNodeCount())
+
+            // 短暂延迟模拟实时输入
+            await new Promise(resolve => setTimeout(resolve, 50))
+          } catch (error) {
+            log(`实时渲染第 ${i + 1} 个公式失败: ${error.message}`)
+          }
         }
-        
-        // 压力测试
-        async function runStressTest() {
-            if (testRunning) return;
-            testRunning = true;
-            
-            log('开始压力测试...');
-            
-            const testCases = [
-                { count: 50, complexity: 'simple' },
-                { count: 100, complexity: 'medium' },
-                { count: 200, complexity: 'medium' },
-                { count: 50, complexity: 'complex' },
-                { count: 20, complexity: 'extreme' }
-            ];
-            
-            const progressBar = document.getElementById('progress-bar');
-            const testArea = document.getElementById('test-area');
-            
-            for (let i = 0; i < testCases.length; i++) {
-                const testCase = testCases[i];
-                const progress = ((i + 1) / testCases.length) * 100;
-                
-                log(`压力测试 ${i + 1}/${testCases.length}: ${testCase.count} 个 ${testCase.complexity} 公式`);
-                
-                // 清除之前的内容
-                testArea.innerHTML = '';
-                
-                // 生成公式
-                const formulas = generateFormulas(testCase.count, testCase.complexity);
-                const testElement = document.createElement('div');
-                testElement.innerHTML = formulas.join('\\n');
-                testArea.appendChild(testElement);
-                
-                const startTime = performance.now();
-                const startMemory = getMemoryUsage();
-                
-                try {
-                    await MathJax.typesetPromise([testElement]);
-                    
-                    const endTime = performance.now();
-                    const renderTime = endTime - startTime;
-                    const memoryUsage = getMemoryUsage() - startMemory;
-                    
-                    log(`  ✅ 完成: ${renderTime.toFixed(2)}ms, 内存: ${memoryUsage.toFixed(2)}MB`);
-                    
-                    // 更新进度条
-                    progressBar.style.width = progress + '%';
-                    
-                    // 短暂延迟以避免浏览器冻结
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    
-                } catch (error) {
-                    log(`  ❌ 失败: ${error.message}`);
-                }
-            }
-            
-            log('🎉 压力测试完成');
-            testRunning = false;
-        }
-        
-        // 内存测试
-        async function runMemoryTest() {
-            if (testRunning) return;
-            testRunning = true;
-            
-            log('开始内存测试...');
-            
-            const testArea = document.getElementById('test-area');
-            const progressBar = document.getElementById('progress-bar');
-            
-            // 记录初始内存
-            const initialMemory = getMemoryUsage();
-            log(`初始内存使用: ${initialMemory.toFixed(2)}MB`);
-            
-            // 逐步增加公式数量
-            const steps = [10, 50, 100, 200, 500];
-            
-            for (let i = 0; i < steps.length; i++) {
-                const count = steps[i];
-                const progress = ((i + 1) / steps.length) * 100;
-                
-                log(`内存测试步骤 ${i + 1}: ${count} 个公式`);
-                
-                // 生成公式
-                const formulas = generateFormulas(count, 'medium');
-                const testElement = document.createElement('div');
-                testElement.innerHTML = formulas.join('\\n');
-                testArea.appendChild(testElement); // 累积添加
-                
-                const beforeRender = getMemoryUsage();
-                
-                try {
-                    await MathJax.typesetPromise([testElement]);
-                    
-                    const afterRender = getMemoryUsage();
-                    const memoryIncrease = afterRender - beforeRender;
-                    const totalMemory = afterRender - initialMemory;
-                    
-                    log(`  内存增加: ${memoryIncrease.toFixed(2)}MB, 总计: ${totalMemory.toFixed(2)}MB`);
-                    
-                    // 更新指标
-                    updateMetrics(0, count, totalMemory, getDOMNodeCount());
-                    progressBar.style.width = progress + '%';
-                    
-                    // 延迟以观察内存变化
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    
-                } catch (error) {
-                    log(`  ❌ 内存测试失败: ${error.message}`);
-                }
-            }
-            
-            log('🧠 内存测试完成');
-            testRunning = false;
-        }
-        
-        // 实时渲染测试
-        async function runRealTimeTest() {
-            if (testRunning) return;
-            testRunning = true;
-            
-            log('开始实时渲染测试...');
-            
-            const testArea = document.getElementById('test-area');
-            const progressBar = document.getElementById('progress-bar');
-            
-            testArea.innerHTML = '<div id="realtime-container"></div>';
-            const container = document.getElementById('realtime-container');
-            
-            const formulas = generateFormulas(50, 'medium');
-            let totalTime = 0;
-            
-            for (let i = 0; i < formulas.length; i++) {
-                const progress = ((i + 1) / formulas.length) * 100;
-                
-                // 创建新的公式元素
-                const formulaDiv = document.createElement('div');
-                formulaDiv.innerHTML = formulas[i];
-                container.appendChild(formulaDiv);
-                
-                const startTime = performance.now();
-                
-                try {
-                    await MathJax.typesetPromise([formulaDiv]);
-                    
-                    const endTime = performance.now();
-                    const renderTime = endTime - startTime;
-                    totalTime += renderTime;
-                    
-                    // 更新进度
-                    progressBar.style.width = progress + '%';
-                    
-                    // 实时更新指标
-                    const avgTime = totalTime / (i + 1);
-                    updateMetrics(avgTime, i + 1, getMemoryUsage() - memoryBaseline, getDOMNodeCount());
-                    
-                    // 短暂延迟模拟实时输入
-                    await new Promise(resolve => setTimeout(resolve, 50));
-                    
-                } catch (error) {
-                    log(`实时渲染第 ${i + 1} 个公式失败: ${error.message}`);
-                }
-            }
-            
-            log(`⏱️ 实时渲染测试完成: 平均 ${(totalTime / formulas.length).toFixed(2)}ms/公式`);
-            testRunning = false;
-        }
-        
-        // 清除测试
-        function clearTests() {
-            document.getElementById('test-area').innerHTML = '<p>测试结果将在这里显示...</p>';
-            document.getElementById('performance-log').innerHTML = '性能测试日志...';
-            document.getElementById('progress-bar').style.width = '0%';
-            
-            // 重置指标
-            updateMetrics(0, 0, 0, 0);
-            
-            // 清除结果
-            testResults = [];
-            
-            log('🧹 测试已清除');
-        }
-        
-        // 滑块事件监听
-        document.getElementById('formula-count').addEventListener('input', function(e) {
-            document.getElementById('count-display').textContent = e.target.value;
-        });
-        
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            memoryBaseline = getMemoryUsage();
-            log('📄 MathJax 性能测试页面加载完成');
-            log(`基线内存使用: ${memoryBaseline.toFixed(2)}MB`);
-        });
+
+        log(`⏱️ 实时渲染测试完成: 平均 ${(totalTime / formulas.length).toFixed(2)}ms/公式`)
+        testRunning = false
+      }
+
+      // 清除测试
+      function clearTests() {
+        document.getElementById('test-area').innerHTML = '<p>测试结果将在这里显示...</p>'
+        document.getElementById('performance-log').innerHTML = '性能测试日志...'
+        document.getElementById('progress-bar').style.width = '0%'
+
+        // 重置指标
+        updateMetrics(0, 0, 0, 0)
+
+        // 清除结果
+        testResults = []
+
+        log('🧹 测试已清除')
+      }
+
+      // 滑块事件监听
+      document.getElementById('formula-count').addEventListener('input', function (e) {
+        document.getElementById('count-display').textContent = e.target.value
+      })
+
+      // 页面加载完成后初始化
+      document.addEventListener('DOMContentLoaded', function () {
+        memoryBaseline = getMemoryUsage()
+        log('📄 MathJax 性能测试页面加载完成')
+        log(`基线内存使用: ${memoryBaseline.toFixed(2)}MB`)
+      })
     </script>
-</body>
+  </body>
 </html>

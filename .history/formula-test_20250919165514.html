@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公式测试 - UTF Star</title>
+    
+    <!-- MathJax 配置 -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['\\(', '\\)'], ['$', '$']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true,
+          processRefs: true,
+          packages: {'[+]': ['ams', 'newcommand', 'configmacros', 'boldsymbol']}
+        },
+        loader: {
+          load: ['[tex]/ams', '[tex]/newcommand', '[tex]/configmacros', '[tex]/boldsymbol'],
+          source: {
+            '[tex]/ams': '[tex]/ams',
+            '[tex]/newcommand': '[tex]/newcommand', 
+            '[tex]/configmacros': '[tex]/configmacros',
+            '[tex]/boldsymbol': '[tex]/boldsymbol'
+          }
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+          ignoreHtmlClass: 'tex2jax_ignore',
+          processHtmlClass: 'tex2jax_process'
+        },
+        startup: {
+          typeset: true
+        }
+      };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .formula-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+        .formula {
+            font-size: 24px;
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .explanation {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>张祥前统一场论公式可视化测试</h1>
+    
+    <div class="formula-container">
+        <h2>核心公式：</h2>
+        <div class="formula">
+            \[ \overrightarrow{A} = -G k \frac{\Delta n}{\Delta s} \frac{\overrightarrow{r}}{r} \]
+        </div>
+        
+        <div class="explanation">
+            <h3>公式说明：</h3>
+            <p>这是一个矢量场方程，其中：</p>
+            <ul>
+                <li>\(\overrightarrow{A}\) 是矢量场</li>
+                <li>\(G\) 是引力常数</li>
+                <li>\(k\) 是比例系数</li>
+                <li>\(\frac{\Delta n}{\Delta s}\) 表示某种密度梯度</li>
+                <li>\(\frac{\overrightarrow{r}}{r}\) 是径向单位矢量</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="formula-container">
+        <h2>行内公式测试：</h2>
+        <p>在文本中嵌入公式：矢量场 \(\overrightarrow{A}\) 的大小与距离 \(r\) 成反比，方向沿径向 \(\frac{\overrightarrow{r}}{r}\)。</p>
+        
+        <p>梯度项 \(\frac{\Delta n}{\Delta s}\) 描述了物理量的空间变化率，其中 \(G\) 和 \(k\) 是常数因子。</p>
+    </div>
+</body>
+</html>

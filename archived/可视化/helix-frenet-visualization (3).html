@@ -1,973 +1,1011 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>空间螺旋运动的Frenet-Serret标架可视化</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+        color: #fff;
+        overflow: hidden;
+      }
+      .container {
+        display: flex;
+        height: 100vh;
+        position: relative;
+      }
+      #canvas-container {
+        flex: 1;
+        position: relative;
+        background: radial-gradient(ellipse at center, rgba(30, 40, 60, 0.3) 0%, transparent 70%);
+      }
+      .sidebar {
+        width: 380px;
+        background: linear-gradient(135deg, rgba(15, 20, 35, 0.98) 0%, rgba(10, 15, 25, 0.98) 100%);
+        backdrop-filter: blur(20px);
+        padding: 25px;
+        overflow-y: auto;
+        border-left: 1px solid rgba(100, 150, 255, 0.2);
+        box-shadow: -5px 0 30px rgba(0, 0, 0, 0.5);
+      }
+      .sidebar::-webkit-scrollbar {
+        width: 8px;
+      }
+      .sidebar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .sidebar::-webkit-scrollbar-thumb {
+        background: rgba(100, 150, 255, 0.3);
+        border-radius: 4px;
+      }
+      h1 {
+        font-size: 22px;
+        margin-bottom: 12px;
+        background: linear-gradient(135deg, #6495ff 0%, #88b3ff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+      h2 {
+        font-size: 15px;
+        margin: 25px 0 15px 0;
+        color: #88b3ff;
+        border-bottom: 2px solid rgba(100, 150, 255, 0.3);
+        padding-bottom: 8px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .control-group {
+        margin-bottom: 22px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        border: 1px solid rgba(100, 150, 255, 0.1);
+        transition: all 0.3s;
+      }
+      .control-group:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(100, 150, 255, 0.2);
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: #b8d4ff;
+        font-weight: 500;
+      }
+      input[type='range'] {
+        width: 100%;
+        height: 6px;
+        background: linear-gradient(to right, rgba(100, 150, 255, 0.3), rgba(100, 150, 255, 0.6));
+        border-radius: 5px;
+        outline: none;
+        -webkit-appearance: none;
+        margin-bottom: 8px;
+      }
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        background: linear-gradient(135deg, #6495ff, #4169e1);
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow:
+          0 0 10px rgba(100, 149, 237, 0.6),
+          0 0 20px rgba(100, 149, 237, 0.3);
+        transition: all 0.2s;
+      }
+      input[type='range']::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+        box-shadow:
+          0 0 15px rgba(100, 149, 237, 0.8),
+          0 0 30px rgba(100, 149, 237, 0.5);
+      }
+      input[type='range']::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        background: linear-gradient(135deg, #6495ff, #4169e1);
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 0 10px rgba(100, 149, 237, 0.6);
+      }
+      .value-display {
+        text-align: right;
+        font-size: 14px;
+        color: #6495ff;
+        font-weight: 700;
+        text-shadow: 0 0 10px rgba(100, 149, 237, 0.5);
+      }
+      .checkbox-group {
+        margin: 15px 0;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 10px;
+      }
+      .checkbox-group label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 13px;
+        padding: 8px;
+        border-radius: 6px;
+        transition: all 0.2s;
+        margin-bottom: 5px;
+      }
+      .checkbox-group label:hover {
+        background: rgba(100, 150, 255, 0.1);
+      }
+      .checkbox-group input {
+        margin-right: 10px;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #6495ff;
+      }
+      .formula-box {
+        background: linear-gradient(135deg, rgba(50, 70, 100, 0.4) 0%, rgba(30, 50, 80, 0.4) 100%);
+        padding: 15px;
+        border-radius: 12px;
+        margin: 12px 0;
+        border: 1px solid rgba(100, 150, 255, 0.25);
+        font-size: 12px;
+        line-height: 1.8;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s;
+      }
+      .formula-box:hover {
+        border-color: rgba(100, 150, 255, 0.4);
+        box-shadow: 0 6px 20px rgba(100, 150, 255, 0.15);
+      }
+      .formula-box code {
+        color: #ffd700;
+        font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+        font-size: 13px;
+        text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+      }
+      .legend {
+        display: flex;
+        align-items: center;
+        margin: 10px 0;
+        font-size: 13px;
+        padding: 8px;
+        border-radius: 8px;
+        transition: all 0.2s;
+      }
+      .legend:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .legend-color {
+        width: 30px;
+        height: 4px;
+        margin-right: 12px;
+        border-radius: 2px;
+        box-shadow: 0 0 10px currentColor;
+      }
+      .info-text {
+        font-size: 12px;
+        color: #b0c4de;
+        line-height: 1.6;
+        margin-top: 15px;
+        padding: 12px;
+        background: rgba(100, 150, 255, 0.08);
+        border-radius: 10px;
+        border-left: 3px solid #6495ff;
+      }
+      button {
+        background: linear-gradient(135deg, #6495ff 0%, #4169e1 100%);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        margin: 5px 5px 5px 0;
+        transition: all 0.3s;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(100, 149, 237, 0.3);
+      }
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(100, 149, 237, 0.5);
+        background: linear-gradient(135deg, #7aa5ff 0%, #5179f1 100%);
+      }
+      button:active {
+        transform: translateY(0);
+      }
+      .stats-overlay {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(15, 20, 35, 0.95);
+        backdrop-filter: blur(15px);
+        padding: 15px 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(100, 150, 255, 0.3);
+        font-size: 11px;
+        color: #b8d4ff;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        z-index: 10;
+      }
+      .stats-overlay div {
+        margin: 5px 0;
+      }
+      .glow {
+        animation: glow 2s ease-in-out infinite alternate;
+      }
+      @keyframes glow {
+        from {
+          text-shadow: 0 0 5px rgba(100, 149, 237, 0.5);
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-            color: #fff;
-            overflow: hidden;
+        to {
+          text-shadow: 0 0 20px rgba(100, 149, 237, 0.8);
         }
-        .container {
-            display: flex;
-            height: 100vh;
-            position: relative;
-        }
-        #canvas-container {
-            flex: 1;
-            position: relative;
-            background: radial-gradient(ellipse at center, rgba(30, 40, 60, 0.3) 0%, transparent 70%);
-        }
-        .sidebar {
-            width: 380px;
-            background: linear-gradient(135deg, rgba(15, 20, 35, 0.98) 0%, rgba(10, 15, 25, 0.98) 100%);
-            backdrop-filter: blur(20px);
-            padding: 25px;
-            overflow-y: auto;
-            border-left: 1px solid rgba(100, 150, 255, 0.2);
-            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.5);
-        }
-        .sidebar::-webkit-scrollbar {
-            width: 8px;
-        }
-        .sidebar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(100, 150, 255, 0.3);
-            border-radius: 4px;
-        }
-        h1 {
-            font-size: 22px;
-            margin-bottom: 12px;
-            background: linear-gradient(135deg, #6495ff 0%, #88b3ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
-        h2 {
-            font-size: 15px;
-            margin: 25px 0 15px 0;
-            color: #88b3ff;
-            border-bottom: 2px solid rgba(100, 150, 255, 0.3);
-            padding-bottom: 8px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .control-group {
-            margin-bottom: 22px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            border: 1px solid rgba(100, 150, 255, 0.1);
-            transition: all 0.3s;
-        }
-        .control-group:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(100, 150, 255, 0.2);
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 13px;
-            color: #b8d4ff;
-            font-weight: 500;
-        }
-        input[type="range"] {
-            width: 100%;
-            height: 6px;
-            background: linear-gradient(to right, rgba(100, 150, 255, 0.3), rgba(100, 150, 255, 0.6));
-            border-radius: 5px;
-            outline: none;
-            -webkit-appearance: none;
-            margin-bottom: 8px;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            background: linear-gradient(135deg, #6495ff, #4169e1);
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(100, 149, 237, 0.6), 0 0 20px rgba(100, 149, 237, 0.3);
-            transition: all 0.2s;
-        }
-        input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-            box-shadow: 0 0 15px rgba(100, 149, 237, 0.8), 0 0 30px rgba(100, 149, 237, 0.5);
-        }
-        input[type="range"]::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            background: linear-gradient(135deg, #6495ff, #4169e1);
-            border-radius: 50%;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 0 10px rgba(100, 149, 237, 0.6);
-        }
-        .value-display {
-            text-align: right;
-            font-size: 14px;
-            color: #6495ff;
-            font-weight: 700;
-            text-shadow: 0 0 10px rgba(100, 149, 237, 0.5);
-        }
-        .checkbox-group {
-            margin: 15px 0;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 10px;
-        }
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            font-size: 13px;
-            padding: 8px;
-            border-radius: 6px;
-            transition: all 0.2s;
-            margin-bottom: 5px;
-        }
-        .checkbox-group label:hover {
-            background: rgba(100, 150, 255, 0.1);
-        }
-        .checkbox-group input {
-            margin-right: 10px;
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: #6495ff;
-        }
-        .formula-box {
-            background: linear-gradient(135deg, rgba(50, 70, 100, 0.4) 0%, rgba(30, 50, 80, 0.4) 100%);
-            padding: 15px;
-            border-radius: 12px;
-            margin: 12px 0;
-            border: 1px solid rgba(100, 150, 255, 0.25);
-            font-size: 12px;
-            line-height: 1.8;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s;
-        }
-        .formula-box:hover {
-            border-color: rgba(100, 150, 255, 0.4);
-            box-shadow: 0 6px 20px rgba(100, 150, 255, 0.15);
-        }
-        .formula-box code {
-            color: #ffd700;
-            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-            text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
-        }
-        .legend {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
-            font-size: 13px;
-            padding: 8px;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-        .legend:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        .legend-color {
-            width: 30px;
-            height: 4px;
-            margin-right: 12px;
-            border-radius: 2px;
-            box-shadow: 0 0 10px currentColor;
-        }
-        .info-text {
-            font-size: 12px;
-            color: #b0c4de;
-            line-height: 1.6;
-            margin-top: 15px;
-            padding: 12px;
-            background: rgba(100, 150, 255, 0.08);
-            border-radius: 10px;
-            border-left: 3px solid #6495ff;
-        }
-        button {
-            background: linear-gradient(135deg, #6495ff 0%, #4169e1 100%);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            margin: 5px 5px 5px 0;
-            transition: all 0.3s;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(100, 149, 237, 0.3);
-        }
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(100, 149, 237, 0.5);
-            background: linear-gradient(135deg, #7aa5ff 0%, #5179f1 100%);
-        }
-        button:active {
-            transform: translateY(0);
-        }
-        .stats-overlay {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(15, 20, 35, 0.95);
-            backdrop-filter: blur(15px);
-            padding: 15px 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(100, 150, 255, 0.3);
-            font-size: 11px;
-            color: #b8d4ff;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            z-index: 10;
-        }
-        .stats-overlay div {
-            margin: 5px 0;
-        }
-        .glow {
-            animation: glow 2s ease-in-out infinite alternate;
-        }
-        @keyframes glow {
-            from { text-shadow: 0 0 5px rgba(100, 149, 237, 0.5); }
-            to { text-shadow: 0 0 20px rgba(100, 149, 237, 0.8); }
-        }
-        .performance-overlay {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(15, 20, 35, 0.85);
-            backdrop-filter: blur(10px);
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid rgba(100, 150, 255, 0.2);
-            font-size: 10px;
-            color: #88b3ff;
-            font-family: monospace;
-            z-index: 10;
-        }
-        .quality-selector {
-            margin: 15px 0;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
-        }
-        .quality-btn {
-            padding: 8px 15px;
-            font-size: 11px;
-            margin: 3px;
-        }
-        .quality-btn.active {
-            background: linear-gradient(135deg, #4169e1 0%, #6495ff 100%);
-        }
+      }
+      .performance-overlay {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        background: rgba(15, 20, 35, 0.85);
+        backdrop-filter: blur(10px);
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: 1px solid rgba(100, 150, 255, 0.2);
+        font-size: 10px;
+        color: #88b3ff;
+        font-family: monospace;
+        z-index: 10;
+      }
+      .quality-selector {
+        margin: 15px 0;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+      }
+      .quality-btn {
+        padding: 8px 15px;
+        font-size: 11px;
+        margin: 3px;
+      }
+      .quality-btn.active {
+        background: linear-gradient(135deg, #4169e1 0%, #6495ff 100%);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <div id="canvas-container">
-            <div class="stats-overlay">
-                <div><strong class="glow">实时几何数据</strong></div>
-                <div>━━━━━━━━━━━━━━</div>
-                <div>位置: <span id="position-display">(0.00, 0.00, 0.00)</span></div>
-                <div>正交验证: <span id="ortho-check" style="color: #33ff33;">✓ 通过</span></div>
-                <div>误差: <span id="ortho-error">0.000</span></div>
-            </div>
-            <div class="performance-overlay">
-                <div>FPS: <span id="fps-display">60</span></div>
-                <div>渲染时间: <span id="render-time">16ms</span></div>
-                <div>几何对象: <span id="object-count">0</span></div>
-            </div>
+      <div id="canvas-container">
+        <div class="stats-overlay">
+          <div><strong class="glow">实时几何数据</strong></div>
+          <div>━━━━━━━━━━━━━━</div>
+          <div>位置: <span id="position-display">(0.00, 0.00, 0.00)</span></div>
+          <div>正交验证: <span id="ortho-check" style="color: #33ff33">✓ 通过</span></div>
+          <div>误差: <span id="ortho-error">0.000</span></div>
         </div>
-        <div class="sidebar">
-            <h1>空间螺旋线Frenet-Serret标架</h1>
-            <p class="info-text">本可视化展示了论文中的核心概念：圆柱螺旋线及其Frenet标架的三个相互垂直的单位向量</p>
-            
-            <h2>渲染质量</h2>
-            <div class="quality-selector">
-                <button class="quality-btn" data-quality="low">低质量 (高性能)</button>
-                <button class="quality-btn active" data-quality="medium">中质量 (平衡)</button>
-                <button class="quality-btn" data-quality="high">高质量 (高品质)</button>
-            </div>
-            
-            <h2>螺旋线参数</h2>
-            <div class="control-group">
-                <label>半径 r: <span class="value-display" id="r-value">2.0</span></label>
-                <input type="range" id="radius" min="0.5" max="5" step="0.1" value="2">
-            </div>
-            <div class="control-group">
-                <label>角速度 ω: <span class="value-display" id="omega-value">1.0</span></label>
-                <input type="range" id="omega" min="0.1" max="3" step="0.1" value="1">
-            </div>
-            <div class="control-group">
-                <label>轴向速度 v: <span class="value-display" id="v-value">1.0</span></label>
-                <input type="range" id="axial-velocity" min="0.1" max="3" step="0.1" value="1">
-            </div>
-            <div class="control-group">
-                <label>时间参数 t: <span class="value-display" id="t-value">3.14</span></label>
-                <input type="range" id="time-param" min="0" max="12.57" step="0.01" value="3.14">
-            </div>
-            
-            <h2>显示选项</h2>
-            <div class="checkbox-group">
-                <label><input type="checkbox" id="show-helix" checked> 螺旋线轨迹</label>
-                <label><input type="checkbox" id="show-tube" checked> 管道效果</label>
-                <label><input type="checkbox" id="show-tangent" checked> 切向量 T (红色)</label>
-                <label><input type="checkbox" id="show-normal" checked> 主法向量 N (绿色)</label>
-                <label><input type="checkbox" id="show-binormal" checked> 次法向量 B (蓝色)</label>
-                <label><input type="checkbox" id="show-planes" checked> 三个垂直平面</label>
-                <label><input type="checkbox" id="show-axes" checked> 坐标轴</label>
-                <label><input type="checkbox" id="show-grid" checked> 网格地面</label>
-                <label><input type="checkbox" id="show-stars" checked> 星空背景</label>
-            </div>
-            
-            <button id="animate-btn">开始动画</button>
-            <button id="reset-btn">重置视角</button>
-            <button id="screenshot-btn">截图保存</button>
-            
-            <h2>计算结果</h2>
-            <div class="formula-box">
-                <div><strong>速度模长 a = √(r²ω² + v²):</strong></div>
-                <code id="velocity-mag">2.236</code>
-            </div>
-            <div class="formula-box">
-                <div><strong>曲率 κ = r²ω²/a²:</strong></div>
-                <code id="curvature">0.400</code>
-            </div>
-            <div class="formula-box">
-                <div><strong>单位切向量 T̂:</strong></div>
-                <code id="tangent-vec">(-0.000, 0.894, 0.447)</code>
-            </div>
-            <div class="formula-box">
-                <div><strong>单位主法向量 N̂:</strong></div>
-                <code id="normal-vec">(-1.000, 0.000, 0.000)</code>
-            </div>
-            <div class="formula-box">
-                <div><strong>单位次法向量 B̂:</strong></div>
-                <code id="binormal-vec">(0.000, -0.447, 0.894)</code>
-            </div>
-            
-            <h2>向量图例</h2>
-            <div class="legend">
-                <div class="legend-color" style="background: #ff3333;"></div>
-                <span>切向量 T̂ (运动方向)</span>
-            </div>
-            <div class="legend">
-                <div class="legend-color" style="background: #33ff33;"></div>
-                <span>主法向量 N̂ (弯曲方向)</span>
-            </div>
-            <div class="legend">
-                <div class="legend-color" style="background: #3333ff;"></div>
-                <span>次法向量 B̂ (螺旋轴向)</span>
-            </div>
-            
-            <p class="info-text">
-                <strong>验证正交性：</strong><br>
-                T̂·N̂ ≈ 0<br>
-                T̂·B̂ ≈ 0<br>
-                N̂·B̂ ≈ 0<br>
-                这三个向量相互垂直，构成标准正交基。
-            </p>
+        <div class="performance-overlay">
+          <div>FPS: <span id="fps-display">60</span></div>
+          <div>渲染时间: <span id="render-time">16ms</span></div>
+          <div>几何对象: <span id="object-count">0</span></div>
         </div>
+      </div>
+      <div class="sidebar">
+        <h1>空间螺旋线Frenet-Serret标架</h1>
+        <p class="info-text">
+          本可视化展示了论文中的核心概念：圆柱螺旋线及其Frenet标架的三个相互垂直的单位向量
+        </p>
+
+        <h2>渲染质量</h2>
+        <div class="quality-selector">
+          <button class="quality-btn" data-quality="low">低质量 (高性能)</button>
+          <button class="quality-btn active" data-quality="medium">中质量 (平衡)</button>
+          <button class="quality-btn" data-quality="high">高质量 (高品质)</button>
+        </div>
+
+        <h2>螺旋线参数</h2>
+        <div class="control-group">
+          <label>半径 r: <span class="value-display" id="r-value">2.0</span></label>
+          <input type="range" id="radius" min="0.5" max="5" step="0.1" value="2" />
+        </div>
+        <div class="control-group">
+          <label>角速度 ω: <span class="value-display" id="omega-value">1.0</span></label>
+          <input type="range" id="omega" min="0.1" max="3" step="0.1" value="1" />
+        </div>
+        <div class="control-group">
+          <label>轴向速度 v: <span class="value-display" id="v-value">1.0</span></label>
+          <input type="range" id="axial-velocity" min="0.1" max="3" step="0.1" value="1" />
+        </div>
+        <div class="control-group">
+          <label>时间参数 t: <span class="value-display" id="t-value">3.14</span></label>
+          <input type="range" id="time-param" min="0" max="12.57" step="0.01" value="3.14" />
+        </div>
+
+        <h2>显示选项</h2>
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="show-helix" checked /> 螺旋线轨迹</label>
+          <label><input type="checkbox" id="show-tube" checked /> 管道效果</label>
+          <label><input type="checkbox" id="show-tangent" checked /> 切向量 T (红色)</label>
+          <label><input type="checkbox" id="show-normal" checked /> 主法向量 N (绿色)</label>
+          <label><input type="checkbox" id="show-binormal" checked /> 次法向量 B (蓝色)</label>
+          <label><input type="checkbox" id="show-planes" checked /> 三个垂直平面</label>
+          <label><input type="checkbox" id="show-axes" checked /> 坐标轴</label>
+          <label><input type="checkbox" id="show-grid" checked /> 网格地面</label>
+          <label><input type="checkbox" id="show-stars" checked /> 星空背景</label>
+        </div>
+
+        <button id="animate-btn">开始动画</button>
+        <button id="reset-btn">重置视角</button>
+        <button id="screenshot-btn">截图保存</button>
+
+        <h2>计算结果</h2>
+        <div class="formula-box">
+          <div><strong>速度模长 a = √(r²ω² + v²):</strong></div>
+          <code id="velocity-mag">2.236</code>
+        </div>
+        <div class="formula-box">
+          <div><strong>曲率 κ = r²ω²/a²:</strong></div>
+          <code id="curvature">0.400</code>
+        </div>
+        <div class="formula-box">
+          <div><strong>单位切向量 T̂:</strong></div>
+          <code id="tangent-vec">(-0.000, 0.894, 0.447)</code>
+        </div>
+        <div class="formula-box">
+          <div><strong>单位主法向量 N̂:</strong></div>
+          <code id="normal-vec">(-1.000, 0.000, 0.000)</code>
+        </div>
+        <div class="formula-box">
+          <div><strong>单位次法向量 B̂:</strong></div>
+          <code id="binormal-vec">(0.000, -0.447, 0.894)</code>
+        </div>
+
+        <h2>向量图例</h2>
+        <div class="legend">
+          <div class="legend-color" style="background: #ff3333"></div>
+          <span>切向量 T̂ (运动方向)</span>
+        </div>
+        <div class="legend">
+          <div class="legend-color" style="background: #33ff33"></div>
+          <span>主法向量 N̂ (弯曲方向)</span>
+        </div>
+        <div class="legend">
+          <div class="legend-color" style="background: #3333ff"></div>
+          <span>次法向量 B̂ (螺旋轴向)</span>
+        </div>
+
+        <p class="info-text">
+          <strong>验证正交性：</strong><br />
+          T̂·N̂ ≈ 0<br />
+          T̂·B̂ ≈ 0<br />
+          N̂·B̂ ≈ 0<br />
+          这三个向量相互垂直，构成标准正交基。
+        </p>
+      </div>
     </div>
 
     <script>
-        // 性能监控
-        let frameCount = 0;
-        let lastFpsUpdate = Date.now();
-        let renderTimes = [];
-        
-        // 质量设置
-        let qualitySettings = {
-            low: {
-                pixelRatio: 1,
-                shadowMap: false,
-                antialias: false,
-                tubeSegments: 64,
-                sphereSegments: 16,
-                helixSteps: 0.1,
-                enableGlow: false,
-                enableStars: false
-            },
-            medium: {
-                pixelRatio: Math.min(window.devicePixelRatio, 1.5),
-                shadowMap: false,
-                antialias: true,
-                tubeSegments: 128,
-                sphereSegments: 24,
-                helixSteps: 0.05,
-                enableGlow: true,
-                enableStars: true
-            },
-            high: {
-                pixelRatio: window.devicePixelRatio,
-                shadowMap: true,
-                antialias: true,
-                tubeSegments: 200,
-                sphereSegments: 32,
-                helixSteps: 0.03,
-                enableGlow: true,
-                enableStars: true
-            }
-        };
-        
-        let currentQuality = 'medium';
-        let quality = qualitySettings[currentQuality];
-        
-        // 场景设置
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050510);
-        scene.fog = new THREE.Fog(0x050510, 10, 50);
-        
-        const container = document.getElementById('canvas-container');
-        const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.set(10, 10, 10);
-        camera.lookAt(0, 0, 0);
-        
-        const renderer = new THREE.WebGLRenderer({ 
-            antialias: quality.antialias,
-            alpha: true,
-            powerPreference: "high-performance"
-        });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        renderer.setPixelRatio(quality.pixelRatio);
-        renderer.shadowMap.enabled = quality.shadowMap;
-        if (quality.shadowMap) {
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      // 性能监控
+      let frameCount = 0
+      let lastFpsUpdate = Date.now()
+      let renderTimes = []
+
+      // 质量设置
+      let qualitySettings = {
+        low: {
+          pixelRatio: 1,
+          shadowMap: false,
+          antialias: false,
+          tubeSegments: 64,
+          sphereSegments: 16,
+          helixSteps: 0.1,
+          enableGlow: false,
+          enableStars: false
+        },
+        medium: {
+          pixelRatio: Math.min(window.devicePixelRatio, 1.5),
+          shadowMap: false,
+          antialias: true,
+          tubeSegments: 128,
+          sphereSegments: 24,
+          helixSteps: 0.05,
+          enableGlow: true,
+          enableStars: true
+        },
+        high: {
+          pixelRatio: window.devicePixelRatio,
+          shadowMap: true,
+          antialias: true,
+          tubeSegments: 200,
+          sphereSegments: 32,
+          helixSteps: 0.03,
+          enableGlow: true,
+          enableStars: true
         }
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
-        container.appendChild(renderer.domElement);
-        
-        // 光照系统
-        const ambientLight = new THREE.AmbientLight(0x404080, 0.8);
-        scene.add(ambientLight);
-        
-        const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        mainLight.position.set(10, 15, 10);
-        mainLight.castShadow = quality.shadowMap;
-        if (quality.shadowMap) {
-            mainLight.shadow.mapSize.width = 1024;
-            mainLight.shadow.mapSize.height = 1024;
+      }
+
+      let currentQuality = 'medium'
+      let quality = qualitySettings[currentQuality]
+
+      // 场景设置
+      const scene = new THREE.Scene()
+      scene.background = new THREE.Color(0x050510)
+      scene.fog = new THREE.Fog(0x050510, 10, 50)
+
+      const container = document.getElementById('canvas-container')
+      const camera = new THREE.PerspectiveCamera(
+        50,
+        container.clientWidth / container.clientHeight,
+        0.1,
+        1000
+      )
+      camera.position.set(10, 10, 10)
+      camera.lookAt(0, 0, 0)
+
+      const renderer = new THREE.WebGLRenderer({
+        antialias: quality.antialias,
+        alpha: true,
+        powerPreference: 'high-performance'
+      })
+      renderer.setSize(container.clientWidth, container.clientHeight)
+      renderer.setPixelRatio(quality.pixelRatio)
+      renderer.shadowMap.enabled = quality.shadowMap
+      if (quality.shadowMap) {
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap
+      }
+      renderer.toneMapping = THREE.ACESFilmicToneMapping
+      renderer.toneMappingExposure = 1.2
+      container.appendChild(renderer.domElement)
+
+      // 光照系统
+      const ambientLight = new THREE.AmbientLight(0x404080, 0.8)
+      scene.add(ambientLight)
+
+      const mainLight = new THREE.DirectionalLight(0xffffff, 1.2)
+      mainLight.position.set(10, 15, 10)
+      mainLight.castShadow = quality.shadowMap
+      if (quality.shadowMap) {
+        mainLight.shadow.mapSize.width = 1024
+        mainLight.shadow.mapSize.height = 1024
+      }
+      scene.add(mainLight)
+
+      const fillLight = new THREE.DirectionalLight(0x6495ff, 0.5)
+      fillLight.position.set(-10, 5, -10)
+      scene.add(fillLight)
+
+      // 星空背景
+      let stars = null
+      function createStars() {
+        if (!quality.enableStars) return
+
+        const starsGeometry = new THREE.BufferGeometry()
+        const starsMaterial = new THREE.PointsMaterial({
+          color: 0xffffff,
+          size: 0.1,
+          transparent: true,
+          opacity: 0.8,
+          blending: THREE.AdditiveBlending
+        })
+
+        const starsVertices = []
+        for (let i = 0; i < 500; i++) {
+          const x = (Math.random() - 0.5) * 100
+          const y = (Math.random() - 0.5) * 100
+          const z = (Math.random() - 0.5) * 100
+          starsVertices.push(x, y, z)
         }
-        scene.add(mainLight);
-        
-        const fillLight = new THREE.DirectionalLight(0x6495ff, 0.5);
-        fillLight.position.set(-10, 5, -10);
-        scene.add(fillLight);
-        
-        // 星空背景
-        let stars = null;
-        function createStars() {
-            if (!quality.enableStars) return;
-            
-            const starsGeometry = new THREE.BufferGeometry();
-            const starsMaterial = new THREE.PointsMaterial({
-                color: 0xffffff,
-                size: 0.1,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
-            });
-            
-            const starsVertices = [];
-            for (let i = 0; i < 500; i++) {
-                const x = (Math.random() - 0.5) * 100;
-                const y = (Math.random() - 0.5) * 100;
-                const z = (Math.random() - 0.5) * 100;
-                starsVertices.push(x, y, z);
-            }
-            starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
-            stars = new THREE.Points(starsGeometry, starsMaterial);
-            scene.add(stars);
+        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3))
+        stars = new THREE.Points(starsGeometry, starsMaterial)
+        scene.add(stars)
+      }
+      createStars()
+
+      // 坐标轴
+      const axesHelper = new THREE.AxesHelper(7)
+      scene.add(axesHelper)
+
+      // 网格地面
+      const gridHelper = new THREE.GridHelper(20, 20, 0x6495ff, 0x2a2a4a)
+      gridHelper.material.opacity = 0.2
+      gridHelper.material.transparent = true
+      scene.add(gridHelper)
+
+      // 参数
+      let params = {
+        r: 2.0,
+        omega: 1.0,
+        v: 1.0,
+        t: Math.PI,
+        animating: false
+      }
+
+      // 对象池（优化内存）
+      const objectPool = {
+        helixLine: null,
+        helixTube: null,
+        tangentArrow: null,
+        normalArrow: null,
+        binormalArrow: null,
+        pointMarker: null,
+        pointLight: null,
+        planes: [],
+        glows: []
+      }
+
+      // 计算螺旋线位置
+      function helixPosition(t) {
+        return new THREE.Vector3(
+          params.r * Math.cos(params.omega * t),
+          params.r * Math.sin(params.omega * t),
+          params.v * t
+        )
+      }
+
+      // 计算Frenet标架
+      function computeFrenetFrame(t) {
+        const r = params.r
+        const omega = params.omega
+        const v = params.v
+        const a = Math.sqrt(r * r * omega * omega + v * v)
+
+        const sinOmegaT = Math.sin(omega * t)
+        const cosOmegaT = Math.cos(omega * t)
+
+        const T = new THREE.Vector3(
+          ((-r * omega) / a) * sinOmegaT,
+          ((r * omega) / a) * cosOmegaT,
+          v / a
+        )
+
+        const N = new THREE.Vector3(-cosOmegaT, -sinOmegaT, 0)
+
+        const B = new THREE.Vector3((v / a) * sinOmegaT, (-v / a) * cosOmegaT, (r * omega) / a)
+
+        const kappa = (r * omega * omega) / (a * a)
+
+        return { T, N, B, kappa, a }
+      }
+
+      // 创建或更新箭头
+      function createOrUpdateArrow(arrow, direction, color, origin) {
+        if (arrow) {
+          arrow.position.copy(origin)
+          arrow.setDirection(direction)
+        } else {
+          arrow = new THREE.ArrowHelper(direction, origin, 2.0, color, 0.4, 0.25)
+          scene.add(arrow)
         }
-        createStars();
-        
-        // 坐标轴
-        const axesHelper = new THREE.AxesHelper(7);
-        scene.add(axesHelper);
-        
-        // 网格地面
-        const gridHelper = new THREE.GridHelper(20, 20, 0x6495ff, 0x2a2a4a);
-        gridHelper.material.opacity = 0.2;
-        gridHelper.material.transparent = true;
-        scene.add(gridHelper);
-        
-        // 参数
-        let params = {
-            r: 2.0,
-            omega: 1.0,
-            v: 1.0,
-            t: Math.PI,
-            animating: false
-        };
-        
-        // 对象池（优化内存）
-        const objectPool = {
-            helixLine: null,
-            helixTube: null,
-            tangentArrow: null,
-            normalArrow: null,
-            binormalArrow: null,
-            pointMarker: null,
-            pointLight: null,
-            planes: [],
-            glows: []
-        };
-        
-        // 计算螺旋线位置
-        function helixPosition(t) {
-            return new THREE.Vector3(
-                params.r * Math.cos(params.omega * t),
-                params.r * Math.sin(params.omega * t),
-                params.v * t
-            );
+        return arrow
+      }
+
+      // 创建平面
+      function createPlane(normal, color) {
+        const size = 4
+        const geometry = new THREE.PlaneGeometry(size, size)
+        const material = new THREE.MeshBasicMaterial({
+          color: color,
+          transparent: true,
+          opacity: 0.18,
+          side: THREE.DoubleSide
+        })
+
+        const plane = new THREE.Mesh(geometry, material)
+        const quaternion = new THREE.Quaternion()
+        quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal.clone().normalize())
+        plane.quaternion.copy(quaternion)
+
+        return plane
+      }
+
+      // 清理对象
+      function disposeObject(obj) {
+        if (!obj) return
+
+        if (obj.geometry) {
+          obj.geometry.dispose()
         }
-        
-        // 计算Frenet标架
-        function computeFrenetFrame(t) {
-            const r = params.r;
-            const omega = params.omega;
-            const v = params.v;
-            const a = Math.sqrt(r * r * omega * omega + v * v);
-            
-            const sinOmegaT = Math.sin(omega * t);
-            const cosOmegaT = Math.cos(omega * t);
-            
-            const T = new THREE.Vector3(
-                -r * omega / a * sinOmegaT,
-                r * omega / a * cosOmegaT,
-                v / a
-            );
-            
-            const N = new THREE.Vector3(
-                -cosOmegaT,
-                -sinOmegaT,
-                0
-            );
-            
-            const B = new THREE.Vector3(
-                v / a * sinOmegaT,
-                -v / a * cosOmegaT,
-                r * omega / a
-            );
-            
-            const kappa = (r * omega * omega) / (a * a);
-            
-            return { T, N, B, kappa, a };
+        if (obj.material) {
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach(mat => mat.dispose())
+          } else {
+            obj.material.dispose()
+          }
         }
-        
-        // 创建或更新箭头
-        function createOrUpdateArrow(arrow, direction, color, origin) {
-            if (arrow) {
-                arrow.position.copy(origin);
-                arrow.setDirection(direction);
-            } else {
-                arrow = new THREE.ArrowHelper(direction, origin, 2.0, color, 0.4, 0.25);
-                scene.add(arrow);
+        scene.remove(obj)
+      }
+
+      // 更新场景
+      function updateScene() {
+        const startTime = performance.now()
+
+        // 清理旧平面
+        objectPool.planes.forEach(p => disposeObject(p))
+        objectPool.planes = []
+
+        // 更新或创建螺旋线
+        if (document.getElementById('show-helix').checked) {
+          if (!objectPool.helixLine) {
+            const points = []
+            const colors = []
+            for (let t = 0; t <= 4 * Math.PI; t += quality.helixSteps) {
+              points.push(helixPosition(t))
+              const hue = (t / (4 * Math.PI)) * 0.6
+              const color = new THREE.Color().setHSL(0.15 + hue, 1, 0.6)
+              colors.push(color.r, color.g, color.b)
             }
-            return arrow;
+
+            const geometry = new THREE.BufferGeometry().setFromPoints(points)
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+            const material = new THREE.LineBasicMaterial({
+              vertexColors: true,
+              transparent: true,
+              opacity: 0.9
+            })
+
+            objectPool.helixLine = new THREE.Line(geometry, material)
+            scene.add(objectPool.helixLine)
+          }
+          objectPool.helixLine.visible = true
+        } else if (objectPool.helixLine) {
+          objectPool.helixLine.visible = false
         }
-        
-        // 创建平面
-        function createPlane(normal, color) {
-            const size = 4;
-            const geometry = new THREE.PlaneGeometry(size, size);
-            const material = new THREE.MeshBasicMaterial({
-                color: color,
-                transparent: true,
-                opacity: 0.18,
-                side: THREE.DoubleSide
-            });
-            
-            const plane = new THREE.Mesh(geometry, material);
-            const quaternion = new THREE.Quaternion();
-            quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal.clone().normalize());
-            plane.quaternion.copy(quaternion);
-            
-            return plane;
+
+        // 管道效果
+        if (
+          document.getElementById('show-tube').checked &&
+          document.getElementById('show-helix').checked
+        ) {
+          if (!objectPool.helixTube) {
+            const points = []
+            for (let t = 0; t <= 4 * Math.PI; t += quality.helixSteps) {
+              points.push(helixPosition(t))
+            }
+            const tubeGeometry = new THREE.TubeGeometry(
+              new THREE.CatmullRomCurve3(points),
+              quality.tubeSegments,
+              0.04,
+              8,
+              false
+            )
+            const tubeMaterial = new THREE.MeshStandardMaterial({
+              color: 0xffaa00,
+              metalness: 0.3,
+              roughness: 0.4,
+              transparent: true,
+              opacity: 0.7,
+              emissive: 0xffaa00,
+              emissiveIntensity: 0.2
+            })
+            objectPool.helixTube = new THREE.Mesh(tubeGeometry, tubeMaterial)
+            scene.add(objectPool.helixTube)
+          }
+          objectPool.helixTube.visible = true
+        } else if (objectPool.helixTube) {
+          objectPool.helixTube.visible = false
         }
-        
-        // 清理对象
-        function disposeObject(obj) {
-            if (!obj) return;
-            
-            if (obj.geometry) {
-                obj.geometry.dispose();
-            }
-            if (obj.material) {
-                if (Array.isArray(obj.material)) {
-                    obj.material.forEach(mat => mat.dispose());
-                } else {
-                    obj.material.dispose();
-                }
-            }
-            scene.remove(obj);
+
+        // 当前点
+        const pos = helixPosition(params.t)
+        const frame = computeFrenetFrame(params.t)
+
+        // 点标记
+        if (!objectPool.pointMarker) {
+          const sphereGeometry = new THREE.SphereGeometry(
+            0.15,
+            quality.sphereSegments,
+            quality.sphereSegments
+          )
+          const sphereMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            emissive: 0xffff00,
+            emissiveIntensity: 0.5,
+            metalness: 0.8,
+            roughness: 0.2
+          })
+          Marker = new THREE.Mesh(sphereGeometry, sphereMaterial)
+          scene.add(objectPool.pointMarker)
+
+          objectPool.pointLight = new THREE.PointLight(0xffff00, 0.8, 5)
+          scene.add(objectPool.pointLight)
         }
-        
-        // 更新场景
-        function updateScene() {
-            const startTime = performance.now();
-            
-            // 清理旧平面
-            objectPool.planes.forEach(p => disposeObject(p));
-            objectPool.planes = [];
-            
-            // 更新或创建螺旋线
-            if (document.getElementById('show-helix').checked) {
-                if (!objectPool.helixLine) {
-                    const points = [];
-                    const colors = [];
-                    for (let t = 0; t <= 4 * Math.PI; t += quality.helixSteps) {
-                        points.push(helixPosition(t));
-                        const hue = (t / (4 * Math.PI)) * 0.6;
-                        const color = new THREE.Color().setHSL(0.15 + hue, 1, 0.6);
-                        colors.push(color.r, color.g, color.b);
-                    }
-                    
-                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-                    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-                    const material = new THREE.LineBasicMaterial({
-                        vertexColors: true,
-                        transparent: true,
-                        opacity: 0.9
-                    });
-                    
-                    objectPool.helixLine = new THREE.Line(geometry, material);
-                    scene.add(objectPool.helixLine);
-                }
-                objectPool.helixLine.visible = true;
-            } else if (objectPool.helixLine) {
-                objectPool.helixLine.visible = false;
-            }
-            
-            // 管道效果
-            if (document.getElementById('show-tube').checked && document.getElementById('show-helix').checked) {
-                if (!objectPool.helixTube) {
-                    const points = [];
-                    for (let t = 0; t <= 4 * Math.PI; t += quality.helixSteps) {
-                        points.push(helixPosition(t));
-                    }
-                    const tubeGeometry = new THREE.TubeGeometry(
-                        new THREE.CatmullRomCurve3(points),
-                        quality.tubeSegments,
-                        0.04,
-                        8,
-                        false
-                    );
-                    const tubeMaterial = new THREE.MeshStandardMaterial({
-                        color: 0xffaa00,
-                        metalness: 0.3,
-                        roughness: 0.4,
-                        transparent: true,
-                        opacity: 0.7,
-                        emissive: 0xffaa00,
-                        emissiveIntensity: 0.2
-                    });
-                    objectPool.helixTube = new THREE.Mesh(tubeGeometry, tubeMaterial);
-                    scene.add(objectPool.helixTube);
-                }
-                objectPool.helixTube.visible = true;
-            } else if (objectPool.helixTube) {
-                objectPool.helixTube.visible = false;
-            }
-            
-            // 当前点
-            const pos = helixPosition(params.t);
-            const frame = computeFrenetFrame(params.t);
-            
-            // 点标记
-            if (!objectPool.pointMarker) {
-                const sphereGeometry = new THREE.SphereGeometry(0.15, quality.sphereSegments, quality.sphereSegments);
-                const sphereMaterial = new THREE.MeshStandardMaterial({
-                    color: 0xffffff,
-                    emissive: 0xffff00,
-                    emissiveIntensity: 0.5,
-                    metalness: 0.8,
-                    roughness: 0.2
-                });
-Marker = new THREE.Mesh(sphereGeometry, sphereMaterial);
-                scene.add(objectPool.pointMarker);
-                
-                objectPool.pointLight = new THREE.PointLight(0xffff00, 0.8, 5);
-                scene.add(objectPool.pointLight);
-            }
-            objectPool.pointMarker.position.copy(pos);
-            objectPool.pointLight.position.copy(pos);
-            
-            // Frenet向量
-            if (document.getElementById('show-tangent').checked) {
-                objectPool.tangentArrow = createOrUpdateArrow(objectPool.tangentArrow, frame.T, 0xff3333, pos);
-            } else if (objectPool.tangentArrow) {
-                objectPool.tangentArrow.visible = false;
-            }
-            
-            if (document.getElementById('show-normal').checked) {
-                objectPool.normalArrow = createOrUpdateArrow(objectPool.normalArrow, frame.N, 0x33ff33, pos);
-            } else if (objectPool.normalArrow) {
-                objectPool.normalArrow.visible = false;
-            }
-            
-            if (document.getElementById('show-binormal').checked) {
-                objectPool.binormalArrow = createOrUpdateArrow(objectPool.binormalArrow, frame.B, 0x3333ff, pos);
-            } else if (objectPool.binormalArrow) {
-                objectPool.binormalArrow.visible = false;
-            }
-            
-            // 三个平面
-            if (document.getElementById('show-planes').checked) {
-                const oscPlane = createPlane(frame.B, 0x3333ff);
-                oscPlane.position.copy(pos);
-                objectPool.planes.push(oscPlane);
-                scene.add(oscPlane);
-                
-                const normalPlane = createPlane(frame.T, 0xff3333);
-                normalPlane.position.copy(pos);
-                objectPool.planes.push(normalPlane);
-                scene.add(normalPlane);
-                
-                const rectPlane = createPlane(frame.N, 0x33ff33);
-                rectPlane.position.copy(pos);
-                objectPool.planes.push(rectPlane);
-                scene.add(rectPlane);
-            }
-            
-            // 更新显示
-            document.getElementById('velocity-mag').textContent = frame.a.toFixed(3);
-            document.getElementById('curvature').textContent = frame.kappa.toFixed(3);
-            document.getElementById('tangent-vec').textContent = 
-                `(${frame.T.x.toFixed(3)}, ${frame.T.y.toFixed(3)}, ${frame.T.z.toFixed(3)})`;
-            document.getElementById('normal-vec').textContent = 
-                `(${frame.N.x.toFixed(3)}, ${frame.N.y.toFixed(3)}, ${frame.N.z.toFixed(3)})`;
-            document.getElementById('binormal-vec').textContent = 
-                `(${frame.B.x.toFixed(3)}, ${frame.B.y.toFixed(3)}, ${frame.B.z.toFixed(3)})`;
-            document.getElementById('position-display').textContent = 
-                `(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`;
-            
-            // 验证正交性
-            const dot1 = Math.abs(frame.T.dot(frame.N));
-            const dot2 = Math.abs(frame.T.dot(frame.B));
-            const dot3 = Math.abs(frame.N.dot(frame.B));
-            const maxError = Math.max(dot1, dot2, dot3);
-            
-            document.getElementById('ortho-error').textContent = maxError.toExponential(3);
-            
-            const orthoCheck = document.getElementById('ortho-check');
-            if (maxError < 0.001) {
-                orthoCheck.innerHTML = '✓ 通过';
-                orthoCheck.style.color = '#33ff33';
-            } else {
-                orthoCheck.innerHTML = '✗ 失败';
-                orthoCheck.style.color = '#ff3333';
-            }
-            
-            // 更新对象计数
-            document.getElementById('object-count').textContent = scene.children.length;
-            
-            const endTime = performance.now();
-            renderTimes.push(endTime - startTime);
-            if (renderTimes.length > 60) renderTimes.shift();
+        objectPool.pointMarker.position.copy(pos)
+        objectPool.pointLight.position.copy(pos)
+
+        // Frenet向量
+        if (document.getElementById('show-tangent').checked) {
+          objectPool.tangentArrow = createOrUpdateArrow(
+            objectPool.tangentArrow,
+            frame.T,
+            0xff3333,
+            pos
+          )
+        } else if (objectPool.tangentArrow) {
+          objectPool.tangentArrow.visible = false
         }
-        
-        // 控件事件
-        document.getElementById('radius').addEventListener('input', (e) => {
-            params.r = parseFloat(e.target.value);
-            document.getElementById('r-value').textContent = params.r.toFixed(1);
-            updateScene();
-        });
-        
-        document.getElementById('omega').addEventListener('input', (e) => {
-            params.omega = parseFloat(e.target.value);
-            document.getElementById('omega-value').textContent = params.omega.toFixed(1);
-            updateScene();
-        });
-        
-        document.getElementById('axial-velocity').addEventListener('input', (e) => {
-            params.v = parseFloat(e.target.value);
-            document.getElementById('v-value').textContent = params.v.toFixed(1);
-            updateScene();
-        });
-        
-        document.getElementById('time-param').addEventListener('input', (e) => {
-            params.t = parseFloat(e.target.value);
-            document.getElementById('t-value').textContent = params.t.toFixed(2);
-            updateScene();
-        });
-        
-        ['show-helix', 'show-tube', 'show-tangent', 'show-normal', 'show-binormal', 'show-planes'].forEach(id => {
-            document.getElementById(id).addEventListener('change', updateScene);
-        });
-        
-        document.getElementById('show-axes').addEventListener('change', (e) => {
-            axesHelper.visible = e.target.checked;
-        });
-        
-        document.getElementById('show-grid').addEventListener('change', (e) => {
-            gridHelper.visible = e.target.checked;
-        });
-        
-        document.getElementById('show-stars').addEventListener('change', (e) => {
-            if (stars) stars.visible = e.target.checked;
-        });
-        
-        document.getElementById('animate-btn').addEventListener('click', () => {
-            params.animating = !params.animating;
-            document.getElementById('animate-btn').textContent = params.animating ? '停止动画' : '开始动画';
-        });
-        
-        document.getElementById('reset-btn').addEventListener('click', () => {
-            camera.position.set(10, 10, 10);
-            camera.lookAt(0, 0, 0);
-        });
-        
-        document.getElementById('screenshot-btn').addEventListener('click', () => {
-            renderer.render(scene, camera);
-            const link = document.createElement('a');
-            link.download = 'frenet-frame-visualization.png';
-            link.href = renderer.domElement.toDataURL();
-            link.click();
-        });
-        
-        // 质量选择
-        document.querySelectorAll('.quality-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                currentQuality = btn.dataset.quality;
-                quality = qualitySettings[currentQuality];
-                
-                // 更新渲染器设置
-                renderer.setPixelRatio(quality.pixelRatio);
-                renderer.shadowMap.enabled = quality.shadowMap;
-                
-                // 重建星空
-                if (stars) {
-                    disposeObject(stars);
-                    stars = null;
-                }
-                createStars();
-                
-                // 清理并重建几何体
-                disposeObject(objectPool.helixLine);
-                disposeObject(objectPool.helixTube);
-                objectPool.helixLine = null;
-                objectPool.helixTube = null;
-                
-                updateScene();
-            });
-        });
-        
-        // 鼠标控制
-        let isDragging = false;
-        let previousMousePosition = { x: 0, y: 0 };
-        
-        container.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            previousMousePosition = { x: e.clientX, y: e.clientY };
-        });
-        
-        container.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            
-            const deltaX = e.clientX - previousMousePosition.x;
-            const deltaY = e.clientY - previousMousePosition.y;
-            
-            const radius = camera.position.length();
-            const theta = Math.atan2(camera.position.x, camera.position.z);
-            const phi = Math.acos(camera.position.y / radius);
-            
-            const newTheta = theta - deltaX * 0.01;
-            const newPhi = Math.max(0.1, Math.min(Math.PI - 0.1, phi - deltaY * 0.01));
-            
-            camera.position.x = radius * Math.sin(newPhi) * Math.sin(newTheta);
-            camera.position.y = radius * Math.cos(newPhi);
-            camera.position.z = radius * Math.sin(newPhi) * Math.cos(newTheta);
-            camera.lookAt(0, 0, 0);
-            
-            previousMousePosition = { x: e.clientX, y: e.clientY };
-        });
-        
-        container.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
-        
-        container.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const delta = e.deltaY * 0.01;
-            const direction = camera.position.clone().normalize();
-            camera.position.addScaledVector(direction, delta);
-        });
-        
-        // 动画循环
-        let lastTime = performance.now();
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            const currentTime = performance.now();
-            const deltaTime = (currentTime - lastTime) / 1000;
-            lastTime = currentTime;
-            
-            // 星空旋转
-            if (stars && quality.enableStars) {
-                stars.rotation.y += 0.0002;
-            }
-            
-            // 点标记脉动
-            if (objectPool.pointMarker) {
-                const scale = 1 + Math.sin(currentTime * 0.003) * 0.15;
-                objectPool.pointMarker.scale.set(scale, scale, scale);
-            }
-            
-            if (params.animating) {
-                params.t += 0.015;
-                if (params.t > 12.57) params.t = 0;
-                document.getElementById('time-param').value = params.t;
-                document.getElementById('t-value').textContent = params.t.toFixed(2);
-                updateScene();
-            }
-            
-            // FPS计算
-            frameCount++;
-            if (currentTime - lastFpsUpdate >= 1000) {
-                const fps = Math.round(frameCount * 1000 / (currentTime - lastFpsUpdate));
-                document.getElementById('fps-display').textContent = fps;
-                frameCount = 0;
-                lastFpsUpdate = currentTime;
-                
-                // 平均渲染时间
-                if (renderTimes.length > 0) {
-                    const avgTime = renderTimes.reduce((a, b) => a + b, 0) / renderTimes.length;
-                    document.getElementById('render-time').textContent = avgTime.toFixed(1) + 'ms';
-                }
-            }
-            
-            renderer.render(scene, camera);
+
+        if (document.getElementById('show-normal').checked) {
+          objectPool.normalArrow = createOrUpdateArrow(
+            objectPool.normalArrow,
+            frame.N,
+            0x33ff33,
+            pos
+          )
+        } else if (objectPool.normalArrow) {
+          objectPool.normalArrow.visible = false
         }
-        
-        // 窗口调整
-        window.addEventListener('resize', () => {
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        });
-        
-        // 初始化
-        updateScene();
-        animate();
+
+        if (document.getElementById('show-binormal').checked) {
+          objectPool.binormalArrow = createOrUpdateArrow(
+            objectPool.binormalArrow,
+            frame.B,
+            0x3333ff,
+            pos
+          )
+        } else if (objectPool.binormalArrow) {
+          objectPool.binormalArrow.visible = false
+        }
+
+        // 三个平面
+        if (document.getElementById('show-planes').checked) {
+          const oscPlane = createPlane(frame.B, 0x3333ff)
+          oscPlane.position.copy(pos)
+          objectPool.planes.push(oscPlane)
+          scene.add(oscPlane)
+
+          const normalPlane = createPlane(frame.T, 0xff3333)
+          normalPlane.position.copy(pos)
+          objectPool.planes.push(normalPlane)
+          scene.add(normalPlane)
+
+          const rectPlane = createPlane(frame.N, 0x33ff33)
+          rectPlane.position.copy(pos)
+          objectPool.planes.push(rectPlane)
+          scene.add(rectPlane)
+        }
+
+        // 更新显示
+        document.getElementById('velocity-mag').textContent = frame.a.toFixed(3)
+        document.getElementById('curvature').textContent = frame.kappa.toFixed(3)
+        document.getElementById('tangent-vec').textContent =
+          `(${frame.T.x.toFixed(3)}, ${frame.T.y.toFixed(3)}, ${frame.T.z.toFixed(3)})`
+        document.getElementById('normal-vec').textContent =
+          `(${frame.N.x.toFixed(3)}, ${frame.N.y.toFixed(3)}, ${frame.N.z.toFixed(3)})`
+        document.getElementById('binormal-vec').textContent =
+          `(${frame.B.x.toFixed(3)}, ${frame.B.y.toFixed(3)}, ${frame.B.z.toFixed(3)})`
+        document.getElementById('position-display').textContent =
+          `(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`
+
+        // 验证正交性
+        const dot1 = Math.abs(frame.T.dot(frame.N))
+        const dot2 = Math.abs(frame.T.dot(frame.B))
+        const dot3 = Math.abs(frame.N.dot(frame.B))
+        const maxError = Math.max(dot1, dot2, dot3)
+
+        document.getElementById('ortho-error').textContent = maxError.toExponential(3)
+
+        const orthoCheck = document.getElementById('ortho-check')
+        if (maxError < 0.001) {
+          orthoCheck.innerHTML = '✓ 通过'
+          orthoCheck.style.color = '#33ff33'
+        } else {
+          orthoCheck.innerHTML = '✗ 失败'
+          orthoCheck.style.color = '#ff3333'
+        }
+
+        // 更新对象计数
+        document.getElementById('object-count').textContent = scene.children.length
+
+        const endTime = performance.now()
+        renderTimes.push(endTime - startTime)
+        if (renderTimes.length > 60) renderTimes.shift()
+      }
+
+      // 控件事件
+      document.getElementById('radius').addEventListener('input', e => {
+        params.r = parseFloat(e.target.value)
+        document.getElementById('r-value').textContent = params.r.toFixed(1)
+        updateScene()
+      })
+
+      document.getElementById('omega').addEventListener('input', e => {
+        params.omega = parseFloat(e.target.value)
+        document.getElementById('omega-value').textContent = params.omega.toFixed(1)
+        updateScene()
+      })
+
+      document.getElementById('axial-velocity').addEventListener('input', e => {
+        params.v = parseFloat(e.target.value)
+        document.getElementById('v-value').textContent = params.v.toFixed(1)
+        updateScene()
+      })
+
+      document.getElementById('time-param').addEventListener('input', e => {
+        params.t = parseFloat(e.target.value)
+        document.getElementById('t-value').textContent = params.t.toFixed(2)
+        updateScene()
+      })
+
+      ;[
+        'show-helix',
+        'show-tube',
+        'show-tangent',
+        'show-normal',
+        'show-binormal',
+        'show-planes'
+      ].forEach(id => {
+        document.getElementById(id).addEventListener('change', updateScene)
+      })
+
+      document.getElementById('show-axes').addEventListener('change', e => {
+        axesHelper.visible = e.target.checked
+      })
+
+      document.getElementById('show-grid').addEventListener('change', e => {
+        gridHelper.visible = e.target.checked
+      })
+
+      document.getElementById('show-stars').addEventListener('change', e => {
+        if (stars) stars.visible = e.target.checked
+      })
+
+      document.getElementById('animate-btn').addEventListener('click', () => {
+        params.animating = !params.animating
+        document.getElementById('animate-btn').textContent = params.animating
+          ? '停止动画'
+          : '开始动画'
+      })
+
+      document.getElementById('reset-btn').addEventListener('click', () => {
+        camera.position.set(10, 10, 10)
+        camera.lookAt(0, 0, 0)
+      })
+
+      document.getElementById('screenshot-btn').addEventListener('click', () => {
+        renderer.render(scene, camera)
+        const link = document.createElement('a')
+        link.download = 'frenet-frame-visualization.png'
+        link.href = renderer.domElement.toDataURL()
+        link.click()
+      })
+
+      // 质量选择
+      document.querySelectorAll('.quality-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'))
+          btn.classList.add('active')
+
+          currentQuality = btn.dataset.quality
+          quality = qualitySettings[currentQuality]
+
+          // 更新渲染器设置
+          renderer.setPixelRatio(quality.pixelRatio)
+          renderer.shadowMap.enabled = quality.shadowMap
+
+          // 重建星空
+          if (stars) {
+            disposeObject(stars)
+            stars = null
+          }
+          createStars()
+
+          // 清理并重建几何体
+          disposeObject(objectPool.helixLine)
+          disposeObject(objectPool.helixTube)
+          objectPool.helixLine = null
+          objectPool.helixTube = null
+
+          updateScene()
+        })
+      })
+
+      // 鼠标控制
+      let isDragging = false
+      let previousMousePosition = { x: 0, y: 0 }
+
+      container.addEventListener('mousedown', e => {
+        isDragging = true
+        previousMousePosition = { x: e.clientX, y: e.clientY }
+      })
+
+      container.addEventListener('mousemove', e => {
+        if (!isDragging) return
+
+        const deltaX = e.clientX - previousMousePosition.x
+        const deltaY = e.clientY - previousMousePosition.y
+
+        const radius = camera.position.length()
+        const theta = Math.atan2(camera.position.x, camera.position.z)
+        const phi = Math.acos(camera.position.y / radius)
+
+        const newTheta = theta - deltaX * 0.01
+        const newPhi = Math.max(0.1, Math.min(Math.PI - 0.1, phi - deltaY * 0.01))
+
+        camera.position.x = radius * Math.sin(newPhi) * Math.sin(newTheta)
+        camera.position.y = radius * Math.cos(newPhi)
+        camera.position.z = radius * Math.sin(newPhi) * Math.cos(newTheta)
+        camera.lookAt(0, 0, 0)
+
+        previousMousePosition = { x: e.clientX, y: e.clientY }
+      })
+
+      container.addEventListener('mouseup', () => {
+        isDragging = false
+      })
+
+      container.addEventListener('wheel', e => {
+        e.preventDefault()
+        const delta = e.deltaY * 0.01
+        const direction = camera.position.clone().normalize()
+        camera.position.addScaledVector(direction, delta)
+      })
+
+      // 动画循环
+      let lastTime = performance.now()
+      function animate() {
+        requestAnimationFrame(animate)
+
+        const currentTime = performance.now()
+        const deltaTime = (currentTime - lastTime) / 1000
+        lastTime = currentTime
+
+        // 星空旋转
+        if (stars && quality.enableStars) {
+          stars.rotation.y += 0.0002
+        }
+
+        // 点标记脉动
+        if (objectPool.pointMarker) {
+          const scale = 1 + Math.sin(currentTime * 0.003) * 0.15
+          objectPool.pointMarker.scale.set(scale, scale, scale)
+        }
+
+        if (params.animating) {
+          params.t += 0.015
+          if (params.t > 12.57) params.t = 0
+          document.getElementById('time-param').value = params.t
+          document.getElementById('t-value').textContent = params.t.toFixed(2)
+          updateScene()
+        }
+
+        // FPS计算
+        frameCount++
+        if (currentTime - lastFpsUpdate >= 1000) {
+          const fps = Math.round((frameCount * 1000) / (currentTime - lastFpsUpdate))
+          document.getElementById('fps-display').textContent = fps
+          frameCount = 0
+          lastFpsUpdate = currentTime
+
+          // 平均渲染时间
+          if (renderTimes.length > 0) {
+            const avgTime = renderTimes.reduce((a, b) => a + b, 0) / renderTimes.length
+            document.getElementById('render-time').textContent = avgTime.toFixed(1) + 'ms'
+          }
+        }
+
+        renderer.render(scene, camera)
+      }
+
+      // 窗口调整
+      window.addEventListener('resize', () => {
+        camera.aspect = container.clientWidth / container.clientHeight
+        camera.updateProjectionMatrix()
+        renderer.setSize(container.clientWidth, container.clientHeight)
+      })
+
+      // 初始化
+      updateScene()
+      animate()
     </script>
-</body>
+  </body>
 </html>

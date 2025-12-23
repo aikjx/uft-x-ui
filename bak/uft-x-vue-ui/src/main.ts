@@ -51,10 +51,10 @@ app.config.errorHandler = createCodeOptimizationErrorHandler()
 // 开发模式下的调试
 if (import.meta.env.DEV) {
   app.config.globalProperties.$debug = true
-  
+
   // 启用Vue DevTools
   app.config.devtools = true
-  
+
   // 性能监控
   app.config.performance = true
 }
@@ -65,14 +65,14 @@ app.mixin({
     // 应用级别的初始化逻辑
     if (this.$options.name === 'App') {
       console.log('🚀 全自动代码优化系统启动中...')
-      
+
       // 启动性能监控
       performanceMonitor.startMonitoring(2000)
-      
+
       console.log('✅ 系统初始化完成')
     }
   },
-  
+
   unmounted() {
     // 清理资源
     if (this.$options.name === 'App') {
@@ -87,6 +87,6 @@ app.mount('#app')
 
 // 导出全局实例供调试使用
 if (import.meta.env.DEV) {
-  (window as any).__CODE_OPTIMIZATION_APP__ = app
-  (window as any).__PERFORMANCE_MONITOR__ = performanceMonitor
+  ;(window as any).__CODE_OPTIMIZATION_APP__ = app(window as any).__PERFORMANCE_MONITOR__ =
+    performanceMonitor
 }

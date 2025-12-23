@@ -2,77 +2,77 @@
  * 可视化状态管理 - 集中式状态管理系统
  */
 
-import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
-import { eventSystem, APP_EVENTS } from '../utils/eventSystem';
-import { RenderQualityLevel } from '../performance/smartRenderScheduler';
+import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react'
+import { eventSystem, APP_EVENTS } from '../utils/eventSystem'
+import { RenderQualityLevel } from '../performance/smartRenderScheduler'
 
 // 状态类型定义
 export interface VisualizationState {
   // 渲染质量设置
-  renderQuality: RenderQualityLevel;
-  enablePostProcessing: boolean;
-  bloomIntensity: number;
-  bloomRadius: number;
-  bloomThreshold: number;
-  filmNoiseIntensity: number;
-  filmScanlineIntensity: number;
-  filmScanlineCount: number;
-  useSMAA: boolean;
-  useFilmPass: boolean;
-  useGammaCorrection: boolean;
-  chromaticAberration: number;
-  vignetteIntensity: number;
-  
+  renderQuality: RenderQualityLevel
+  enablePostProcessing: boolean
+  bloomIntensity: number
+  bloomRadius: number
+  bloomThreshold: number
+  filmNoiseIntensity: number
+  filmScanlineIntensity: number
+  filmScanlineCount: number
+  useSMAA: boolean
+  useFilmPass: boolean
+  useGammaCorrection: boolean
+  chromaticAberration: number
+  vignetteIntensity: number
+
   // 性能设置
-  isPerformanceMode: boolean;
-  targetFPS: number;
-  autoModeEnabled: boolean;
-  pixelRatio: number;
-  enableAdaptiveResolution: boolean;
-  resolutionScale: number;
-  
+  isPerformanceMode: boolean
+  targetFPS: number
+  autoModeEnabled: boolean
+  pixelRatio: number
+  enableAdaptiveResolution: boolean
+  resolutionScale: number
+
   // 交互设置
-  enableControls: boolean;
-  enableDamping: boolean;
-  dampingFactor: number;
-  rotateSpeed: number;
-  zoomSpeed: number;
-  enablePan: boolean;
-  autoRotate: boolean;
-  autoRotateSpeed: number;
-  
+  enableControls: boolean
+  enableDamping: boolean
+  dampingFactor: number
+  rotateSpeed: number
+  zoomSpeed: number
+  enablePan: boolean
+  autoRotate: boolean
+  autoRotateSpeed: number
+
   // 场景设置
-  backgroundColor: string;
-  showGrid: boolean;
-  showAxes: boolean;
-  enableShadows: boolean;
-  enableFog: boolean;
-  fogDensity: number;
-  fogColor: string;
-  
+  backgroundColor: string
+  showGrid: boolean
+  showAxes: boolean
+  enableShadows: boolean
+  enableFog: boolean
+  fogDensity: number
+  fogColor: string
+
   // 粒子系统设置
-  maxParticles: number;
-  emissionRate: number;
-  particleLifetime: number;
-  particleSize: number;
-  
+  maxParticles: number
+  emissionRate: number
+  particleLifetime: number
+  particleSize: number
+
   // 相机设置
-  cameraPosition: { x: number; y: number; z: number };
-  cameraRotation: { x: number; y: number; z: number };
-  cameraFov: number;
-  cameraNear: number;
-  cameraFar: number;
-  
+  cameraPosition: { x: number; y: number; z: number }
+  cameraRotation: { x: number; y: number; z: number }
+  cameraFov: number
+  cameraNear: number
+  cameraFar: number
+
   // 性能监控
-  showPerformancePanel: boolean;
-  currentFPS: number;
-  currentMemory: number;
-  currentDrawCalls: number;
-  currentTriangles: number;
-  
+  showPerformancePanel: boolean
+  currentFPS: number
+  currentMemory: number
+  currentDrawCalls: number
+  currentTriangles: number
+
   // 错误状态
-  hasError: boolean;
-  errorMessage: string;
+  hasError: boolean
+  errorMessage: string
 }
 
 // Action类型定义
@@ -121,9 +121,12 @@ type VisualizationAction =
   | { type: 'SET_CAMERA_NEAR'; payload: number }
   | { type: 'SET_CAMERA_FAR'; payload: number }
   | { type: 'SET_SHOW_PERFORMANCE_PANEL'; payload: boolean }
-  | { type: 'UPDATE_PERFORMANCE_STATS'; payload: { fps: number; memory: number; drawCalls: number; triangles: number } }
+  | {
+      type: 'UPDATE_PERFORMANCE_STATS'
+      payload: { fps: number; memory: number; drawCalls: number; triangles: number }
+    }
   | { type: 'SET_ERROR'; payload: { hasError: boolean; errorMessage: string } }
-  | { type: 'RESET_STATE' };
+  | { type: 'RESET_STATE' }
 
 // 初始状态
 export const initialVisualizationState: VisualizationState = {
@@ -141,7 +144,7 @@ export const initialVisualizationState: VisualizationState = {
   useGammaCorrection: true,
   chromaticAberration: 0.01,
   vignetteIntensity: 0.3,
-  
+
   // 性能设置
   isPerformanceMode: false,
   targetFPS: 60,
@@ -149,7 +152,7 @@ export const initialVisualizationState: VisualizationState = {
   pixelRatio: window.devicePixelRatio,
   enableAdaptiveResolution: true,
   resolutionScale: 1.0,
-  
+
   // 交互设置
   enableControls: true,
   enableDamping: true,
@@ -159,7 +162,7 @@ export const initialVisualizationState: VisualizationState = {
   enablePan: true,
   autoRotate: false,
   autoRotateSpeed: 2.0,
-  
+
   // 场景设置
   backgroundColor: '#000000',
   showGrid: true,
@@ -168,136 +171,139 @@ export const initialVisualizationState: VisualizationState = {
   enableFog: false,
   fogDensity: 0.05,
   fogColor: '#000000',
-  
+
   // 粒子系统设置
   maxParticles: 100000,
   emissionRate: 500,
   particleLifetime: 5,
   particleSize: 0.5,
-  
+
   // 相机设置
   cameraPosition: { x: 10, y: 10, z: 10 },
   cameraRotation: { x: 0, y: 0, z: 0 },
   cameraFov: 75,
   cameraNear: 0.1,
   cameraFar: 1000,
-  
+
   // 性能监控
   showPerformancePanel: false,
   currentFPS: 60,
   currentMemory: 0,
   currentDrawCalls: 0,
   currentTriangles: 0,
-  
+
   // 错误状态
   hasError: false,
   errorMessage: ''
-};
+}
 
 // Reducer函数
-const visualizationReducer = (state: VisualizationState, action: VisualizationAction): VisualizationState => {
+const visualizationReducer = (
+  state: VisualizationState,
+  action: VisualizationAction
+): VisualizationState => {
   switch (action.type) {
     // 渲染质量设置
     case 'SET_RENDER_QUALITY':
-      return { ...state, renderQuality: action.payload };
+      return { ...state, renderQuality: action.payload }
     case 'SET_POST_PROCESSING':
-      return { ...state, enablePostProcessing: action.payload };
+      return { ...state, enablePostProcessing: action.payload }
     case 'SET_BLOOM_INTENSITY':
-      return { ...state, bloomIntensity: action.payload };
+      return { ...state, bloomIntensity: action.payload }
     case 'SET_BLOOM_RADIUS':
-      return { ...state, bloomRadius: action.payload };
+      return { ...state, bloomRadius: action.payload }
     case 'SET_BLOOM_THRESHOLD':
-      return { ...state, bloomThreshold: action.payload };
+      return { ...state, bloomThreshold: action.payload }
     case 'SET_FILM_NOISE_INTENSITY':
-      return { ...state, filmNoiseIntensity: action.payload };
+      return { ...state, filmNoiseIntensity: action.payload }
     case 'SET_FILM_SCANLINE_INTENSITY':
-      return { ...state, filmScanlineIntensity: action.payload };
+      return { ...state, filmScanlineIntensity: action.payload }
     case 'SET_FILM_SCANLINE_COUNT':
-      return { ...state, filmScanlineCount: action.payload };
+      return { ...state, filmScanlineCount: action.payload }
     case 'SET_USE_SMAA':
-      return { ...state, useSMAA: action.payload };
+      return { ...state, useSMAA: action.payload }
     case 'SET_USE_FILM_PASS':
-      return { ...state, useFilmPass: action.payload };
+      return { ...state, useFilmPass: action.payload }
     case 'SET_USE_GAMMA_CORRECTION':
-      return { ...state, useGammaCorrection: action.payload };
+      return { ...state, useGammaCorrection: action.payload }
     case 'SET_CHROMATIC_ABERRATION':
-      return { ...state, chromaticAberration: action.payload };
+      return { ...state, chromaticAberration: action.payload }
     case 'SET_VIGNETTE_INTENSITY':
-      return { ...state, vignetteIntensity: action.payload };
-    
+      return { ...state, vignetteIntensity: action.payload }
+
     // 性能设置
     case 'SET_PERFORMANCE_MODE':
-      return { ...state, isPerformanceMode: action.payload };
+      return { ...state, isPerformanceMode: action.payload }
     case 'SET_TARGET_FPS':
-      return { ...state, targetFPS: action.payload };
+      return { ...state, targetFPS: action.payload }
     case 'SET_AUTO_MODE':
-      return { ...state, autoModeEnabled: action.payload };
+      return { ...state, autoModeEnabled: action.payload }
     case 'SET_PIXEL_RATIO':
-      return { ...state, pixelRatio: action.payload };
+      return { ...state, pixelRatio: action.payload }
     case 'SET_ADAPTIVE_RESOLUTION':
-      return { ...state, enableAdaptiveResolution: action.payload };
+      return { ...state, enableAdaptiveResolution: action.payload }
     case 'SET_RESOLUTION_SCALE':
-      return { ...state, resolutionScale: action.payload };
-    
+      return { ...state, resolutionScale: action.payload }
+
     // 交互设置
     case 'SET_ENABLE_CONTROLS':
-      return { ...state, enableControls: action.payload };
+      return { ...state, enableControls: action.payload }
     case 'SET_ENABLE_DAMPING':
-      return { ...state, enableDamping: action.payload };
+      return { ...state, enableDamping: action.payload }
     case 'SET_DAMPING_FACTOR':
-      return { ...state, dampingFactor: action.payload };
+      return { ...state, dampingFactor: action.payload }
     case 'SET_ROTATE_SPEED':
-      return { ...state, rotateSpeed: action.payload };
+      return { ...state, rotateSpeed: action.payload }
     case 'SET_ZOOM_SPEED':
-      return { ...state, zoomSpeed: action.payload };
+      return { ...state, zoomSpeed: action.payload }
     case 'SET_ENABLE_PAN':
-      return { ...state, enablePan: action.payload };
+      return { ...state, enablePan: action.payload }
     case 'SET_AUTO_ROTATE':
-      return { ...state, autoRotate: action.payload };
+      return { ...state, autoRotate: action.payload }
     case 'SET_AUTO_ROTATE_SPEED':
-      return { ...state, autoRotateSpeed: action.payload };
-    
+      return { ...state, autoRotateSpeed: action.payload }
+
     // 场景设置
     case 'SET_BACKGROUND_COLOR':
-      return { ...state, backgroundColor: action.payload };
+      return { ...state, backgroundColor: action.payload }
     case 'SET_SHOW_GRID':
-      return { ...state, showGrid: action.payload };
+      return { ...state, showGrid: action.payload }
     case 'SET_SHOW_AXES':
-      return { ...state, showAxes: action.payload };
+      return { ...state, showAxes: action.payload }
     case 'SET_ENABLE_SHADOWS':
-      return { ...state, enableShadows: action.payload };
+      return { ...state, enableShadows: action.payload }
     case 'SET_ENABLE_FOG':
-      return { ...state, enableFog: action.payload };
+      return { ...state, enableFog: action.payload }
     case 'SET_FOG_DENSITY':
-      return { ...state, fogDensity: action.payload };
+      return { ...state, fogDensity: action.payload }
     case 'SET_FOG_COLOR':
-      return { ...state, fogColor: action.payload };
-    
+      return { ...state, fogColor: action.payload }
+
     // 粒子系统设置
     case 'SET_MAX_PARTICLES':
-      return { ...state, maxParticles: action.payload };
+      return { ...state, maxParticles: action.payload }
     case 'SET_EMISSION_RATE':
-      return { ...state, emissionRate: action.payload };
+      return { ...state, emissionRate: action.payload }
     case 'SET_PARTICLE_LIFETIME':
-      return { ...state, particleLifetime: action.payload };
+      return { ...state, particleLifetime: action.payload }
     case 'SET_PARTICLE_SIZE':
-      return { ...state, particleSize: action.payload };
-    
+      return { ...state, particleSize: action.payload }
+
     // 相机设置
     case 'SET_CAMERA_POSITION':
-      return { ...state, cameraPosition: action.payload };
+      return { ...state, cameraPosition: action.payload }
     case 'SET_CAMERA_ROTATION':
-      return { ...state, cameraRotation: action.payload };
+      return { ...state, cameraRotation: action.payload }
     case 'SET_CAMERA_FOV':
-      return { ...state, cameraFov: action.payload };
+      return { ...state, cameraFov: action.payload }
     case 'SET_CAMERA_NEAR':
-      return { ...state, cameraNear: action.payload };
+      return { ...state, cameraNear: action.payload }
     case 'SET_CAMERA_FAR':
-      return { ...state, cameraFar: action.payload };
-    
+      return { ...state, cameraFar: action.payload }
+
     // 性能监控
     case 'SET_SHOW_PERFORMANCE_PANEL':
-      return { ...state, showPerformancePanel: action.payload };
+      return { ...state, showPerformancePanel: action.payload }
     case 'UPDATE_PERFORMANCE_STATS':
       return {
         ...state,
@@ -305,72 +311,82 @@ const visualizationReducer = (state: VisualizationState, action: VisualizationAc
         currentMemory: action.payload.memory,
         currentDrawCalls: action.payload.drawCalls,
         currentTriangles: action.payload.triangles
-      };
-    
+      }
+
     // 错误状态
     case 'SET_ERROR':
       return {
         ...state,
         hasError: action.payload.hasError,
         errorMessage: action.payload.errorMessage
-      };
-    
+      }
+
     // 重置状态
     case 'RESET_STATE':
-      return initialVisualizationState;
-    
+      return initialVisualizationState
+
     default:
-      return state;
+      return state
   }
-};
+}
 
 // Context定义
 interface VisualizationContextType {
-  state: VisualizationState;
-  dispatch: React.Dispatch<VisualizationAction>;
-  updatePerformanceStats: (fps: number, memory: number, drawCalls: number, triangles: number) => void;
-  setError: (hasError: boolean, errorMessage?: string) => void;
-  resetState: () => void;
+  state: VisualizationState
+  dispatch: React.Dispatch<VisualizationAction>
+  updatePerformanceStats: (
+    fps: number,
+    memory: number,
+    drawCalls: number,
+    triangles: number
+  ) => void
+  setError: (hasError: boolean, errorMessage?: string) => void
+  resetState: () => void
 }
 
-const VisualizationContext = createContext<VisualizationContextType | undefined>(undefined);
+const VisualizationContext = createContext<VisualizationContextType | undefined>(undefined)
 
 // Provider组件
 export const VisualizationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(visualizationReducer, initialVisualizationState);
+  const [state, dispatch] = useReducer(visualizationReducer, initialVisualizationState)
 
   // 更新性能统计
-  const updatePerformanceStats = (fps: number, memory: number, drawCalls: number, triangles: number) => {
+  const updatePerformanceStats = (
+    fps: number,
+    memory: number,
+    drawCalls: number,
+    triangles: number
+  ) => {
     dispatch({
       type: 'UPDATE_PERFORMANCE_STATS',
       payload: { fps, memory, drawCalls, triangles }
-    });
-  };
+    })
+  }
 
   // 设置错误状态
   const setError = (hasError: boolean, errorMessage: string = '') => {
     dispatch({
       type: 'SET_ERROR',
       payload: { hasError, errorMessage }
-    });
-  };
+    })
+  }
 
   // 重置状态
   const resetState = () => {
-    dispatch({ type: 'RESET_STATE' });
-  };
+    dispatch({ type: 'RESET_STATE' })
+  }
 
   // 监听性能变化事件
   useEffect(() => {
     // 性能下降事件处理
     const handlePerformanceDrop = (data: any) => {
-      dispatch({ type: 'SET_PERFORMANCE_MODE', payload: true });
-    };
+      dispatch({ type: 'SET_PERFORMANCE_MODE', payload: true })
+    }
 
     // 性能恢复事件处理
     const handlePerformanceRecover = (data: any) => {
-      dispatch({ type: 'SET_PERFORMANCE_MODE', payload: false });
-    };
+      dispatch({ type: 'SET_PERFORMANCE_MODE', payload: false })
+    }
 
     // 帧率变化事件处理
     const handleFrameRateChange = (data: { fps: number }) => {
@@ -382,21 +398,21 @@ export const VisualizationProvider: React.FC<{ children: ReactNode }> = ({ child
           drawCalls: state.currentDrawCalls,
           triangles: state.currentTriangles
         }
-      });
-    };
+      })
+    }
 
     // 注册事件监听器
-    eventSystem.on(APP_EVENTS.PERFORMANCE_DROP, handlePerformanceDrop);
-    eventSystem.on(APP_EVENTS.PERFORMANCE_RECOVER, handlePerformanceRecover);
-    eventSystem.on(APP_EVENTS.FRAME_RATE_CHANGE, handleFrameRateChange);
+    eventSystem.on(APP_EVENTS.PERFORMANCE_DROP, handlePerformanceDrop)
+    eventSystem.on(APP_EVENTS.PERFORMANCE_RECOVER, handlePerformanceRecover)
+    eventSystem.on(APP_EVENTS.FRAME_RATE_CHANGE, handleFrameRateChange)
 
     // 清理事件监听器
     return () => {
-      eventSystem.off(APP_EVENTS.PERFORMANCE_DROP, handlePerformanceDrop);
-      eventSystem.off(APP_EVENTS.PERFORMANCE_RECOVER, handlePerformanceRecover);
-      eventSystem.off(APP_EVENTS.FRAME_RATE_CHANGE, handleFrameRateChange);
-    };
-  }, [state.currentMemory, state.currentDrawCalls, state.currentTriangles]);
+      eventSystem.off(APP_EVENTS.PERFORMANCE_DROP, handlePerformanceDrop)
+      eventSystem.off(APP_EVENTS.PERFORMANCE_RECOVER, handlePerformanceRecover)
+      eventSystem.off(APP_EVENTS.FRAME_RATE_CHANGE, handleFrameRateChange)
+    }
+  }, [state.currentMemory, state.currentDrawCalls, state.currentTriangles])
 
   return (
     <VisualizationContext.Provider
@@ -410,81 +426,81 @@ export const VisualizationProvider: React.FC<{ children: ReactNode }> = ({ child
     >
       {children}
     </VisualizationContext.Provider>
-  );
-};
+  )
+}
 
 // 自定义Hook，用于在组件中访问状态
 export const useVisualizationState = (): VisualizationContextType => {
-  const context = useContext(VisualizationContext);
+  const context = useContext(VisualizationContext)
   if (context === undefined) {
-    throw new Error('useVisualizationState must be used within a VisualizationProvider');
+    throw new Error('useVisualizationState must be used within a VisualizationProvider')
   }
-  return context;
-};
+  return context
+}
 
 // 便捷的状态更新Hook
 export const useVisualizationActions = () => {
-  const { dispatch } = useVisualizationState();
-  
+  const { dispatch } = useVisualizationState()
+
   return {
     // 渲染质量设置
     setRenderQuality: (quality: RenderQualityLevel) => {
-      dispatch({ type: 'SET_RENDER_QUALITY', payload: quality });
+      dispatch({ type: 'SET_RENDER_QUALITY', payload: quality })
     },
     setEnablePostProcessing: (enabled: boolean) => {
-      dispatch({ type: 'SET_POST_PROCESSING', payload: enabled });
+      dispatch({ type: 'SET_POST_PROCESSING', payload: enabled })
     },
     setBloomIntensity: (intensity: number) => {
-      dispatch({ type: 'SET_BLOOM_INTENSITY', payload: intensity });
+      dispatch({ type: 'SET_BLOOM_INTENSITY', payload: intensity })
     },
     setBloomRadius: (radius: number) => {
-      dispatch({ type: 'SET_BLOOM_RADIUS', payload: radius });
+      dispatch({ type: 'SET_BLOOM_RADIUS', payload: radius })
     },
     setBloomThreshold: (threshold: number) => {
-      dispatch({ type: 'SET_BLOOM_THRESHOLD', payload: threshold });
+      dispatch({ type: 'SET_BLOOM_THRESHOLD', payload: threshold })
     },
-    
+
     // 性能设置
     setAutoModeEnabled: (enabled: boolean) => {
-      dispatch({ type: 'SET_AUTO_MODE', payload: enabled });
+      dispatch({ type: 'SET_AUTO_MODE', payload: enabled })
     },
     setTargetFPS: (fps: number) => {
-      dispatch({ type: 'SET_TARGET_FPS', payload: fps });
+      dispatch({ type: 'SET_TARGET_FPS', payload: fps })
     },
-    
+
     // 场景设置
     setBackgroundColor: (color: string) => {
-      dispatch({ type: 'SET_BACKGROUND_COLOR', payload: color });
+      dispatch({ type: 'SET_BACKGROUND_COLOR', payload: color })
     },
     setShowGrid: (show: boolean) => {
-      dispatch({ type: 'SET_SHOW_GRID', payload: show });
+      dispatch({ type: 'SET_SHOW_GRID', payload: show })
     },
     setShowAxes: (show: boolean) => {
-      dispatch({ type: 'SET_SHOW_AXES', payload: show });
+      dispatch({ type: 'SET_SHOW_AXES', payload: show })
     },
-    
+
     // 性能监控
     setShowPerformancePanel: (show: boolean) => {
-      dispatch({ type: 'SET_SHOW_PERFORMANCE_PANEL', payload: show });
+      dispatch({ type: 'SET_SHOW_PERFORMANCE_PANEL', payload: show })
     },
     updatePerformanceStats: (fps: number, memory: number, drawCalls: number, triangles: number) => {
       dispatch({
         type: 'UPDATE_PERFORMANCE_STATS',
         payload: { fps, memory, drawCalls, triangles }
-      });
+      })
     },
-    
+
     // 错误处理
     setError: (hasError: boolean, errorMessage?: string) => {
       dispatch({
         type: 'SET_ERROR',
         payload: { hasError, errorMessage: errorMessage || '' }
-      });
+      })
     },
-    
+
     // 重置状态
     resetState: () => {
-      dispatch({ type: 'RESET_STATE' });
+      dispatch({ type: 'RESET_STATE' })
     }
-  };
-};
+  }
+}

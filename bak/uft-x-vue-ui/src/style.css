@@ -33,7 +33,7 @@ body {
 
 a {
   font-weight: 500;
-  color: #4DBA87;
+  color: #4dba87;
   text-decoration: inherit;
   transition: color 0.3s;
 }
@@ -53,7 +53,7 @@ button {
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #4DBA87;
+  border-color: #4dba87;
 }
 button:focus,
 button:focus-visible {

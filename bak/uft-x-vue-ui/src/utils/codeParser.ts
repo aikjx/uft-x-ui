@@ -2,13 +2,13 @@
 import { parse } from '@babel/parser'
 import { traverse } from '@babel/traverse'
 import * as t from '@babel/types'
-import { 
-  ProgrammingLanguage, 
-  CodeMetrics, 
-  CodeIssue, 
-  IssueSeverity, 
+import {
+  ProgrammingLanguage,
+  CodeMetrics,
+  CodeIssue,
+  IssueSeverity,
   IssueCategory,
-  CodePosition 
+  CodePosition
 } from '../types/code-optimization'
 
 /**
@@ -16,7 +16,7 @@ import {
  */
 export class CodeParser {
   private language: ProgrammingLanguage
-  
+
   constructor(language: ProgrammingLanguage) {
     this.language = language
   }
@@ -50,11 +50,11 @@ export class CodeParser {
     if (this.language === ProgrammingLanguage.TYPESCRIPT) {
       plugins.push('typescript')
     }
-    
+
     return parse(code, {
       sourceType: 'module',
       plugins: [...plugins, 'jsx', 'decorators-legacy'],
-      allowUndeclaredExports: true,
+      allowUndeclaredExports: true
     })
   }
 
@@ -81,7 +81,7 @@ export class CodeParser {
    */
   calculateMetrics(code: string): CodeMetrics {
     const ast = this.parseCode(code)
-    
+
     switch (this.language) {
       case ProgrammingLanguage.JAVASCRIPT:
       case ProgrammingLanguage.TYPESCRIPT:
@@ -102,34 +102,59 @@ export class CodeParser {
     let cyclomaticComplexity = 1
     let cognitiveComplexity = 0
     const linesOfCode = code.split('\n').length
-    
+
     // 遍历AST计算复杂度
     traverse(ast, {
-      IfStatement: () => { cyclomaticComplexity++; cognitiveComplexity += 2 },
-      ForStatement: () => { cyclomaticComplexity++; cognitiveComplexity += 3 },
-      WhileStatement: () => { cyclomaticComplexity++; cognitiveComplexity += 3 },
-      DoWhileStatement: () => { cyclomaticComplexity++; cognitiveComplexity += 3 },
-      SwitchStatement: (path) => {
+      IfStatement: () => {
+        cyclomaticComplexity++
+        cognitiveComplexity += 2
+      },
+      ForStatement: () => {
+        cyclomaticComplexity++
+        cognitiveComplexity += 3
+      },
+      WhileStatement: () => {
+        cyclomaticComplexity++
+        cognitiveComplexity += 3
+      },
+      DoWhileStatement: () => {
+        cyclomaticComplexity++
+        cognitiveComplexity += 3
+      },
+      SwitchStatement: path => {
         cyclomaticComplexity += path.node.cases.length
         cognitiveComplexity += path.node.cases.length * 2
       },
-      ConditionalExpression: () => { cyclomaticComplexity++ },
-      LogicalExpression: (path) => {
+      ConditionalExpression: () => {
+        cyclomaticComplexity++
+      },
+      LogicalExpression: path => {
         if (path.node.operator === '&&' || path.node.operator === '||') {
           cyclomaticComplexity++
         }
       },
-      TryStatement: () => { cognitiveComplexity += 2 },
-      CatchClause: () => { cognitiveComplexity += 1 },
+      TryStatement: () => {
+        cognitiveComplexity += 2
+      },
+      CatchClause: () => {
+        cognitiveComplexity += 1
+      }
     })
 
     // 计算Halstead指标
     const halsteadMetrics = this.calculateHalsteadMetrics(code)
-    
+
     // 计算可维护性指数
-    const maintainabilityIndex = Math.max(0, Math.min(100, 
-      171 - 5.2 * Math.log(halsteadMetrics.volume) - 0.23 * cyclomaticComplexity - 16.2 * Math.log(linesOfCode)
-    ))
+    const maintainabilityIndex = Math.max(
+      0,
+      Math.min(
+        100,
+        171 -
+          5.2 * Math.log(halsteadMetrics.volume) -
+          0.23 * cyclomaticComplexity -
+          16.2 * Math.log(linesOfCode)
+      )
+    )
 
     return {
       cyclomaticComplexity,
@@ -144,19 +169,44 @@ export class CodeParser {
    */
   private calculateHalsteadMetrics(code: string): any {
     // 简化的Halstead指标计算
-    const operators = ['+', '-', '*', '/', '=', '==', '===', '!=', '!==', '>', '<', '>=', '<=', '&&', '||', '!']
-    const keywords = ['if', 'else', 'for', 'while', 'do', 'switch', 'case', 'break', 'continue', 'return', 'function']
-    
-    const operatorCount = operators.reduce((count, op) => 
-      count + (code.split(op).length - 1), 0
-    )
-    const keywordCount = keywords.reduce((count, kw) => 
-      count + (code.split(kw).length - 1), 0
-    )
-    
+    const operators = [
+      '+',
+      '-',
+      '*',
+      '/',
+      '=',
+      '==',
+      '===',
+      '!=',
+      '!==',
+      '>',
+      '<',
+      '>=',
+      '<=',
+      '&&',
+      '||',
+      '!'
+    ]
+    const keywords = [
+      'if',
+      'else',
+      'for',
+      'while',
+      'do',
+      'switch',
+      'case',
+      'break',
+      'continue',
+      'return',
+      'function'
+    ]
+
+    const operatorCount = operators.reduce((count, op) => count + (code.split(op).length - 1), 0)
+    const keywordCount = keywords.reduce((count, kw) => count + (code.split(kw).length - 1), 0)
+
     const totalOperators = operatorCount + keywordCount
     const uniqueOperators = new Set([...operators, ...keywords]).size
-    
+
     // 简化的计算
     const volume = totalOperators * Math.log2(uniqueOperators || 1)
     const difficulty = (uniqueOperators / 2) * (totalOperators / (uniqueOperators || 1))
@@ -170,7 +220,7 @@ export class CodeParser {
    */
   detectIssues(code: string): CodeIssue[] {
     const issues: CodeIssue[] = []
-    
+
     switch (this.language) {
       case ProgrammingLanguage.JAVASCRIPT:
       case ProgrammingLanguage.TYPESCRIPT:
@@ -193,7 +243,7 @@ export class CodeParser {
   private detectJavaScriptIssues(code: string): CodeIssue[] {
     const issues: CodeIssue[] = []
     const ast = this.parseCode(code)
-    
+
     traverse(ast, {
       // 检测未使用的变量
       VariableDeclarator(path) {
@@ -212,7 +262,7 @@ export class CodeParser {
           }
         }
       },
-      
+
       // 检测循环中的var声明
       ForStatement(path) {
         if (t.isVariableDeclaration(path.node.init) && path.node.init.kind === 'var') {
@@ -227,12 +277,14 @@ export class CodeParser {
           })
         }
       },
-      
+
       // 检测未处理的Promise
       CallExpression(path) {
-        if (t.isMemberExpression(path.node.callee) && 
-            t.isIdentifier(path.node.callee.property) && 
-            path.node.callee.property.name === 'then') {
+        if (
+          t.isMemberExpression(path.node.callee) &&
+          t.isIdentifier(path.node.callee.property) &&
+          path.node.callee.property.name === 'then'
+        ) {
           issues.push({
             id: 'unhandled-promise',
             severity: IssueSeverity.WARNING,
@@ -244,7 +296,7 @@ export class CodeParser {
           })
         }
       },
-      
+
       // 检测可能的内存泄漏
       FunctionDeclaration(path) {
         if (this.hasPotentialMemoryLeak(path.node)) {
@@ -310,11 +362,11 @@ export class CodeParser {
    */
   private calculatePythonMetrics(ast: any, code: string): CodeMetrics {
     const linesOfCode = code.split('\n').length
-    
+
     // 简化的Python复杂度计算
     const cyclomaticComplexity = (code.match(/if|elif|for|while|and|or/g) || []).length + 1
     const cognitiveComplexity = cyclomaticComplexity * 1.5
-    
+
     return {
       cyclomaticComplexity,
       cognitiveComplexity,
@@ -328,11 +380,11 @@ export class CodeParser {
    */
   private calculateJavaMetrics(ast: any, code: string): CodeMetrics {
     const linesOfCode = code.split('\n').length
-    
+
     // 简化的Java复杂度计算
     const cyclomaticComplexity = (code.match(/if|else|for|while|&&|\|\||case/g) || []).length + 1
     const cognitiveComplexity = cyclomaticComplexity * 1.3
-    
+
     return {
       cyclomaticComplexity,
       cognitiveComplexity,
@@ -346,7 +398,7 @@ export class CodeParser {
    */
   private calculateBasicMetrics(code: string): CodeMetrics {
     const linesOfCode = code.split('\n').length
-    
+
     return {
       cyclomaticComplexity: 1,
       cognitiveComplexity: 1,
@@ -360,7 +412,7 @@ export class CodeParser {
    */
   private detectPythonIssues(code: string): CodeIssue[] {
     const issues: CodeIssue[] = []
-    
+
     // 简化的Python代码问题检测
     if (code.includes('except:')) {
       issues.push({
@@ -373,7 +425,7 @@ export class CodeParser {
         confidence: 0.8
       })
     }
-    
+
     return issues
   }
 
@@ -382,7 +434,7 @@ export class CodeParser {
    */
   private detectJavaIssues(code: string): CodeIssue[] {
     const issues: CodeIssue[] = []
-    
+
     // 简化的Java代码问题检测
     if (code.includes('Thread.sleep')) {
       issues.push({
@@ -395,7 +447,7 @@ export class CodeParser {
         confidence: 0.7
       })
     }
-    
+
     return issues
   }
 }
@@ -413,7 +465,7 @@ export class CodeParserFactory {
    */
   static detectLanguage(filename: string): ProgrammingLanguage {
     const ext = filename.toLowerCase().split('.').pop()
-    
+
     switch (ext) {
       case 'js':
         return ProgrammingLanguage.JAVASCRIPT

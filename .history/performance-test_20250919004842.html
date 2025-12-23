@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathFormula 性能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .performance-metrics {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MathFormula 组件性能测试</h1>
+        
+        <div class="performance-metrics">
+            <h3>性能指标</h3>
+            <div class="metric">
+                <span>渲染时间:</span>
+                <span id="renderTime">-</span>
+            </div>
+            <div class="metric">
+                <span>内存使用:</span>
+                <span id="memoryUsage">-</span>
+            </div>
+            <div class="metric">
+                <span>组件实例数:</span>
+                <span id="instanceCount">-</span>
+            </div>
+            <div class="metric">
+                <span>FPS:</span>
+                <span id="fps">-</span>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>基础功能测试</h3>
+            <div id="basicTest"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>批量渲染测试 (100个公式)</h3>
+            <button onclick="runBatchTest()">运行批量测试</button>
+            <div id="batchTest"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>动态更新测试</h3>
+            <button onclick="runDynamicTest()">运行动态更新测试</button>
+            <div id="dynamicTest"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createApp } from 'vue'
+        import MathFormula from './src/components/MathFormula.vue'
+
+        // 性能监控工具
+        class PerformanceMonitor {
+            constructor() {
+                this.metrics = {
+                    renderTime: 0,
+                    memoryUsage: 0,
+                    instanceCount: 0,
+                    fps: 0
+                }
+                this.startTime = 0
+                this.frameCount = 0
+                this.lastFpsUpdate = 0
+            }
+
+            start() {
+                this.startTime = Date.now()
+                this.startFpsCounter()
+            }
+
+            stop() {
+                this.metrics.renderTime = Date.now() - this.startTime
+                this.metrics.memoryUsage = this.getMemoryUsage()
+                this.updateMetrics()
+            }
+
+            startFpsCounter() {
+                this.frameCount = 0
+                this.lastFpsUpdate = Date.now()
+                
+                const updateFps = () => {
+                    this.frameCount++
+                    const now = Date.now()
+                    if (now - this.lastFpsUpdate >= 1000) {
+                        this.metrics.fps = Math.round((this.frameCount * 1000) / (now - this.lastFpsUpdate))
+                        this.lastFpsUpdate = now
+                        this.frameCount = 0
+                        this.updateMetrics()
+                    }
+                    requestAnimationFrame(updateFps)
+                }
+                requestAnimationFrame(updateFps)
+            }
+
+            getMemoryUsage() {
+                // 近似内存使用估算
+                if (window.performance && window.performance.memory) {
+                    return (window.performance.memory.usedJSHeapSize / 1048576).toFixed(2)
+                }
+                // 备用估算方法
+                return (document.querySelectorAll('*').length * 0.05).toFixed(2)
+            }
+
+            updateMetrics() {
+                document.getElementById('renderTime').textContent = `${this.metrics.renderTime}ms`
+                document.getElementById('memoryUsage').textContent = `${this.metrics.memoryUsage} MB`
+                document.getElementById('instanceCount').textContent = this.metrics.instanceCount
+                document.getElementById('fps').textContent = this.metrics.fps
+            }
+
+            setInstanceCount(count) {
+                this.metrics.instanceCount = count
+                this.updateMetrics()
+            }
+        }
+
+        const perfMonitor = new PerformanceMonitor()
+
+        // 基础功能测试
+        function runBasicTest() {
+            perfMonitor.start()
+            
+            const basicApp = createApp({
+                components: { MathFormula },
+                template: `
+                    <div>
+                        <h4>内联公式:</h4>
+                        <MathFormula formula="E = mc^2" inline />
+                        <MathFormula formula="a^2 + b^2 = c^2" inline color="#ff6b6b" />
+                        
+                        <h4>块级公式:</h4>
+                        <MathFormula formula="\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}" />
+                        <MathFormula formula="\\frac{1}{\\sqrt{2\\pi\\sigma^2}} e^{-\\frac{(x-\\mu)^2}{2\\sigma^2}}" size="large" />
+                        
+                        <h4>错误处理:</h4>
+                        <MathFormula formula="" />
+                        <MathFormula formula="invalid { latex }" />
+                    </div>
+                `
+            })
+
+            basicApp.mount('#basicTest')
+            perfMonitor.setInstanceCount(6)
+            perfMonitor.stop()
+        }
+
+        // 立即运行基础测试
+        runBasicTest()
+
+        // 批量测试函数
+        window.runBatchTest = async function() {
+            const batchTestEl = document.getElementById('batchTest')
+            batchTestEl.innerHTML = '<div>测试中...</div>'
+            
+            const formulas = Array.from({length: 100}, (_, i) => 
+                `f(x) = x^${i + 1} + \\sqrt{${i + 2}}`
+            )
+
+            perfMonitor.start()
+            
+            const batchApp = createApp({
+                components: { MathFormula },
+                data() {
+                    return { formulas }
+                },
+                template: `
+                    <div>
+                        <div v-for="(formula, index) in formulas" :key="index">
+                            <MathFormula :formula="formula" inline />
+                        </div>
+                    </div>
+                `
+            })
+
+            batchApp.mount('#batchTest')
+            
+            perfMonitor.setInstanceCount(100)
+            perfMonitor.stop()
+        }
+
+        // 动态更新测试
+        window.runDynamicTest = function() {
+            const dynamicTestEl = document.getElementById('dynamicTest')
+            dynamicTestEl.innerHTML = '<div>准备动态更新...</div>'
+            
+            perfMonitor.start()
+            
+            const dynamicApp = createApp({
+                components: { MathFormula },
+                data() {
+                    return {
+                        currentFormula: 'E = mc^2',
+                        updateCount: 0
+                    }
+                },
+                methods: {
+                    updateFormula() {
+                        this.updateCount++
+                        this.currentFormula = `f(x) = x^${this.updateCount} + \\sin(x)`
+                        // 每次更新后重新计算性能指标
+                        setTimeout(() => {
+                            perfMonitor.setInstanceCount(1)
+                            perfMonitor.updateMetrics()
+                        }, 100)
+                    }
+                },
+                template: `
+                    <div>
+                        <MathFormula :formula="currentFormula" />
+                        <button @click="updateFormula">更新公式 ({{ updateCount }})</button>
+                    </div>
+                `
+            })
+
+            dynamicApp.mount('#dynamicTest')
+            perfMonitor.setInstanceCount(1)
+            perfMonitor.stop()
+        }
+    </script>
+</body>
+</html>

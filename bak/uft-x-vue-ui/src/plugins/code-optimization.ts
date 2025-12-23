@@ -61,7 +61,10 @@ export const CodeOptimizationPlugin: Plugin<CodeOptimizationPluginOptions> = {
     app.config.globalProperties.$codeOptimizerRoutes = routes
 
     // 全局工具函数
-    app.config.globalProperties.$optimizeCode = async (code: string, language: string = 'javascript') => {
+    app.config.globalProperties.$optimizeCode = async (
+      code: string,
+      language: string = 'javascript'
+    ) => {
       store.setInputCode(code)
       store.setSelectedLanguage(language as any)
       await store.analyzeAndOptimize()

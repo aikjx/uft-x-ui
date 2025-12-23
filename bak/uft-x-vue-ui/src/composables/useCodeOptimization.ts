@@ -36,22 +36,19 @@ export function useCodeOptimization(options: CodeOptimizationOptions = {}) {
   const error = ref<Error | null>(null)
 
   // 响应式计算属性
-  const canAnalyze = computed(() => 
-    store.hasCode && 
-    !store.isAnalyzing && 
-    !store.isOptimizing &&
-    store.inputCode.length <= maxCodeLength
+  const canAnalyze = computed(
+    () =>
+      store.hasCode &&
+      !store.isAnalyzing &&
+      !store.isOptimizing &&
+      store.inputCode.length <= maxCodeLength
   )
 
-  const canOptimize = computed(() => 
-    store.analysisResult !== null &&
-    !store.isAnalyzing && 
-    !store.isOptimizing
+  const canOptimize = computed(
+    () => store.analysisResult !== null && !store.isAnalyzing && !store.isOptimizing
   )
 
-  const codeTooLong = computed(() => 
-    store.inputCode.length > maxCodeLength
-  )
+  const codeTooLong = computed(() => store.inputCode.length > maxCodeLength)
 
   const performanceScore = computed(() => {
     const metrics = store.complexityMetrics
@@ -59,16 +56,16 @@ export function useCodeOptimization(options: CodeOptimizationOptions = {}) {
 
     // 计算性能分数 (0-100)
     let score = 100
-    
+
     // 循环复杂度影响
     score -= Math.min(metrics.cyclomaticComplexity * 2, 30)
-    
+
     // 认知复杂度影响
     score -= Math.min(metrics.cognitiveComplexity * 1.5, 25)
-    
+
     // 可维护性指数影响
     score -= Math.max(100 - metrics.maintainabilityIndex, 0)
-    
+
     return Math.max(0, Math.round(score))
   })
 
@@ -77,15 +74,15 @@ export function useCodeOptimization(options: CodeOptimizationOptions = {}) {
     if (!metrics) return 0
 
     let potential = 0
-    
+
     // 高复杂度代码有更大优化潜力
     if (metrics.cyclomaticComplexity > 10) potential += 20
     if (metrics.cognitiveComplexity > 15) potential += 15
     if (metrics.maintainabilityIndex < 70) potential += 25
-    
+
     // 代码长度因素
     if (store.inputCode.length > 1000) potential += 10
-    
+
     return Math.min(100, potential)
   })
 
@@ -93,11 +90,11 @@ export function useCodeOptimization(options: CodeOptimizationOptions = {}) {
   let analysisTimeout: NodeJS.Timeout | null = null
   const debouncedAnalyze = () => {
     if (!enableAutoAnalysis) return
-    
+
     if (analysisTimeout) {
       clearTimeout(analysisTimeout)
     }
-    
+
     analysisTimeout = setTimeout(async () => {
       if (canAnalyze.value) {
         await performAnalysis()
@@ -112,11 +109,10 @@ export function useCodeOptimization(options: CodeOptimizationOptions = {}) {
     try {
       error.value = null
       const startTime = performance.now()
-      
+
       await store.analyzeCode()
-      
+
       lastAnalysisTime.value = performance.now() - startTime
-      
     } catch (err) {
       console.error('代码分析失败:', err)
       error.value = err as Error
@@ -130,7 +126,6 @@ export function useCodeOptimization(options: CodeOptimizationOptions = {}) {
     try {
       error.value = null
       await store.optimizeCode()
-      
     } catch (err) {
       console.error('代码优化失败:', err)
       error.value = err as Error
@@ -144,7 +139,6 @@ export function useCodeOptimization(options: CodeOptimizationOptions = {}) {
     try {
       error.value = null
       await store.analyzeAndOptimize()
-      
     } catch (err) {
       console.error('全流程优化失败:', err)
       error.value = err as Error
@@ -154,7 +148,7 @@ export function useCodeOptimization(options: CodeOptimizationOptions = {}) {
   // 更新输入代码
   function updateCode(code: string) {
     store.setInputCode(code)
-    
+
     // 触发防抖分析
     if (enableAutoAnalysis) {
       debouncedAnalyze()
@@ -164,7 +158,7 @@ export function useCodeOptimization(options: CodeOptimizationOptions = {}) {
   // 更新语言
   function updateLanguage(language: ProgrammingLanguage) {
     store.setSelectedLanguage(language)
-    
+
     // 如果启用自动分析，重新分析
     if (enableAutoAnalysis && store.hasCode) {
       debouncedAnalyze()
@@ -174,7 +168,7 @@ export function useCodeOptimization(options: CodeOptimizationOptions = {}) {
   // 更新优化级别
   function updateOptimizationLevel(level: OptimizationLevel) {
     store.setOptimizationLevel(level)
-    
+
     // 如果有优化结果，重新优化
     if (store.analysisResult) {
       performOptimization()
@@ -187,30 +181,30 @@ export function useCodeOptimization(options: CodeOptimizationOptions = {}) {
     if (!result) return []
 
     const suggestions: string[] = []
-    
+
     // 基于复杂度的建议
     if (result.complexityMetrics.cyclomaticComplexity > 10) {
       suggestions.push('考虑将复杂函数拆分为更小的函数以降低循环复杂度')
     }
-    
+
     if (result.complexityMetrics.cognitiveComplexity > 15) {
       suggestions.push('简化控制流结构，减少嵌套层级以提高代码可读性')
     }
-    
+
     // 基于性能指标的建议
     if (result.performanceMetrics.bottlenecks.length > 0) {
       suggestions.push('检测到性能瓶颈，建议优化相关算法或数据结构')
     }
-    
+
     // 基于问题的建议
     if (result.issues.some(issue => issue.severity === 'error')) {
       suggestions.push('存在严重错误，需要优先修复')
     }
-    
+
     if (result.issues.some(issue => issue.type === 'performance')) {
       suggestions.push('存在性能问题，建议进行代码重构')
     }
-    
+
     return suggestions
   }
 
@@ -222,13 +216,13 @@ export function useCodeOptimization(options: CodeOptimizationOptions = {}) {
     switch (format) {
       case 'json':
         return JSON.stringify(data, null, 2)
-        
+
       case 'html':
         return generateHTMLReport(data)
-        
+
       case 'markdown':
         return generateMarkdownReport(data)
-        
+
       default:
         return data
     }
@@ -308,16 +302,18 @@ ${data.optimizedCode}
 
 ## 修复的问题
 
-${data.report.fixes.length > 0 ? 
-  data.report.fixes.map((fix: any) => `- ✅ ${fix.description}`).join('\n') : 
-  '无问题修复'
+${
+  data.report.fixes.length > 0
+    ? data.report.fixes.map((fix: any) => `- ✅ ${fix.description}`).join('\n')
+    : '无问题修复'
 }
 
 ## 警告信息
 
-${data.report.warnings.length > 0 ? 
-  data.report.warnings.map((warning: any) => `- ⚠️ ${warning.message}`).join('\n') : 
-  '无警告'
+${
+  data.report.warnings.length > 0
+    ? data.report.warnings.map((warning: any) => `- ⚠️ ${warning.message}`).join('\n')
+    : '无警告'
 }`
   }
 
@@ -336,14 +332,14 @@ ${data.report.warnings.length > 0 ?
     isInitializing,
     error,
     lastAnalysisTime,
-    
+
     // 计算属性
     canAnalyze,
     canOptimize,
     codeTooLong,
     performanceScore,
     optimizationPotential,
-    
+
     // 方法
     performAnalysis,
     performOptimization,

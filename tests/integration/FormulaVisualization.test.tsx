@@ -6,7 +6,7 @@ import FormulaVisualizationPage from '@/pages/FormulaVisualizationPage'
 describe('FormulaVisualizationPage - 公式可视化集成测试', () => {
   it('应该完整渲染公式可视化页面', () => {
     render(<FormulaVisualizationPage />)
-    
+
     // 验证页面标题
     expect(screen.getByText(/统一场论核心公式/)).toBeInTheDocument()
   })

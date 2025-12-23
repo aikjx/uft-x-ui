@@ -12,50 +12,56 @@ describe('AdvancedPerformancePanel - 高级性能控制面板', () => {
   })
 
   it('应该正确渲染组件结构', () => {
-    render(<AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />)
-    
+    render(
+      <AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />
+    )
+
     // 验证面板标题
     expect(screen.getByText('高级性能控制面板')).toBeInTheDocument()
-    
+
     // 验证性能概览部分
     expect(screen.getByText('性能概览')).toBeInTheDocument()
     expect(screen.getByText('当前 FPS')).toBeInTheDocument()
     expect(screen.getByText('内存使用')).toBeInTheDocument()
     expect(screen.getByText('绘制调用')).toBeInTheDocument()
     expect(screen.getByText('场景复杂度')).toBeInTheDocument()
-    
+
     // 验证性能模式部分
     expect(screen.getByText('性能模式')).toBeInTheDocument()
-    
+
     // 验证高级设置部分
     expect(screen.getByText('高级设置')).toBeInTheDocument()
     expect(screen.getByText('像素比率')).toBeInTheDocument()
     expect(screen.getByText('阴影质量')).toBeInTheDocument()
     expect(screen.getByText('渲染距离')).toBeInTheDocument()
- expect(screen.getByText('反锯齿')).toBeInTheDocument()
-    expect(screen.getByText('动态帧跳过')).toBeInTheDocument()     
-    expect(screen.getByText((content) => content.includes('最大FPS'))).toBeInTheDocument()
-    
+    expect(screen.getByText('反锯齿')).toBeInTheDocument()
+    expect(screen.getByText('动态帧跳过')).toBeInTheDocument()
+    expect(screen.getByText(content => content.includes('最大FPS'))).toBeInTheDocument()
+
     // 验证性能测试部分
     expect(screen.getByText('性能测试')).toBeInTheDocument()
     expect(screen.getByText('运行性能测试')).toBeInTheDocument()
   })
 
   it('应该正确处理关闭按钮点击', () => {
-    render(<AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />)
-    
+    render(
+      <AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />
+    )
+
     const closeButton = screen.getByText('✕')
     fireEvent.click(closeButton)
-    
+
     expect(mockOnClose).toHaveBeenCalledTimes(1)
   })
 
   it('应该正确处理性能模式切换', () => {
-    render(<AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />)
-    
+    render(
+      <AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />
+    )
+
     const performanceButton = screen.getByText('性能')
     fireEvent.click(performanceButton)
-    
+
     expect(mockOnSettingsChanged).toHaveBeenCalledWith({
       performanceMode: 'low',
       autoMode: false
@@ -63,15 +69,17 @@ describe('AdvancedPerformancePanel - 高级性能控制面板', () => {
   })
 
   it('应该正确处理自动性能优化开关', async () => {
-    render(<AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />)
-    
+    render(
+      <AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />
+    )
+
     // 直接获取所有复选框，然后找到正确的那个
     const checkboxes = screen.getAllByRole('checkbox')
     expect(checkboxes.length).toBeGreaterThan(0)
-    
+
     // 点击第一个复选框（假设是自动性能优化开关）
     fireEvent.click(checkboxes[0])
-    
+
     // 等待 onSettingsChanged 被调用
     await waitFor(() => {
       expect(mockOnSettingsChanged).toHaveBeenCalled()
@@ -79,67 +87,75 @@ describe('AdvancedPerformancePanel - 高级性能控制面板', () => {
   })
 
   it('应该正确处理高级设置变更', () => {
-    render(<AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />)
-    
+    render(
+      <AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />
+    )
+
     // 测试像素比率变更
     const pixelRatioContainer = screen.getByText('像素比率').closest('.mb-3')
     expect(pixelRatioContainer).toBeInTheDocument()
-    
+
     const pixelRatioSelect = pixelRatioContainer?.querySelector('select')
     expect(pixelRatioSelect).toBeInTheDocument()
-    
+
     fireEvent.change(pixelRatioSelect!, { target: { value: '1.5' } })
-    
+
     // 测试阴影质量变更
     const shadowQualityContainer = screen.getByText('阴影质量').closest('.mb-3')
     expect(shadowQualityContainer).toBeInTheDocument()
-    
+
     const shadowQualitySelect = shadowQualityContainer?.querySelector('select')
     expect(shadowQualitySelect).toBeInTheDocument()
-    
+
     fireEvent.change(shadowQualitySelect!, { target: { value: 'high' } })
-    
+
     // 测试渲染距离变更
     const renderDistanceContainer = screen.getByText('渲染距离').closest('.mb-3')
     expect(renderDistanceContainer).toBeInTheDocument()
-    
+
     const renderDistanceSelect = renderDistanceContainer?.querySelector('select')
     expect(renderDistanceSelect).toBeInTheDocument()
-    
+
     fireEvent.change(renderDistanceSelect!, { target: { value: 'high' } })
   })
 
   it('应该正确处理性能测试按钮点击', () => {
-    render(<AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />)
-    
+    render(
+      <AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />
+    )
+
     const runTestButton = screen.getByText('运行性能测试')
     fireEvent.click(runTestButton)
-    
+
     // 验证按钮文本变为 "测试中..."
     expect(screen.getByText('测试中...')).toBeInTheDocument()
   })
 
   it('应该正确处理导出报告按钮点击', async () => {
-    render(<AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />)
-    
+    render(
+      <AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />
+    )
+
     const exportButton = screen.getByText('导出报告')
     fireEvent.click(exportButton)
-    
+
     // 验证按钮点击后没有抛出错误
     expect(exportButton).toBeInTheDocument()
   })
 
   it('应该正确处理重置设置按钮点击', async () => {
-    render(<AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />)
-    
+    render(
+      <AdvancedPerformancePanel onClose={mockOnClose} onSettingsChanged={mockOnSettingsChanged} />
+    )
+
     const resetButton = screen.getByText('重置设置')
     fireEvent.click(resetButton)
-    
+
     // 等待 onSettingsChanged 被调用
     await waitFor(() => {
       expect(mockOnSettingsChanged).toHaveBeenCalled()
     })
-    
+
     // 验证 onSettingsChanged 被调用，且传递了默认设置
     expect(mockOnSettingsChanged.mock.calls[0][0].performanceMode).toBe('auto')
     expect(mockOnSettingsChanged.mock.calls[0][0].autoMode).toBe(true)

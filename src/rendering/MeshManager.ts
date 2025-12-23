@@ -1,33 +1,33 @@
-import * as THREE from 'three';
-import { SceneGraph } from './SceneGraph';
+import * as THREE from 'three'
+import { SceneGraph } from './SceneGraph'
 
 /**
  * 网格配置
  */
 export interface MeshConfig {
-  geometry: THREE.BufferGeometry | THREE.BufferGeometry;
-  material: THREE.Material | THREE.Material[];
-  position?: THREE.Vector3;
-  rotation?: THREE.Euler;
-  scale?: THREE.Vector3;
-  castShadow?: boolean;
-  receiveShadow?: boolean;
-  visible?: boolean;
+  geometry: THREE.BufferGeometry | THREE.BufferGeometry
+  material: THREE.Material | THREE.Material[]
+  position?: THREE.Vector3
+  rotation?: THREE.Euler
+  scale?: THREE.Vector3
+  castShadow?: boolean
+  receiveShadow?: boolean
+  visible?: boolean
 }
 
 /**
  * 网格管理器
  */
 export class MeshManager {
-  private meshes: Map<string, THREE.Mesh | THREE.Points | THREE.Line> = new Map();
-  private sceneGraph: SceneGraph;
+  private meshes: Map<string, THREE.Mesh | THREE.Points | THREE.Line> = new Map()
+  private sceneGraph: SceneGraph
 
   /**
    * 构造函数
    * @param sceneGraph 场景图
    */
   constructor(sceneGraph: SceneGraph) {
-    this.sceneGraph = sceneGraph;
+    this.sceneGraph = sceneGraph
   }
 
   /**
@@ -36,28 +36,35 @@ export class MeshManager {
    * @param config 网格配置
    * @param parentId 父节点ID
    */
-  createMesh(id: string, config: MeshConfig, parentId?: string): THREE.Mesh | THREE.Points | THREE.Line {
-    let mesh: THREE.Mesh | THREE.Points | THREE.Line;
+  createMesh(
+    id: string,
+    config: MeshConfig,
+    parentId?: string
+  ): THREE.Mesh | THREE.Points | THREE.Line {
+    let mesh: THREE.Mesh | THREE.Points | THREE.Line
 
     // 根据材质类型创建不同类型的网格
     if (config.material instanceof THREE.PointsMaterial) {
-      mesh = new THREE.Points(config.geometry, config.material);
-    } else if (config.material instanceof THREE.LineBasicMaterial || config.material instanceof THREE.LineDashedMaterial) {
-      mesh = new THREE.Line(config.geometry, config.material);
+      mesh = new THREE.Points(config.geometry, config.material)
+    } else if (
+      config.material instanceof THREE.LineBasicMaterial ||
+      config.material instanceof THREE.LineDashedMaterial
+    ) {
+      mesh = new THREE.Line(config.geometry, config.material)
     } else {
-      mesh = new THREE.Mesh(config.geometry, config.material);
+      mesh = new THREE.Mesh(config.geometry, config.material)
     }
 
     // 设置网格属性
-    this.setMeshProperties(mesh, config);
+    this.setMeshProperties(mesh, config)
 
     // 添加到场景图
-    this.sceneGraph.addNode(id, mesh, parentId);
+    this.sceneGraph.addNode(id, mesh, parentId)
 
     // 保存网格
-    this.meshes.set(id, mesh);
+    this.meshes.set(id, mesh)
 
-    return mesh;
+    return mesh
   }
 
   /**
@@ -65,30 +72,33 @@ export class MeshManager {
    * @param mesh 网格
    * @param config 网格配置
    */
-  private setMeshProperties(mesh: THREE.Mesh | THREE.Points | THREE.Line, config: MeshConfig): void {
+  private setMeshProperties(
+    mesh: THREE.Mesh | THREE.Points | THREE.Line,
+    config: MeshConfig
+  ): void {
     // 设置位置
     if (config.position) {
-      mesh.position.copy(config.position);
+      mesh.position.copy(config.position)
     }
 
     // 设置旋转
     if (config.rotation) {
-      mesh.rotation.copy(config.rotation);
+      mesh.rotation.copy(config.rotation)
     }
 
     // 设置缩放
     if (config.scale) {
-      mesh.scale.copy(config.scale);
+      mesh.scale.copy(config.scale)
     }
 
     // 设置阴影属性
     if ('castShadow' in mesh) {
-      mesh.castShadow = config.castShadow !== undefined ? config.castShadow : false;
-      mesh.receiveShadow = config.receiveShadow !== undefined ? config.receiveShadow : false;
+      mesh.castShadow = config.castShadow !== undefined ? config.castShadow : false
+      mesh.receiveShadow = config.receiveShadow !== undefined ? config.receiveShadow : false
     }
 
     // 设置可见性
-    mesh.visible = config.visible !== undefined ? config.visible : true;
+    mesh.visible = config.visible !== undefined ? config.visible : true
   }
 
   /**
@@ -96,7 +106,7 @@ export class MeshManager {
    * @param id 网格ID
    */
   getMesh(id: string): THREE.Mesh | THREE.Points | THREE.Line | undefined {
-    return this.meshes.get(id);
+    return this.meshes.get(id)
   }
 
   /**
@@ -105,50 +115,50 @@ export class MeshManager {
    * @param config 网格配置
    */
   updateMesh(id: string, config: Partial<MeshConfig>): void {
-    const mesh = this.meshes.get(id);
-    if (!mesh) return;
+    const mesh = this.meshes.get(id)
+    if (!mesh) return
 
     // 更新位置
     if (config.position) {
-      mesh.position.copy(config.position);
+      mesh.position.copy(config.position)
     }
 
     // 更新旋转
     if (config.rotation) {
-      mesh.rotation.copy(config.rotation);
+      mesh.rotation.copy(config.rotation)
     }
 
     // 更新缩放
     if (config.scale) {
-      mesh.scale.copy(config.scale);
+      mesh.scale.copy(config.scale)
     }
 
     // 更新可见性
     if (config.visible !== undefined) {
-      mesh.visible = config.visible;
+      mesh.visible = config.visible
     }
 
     // 更新材质
     if (config.material) {
       if ('material' in mesh) {
-        mesh.material = config.material;
+        mesh.material = config.material
       }
     }
 
     // 更新几何体
     if (config.geometry) {
       if ('geometry' in mesh) {
-        mesh.geometry = config.geometry;
+        mesh.geometry = config.geometry
       }
     }
 
     // 更新阴影属性
     if ('castShadow' in mesh) {
       if (config.castShadow !== undefined) {
-        mesh.castShadow = config.castShadow;
+        mesh.castShadow = config.castShadow
       }
       if (config.receiveShadow !== undefined) {
-        mesh.receiveShadow = config.receiveShadow;
+        mesh.receiveShadow = config.receiveShadow
       }
     }
   }
@@ -158,16 +168,16 @@ export class MeshManager {
    * @param id 网格ID
    */
   removeMesh(id: string): void {
-    const mesh = this.meshes.get(id);
+    const mesh = this.meshes.get(id)
     if (mesh) {
       // 从场景图移除
-      this.sceneGraph.removeNode(id);
+      this.sceneGraph.removeNode(id)
 
       // 清理资源
-      this.disposeMesh(mesh);
+      this.disposeMesh(mesh)
 
       // 从映射中移除
-      this.meshes.delete(id);
+      this.meshes.delete(id)
     }
   }
 
@@ -178,16 +188,16 @@ export class MeshManager {
   private disposeMesh(mesh: THREE.Mesh | THREE.Points | THREE.Line): void {
     // 清理几何体
     if ('geometry' in mesh) {
-      mesh.geometry.dispose();
+      mesh.geometry.dispose()
     }
 
     // 清理材质
     if ('material' in mesh) {
-      const material = mesh.material;
+      const material = mesh.material
       if (Array.isArray(material)) {
-        material.forEach(m => m.dispose());
+        material.forEach(m => m.dispose())
       } else {
-        material.dispose();
+        material.dispose()
       }
     }
   }
@@ -199,7 +209,7 @@ export class MeshManager {
    */
   batchCreateMeshes(meshesConfig: Record<string, MeshConfig>, parentId?: string): void {
     for (const [id, config] of Object.entries(meshesConfig)) {
-      this.createMesh(id, config, parentId);
+      this.createMesh(id, config, parentId)
     }
   }
 
@@ -209,22 +219,22 @@ export class MeshManager {
    */
   batchRemoveMeshes(ids: string[]): void {
     ids.forEach(id => {
-      this.removeMesh(id);
-    });
+      this.removeMesh(id)
+    })
   }
 
   /**
    * 获取所有网格
    */
   getAllMeshes(): Map<string, THREE.Mesh | THREE.Points | THREE.Line> {
-    return new Map(this.meshes);
+    return new Map(this.meshes)
   }
 
   /**
    * 获取网格数量
    */
   getMeshCount(): number {
-    return this.meshes.size;
+    return this.meshes.size
   }
 
   /**
@@ -232,9 +242,9 @@ export class MeshManager {
    */
   dispose(): void {
     this.meshes.forEach(mesh => {
-      this.disposeMesh(mesh);
-    });
-    this.meshes.clear();
+      this.disposeMesh(mesh)
+    })
+    this.meshes.clear()
   }
 
   /**
@@ -242,8 +252,8 @@ export class MeshManager {
    */
   showAllMeshes(): void {
     this.meshes.forEach(mesh => {
-      mesh.visible = true;
-    });
+      mesh.visible = true
+    })
   }
 
   /**
@@ -251,8 +261,8 @@ export class MeshManager {
    */
   hideAllMeshes(): void {
     this.meshes.forEach(mesh => {
-      mesh.visible = false;
-    });
+      mesh.visible = false
+    })
   }
 
   /**
@@ -260,9 +270,9 @@ export class MeshManager {
    * @param id 网格ID
    */
   showMesh(id: string): void {
-    const mesh = this.meshes.get(id);
+    const mesh = this.meshes.get(id)
     if (mesh) {
-      mesh.visible = true;
+      mesh.visible = true
     }
   }
 
@@ -271,9 +281,9 @@ export class MeshManager {
    * @param id 网格ID
    */
   hideMesh(id: string): void {
-    const mesh = this.meshes.get(id);
+    const mesh = this.meshes.get(id)
     if (mesh) {
-      mesh.visible = false;
+      mesh.visible = false
     }
   }
 
@@ -283,9 +293,9 @@ export class MeshManager {
    * @param material 材质
    */
   updateMeshMaterial(id: string, material: THREE.Material | THREE.Material[]): void {
-    const mesh = this.meshes.get(id);
+    const mesh = this.meshes.get(id)
     if (mesh && 'material' in mesh) {
-      mesh.material = material;
+      mesh.material = material
     }
   }
 
@@ -295,11 +305,11 @@ export class MeshManager {
    * @param geometry 几何体
    */
   updateMeshGeometry(id: string, geometry: THREE.BufferGeometry | THREE.BufferGeometry): void {
-    const mesh = this.meshes.get(id);
+    const mesh = this.meshes.get(id)
     if (mesh && 'geometry' in mesh) {
       // 先清理旧几何体
-      mesh.geometry.dispose();
-      mesh.geometry = geometry;
+      mesh.geometry.dispose()
+      mesh.geometry = geometry
     }
   }
 
@@ -309,9 +319,9 @@ export class MeshManager {
    * @param position 位置
    */
   setMeshPosition(id: string, position: THREE.Vector3): void {
-    const mesh = this.meshes.get(id);
+    const mesh = this.meshes.get(id)
     if (mesh) {
-      mesh.position.copy(position);
+      mesh.position.copy(position)
     }
   }
 
@@ -321,9 +331,9 @@ export class MeshManager {
    * @param rotation 旋转
    */
   setMeshRotation(id: string, rotation: THREE.Euler): void {
-    const mesh = this.meshes.get(id);
+    const mesh = this.meshes.get(id)
     if (mesh) {
-      mesh.rotation.copy(rotation);
+      mesh.rotation.copy(rotation)
     }
   }
 
@@ -333,9 +343,9 @@ export class MeshManager {
    * @param scale 缩放
    */
   setMeshScale(id: string, scale: THREE.Vector3): void {
-    const mesh = this.meshes.get(id);
+    const mesh = this.meshes.get(id)
     if (mesh) {
-      mesh.scale.copy(scale);
+      mesh.scale.copy(scale)
     }
   }
 }

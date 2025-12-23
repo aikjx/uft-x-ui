@@ -10,7 +10,7 @@ describe('MathJax Utils', () => {
     const calculateFPS = (deltaTime: number) => {
       return 1 / deltaTime
     }
-    
+
     expect(calculateFPS(0.016)).toBeCloseTo(62.5, 1)
     expect(calculateFPS(0.033)).toBeCloseTo(30.3, 1)
   })
@@ -19,11 +19,11 @@ describe('MathJax Utils', () => {
     const isMathJaxReady = (mathJax: any) => {
       return Boolean(mathJax && mathJax.typesetPromise !== undefined)
     }
-    
+
     const mockMathJax = {
       typesetPromise: () => Promise.resolve()
     }
-    
+
     expect(isMathJaxReady(mockMathJax)).toBe(true)
     expect(isMathJaxReady(null)).toBe(false)
     expect(isMathJaxReady({})).toBe(false)
@@ -34,7 +34,7 @@ describe('MathJax Utils', () => {
       if (!mathJax || !mathJax.typesetPromise) {
         throw new Error('MathJax 未加载')
       }
-      
+
       try {
         await mathJax.typesetPromise([element])
         return true
@@ -42,11 +42,11 @@ describe('MathJax Utils', () => {
         throw new Error('渲染失败')
       }
     }
-    
+
     const mockMathJax = {
       typesetPromise: vi.fn().mockRejectedValue(new Error('渲染错误'))
     }
-    
+
     await expect(renderMathJax(mockMathJax, {})).rejects.toThrow('渲染失败')
     await expect(renderMathJax(null, {})).rejects.toThrow('MathJax 未加载')
   })
@@ -55,7 +55,7 @@ describe('MathJax Utils', () => {
     const formatLatex = (latex: string) => {
       return `$${latex}$`
     }
-    
+
     expect(formatLatex('E = mc^2')).toBe('$E = mc^2$')
     expect(formatLatex('\\frac{1}{2}')).toBe('$\\frac{1}{2}$')
   })

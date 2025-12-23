@@ -1,6 +1,6 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import SpiralDivergenceVisualization from '../../archived/可视化/spiral_divergence_3d';
+import React from 'react'
+import { motion } from 'framer-motion'
+import SpiralDivergenceVisualization from '../../archived/可视化/spiral_divergence_3d'
 
 const SpiralDivergencePage: React.FC = () => {
   return (
@@ -10,7 +10,7 @@ const SpiralDivergencePage: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        <h1 className="mb-6 text-4xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-yellow-300 to-cyan-400">
+        <h1 className="mb-6 bg-gradient-to-r from-orange-400 via-yellow-300 to-cyan-400 bg-clip-text text-center text-4xl font-bold text-transparent">
           物体12方向圆柱状螺旋发散运动
         </h1>
         <div className="mb-8 text-center text-blue-300/90">
@@ -18,11 +18,11 @@ const SpiralDivergencePage: React.FC = () => {
         </div>
       </motion.div>
 
-      <div className="relative w-full h-[80vh]">
+      <div className="relative h-[80vh] w-full">
         <SpiralDivergenceVisualization />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default SpiralDivergencePage;
+export default SpiralDivergencePage

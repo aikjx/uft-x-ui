@@ -13,23 +13,30 @@
       <!-- 搜索和筛选 -->
       <div class="search-filter-section">
         <div class="search-bar">
-          <input 
-            type="text" 
-            v-model="searchQuery" 
+          <input
+            type="text"
+            v-model="searchQuery"
             placeholder="搜索知识库内容..."
             class="search-input"
           />
           <button class="search-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
           </button>
         </div>
-        
+
         <div class="filter-tabs">
-          <button 
-            v-for="category in categories" 
+          <button
+            v-for="category in categories"
             :key="category.value"
             :class="['filter-tab', { active: selectedCategory === category.value }]"
             @click="selectedCategory = category.value"
@@ -47,8 +54,8 @@
             <h3 class="sidebar-title">知识分类</h3>
             <nav class="category-nav">
               <ul class="category-list">
-                <li 
-                  v-for="item in navigationItems" 
+                <li
+                  v-for="item in navigationItems"
                   :key="item.id"
                   :class="['category-item', { active: activeSection === item.id }]"
                   @click="scrollToSection(item.id)"
@@ -62,11 +69,11 @@
           <div class="sidebar-section">
             <h3 class="sidebar-title">推荐资源</h3>
             <div class="resource-list">
-              <a 
-                v-for="resource in recommendedResources" 
+              <a
+                v-for="resource in recommendedResources"
                 :key="resource.id"
-                :href="resource.url" 
-                target="_blank" 
+                :href="resource.url"
+                target="_blank"
                 class="resource-item"
               >
                 <div class="resource-icon">{{ resource.icon }}</div>
@@ -426,13 +433,15 @@
         <h2 class="section-title">学术讨论</h2>
         <div class="discussion-content">
           <div class="discussion-header">
-            <p class="discussion-description">
-              参与统一场论相关话题的讨论，分享您的见解和问题。
-            </p>
+            <p class="discussion-description">参与统一场论相关话题的讨论，分享您的见解和问题。</p>
             <button class="start-discussion-btn">发起新讨论</button>
           </div>
           <div class="recent-discussions">
-            <div v-for="discussion in recentDiscussions" :key="discussion.id" class="discussion-item">
+            <div
+              v-for="discussion in recentDiscussions"
+              :key="discussion.id"
+              class="discussion-item"
+            >
               <h3 class="discussion-title">{{ discussion.title }}</h3>
               <p class="discussion-excerpt">{{ discussion.excerpt }}</p>
               <div class="discussion-meta">
@@ -449,907 +458,909 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-// import MathJax from '../components/MathJax.vue'
+  import { ref, onMounted } from 'vue'
+  // import MathJax from '../components/MathJax.vue'
 
-// 响应式数据
-const searchQuery = ref('')
-const selectedCategory = ref('all')
-const activeSection = ref('core-concepts')
+  // 响应式数据
+  const searchQuery = ref('')
+  const selectedCategory = ref('all')
+  const activeSection = ref('core-concepts')
 
-// 分类
-const categories = [
-  { value: 'all', label: '全部' },
-  { value: 'concepts', label: '概念' },
-  { value: 'history', label: '历史' },
-  { value: 'mathematics', label: '数学' },
-  { value: 'theories', label: '理论' },
-  { value: 'experiments', label: '实验' }
-]
+  // 分类
+  const categories = [
+    { value: 'all', label: '全部' },
+    { value: 'concepts', label: '概念' },
+    { value: 'history', label: '历史' },
+    { value: 'mathematics', label: '数学' },
+    { value: 'theories', label: '理论' },
+    { value: 'experiments', label: '实验' }
+  ]
 
-// 导航项
-const navigationItems = [
-  { id: 'core-concepts', title: '核心概念' },
-  { id: 'history', title: '历史发展' },
-  { id: 'mathematical-foundation', title: '数学基础' },
-  { id: 'modern-theories', title: '现代理论' },
-  { id: 'experiments', title: '实验与观测' },
-  { id: 'future', title: '未来展望' }
-]
+  // 导航项
+  const navigationItems = [
+    { id: 'core-concepts', title: '核心概念' },
+    { id: 'history', title: '历史发展' },
+    { id: 'mathematical-foundation', title: '数学基础' },
+    { id: 'modern-theories', title: '现代理论' },
+    { id: 'experiments', title: '实验与观测' },
+    { id: 'future', title: '未来展望' }
+  ]
 
-// 推荐资源
-const recommendedResources = [
-  { id: 1, title: '广义相对论导论', type: '电子书', icon: '📚', url: '#' },
-  { id: 2, title: '统一场论讲座系列', type: '视频课程', icon: '🎓', url: '#' },
-  { id: 3, title: '弦理论最新进展', type: '研究论文', icon: '📄', url: '#' },
-  { id: 4, title: '量子引力模拟工具', type: '软件', icon: '💻', url: '#' }
-]
+  // 推荐资源
+  const recommendedResources = [
+    { id: 1, title: '广义相对论导论', type: '电子书', icon: '📚', url: '#' },
+    { id: 2, title: '统一场论讲座系列', type: '视频课程', icon: '🎓', url: '#' },
+    { id: 3, title: '弦理论最新进展', type: '研究论文', icon: '📄', url: '#' },
+    { id: 4, title: '量子引力模拟工具', type: '软件', icon: '💻', url: '#' }
+  ]
 
-// 核心公式
-const coreFormulas = {
-  unifiedField: '\\mathcal{U} = \\alpha \\mathcal{G} + \\beta \\mathcal{E} + \\gamma \\mathcal{G}\\mathcal{E}',
-  gravityField: 'G_{\\mu\\nu} + \\Lambda g_{\\mu\\nu} = \\frac{8\\pi G}{c^4} T_{\\mu\\nu}',
-  electroMagnetic: 'F_{\\mu\\nu} = \\partial_{\\mu} A_{\\nu} - \\partial_{\\nu} A_{\\mu}',
-  coupling: '\\mathcal{L}_{int} = g \\bar{\\psi} \\gamma^{\\mu} A_{\\mu} \\psi'
-}
-
-// 数学公式
-const mathFormulas = {
-  tensor: 'T^{\\mu\\nu} = \\rho u^{\\mu} u^{\\nu} + p (g^{\\mu\\nu} + u^{\\mu} u^{\\nu})',
-  riemann: 'R^\\rho_{\\sigma \\mu\\nu} = \\partial_\\mu \\Gamma^\\rho_{\\nu\\sigma} - \\partial_\\nu \\Gamma^\\rho_{\\mu\\sigma} + \\Gamma^\\rho_{\\mu\\lambda} \\Gamma^\\lambda_{\\nu\\sigma} - \\Gamma^\\rho_{\\nu\\lambda} \\Gamma^\\lambda_{\\mu\\sigma}',
-  fiberBundle: 'P(M, G) \\text{ where } \\pi: P \\to M',
-  groupTheory: '\\text{SU}(3) \\times \\text{SU}(2) \\times \\text{U}(1)'
-}
-
-// 时间线事件
-const timelineEvents = [
-  {
-    year: '1915',
-    title: '爱因斯坦提出广义相对论',
-    description: '爱因斯坦发表广义相对论，将引力描述为时空的弯曲，为统一场论奠定了基础。'
-  },
-  {
-    year: '1920s',
-    title: '爱因斯坦的统一场论尝试',
-    description: '爱因斯坦开始尝试将引力和电磁力统一，但未能取得成功。'
-  },
-  {
-    year: '1967',
-    title: '电弱统一理论',
-    description: '温伯格和萨拉姆提出电弱统一理论，成功统一了电磁力和弱核力。'
-  },
-  {
-    year: '1970s',
-    title: '标准模型的建立',
-    description: '粒子物理标准模型完成，统一了电磁力、弱核力和强核力，但不包括引力。'
-  },
-  {
-    year: '1980s',
-    title: '超弦理论兴起',
-    description: '超弦理论作为统一所有力的候选理论开始受到广泛关注。'
-  },
-  {
-    year: '1995',
-    title: 'M理论提出',
-    description: '威滕提出M理论，统一了五种不同的超弦理论。'
-  },
-  {
-    year: '2015',
-    title: '引力波探测',
-    description: 'LIGO首次直接探测到引力波，为引力的量子化研究提供了新的观测窗口。'
+  // 核心公式
+  const coreFormulas = {
+    unifiedField:
+      '\\mathcal{U} = \\alpha \\mathcal{G} + \\beta \\mathcal{E} + \\gamma \\mathcal{G}\\mathcal{E}',
+    gravityField: 'G_{\\mu\\nu} + \\Lambda g_{\\mu\\nu} = \\frac{8\\pi G}{c^4} T_{\\mu\\nu}',
+    electroMagnetic: 'F_{\\mu\\nu} = \\partial_{\\mu} A_{\\nu} - \\partial_{\\nu} A_{\\mu}',
+    coupling: '\\mathcal{L}_{int} = g \\bar{\\psi} \\gamma^{\\mu} A_{\\mu} \\psi'
   }
-]
 
-// 最近讨论
-const recentDiscussions = [
-  {
-    id: 1,
-    title: '量子纠缠与引力的关系探讨',
-    excerpt: '量子纠缠现象是否可以解释引力的本质？本文探讨了ER=EPR猜想及其意义...',
-    author: '李教授',
-    date: '2024-01-15',
-    comments: 28
-  },
-  {
-    id: 2,
-    title: '环量子引力的最新实验检验方案',
-    excerpt: '提出了一种通过高精度原子干涉仪检验环量子引力效应的新实验方案...',
-    author: '王博士',
-    date: '2024-01-10',
-    comments: 15
-  },
-  {
-    id: 3,
-    title: '统一场论中的暗能量问题',
-    excerpt: '探讨了如何在统一场论框架下解释宇宙加速膨胀和暗能量的本质...',
-    author: '张研究员',
-    date: '2024-01-05',
-    comments: 32
+  // 数学公式
+  const mathFormulas = {
+    tensor: 'T^{\\mu\\nu} = \\rho u^{\\mu} u^{\\nu} + p (g^{\\mu\\nu} + u^{\\mu} u^{\\nu})',
+    riemann:
+      'R^\\rho_{\\sigma \\mu\\nu} = \\partial_\\mu \\Gamma^\\rho_{\\nu\\sigma} - \\partial_\\nu \\Gamma^\\rho_{\\mu\\sigma} + \\Gamma^\\rho_{\\mu\\lambda} \\Gamma^\\lambda_{\\nu\\sigma} - \\Gamma^\\rho_{\\nu\\lambda} \\Gamma^\\lambda_{\\mu\\sigma}',
+    fiberBundle: 'P(M, G) \\text{ where } \\pi: P \\to M',
+    groupTheory: '\\text{SU}(3) \\times \\text{SU}(2) \\times \\text{U}(1)'
   }
-]
 
-// 方法
-function scrollToSection(sectionId: string) {
-  activeSection.value = sectionId
-  const element = document.getElementById(sectionId)
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth' })
-  }
-}
+  // 时间线事件
+  const timelineEvents = [
+    {
+      year: '1915',
+      title: '爱因斯坦提出广义相对论',
+      description: '爱因斯坦发表广义相对论，将引力描述为时空的弯曲，为统一场论奠定了基础。'
+    },
+    {
+      year: '1920s',
+      title: '爱因斯坦的统一场论尝试',
+      description: '爱因斯坦开始尝试将引力和电磁力统一，但未能取得成功。'
+    },
+    {
+      year: '1967',
+      title: '电弱统一理论',
+      description: '温伯格和萨拉姆提出电弱统一理论，成功统一了电磁力和弱核力。'
+    },
+    {
+      year: '1970s',
+      title: '标准模型的建立',
+      description: '粒子物理标准模型完成，统一了电磁力、弱核力和强核力，但不包括引力。'
+    },
+    {
+      year: '1980s',
+      title: '超弦理论兴起',
+      description: '超弦理论作为统一所有力的候选理论开始受到广泛关注。'
+    },
+    {
+      year: '1995',
+      title: 'M理论提出',
+      description: '威滕提出M理论，统一了五种不同的超弦理论。'
+    },
+    {
+      year: '2015',
+      title: '引力波探测',
+      description: 'LIGO首次直接探测到引力波，为引力的量子化研究提供了新的观测窗口。'
+    }
+  ]
 
-// 监听滚动，更新当前激活的章节
-function handleScroll() {
-  const scrollPosition = window.scrollY + 100
-  
-  for (const item of navigationItems) {
-    const element = document.getElementById(item.id)
+  // 最近讨论
+  const recentDiscussions = [
+    {
+      id: 1,
+      title: '量子纠缠与引力的关系探讨',
+      excerpt: '量子纠缠现象是否可以解释引力的本质？本文探讨了ER=EPR猜想及其意义...',
+      author: '李教授',
+      date: '2024-01-15',
+      comments: 28
+    },
+    {
+      id: 2,
+      title: '环量子引力的最新实验检验方案',
+      excerpt: '提出了一种通过高精度原子干涉仪检验环量子引力效应的新实验方案...',
+      author: '王博士',
+      date: '2024-01-10',
+      comments: 15
+    },
+    {
+      id: 3,
+      title: '统一场论中的暗能量问题',
+      excerpt: '探讨了如何在统一场论框架下解释宇宙加速膨胀和暗能量的本质...',
+      author: '张研究员',
+      date: '2024-01-05',
+      comments: 32
+    }
+  ]
+
+  // 方法
+  function scrollToSection(sectionId: string) {
+    activeSection.value = sectionId
+    const element = document.getElementById(sectionId)
     if (element) {
-      const offsetTop = element.offsetTop
-      const offsetBottom = offsetTop + element.offsetHeight
-      
-      if (scrollPosition >= offsetTop && scrollPosition < offsetBottom) {
-        activeSection.value = item.id
-        break
+      element.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
+  // 监听滚动，更新当前激活的章节
+  function handleScroll() {
+    const scrollPosition = window.scrollY + 100
+
+    for (const item of navigationItems) {
+      const element = document.getElementById(item.id)
+      if (element) {
+        const offsetTop = element.offsetTop
+        const offsetBottom = offsetTop + element.offsetHeight
+
+        if (scrollPosition >= offsetTop && scrollPosition < offsetBottom) {
+          activeSection.value = item.id
+          break
+        }
       }
     }
   }
-}
 
-// 生命周期钩子
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
-})
+  // 生命周期钩子
+  onMounted(() => {
+    window.addEventListener('scroll', handleScroll)
+  })
 </script>
 
 <style scoped>
-.knowledge-page {
-  min-height: 100vh;
-  background-color: #0a0a0a;
-  color: #fff;
-  padding-bottom: 3rem;
-}
-
-/* 页面标题 */
-.page-header {
-  background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
-  padding: 3rem 0;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid rgba(77, 186, 135, 0.2);
-}
-
-.page-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  background: linear-gradient(90deg, #4DBA87, #2A9D8F);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.page-description {
-  font-size: 1.1rem;
-  color: #999;
-  max-width: 800px;
-}
-
-/* 容器 */
-.container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-/* 搜索和筛选 */
-.search-filter-section {
-  margin-bottom: 2rem;
-}
-
-.search-bar {
-  display: flex;
-  max-width: 600px;
-  margin-bottom: 1.5rem;
-}
-
-.search-input {
-  flex: 1;
-  padding: 1rem 1.5rem;
-  background-color: #1a1a1a;
-  border: 1px solid #2d2d2d;
-  border-radius: 8px 0 0 8px;
-  color: #fff;
-  font-size: 1rem;
-  transition: border-color 0.3s ease;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #4DBA87;
-}
-
-.search-input::placeholder {
-  color: #666;
-}
-
-.search-btn {
-  padding: 0 1.5rem;
-  background-color: #4DBA87;
-  color: #000;
-  border: none;
-  border-radius: 0 8px 8px 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s ease;
-}
-
-.search-btn:hover {
-  background-color: #43b77d;
-}
-
-.filter-tabs {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.filter-tab {
-  padding: 0.75rem 1.25rem;
-  background-color: #1a1a1a;
-  color: #999;
-  border: 1px solid #2d2d2d;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
-}
-
-.filter-tab:hover {
-  background-color: #2d2d2d;
-  color: #fff;
-}
-
-.filter-tab.active {
-  background-color: #4DBA87;
-  color: #000;
-  border-color: #4DBA87;
-}
-
-/* 内容布局 */
-.content-layout {
-  display: grid;
-  grid-template-columns: 1fr 3fr;
-  gap: 2rem;
-  margin-bottom: 3rem;
-}
-
-/* 侧边栏 */
-.sidebar {
-  position: sticky;
-  top: 2rem;
-  height: fit-content;
-}
-
-.sidebar-section {
-  background-color: #1a1a1a;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid #2d2d2d;
-}
-
-.sidebar-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #4DBA87;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #2d2d2d;
-}
-
-/* 目录导航 */
-.category-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.category-item {
-  padding: 0.75rem;
-  color: #999;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border-radius: 4px;
-  margin-bottom: 0.25rem;
-}
-
-.category-item:hover {
-  background-color: #2d2d2d;
-  color: #fff;
-  transform: translateX(3px);
-}
-
-.category-item.active {
-  background-color: #4DBA87;
-  color: #000;
-  font-weight: 500;
-}
-
-/* 推荐资源 */
-.resource-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.resource-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem;
-  background-color: #2d2d2d;
-  border-radius: 6px;
-  color: #fff;
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-.resource-item:hover {
-  background-color: #3d3d3d;
-  transform: translateX(3px);
-}
-
-.resource-icon {
-  font-size: 1.5rem;
-}
-
-.resource-info {
-  flex: 1;
-}
-
-.resource-title {
-  font-size: 0.95rem;
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-}
-
-.resource-type {
-  font-size: 0.8rem;
-  color: #4DBA87;
-}
-
-/* 快速链接 */
-.quick-links {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.quick-link {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background-color: #1e1e1e;
-  border: 1px solid #333;
-  border-radius: 6px;
-  color: #fff;
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-.quick-link:hover {
-  background-color: #2d2d2d;
-  border-color: #4DBA87;
-  transform: translateY(-2px);
-}
-
-.link-icon {
-  font-size: 1.2rem;
-}
-
-.link-text {
-  font-weight: 500;
-}
-
-/* 主内容 */
-.main-content {
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
-}
-
-.knowledge-section {
-  background-color: #1a1a1a;
-  border-radius: 8px;
-  padding: 2rem;
-  border: 1px solid #2d2d2d;
-}
-
-.section-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #4DBA87;
-  margin-bottom: 1.5rem;
-}
-
-.section-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-/* 概念卡片 */
-.concept-card {
-  background-color: #151515;
-  border-radius: 8px;
-  padding: 1.5rem;
-  border: 1px solid #252525;
-  transition: transform 0.3s ease;
-}
-
-.concept-card:hover {
-  transform: translateY(-5px);
-}
-
-.concept-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 1rem;
-}
-
-.concept-description {
-  color: #ccc;
-  line-height: 1.6;
-  margin-bottom: 1rem;
-}
-
-.formula-block {
-  background-color: #0d0d0d;
-  padding: 1rem;
-  border-radius: 6px;
-  border: 1px solid #252525;
-  overflow-x: auto;
-}
-
-/* 时间线 */
-.timeline {
-  position: relative;
-  padding-left: 2rem;
-}
-
-.timeline::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background-color: #4DBA87;
-}
-
-.timeline-item {
-  position: relative;
-  margin-bottom: 2rem;
-}
-
-.timeline-item::before {
-  content: '';
-  position: absolute;
-  left: -2rem;
-  top: 0.5rem;
-  width: 12px;
-  height: 12px;
-  background-color: #4DBA87;
-  border-radius: 50%;
-  border: 2px solid #0a0a0a;
-}
-
-.timeline-year {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #4DBA87;
-  margin-bottom: 0.5rem;
-}
-
-.timeline-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 0.5rem;
-}
-
-.timeline-description {
-  color: #ccc;
-  line-height: 1.6;
-}
-
-/* 数学主题 */
-.math-topic {
-  background-color: #151515;
-  border-radius: 8px;
-  padding: 1.5rem;
-  border: 1px solid #252525;
-}
-
-.math-topic-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 1rem;
-}
-
-.math-topic-description {
-  color: #ccc;
-  line-height: 1.6;
-  margin-bottom: 1rem;
-}
-
-/* 理论卡片 */
-.theory-card {
-  background-color: #151515;
-  border-radius: 8px;
-  padding: 1.5rem;
-  border: 1px solid #252525;
-  transition: all 0.3s ease;
-}
-
-.theory-card:hover {
-  border-color: #4DBA87;
-  transform: translateY(-3px);
-}
-
-.theory-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.theory-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #fff;
-}
-
-.theory-badge {
-  padding: 0.25rem 0.75rem;
-  background-color: #4DBA87;
-  color: #000;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.theory-description {
-  color: #ccc;
-  line-height: 1.6;
-  margin-bottom: 1rem;
-}
-
-.theory-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.detail-label {
-  font-size: 0.85rem;
-  color: #999;
-}
-
-.detail-value {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #4DBA87;
-}
-
-/* 实验网格 */
-.experiment-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.experiment-card {
-  background-color: #151515;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #252525;
-  transition: all 0.3s ease;
-}
-
-.experiment-card:hover {
-  transform: translateY(-5px);
-  border-color: #4DBA87;
-}
-
-.experiment-thumbnail {
-  height: 150px;
-  background-color: #0d0d0d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #444;
-  font-size: 0.9rem;
-}
-
-.experiment-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #fff;
-  margin: 1rem;
-}
-
-.experiment-description {
-  color: #ccc;
-  line-height: 1.6;
-  margin: 0 1rem 1rem;
-  font-size: 0.95rem;
-}
-
-.experiment-date {
-  background-color: #2d2d2d;
-  color: #4DBA87;
-  padding: 0.75rem 1rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-/* 未来展望 */
-.future-section {
-  margin-bottom: 2rem;
-}
-
-.future-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 1.5rem;
-}
-
-.future-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.future-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  background-color: #151515;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid #252525;
-}
-
-.future-icon {
-  font-size: 1.5rem;
-  flex-shrink: 0;
-  margin-top: 0.25rem;
-}
-
-.future-text strong {
-  color: #4DBA87;
-  display: block;
-  margin-bottom: 0.5rem;
-}
-
-.future-text p {
-  color: #ccc;
-  margin: 0;
-  line-height: 1.6;
-}
-
-/* 挑战部分 */
-.challenges-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 1.5rem;
-}
-
-.challenges-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.challenge-card {
-  background-color: #151515;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid #252525;
-}
-
-.challenge-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #4DBA87;
-  margin-bottom: 0.75rem;
-}
-
-.challenge-description {
-  color: #ccc;
-  line-height: 1.6;
-  font-size: 0.95rem;
-}
-
-/* 讨论部分 */
-.discussion-section {
-  background-color: #1a1a1a;
-  border-radius: 8px;
-  padding: 2rem;
-  border: 1px solid #2d2d2d;
-}
-
-.discussion-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.discussion-description {
-  color: #ccc;
-  font-size: 1.05rem;
-}
-
-.start-discussion-btn {
-  padding: 0.75rem 1.5rem;
-  background-color: #4DBA87;
-  color: #000;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.start-discussion-btn:hover {
-  background-color: #43b77d;
-  transform: translateY(-2px);
-}
-
-.recent-discussions {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.discussion-item {
-  background-color: #151515;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid #252525;
-  transition: all 0.3s ease;
-}
-
-.discussion-item:hover {
-  border-color: #4DBA87;
-  transform: translateY(-3px);
-}
-
-.discussion-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 0.75rem;
-}
-
-.discussion-excerpt {
-  color: #ccc;
-  line-height: 1.6;
-  margin-bottom: 1rem;
-  font-size: 0.95rem;
-}
-
-.discussion-meta {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  font-size: 0.85rem;
-  color: #999;
-}
-
-.discussion-author {
-  color: #4DBA87;
-  font-weight: 500;
-}
-
-/* 响应式设计 */
-@media (max-width: 1200px) {
-  .content-layout {
-    grid-template-columns: 1fr;
+  .knowledge-page {
+    min-height: 100vh;
+    background-color: #0a0a0a;
+    color: #fff;
+    padding-bottom: 3rem;
   }
-  
-  .sidebar {
-    position: relative;
-    top: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1rem;
-  }
-  
-  .sidebar-section {
-    margin-bottom: 0;
-  }
-}
 
-@media (max-width: 992px) {
-  .sidebar {
-    grid-template-columns: 1fr;
+  /* 页面标题 */
+  .page-header {
+    background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(77, 186, 135, 0.2);
   }
-  
-  .theory-details {
-    grid-template-columns: 1fr;
-  }
-  
-  .experiment-grid,
-  .challenges-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
 
-@media (max-width: 768px) {
   .page-title {
-    font-size: 2rem;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(90deg, #4dba87, #2a9d8f);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
-  
+
+  .page-description {
+    font-size: 1.1rem;
+    color: #999;
+    max-width: 800px;
+  }
+
+  /* 容器 */
   .container {
-    padding: 0 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
   }
-  
-  .knowledge-section,
-  .discussion-section {
-    padding: 1.5rem 1rem;
+
+  /* 搜索和筛选 */
+  .search-filter-section {
+    margin-bottom: 2rem;
   }
-  
-  .section-title {
+
+  .search-bar {
+    display: flex;
+    max-width: 600px;
+    margin-bottom: 1.5rem;
+  }
+
+  .search-input {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    background-color: #1a1a1a;
+    border: 1px solid #2d2d2d;
+    border-radius: 8px 0 0 8px;
+    color: #fff;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: #4dba87;
+  }
+
+  .search-input::placeholder {
+    color: #666;
+  }
+
+  .search-btn {
+    padding: 0 1.5rem;
+    background-color: #4dba87;
+    color: #000;
+    border: none;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+  }
+
+  .search-btn:hover {
+    background-color: #43b77d;
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-tab {
+    padding: 0.75rem 1.25rem;
+    background-color: #1a1a1a;
+    color: #999;
+    border: 1px solid #2d2d2d;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+  }
+
+  .filter-tab:hover {
+    background-color: #2d2d2d;
+    color: #fff;
+  }
+
+  .filter-tab.active {
+    background-color: #4dba87;
+    color: #000;
+    border-color: #4dba87;
+  }
+
+  /* 内容布局 */
+  .content-layout {
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  /* 侧边栏 */
+  .sidebar {
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+  }
+
+  .sidebar-section {
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #2d2d2d;
+  }
+
+  .sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4dba87;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #2d2d2d;
+  }
+
+  /* 目录导航 */
+  .category-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .category-item {
+    padding: 0.75rem;
+    color: #999;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    margin-bottom: 0.25rem;
+  }
+
+  .category-item:hover {
+    background-color: #2d2d2d;
+    color: #fff;
+    transform: translateX(3px);
+  }
+
+  .category-item.active {
+    background-color: #4dba87;
+    color: #000;
+    font-weight: 500;
+  }
+
+  /* 推荐资源 */
+  .resource-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .resource-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background-color: #2d2d2d;
+    border-radius: 6px;
+    color: #fff;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .resource-item:hover {
+    background-color: #3d3d3d;
+    transform: translateX(3px);
+  }
+
+  .resource-icon {
     font-size: 1.5rem;
   }
-  
-  .discussion-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .experiment-grid,
-  .challenges-grid {
-    grid-template-columns: 1fr;
-  }
-}
 
-@media (max-width: 480px) {
-  .page-header {
-    padding: 2rem 0;
+  .resource-info {
+    flex: 1;
   }
-  
-  .page-title {
-    font-size: 1.75rem;
+
+  .resource-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
   }
-  
-  .filter-tabs {
+
+  .resource-type {
+    font-size: 0.8rem;
+    color: #4dba87;
+  }
+
+  /* 快速链接 */
+  .quick-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .quick-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: #fff;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .quick-link:hover {
+    background-color: #2d2d2d;
+    border-color: #4dba87;
+    transform: translateY(-2px);
+  }
+
+  .link-icon {
+    font-size: 1.2rem;
+  }
+
+  .link-text {
+    font-weight: 500;
+  }
+
+  /* 主内容 */
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .knowledge-section {
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    padding: 2rem;
+    border: 1px solid #2d2d2d;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #4dba87;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* 概念卡片 */
+  .concept-card {
+    background-color: #151515;
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid #252525;
+    transition: transform 0.3s ease;
+  }
+
+  .concept-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .concept-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 1rem;
+  }
+
+  .concept-description {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .formula-block {
+    background-color: #0d0d0d;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid #252525;
+    overflow-x: auto;
+  }
+
+  /* 时间线 */
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #4dba87;
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 0.5rem;
+    width: 12px;
+    height: 12px;
+    background-color: #4dba87;
+    border-radius: 50%;
+    border: 2px solid #0a0a0a;
+  }
+
+  .timeline-year {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #4dba87;
+    margin-bottom: 0.5rem;
+  }
+
+  .timeline-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0.5rem;
+  }
+
+  .timeline-description {
+    color: #ccc;
+    line-height: 1.6;
+  }
+
+  /* 数学主题 */
+  .math-topic {
+    background-color: #151515;
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid #252525;
+  }
+
+  .math-topic-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 1rem;
+  }
+
+  .math-topic-description {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  /* 理论卡片 */
+  .theory-card {
+    background-color: #151515;
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid #252525;
+    transition: all 0.3s ease;
+  }
+
+  .theory-card:hover {
+    border-color: #4dba87;
+    transform: translateY(-3px);
+  }
+
+  .theory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .theory-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .theory-badge {
+    padding: 0.25rem 0.75rem;
+    background-color: #4dba87;
+    color: #000;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .theory-description {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .theory-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .detail-item {
+    display: flex;
+    flex-direction: column;
     gap: 0.25rem;
   }
-  
-  .filter-tab {
-    padding: 0.5rem 0.75rem;
+
+  .detail-label {
     font-size: 0.85rem;
+    color: #999;
   }
-}
+
+  .detail-value {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #4dba87;
+  }
+
+  /* 实验网格 */
+  .experiment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .experiment-card {
+    background-color: #151515;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #252525;
+    transition: all 0.3s ease;
+  }
+
+  .experiment-card:hover {
+    transform: translateY(-5px);
+    border-color: #4dba87;
+  }
+
+  .experiment-thumbnail {
+    height: 150px;
+    background-color: #0d0d0d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #444;
+    font-size: 0.9rem;
+  }
+
+  .experiment-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 1rem;
+  }
+
+  .experiment-description {
+    color: #ccc;
+    line-height: 1.6;
+    margin: 0 1rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .experiment-date {
+    background-color: #2d2d2d;
+    color: #4dba87;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  /* 未来展望 */
+  .future-section {
+    margin-bottom: 2rem;
+  }
+
+  .future-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 1.5rem;
+  }
+
+  .future-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .future-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background-color: #151515;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #252525;
+  }
+
+  .future-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+  }
+
+  .future-text strong {
+    color: #4dba87;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .future-text p {
+    color: #ccc;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* 挑战部分 */
+  .challenges-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 1.5rem;
+  }
+
+  .challenges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .challenge-card {
+    background-color: #151515;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #252525;
+  }
+
+  .challenge-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4dba87;
+    margin-bottom: 0.75rem;
+  }
+
+  .challenge-description {
+    color: #ccc;
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+
+  /* 讨论部分 */
+  .discussion-section {
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    padding: 2rem;
+    border: 1px solid #2d2d2d;
+  }
+
+  .discussion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .discussion-description {
+    color: #ccc;
+    font-size: 1.05rem;
+  }
+
+  .start-discussion-btn {
+    padding: 0.75rem 1.5rem;
+    background-color: #4dba87;
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .start-discussion-btn:hover {
+    background-color: #43b77d;
+    transform: translateY(-2px);
+  }
+
+  .recent-discussions {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .discussion-item {
+    background-color: #151515;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #252525;
+    transition: all 0.3s ease;
+  }
+
+  .discussion-item:hover {
+    border-color: #4dba87;
+    transform: translateY(-3px);
+  }
+
+  .discussion-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0.75rem;
+  }
+
+  .discussion-excerpt {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+  }
+
+  .discussion-meta {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: #999;
+  }
+
+  .discussion-author {
+    color: #4dba87;
+    font-weight: 500;
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 1200px) {
+    .content-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+      position: relative;
+      top: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .sidebar-section {
+      margin-bottom: 0;
+    }
+  }
+
+  @media (max-width: 992px) {
+    .sidebar {
+      grid-template-columns: 1fr;
+    }
+
+    .theory-details {
+      grid-template-columns: 1fr;
+    }
+
+    .experiment-grid,
+    .challenges-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .page-title {
+      font-size: 2rem;
+    }
+
+    .container {
+      padding: 0 1rem;
+    }
+
+    .knowledge-section,
+    .discussion-section {
+      padding: 1.5rem 1rem;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+    }
+
+    .discussion-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .experiment-grid,
+    .challenges-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .page-header {
+      padding: 2rem 0;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+    }
+
+    .filter-tabs {
+      gap: 0.25rem;
+    }
+
+    .filter-tab {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+    }
+  }
 </style>

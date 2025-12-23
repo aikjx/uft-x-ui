@@ -19,121 +19,121 @@ jobs:
   performance-monitor:
     name: Performance Monitoring
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: |
-        npm ci
-        npm install -g @playwright/test
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g @playwright/test
 
-    - name: Run performance tests
-      run: |
-        npm run test:performance
-      env:
-        CI: true
+      - name: Run performance tests
+        run: |
+          npm run test:performance
+        env:
+          CI: true
 
-    - name: Generate performance report
-      run: |
-        node scripts/performance-analyzer.js
+      - name: Generate performance report
+        run: |
+          node scripts/performance-analyzer.js
 
-    - name: Upload performance report
-      uses: actions/upload-artifact@v4
-      with:
-        name: performance-report
-        path: reports/
-        retention-days: 30
+      - name: Upload performance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report
+          path: reports/
+          retention-days: 30
 
-    - name: Check performance thresholds
-      id: performance-check
-      run: |
-        # 检查性能是否达标
-        SCORE=$(node -e "console.log(require('./reports/performance-report-*.json').summary.overallScore)" 2>/dev/null || echo 0)
-        echo "score=$SCORE" >> $GITHUB_OUTPUT
-        
-        if [ $SCORE -lt $PERFORMANCE_THRESHOLD ]; then
-          echo "❌ 性能不达标: $SCORE < $PERFORMANCE_THRESHOLD"
-          exit 1
-        else
-          echo "✅ 性能达标: $SCORE >= $PERFORMANCE_THRESHOLD"
-        fi
+      - name: Check performance thresholds
+        id: performance-check
+        run: |
+          # 检查性能是否达标
+          SCORE=$(node -e "console.log(require('./reports/performance-report-*.json').summary.overallScore)" 2>/dev/null || echo 0)
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
 
-    - name: Notify on failure
-      if: failure()
-      uses: 8398a7/action-slack@v3
-      with:
-        status: failure
-        text: '性能测试失败: 整体性能分数 ${{ steps.performance-check.outputs.score }} 低于阈值 ${{ env.PERFORMANCE_THRESHOLD }}'
-        webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          if [ $SCORE -lt $PERFORMANCE_THRESHOLD ]; then
+            echo "❌ 性能不达标: $SCORE < $PERFORMANCE_THRESHOLD"
+            exit 1
+          else
+            echo "✅ 性能达标: $SCORE >= $PERFORMANCE_THRESHOLD"
+          fi
 
-    - name: Notify on success
-      if: success()
-      uses: 8398a7/action-slack@v3
-      with:
-        status: success
-        text: '性能测试通过: 整体性能分数 ${{ steps.performance-check.outputs.score }}'
-        webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - name: Notify on failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: '性能测试失败: 整体性能分数 ${{ steps.performance-check.outputs.score }} 低于阈值 ${{ env.PERFORMANCE_THRESHOLD }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify on success
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: '性能测试通过: 整体性能分数 ${{ steps.performance-check.outputs.score }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   performance-trends:
     name: Performance Trends Analysis
     runs-on: ubuntu-latest
     needs: performance-monitor
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Download performance reports
-      uses: actions/download-artifact@v4
-      with:
-        name: performance-report
-        path: ./historical-reports/
+      - name: Download performance reports
+        uses: actions/download-artifact@v4
+        with:
+          name: performance-report
+          path: ./historical-reports/
 
-    - name: Analyze performance trends
-      run: |
-        # 分析性能趋势
-        npm run analyze:trends
+      - name: Analyze performance trends
+        run: |
+          # 分析性能趋势
+          npm run analyze:trends
 
-    - name: Upload trend analysis
-      uses: actions/upload-artifact@v4
-      with:
-        name: trend-analysis
-        path: ./trend-analysis/
+      - name: Upload trend analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: trend-analysis
+          path: ./trend-analysis/
 
   benchmark-comparison:
     name: Benchmark Comparison
     runs-on: ubuntu-latest
     needs: performance-monitor
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Compare with baseline
-      run: |
-        # 与基准性能比较
-        npm run compare:benchmark
+      - name: Compare with baseline
+        run: |
+          # 与基准性能比较
+          npm run compare:benchmark
 
-    - name: Generate comparison report
-      run: |
-        npm run report:comparison
+      - name: Generate comparison report
+        run: |
+          npm run report:comparison
 
-    - name: Upload comparison report
-      uses: actions/upload-artifact@v4
-      with:
-        name: comparison-report
-        path: ./comparison-reports/
+      - name: Upload comparison report
+        uses: actions/upload-artifact@v4
+        with:
+          name: comparison-report
+          path: ./comparison-reports/

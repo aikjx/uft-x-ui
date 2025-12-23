@@ -1,5 +1,5 @@
-import { Formula, FeatureItem } from '../types';
-import { easeOut, easeInOut, Easing } from 'framer-motion';
+import { Formula, FeatureItem } from '../types'
+import { easeOut, easeInOut, Easing } from 'framer-motion'
 
 // 统一场论核心公式数据
 export const FORMULAS: Formula[] = [
@@ -13,7 +13,8 @@ export const FORMULAS: Formula[] = [
   {
     id: 2,
     name: '三维螺旋时空方程',
-    expression: '\\vec{r}(t) = r\\cos\\omega t \\cdot \\vec{i} + r\\sin\\omega t \\cdot \\vec{j} + ht \\cdot \\vec{k}',
+    expression:
+      '\\vec{r}(t) = r\\cos\\omega t \\cdot \\vec{i} + r\\sin\\omega t \\cdot \\vec{j} + ht \\cdot \\vec{k}',
     description: '描述物质点在三维空间中的螺旋运动轨迹',
     category: '时空方程'
   },
@@ -27,7 +28,8 @@ export const FORMULAS: Formula[] = [
   {
     id: 4,
     name: '引力场定义方程',
-    expression: '\\overrightarrow{A} = -Gk\\frac{\\Delta n}{\\Delta s}\\frac{\\overrightarrow{r}}{r}',
+    expression:
+      '\\overrightarrow{A} = -Gk\\frac{\\Delta n}{\\Delta s}\\frac{\\overrightarrow{r}}{r}',
     description: '引力场是空间的加速运动效应',
     category: '场方程'
   },
@@ -48,14 +50,16 @@ export const FORMULAS: Formula[] = [
   {
     id: 7,
     name: '宇宙大统一方程（力方程）',
-    expression: 'F = \\frac{d\\vec{P}}{dt} = \\vec{C}\\frac{dm}{dt} - \\vec{V}\\frac{dm}{dt} + m\\frac{d\\vec{C}}{dt} - m\\frac{d\\vec{V}}{dt}',
+    expression:
+      'F = \\frac{d\\vec{P}}{dt} = \\vec{C}\\frac{dm}{dt} - \\vec{V}\\frac{dm}{dt} + m\\frac{d\\vec{C}}{dt} - m\\frac{d\\vec{V}}{dt}',
     description: '统一四种基本力的核心方程，揭示力的本质',
     category: '统一方程'
   },
   {
     id: 8,
     name: '空间波动方程',
-    expression: '\\frac{\\partial^2 L}{\\partial x^2} + \\frac{\\partial^2 L}{\\partial y^2} + \\frac{\\partial^2 L}{\\partial z^2} = \\frac{1}{c^2} \\frac{\\partial^2 L}{\\partial t^2}',
+    expression:
+      '\\frac{\\partial^2 L}{\\partial x^2} + \\frac{\\partial^2 L}{\\partial y^2} + \\frac{\\partial^2 L}{\\partial z^2} = \\frac{1}{c^2} \\frac{\\partial^2 L}{\\partial t^2}',
     description: '描述空间波动的传播规律',
     category: '场方程'
   },
@@ -69,21 +73,24 @@ export const FORMULAS: Formula[] = [
   {
     id: 10,
     name: '电场定义方程',
-    expression: '\\vec{E} = -\\frac{kk^{\\prime}}{4\\pi\\epsilon_0\\Omega^2}\\frac{d\\Omega}{dt}\\frac{\\vec{r}}{r^3}',
+    expression:
+      '\\vec{E} = -\\frac{kk^{\\prime}}{4\\pi\\epsilon_0\\Omega^2}\\frac{d\\Omega}{dt}\\frac{\\vec{r}}{r^3}',
     description: '电场是空间角动量变化产生的效应',
     category: '场方程'
   },
   {
     id: 11,
     name: '磁场定义方程',
-    expression: '\\vec{B} = \\frac{\\mu_{0} \\gamma k k^{\\prime}}{4 \\pi \\Omega^{2}} \\frac{d \\Omega}{d t} \\frac{[(x-v t) \\vec{i}+y \\vec{j}+z \\vec{k}]}{[\\gamma^{2}(x-v t)^{2}+y^{2}+z^{2}]^{\\frac{3}{2}}}',
+    expression:
+      '\\vec{B} = \\frac{\\mu_{0} \\gamma k k^{\\prime}}{4 \\pi \\Omega^{2}} \\frac{d \\Omega}{d t} \\frac{[(x-v t) \\vec{i}+y \\vec{j}+z \\vec{k}]}{[\\gamma^{2}(x-v t)^{2}+y^{2}+z^{2}]^{\\frac{3}{2}}}',
     description: '磁场是运动电荷产生的相对论效应',
     category: '场方程'
   },
   {
     id: 12,
     name: '变化的引力场产生电磁场',
-    expression: '\\frac{\\partial^{2}\\overline{A}}{\\partial t^{2}} = \\frac{\\overline{V}}{f}(\\overline{\\nabla}\\cdot\\overline{E}) - \\frac{C^{2}}{f}(\\overline{\\nabla}\\times\\overline{B})',
+    expression:
+      '\\frac{\\partial^{2}\\overline{A}}{\\partial t^{2}} = \\frac{\\overline{V}}{f}(\\overline{\\nabla}\\cdot\\overline{E}) - \\frac{C^{2}}{f}(\\overline{\\nabla}\\times\\overline{B})',
     description: '引力场与电磁场的相互转化关系',
     category: '统一方程'
   },
@@ -104,7 +111,8 @@ export const FORMULAS: Formula[] = [
   {
     id: 15,
     name: '变化的磁场产生引力场和电场',
-    expression: '\\frac{d\\overrightarrow{B}}{dt} = \\frac{-\\overrightarrow{A}\\times\\overrightarrow{E}}{c^2} - \\frac{\\overrightarrow{V}}{c^{2}}\\times\\frac{d\\overrightarrow{E}}{dt}',
+    expression:
+      '\\frac{d\\overrightarrow{B}}{dt} = \\frac{-\\overrightarrow{A}\\times\\overrightarrow{E}}{c^2} - \\frac{\\overrightarrow{V}}{c^{2}}\\times\\frac{d\\overrightarrow{E}}{dt}',
     description: '磁场变化如何影响引力场和电场',
     category: '统一方程'
   },
@@ -125,7 +133,8 @@ export const FORMULAS: Formula[] = [
   {
     id: 18,
     name: '核力场定义方程',
-    expression: '\\mathbf{D} = - G m \\frac{ \\mathbf{C} - 3 \\frac{\\mathbf{R}}{r} \\dot{r} }{r^3}',
+    expression:
+      '\\mathbf{D} = - G m \\frac{ \\mathbf{C} - 3 \\frac{\\mathbf{R}}{r} \\dot{r} }{r^3}',
     description: '核力场的数学表达式',
     category: '场方程'
   },
@@ -136,7 +145,7 @@ export const FORMULAS: Formula[] = [
     description: '揭示引力常数与光速的内在联系',
     category: '统一方程'
   }
-];
+]
 
 // 首页特性数据
 export const FEATURES: FeatureItem[] = [
@@ -167,7 +176,7 @@ export const FEATURES: FeatureItem[] = [
     gradientFrom: 'rgb(37, 99, 235)',
     gradientTo: 'rgb(96, 165, 250)'
   }
-];
+]
 
 // 动画变体常量
 export const ANIMATION_VARIANTS = {
@@ -176,10 +185,10 @@ export const ANIMATION_VARIANTS = {
     visible: {
       opacity: 1,
       transition: {
-          staggerChildren: 0.1,
-          duration: 0.7,
-          ease: "easeOut"
-        }
+        staggerChildren: 0.1,
+        duration: 0.7,
+        ease: 'easeOut'
+      }
     }
   },
   itemVariants: {
@@ -188,9 +197,9 @@ export const ANIMATION_VARIANTS = {
       opacity: 1,
       y: 0,
       transition: {
-          duration: 0.5,
-          ease: "easeOut"
-        }
+        duration: 0.5,
+        ease: 'easeOut'
+      }
     }
   },
   formulaVariants: {
@@ -199,9 +208,9 @@ export const ANIMATION_VARIANTS = {
       opacity: 1,
       scale: 1,
       transition: {
-          duration: 0.6,
-          ease: "easeInOut"
-        }
+        duration: 0.6,
+        ease: 'easeInOut'
+      }
     }
   },
   fadeInUpVariants: {
@@ -210,10 +219,10 @@ export const ANIMATION_VARIANTS = {
       opacity: 1,
       y: 0,
       transition: {
-            duration: 0.6,
-            delay: custom * 0.1,
-            ease: "easeOut"
-          }
+        duration: 0.6,
+        delay: custom * 0.1,
+        ease: 'easeOut'
+      }
     })
   },
   simulationVariants: {
@@ -222,9 +231,9 @@ export const ANIMATION_VARIANTS = {
       opacity: 1,
       scale: 1,
       transition: {
-          duration: 0.5,
-          ease: "easeOut"
-        }
+        duration: 0.5,
+        ease: 'easeOut'
+      }
     }
   },
   tabVariants: {
@@ -233,12 +242,12 @@ export const ANIMATION_VARIANTS = {
       opacity: 1,
       x: 0,
       transition: {
-          duration: 0.4,
-          ease: "easeOut"
-        }
+        duration: 0.4,
+        ease: 'easeOut'
+      }
     }
   }
-};
+}
 
 // 默认模拟参数
 export const DEFAULT_SIMULATION_PARAMETERS = {
@@ -257,7 +266,7 @@ export const DEFAULT_SIMULATION_PARAMETERS = {
     fieldStrength: 1,
     frequency: 1
   }
-};
+}
 
 /**
  * 主题颜色常量
@@ -288,7 +297,7 @@ export const THEME_COLORS = {
     muted: '#cbd5e1', // 次要文本
     disabled: '#94a3b8' // 禁用文本
   }
-};
+}
 
 /**
  * 布局常量
@@ -306,7 +315,7 @@ export const LAYOUT = {
     xl: '16px',
     full: '9999px'
   }
-};
+}
 
 /**
  * 动画配置常量
@@ -321,7 +330,7 @@ export const ANIMATION_CONFIG = {
     easeInOut: [0.4, 0, 0.2, 1],
     cubicBezier: [0.22, 1, 0.36, 1]
   }
-};
+}
 
 /**
  * 响应式断点
@@ -332,7 +341,7 @@ export const BREAKPOINTS = {
   lg: '1024px',
   xl: '1280px',
   '2xl': '1536px'
-};
+}
 
 /**
  * 粒子背景配置
@@ -346,7 +355,7 @@ export const PARTICLE_CONFIG = {
   color: '#3b82f6',
   opacity: 0.5,
   connectDistance: 150
-};
+}
 
 /**
  * 3D可视化配置
@@ -356,25 +365,25 @@ export const VISUALIZATION_CONFIG = {
   backgroundColor: 0x0a0a14,
   clearColor: 0x0a0a14,
   clearAlpha: 1,
-  
+
   // 相机配置
   fov: 60,
   near: 0.1,
   far: 1000,
   maxCameraDistance: 100,
   minCameraDistance: 5,
-  
+
   // 辅助线配置
   showGrid: true,
   gridSize: 20,
   gridDivisions: 20,
   showAxes: true,
   axesSize: 10,
-  
+
   // 光照配置
   defaultAmbientLightIntensity: 0.6,
   defaultDirectionalLightIntensity: 0.8,
-  
+
   // 粒子系统配置
   particles: {
     count: 1000,
@@ -383,20 +392,20 @@ export const VISUALIZATION_CONFIG = {
     velocity: 0.01,
     maxAge: 3000
   },
-  
+
   // 场配置
   field: {
     resolution: 20,
     range: 10,
     arrowSize: 0.5
   },
-  
+
   // 动画配置
   animation: {
     duration: 10000,
     easing: 'easeInOutSine'
   },
-  
+
   // 性能配置
   performance: {
     antialiasing: true,
@@ -425,4 +434,4 @@ export const VISUALIZATION_CONFIG = {
     particleLODLevels: 3,
     particleDistanceFactor: 0.05
   }
-};
+}

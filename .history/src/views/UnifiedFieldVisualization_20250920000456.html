@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>张祥前统一场论：空间螺旋发散交互式可视化</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="unified-field.css">
+</head>
+<body>
+    <div id="container">
+        <!-- 控制面板 -->
+        <div id="controls" class="panel">
+            <h3>🌌 统一场论参数控制</h3>
+            
+            <div class="preset-buttons">
+                <button class="preset-btn" onclick="loadPreset('default')">默认</button>
+                <button class="preset-btn" onclick="loadPreset('intense')">强场</button>
+                <button class="preset-btn" onclick="loadPreset('gentle')">弱场</button>
+                <button class="preset-btn" onclick="loadPreset('spiral')">高螺旋</button>
+            </div>
+            
+            <div class="control-group">
+                <label class="help-tooltip" data-tooltip="空间发散的对称方向数量">
+                    🎯 发散方向数 N: <span id="directionCount" class="stat-value">14</span>
+                </label>
+                <input type="range" id="directions" min="8" max="26" value="14" step="2">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="directionProgress" style="width: 33%"></div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label class="help-tooltip" data-tooltip="螺旋运动的角频率，影响磁场分量">
+                    ⚡ 螺旋角频率 ω: <span id="omegaValue" class="stat-value">1.5</span> rad/s
+                </label>
+                <input type="range" id="omega" min="0.2" max="4.0" value="1.5" step="0.1">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="omegaProgress" style="width: 34%"></div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label class="help-tooltip" data-tooltip="矢量光速的大小，恒定为c">
+                    💫 矢量光速 |C⃗|: <span id="velocityValue" class="stat-value">1.0</span>c
+                </label>
+                <input type="range" id="velocity" min="0.3" max="2.5" value="1.0" step="0.1">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="velocityProgress" style="width: 32%"></div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label class="help-tooltip" data-tooltip="螺旋运动的半径，影响场的空间分布">
+                    🌀 螺旋半径 R: <span id="radiusValue" class="stat-value">0.8</span>
+                </label>
+                <input type="range" id="radius" min="0.2" max="2.0" value="0.8" step="0.1">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="radiusProgress" style="width: 33%"></div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label class="help-tooltip" data-tooltip="质量参数，影响空间矢量密度">
+                    ⚛️ 质量参数 m: <span id="massValue" class="stat-value">1.0</span>
+                </label>
+                <input type="range" id="mass" min="0.5" max="3.0" value="1.0" step="0.1">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="massProgress" style="width: 20%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 交互控制面板 -->
+        <div id="interaction-panel" class="panel">
+            <h3>🎮 交互控制</h3>
+            
+            <div class="control-group">
+                <button class="btn" onclick="resetSimulation()">🔄 重置模拟</button>
+                <button class="btn" id="pauseBtn" onclick="toggleAnimation()">⏸️ 暂停</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn" id="vectorBtn" onclick="toggleVectors()">📐 显示矢量</button>
+                <button class="btn" id="trailBtn" onclick="toggleTrails()">✨ 粒子轨迹</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn" onclick="toggleCameraMode()">📹 相机模式</button>
+                <button class="btn" onclick="captureFrame()">📸 截图</button>
+            </div>
+            
+            <div class="control-group">
+                <label>🎨 视觉效果:</label>
+                <button class="btn" onclick="changeColorScheme('aurora')">极光</button>
+                <button class="btn" onclick="changeColorScheme('nebula')">星云</button>
+                <button class="btn" onclick="changeColorScheme('plasma')">等离子</button>
+            </div>
+            
+            <div class="control-group">
+                <label>⚡ 动画速度: <span id="speedValue" class="stat-value">1.0x</span></label>
+                <input type="range" id="animSpeed" min="0.1" max="3.0" value="1.0" step="0.1">
+            </div>
+        </div>
+        
+        <!-- 理论说明面板 -->
+        <div id="theory-panel" class="panel">
+            <h4>📚 统一场论核心方程</h4>
+            <div class="formula">r⃗(t) = C⃗t = |C⃗|t · û_r</div>
+            <div class="physics-concept">⏰ 时空同一化：时间 ≡ 空间位移/光速</div>
+            
+            <div class="formula">螺旋运动: r⃗ = R cos(ωt)ê₁ + R sin(ωt)ê₂ + v_z t ê₃</div>
+            <div class="physics-concept">🌀 圆柱螺旋：旋转(磁场) + 直线(电场)</div>
+            
+            <div class="formula">质量定义: m = k(dn/dΩ)</div>
+            <div class="physics-concept">⚛️ 质量 = 单位立体角内空间矢量密度</div>
+            
+            <div class="physics-concept">
+                <strong>🎯 14方向对称性：</strong>基于3D空间最大对称分布，体现空间运动的完整性和各向同性。
+            </div>
+        </div>
+        
+        <!-- 实时统计面板 -->
+        <div id="stats" class="panel">
+            <h4>📊 实时数据监控</h4>
+            <div class="stat-item">
+                <span>⏱️ 模拟时间:</span>
+                <span class="stat-value" id="timeValue">0.00s</span>
+            </div>
+            <div class="stat-item">
+                <span>🎯 活跃粒子:</span>
+                <span class="stat-value" id="particleCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span>⚡ 平均场强:</span>
+                <span class="stat-value" id="fieldStrength">0.00</span>
+            </div>
+            <div class="stat-item">
+                <span>🌌 空间曲率:</span>
+                <span class="stat-value" id="curvature">0.00</span>
+            </div>
+            <div class="stat-item">
+                <span>📈 FPS:</span>
+                <span class="stat-value" id="fpsCounter">60</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="unified-field.js"></script>
+</body>
+</html>

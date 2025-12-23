@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   schedule:
     # 每天凌晨2点运行性能测试
     - cron: '0 2 * * *'
@@ -18,147 +18,147 @@ jobs:
   quality:
     name: 代码质量检查
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: 检出代码
-      uses: actions/checkout@v4
+      - name: 检出代码
+        uses: actions/checkout@v4
 
-    - name: 设置Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+      - name: 设置Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-    - name: 安装依赖
-      run: npm ci
+      - name: 安装依赖
+        run: npm ci
 
-    - name: 类型检查
-      run: npm run type-check
+      - name: 类型检查
+        run: npm run type-check
 
-    - name: ESLint代码检查
-      run: npm run lint
+      - name: ESLint代码检查
+        run: npm run lint
 
-    - name: 安全漏洞扫描
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
+      - name: 安全漏洞扫描
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
 
-    - name: 上传安全扫描结果
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: 'trivy-results.sarif'
+      - name: 上传安全扫描结果
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
 
   # 单元测试
   unit-tests:
     name: 单元测试
     runs-on: ubuntu-latest
     needs: quality
-    
+
     steps:
-    - name: 检出代码
-      uses: actions/checkout@v4
+      - name: 检出代码
+        uses: actions/checkout@v4
 
-    - name: 设置Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+      - name: 设置Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-    - name: 安装依赖
-      run: npm ci
+      - name: 安装依赖
+        run: npm ci
 
-    - name: 运行单元测试
-      run: npm run test:run
+      - name: 运行单元测试
+        run: npm run test:run
 
-    - name: 生成覆盖率报告
-      run: npm run test:coverage
+      - name: 生成覆盖率报告
+        run: npm run test:coverage
 
-    - name: 上传覆盖率报告
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
+      - name: 上传覆盖率报告
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
 
   # 性能测试
   performance-tests:
     name: 性能测试
     runs-on: ubuntu-latest
     needs: unit-tests
-    
+
     steps:
-    - name: 检出代码
-      uses: actions/checkout@v4
+      - name: 检出代码
+        uses: actions/checkout@v4
 
-    - name: 设置Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+      - name: 设置Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-    - name: 安装依赖
-      run: npm ci
+      - name: 安装依赖
+        run: npm ci
 
-    - name: 运行性能基准测试
-      run: npm run test:performance
+      - name: 运行性能基准测试
+        run: npm run test:performance
 
-    - name: 生成性能报告
-      run: |
-        npm run test:performance -- --reporter=json > performance-report.json
-        echo "性能测试完成"
+      - name: 生成性能报告
+        run: |
+          npm run test:performance -- --reporter=json > performance-report.json
+          echo "性能测试完成"
 
-    - name: 分析性能数据
-      run: |
-        # 检查性能指标
-        npm run test:performance | grep -E "(FPS|Memory|Loading)" || true
+      - name: 分析性能数据
+        run: |
+          # 检查性能指标
+          npm run test:performance | grep -E "(FPS|Memory|Loading)" || true
 
-    - name: 上传性能报告
-      uses: actions/upload-artifact@v4
-      with:
-        name: performance-report
-        path: performance-report.json
+      - name: 上传性能报告
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report
+          path: performance-report.json
 
   # E2E测试
   e2e-tests:
     name: E2E测试
     runs-on: ubuntu-latest
     needs: performance-tests
-    
+
     steps:
-    - name: 检出代码
-      uses: actions/checkout@v4
+      - name: 检出代码
+        uses: actions/checkout@v4
 
-    - name: 设置Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+      - name: 设置Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-    - name: 安装依赖
-      run: npm ci
+      - name: 安装依赖
+        run: npm ci
 
-    - name: 安装Playwright浏览器
-      run: npx playwright install --with-deps
+      - name: 安装Playwright浏览器
+        run: npx playwright install --with-deps
 
-    - name: 构建应用
-      run: npm run build
+      - name: 构建应用
+        run: npm run build
 
-    - name: 启动开发服务器
-      run: |
-        npm run dev &
-        sleep 10
+      - name: 启动开发服务器
+        run: |
+          npm run dev &
+          sleep 10
 
-    - name: 运行E2E测试
-      run: npm run test:e2e
+      - name: 运行E2E测试
+        run: npm run test:e2e
 
-    - name: 上传E2E测试报告
-      uses: actions/upload-artifact@v4
-      with:
-        name: playwright-report
-        path: playwright-report/
+      - name: 上传E2E测试报告
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
 
   # 构建和部署
   build-deploy:
@@ -166,48 +166,48 @@ jobs:
     runs-on: ubuntu-latest
     needs: e2e-tests
     if: github.ref == 'refs/heads/main'
-    
+
     environment: production
-    
+
     steps:
-    - name: 检出代码
-      uses: actions/checkout@v4
+      - name: 检出代码
+        uses: actions/checkout@v4
 
-    - name: 设置Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+      - name: 设置Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-    - name: 安装依赖
-      run: npm ci
+      - name: 安装依赖
+        run: npm ci
 
-    - name: 构建应用
-      run: npm run build
+      - name: 构建应用
+        run: npm run build
 
-    - name: 构建分析
-      run: npm run build:analyze
+      - name: 构建分析
+        run: npm run build:analyze
 
-    - name: 检查构建产物
-      run: |
-        ls -la dist/
-        echo "构建产物大小:"
-        du -sh dist/
+      - name: 检查构建产物
+        run: |
+          ls -la dist/
+          echo "构建产物大小:"
+          du -sh dist/
 
-    - name: 部署到生产环境
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./dist
-        publish_branch: gh-pages
-        force_orphan: true
+      - name: 部署到生产环境
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          force_orphan: true
 
-    - name: 发送部署通知
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ job.status }}
-        text: 应用已成功部署到生产环境
-        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      - name: 发送部署通知
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 应用已成功部署到生产环境
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
 
   # 性能监控报告
   performance-monitoring:
@@ -215,30 +215,30 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-deploy
     if: always()
-    
-    steps:
-    - name: 生成性能监控报告
-      run: |
-        echo "📊 性能监控报告"
-        echo "=============="
-        echo "分支: ${{ github.ref }}"
-        echo "提交: ${{ github.sha }}"
-        echo "时间: $(date)"
-        echo ""
-        echo "✅ 代码质量检查: ${{ needs.quality.result }}"
-        echo "✅ 单元测试: ${{ needs.unit-tests.result }}"
-        echo "✅ 性能测试: ${{ needs.performance-tests.result }}"
-        echo "✅ E2E测试: ${{ needs.e2e-tests.result }}"
-        echo "✅ 构建部署: ${{ needs.build-deploy.result }}"
 
-    - name: 发送性能报告
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 587
-        username: ${{ secrets.MAIL_USERNAME }}
-        password: ${{ secrets.MAIL_PASSWORD }}
-        subject: "🚀 应用性能报告 - ${{ github.ref }}"
-        body: file://performance-report.md
-        to: ${{ secrets.MONITORING_EMAIL }}
-        from: CI/CD Bot <ci-cd@project.com>
+    steps:
+      - name: 生成性能监控报告
+        run: |
+          echo "📊 性能监控报告"
+          echo "=============="
+          echo "分支: ${{ github.ref }}"
+          echo "提交: ${{ github.sha }}"
+          echo "时间: $(date)"
+          echo ""
+          echo "✅ 代码质量检查: ${{ needs.quality.result }}"
+          echo "✅ 单元测试: ${{ needs.unit-tests.result }}"
+          echo "✅ 性能测试: ${{ needs.performance-tests.result }}"
+          echo "✅ E2E测试: ${{ needs.e2e-tests.result }}"
+          echo "✅ 构建部署: ${{ needs.build-deploy.result }}"
+
+      - name: 发送性能报告
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: '🚀 应用性能报告 - ${{ github.ref }}'
+          body: file://performance-report.md
+          to: ${{ secrets.MONITORING_EMAIL }}
+          from: CI/CD Bot <ci-cd@project.com>

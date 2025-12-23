@@ -138,7 +138,9 @@ describe('ObjectPool', () => {
     idCounter = 0
     pool = new ObjectPool<TestObject>(
       () => ({ id: idCounter++, active: true }),
-      (obj) => { obj.active = false },
+      obj => {
+        obj.active = false
+      },
       5
     )
   })

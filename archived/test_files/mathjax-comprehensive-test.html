@@ -1,1128 +1,1135 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MathJax 最强结合 - 全局全面测试套件</title>
-    
+
     <!-- MathJax 全局配置 - 最强配置 -->
     <script>
-        window.MathJax = {
-            // 全局配置
-            startup: {
-                ready() {
-                    console.log('🚀 MathJax 启动完成');
-                    MathJax.startup.defaultReady();
-                    // 启动后立即测试
-                    setTimeout(() => {
-                        runComprehensiveTests();
-                    }, 100);
-                }
-            },
-            
-            // 输入处理器配置
-            tex: {
-                // 内联数学分隔符
-                inlineMath: [
-                    ['$', '$'],
-                    ['\\(', '\\)']
-                ],
-                // 显示数学分隔符
-                displayMath: [
-                    ['$$', '$$'],
-                    ['\\[', '\\]']
-                ],
-                // 启用所有扩展包
-                packages: {
-                    '[+]': [
-                        'base',
-                        'ams',
-                        'newcommand',
-                        'configmacros',
-                        'action',
-                        'bbox',
-                        'boldsymbol',
-                        'braket',
-                        'cancel',
-                        'color',
-                        'enclose',
-                        'extpfeil',
-                        'html',
-                        'mathtools',
-                        'mhchem',
-                        'physics',
-                        'textmacros',
-                        'unicode',
-                        'verb'
-                    ]
-                },
-                // 自定义宏
-                macros: {
-                    // 基础宏
-                    RR: "\\mathbb{R}",
-                    CC: "\\mathbb{C}",
-                    NN: "\\mathbb{N}",
-                    ZZ: "\\mathbb{Z}",
-                    QQ: "\\mathbb{Q}",
-                    
-                    // 向量和矩阵
-                    vec: ["\\mathbf{#1}", 1],
-                    mat: ["\\mathbf{#1}", 1],
-                    
-                    // 微积分
-                    dd: "\\mathrm{d}",
-                    pp: "\\partial",
-                    grad: "\\nabla",
-                    
-                    // 物理学
-                    hbar: "\\hslash",
-                    ket: ["|#1\\rangle", 1],
-                    bra: ["\\langle#1|", 1],
-                    braket: ["\\langle#1|#2\\rangle", 2],
-                    
-                    // 自定义函数
-                    sinc: "\\operatorname{sinc}",
-                    rect: "\\operatorname{rect}",
-                    
-                    // 特殊符号
-                    implies: "\\Rightarrow",
-                    iff: "\\Leftrightarrow"
-                },
-                // 标签和引用
-                tags: 'ams',
-                tagSide: 'right',
-                tagIndent: '0.8em',
-                // 多行公式
-                multlineWidth: '85%',
-                // 错误处理
-                formatError: (jax, err) => {
-                    console.error('MathJax 错误:', err);
-                    return jax.formatError(err);
-                }
-            },
-            
-            // MathML 配置
-            mathml: {
-                forceReparse: true
-            },
-            
-            // AsciiMath 配置
-            asciimath: {
-                delimiters: [['`', '`'], ['am:', ':am']]
-            },
-            
-            // 输出配置
-            chtml: {
-                scale: 1,
-                minScale: 0.5,
-                matchFontHeight: false,
-                fontURL: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2'
-            },
-            
-            svg: {
-                scale: 1,
-                minScale: 0.5,
-                fontCache: 'local'
-            },
-            
-            // 菜单配置
-            options: {
-                menuOptions: {
-                    settings: {
-                        assistiveMml: true,
-                        collapsible: true,
-                        explorer: true
-                    }
-                },
-                renderActions: {
-                    addMenu: [0, '', '']
-                }
-            },
-            
-            // 加载器配置
-            loader: {
-                load: [
-                    '[tex]/ams',
-                    '[tex]/newcommand',
-                    '[tex]/configmacros',
-                    '[tex]/action',
-                    '[tex]/bbox',
-                    '[tex]/boldsymbol',
-                    '[tex]/braket',
-                    '[tex]/cancel',
-                    '[tex]/color',
-                    '[tex]/enclose',
-                    '[tex]/extpfeil',
-                    '[tex]/html',
-                    '[tex]/mathtools',
-                    '[tex]/mhchem',
-                    '[tex]/physics',
-                    '[tex]/textmacros',
-                    '[tex]/unicode',
-                    '[tex]/verb'
-                ]
+      window.MathJax = {
+        // 全局配置
+        startup: {
+          ready() {
+            console.log('🚀 MathJax 启动完成')
+            MathJax.startup.defaultReady()
+            // 启动后立即测试
+            setTimeout(() => {
+              runComprehensiveTests()
+            }, 100)
+          }
+        },
+
+        // 输入处理器配置
+        tex: {
+          // 内联数学分隔符
+          inlineMath: [
+            ['$', '$'],
+            ['\\(', '\\)']
+          ],
+          // 显示数学分隔符
+          displayMath: [
+            ['$$', '$$'],
+            ['\\[', '\\]']
+          ],
+          // 启用所有扩展包
+          packages: {
+            '[+]': [
+              'base',
+              'ams',
+              'newcommand',
+              'configmacros',
+              'action',
+              'bbox',
+              'boldsymbol',
+              'braket',
+              'cancel',
+              'color',
+              'enclose',
+              'extpfeil',
+              'html',
+              'mathtools',
+              'mhchem',
+              'physics',
+              'textmacros',
+              'unicode',
+              'verb'
+            ]
+          },
+          // 自定义宏
+          macros: {
+            // 基础宏
+            RR: '\\mathbb{R}',
+            CC: '\\mathbb{C}',
+            NN: '\\mathbb{N}',
+            ZZ: '\\mathbb{Z}',
+            QQ: '\\mathbb{Q}',
+
+            // 向量和矩阵
+            vec: ['\\mathbf{#1}', 1],
+            mat: ['\\mathbf{#1}', 1],
+
+            // 微积分
+            dd: '\\mathrm{d}',
+            pp: '\\partial',
+            grad: '\\nabla',
+
+            // 物理学
+            hbar: '\\hslash',
+            ket: ['|#1\\rangle', 1],
+            bra: ['\\langle#1|', 1],
+            braket: ['\\langle#1|#2\\rangle', 2],
+
+            // 自定义函数
+            sinc: '\\operatorname{sinc}',
+            rect: '\\operatorname{rect}',
+
+            // 特殊符号
+            implies: '\\Rightarrow',
+            iff: '\\Leftrightarrow'
+          },
+          // 标签和引用
+          tags: 'ams',
+          tagSide: 'right',
+          tagIndent: '0.8em',
+          // 多行公式
+          multlineWidth: '85%',
+          // 错误处理
+          formatError: (jax, err) => {
+            console.error('MathJax 错误:', err)
+            return jax.formatError(err)
+          }
+        },
+
+        // MathML 配置
+        mathml: {
+          forceReparse: true
+        },
+
+        // AsciiMath 配置
+        asciimath: {
+          delimiters: [
+            ['`', '`'],
+            ['am:', ':am']
+          ]
+        },
+
+        // 输出配置
+        chtml: {
+          scale: 1,
+          minScale: 0.5,
+          matchFontHeight: false,
+          fontURL: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2'
+        },
+
+        svg: {
+          scale: 1,
+          minScale: 0.5,
+          fontCache: 'local'
+        },
+
+        // 菜单配置
+        options: {
+          menuOptions: {
+            settings: {
+              assistiveMml: true,
+              collapsible: true,
+              explorer: true
             }
-        };
+          },
+          renderActions: {
+            addMenu: [0, '', '']
+          }
+        },
+
+        // 加载器配置
+        loader: {
+          load: [
+            '[tex]/ams',
+            '[tex]/newcommand',
+            '[tex]/configmacros',
+            '[tex]/action',
+            '[tex]/bbox',
+            '[tex]/boldsymbol',
+            '[tex]/braket',
+            '[tex]/cancel',
+            '[tex]/color',
+            '[tex]/enclose',
+            '[tex]/extpfeil',
+            '[tex]/html',
+            '[tex]/mathtools',
+            '[tex]/mhchem',
+            '[tex]/physics',
+            '[tex]/textmacros',
+            '[tex]/unicode',
+            '[tex]/verb'
+          ]
+        }
+      }
     </script>
-    
+
     <!-- 加载 MathJax -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 20px;
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-            border-radius: 15px;
-            color: white;
-        }
-        
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-        
-        .test-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-        
-        .test-section {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            border-left: 5px solid;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .test-section:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-        }
-        
-        .test-section.basic { border-left-color: #ff6b6b; }
-        .test-section.advanced { border-left-color: #4ecdc4; }
-        .test-section.physics { border-left-color: #45b7d1; }
-        .test-section.chemistry { border-left-color: #96ceb4; }
-        .test-section.geometry { border-left-color: #feca57; }
-        .test-section.interactive { border-left-color: #ff9ff3; }
-        
-        .test-section h2 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .test-item {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border-left: 3px solid #007bff;
-        }
-        
-        .test-item h3 {
-            color: #495057;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-        }
-        
-        .math-display {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-            border: 1px solid #e9ecef;
-            min-height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .controls {
-            background: #2c3e50;
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .controls h2 {
-            margin-bottom: 20px;
-            color: #ecf0f1;
-        }
-        
-        .control-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        button {
-            background: linear-gradient(45deg, #3498db, #2980b9);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
-        }
-        
-        button.success {
-            background: linear-gradient(45deg, #27ae60, #2ecc71);
-        }
-        
-        button.danger {
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
-        }
-        
-        .status {
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-            font-weight: bold;
-        }
-        
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .status.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-        
-        .performance-meter {
-            background: #34495e;
-            padding: 20px;
-            border-radius: 10px;
-            color: white;
-            margin: 20px 0;
-        }
-        
-        .meter-bar {
-            background: #2c3e50;
-            height: 20px;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-        
-        .meter-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #27ae60, #f39c12, #e74c3c);
-            transition: width 0.5s ease;
-            border-radius: 10px;
-        }
-        
-        .interactive-demo {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 15px 0;
-        }
-        
-        input[type="text"], textarea {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            margin: 10px 0;
-        }
-        
-        input[type="text"]:focus, textarea:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
-        }
-        
-        .error-log {
-            background: #2c3e50;
-            color: #ecf0f1;
-            padding: 15px;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-            margin: 15px 0;
-        }
-        
-        @media (max-width: 768px) {
-            .test-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .container {
-                padding: 15px;
-            }
-            
-            .header h1 {
-                font-size: 2em;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🧮 MathJax 最强结合测试套件</h1>
-            <p>全局配置 • 全面功能 • 全方位测试</p>
-        </div>
-        
-        <div class="controls">
-            <h2>🎛️ 测试控制面板</h2>
-            <div class="control-group">
-                <button onclick="runAllTests()">🚀 运行全部测试</button>
-                <button onclick="runPerformanceTest()">⚡ 性能测试</button>
-                <button onclick="testErrorHandling()">🐛 错误处理测试</button>
-                <button onclick="clearResults()">🧹 清除结果</button>
-                <button onclick="exportResults()">📊 导出结果</button>
-            </div>
-            
-            <div class="control-group">
-                <button onclick="toggleRenderer('chtml')" id="chtml-btn" class="success">HTML-CSS 渲染</button>
-                <button onclick="toggleRenderer('svg')" id="svg-btn">SVG 渲染</button>
-                <button onclick="reprocessMath()">🔄 重新处理</button>
-                <button onclick="showMathJaxMenu()">⚙️ MathJax 菜单</button>
-            </div>
-            
-            <div id="status-display" class="status info">
-                准备就绪 - 点击按钮开始测试
-            </div>
-            
-            <div class="performance-meter">
-                <div>渲染性能: <span id="perf-text">待测试</span></div>
-                <div class="meter-bar">
-                    <div class="meter-fill" id="perf-bar" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>        
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
 
-        <div class="test-grid">
-            <!-- 基础数学测试 -->
-            <div class="test-section basic">
-                <h2>🔢 基础数学测试</h2>
-                
-                <div class="test-item">
-                    <h3>内联数学</h3>
-                    <p>这是内联数学: $E = mc^2$ 和 $\pi \approx 3.14159$</p>
-                    <p>更多内联: \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\)</p>
-                </div>
-                
-                <div class="test-item">
-                    <h3>显示数学</h3>
-                    <div class="math-display">
-                        $$\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}$$
-                    </div>
-                    <div class="math-display">
-                        \[\sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6}\]
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>分数和根式</h3>
-                    <div class="math-display">
-                        $$\frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>上下标</h3>
-                    <div class="math-display">
-                        $$x^{2^3} + y_{i,j}^{(k)} = z_{\text{max}}^{\alpha + \beta}$$
-                    </div>
-                </div>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 20px;
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        border-radius: 15px;
+        color: white;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .header p {
+        font-size: 1.2em;
+        opacity: 0.9;
+      }
+
+      .test-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+      }
+
+      .test-section {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border-left: 5px solid;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+
+      .test-section:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+      }
+
+      .test-section.basic {
+        border-left-color: #ff6b6b;
+      }
+      .test-section.advanced {
+        border-left-color: #4ecdc4;
+      }
+      .test-section.physics {
+        border-left-color: #45b7d1;
+      }
+      .test-section.chemistry {
+        border-left-color: #96ceb4;
+      }
+      .test-section.geometry {
+        border-left-color: #feca57;
+      }
+      .test-section.interactive {
+        border-left-color: #ff9ff3;
+      }
+
+      .test-section h2 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+        font-size: 1.5em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .test-item {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 3px solid #007bff;
+      }
+
+      .test-item h3 {
+        color: #495057;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+      }
+
+      .math-display {
+        background: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+        border: 1px solid #e9ecef;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .controls {
+        background: #2c3e50;
+        color: white;
+        padding: 25px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+      }
+
+      .controls h2 {
+        margin-bottom: 20px;
+        color: #ecf0f1;
+      }
+
+      .control-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      button {
+        background: linear-gradient(45deg, #3498db, #2980b9);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        font-size: 14px;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+      }
+
+      button.success {
+        background: linear-gradient(45deg, #27ae60, #2ecc71);
+      }
+
+      button.danger {
+        background: linear-gradient(45deg, #e74c3c, #c0392b);
+      }
+
+      .status {
+        padding: 15px;
+        border-radius: 10px;
+        margin: 15px 0;
+        font-weight: bold;
+      }
+
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .status.info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+
+      .performance-meter {
+        background: #34495e;
+        padding: 20px;
+        border-radius: 10px;
+        color: white;
+        margin: 20px 0;
+      }
+
+      .meter-bar {
+        background: #2c3e50;
+        height: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+
+      .meter-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #27ae60, #f39c12, #e74c3c);
+        transition: width 0.5s ease;
+        border-radius: 10px;
+      }
+
+      .interactive-demo {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 15px 0;
+      }
+
+      input[type='text'],
+      textarea {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        margin: 10px 0;
+      }
+
+      input[type='text']:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+      }
+
+      .error-log {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 15px;
+        border-radius: 10px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        max-height: 200px;
+        overflow-y: auto;
+        margin: 15px 0;
+      }
+
+      @media (max-width: 768px) {
+        .test-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🧮 MathJax 最强结合测试套件</h1>
+        <p>全局配置 • 全面功能 • 全方位测试</p>
+      </div>
+
+      <div class="controls">
+        <h2>🎛️ 测试控制面板</h2>
+        <div class="control-group">
+          <button onclick="runAllTests()">🚀 运行全部测试</button>
+          <button onclick="runPerformanceTest()">⚡ 性能测试</button>
+          <button onclick="testErrorHandling()">🐛 错误处理测试</button>
+          <button onclick="clearResults()">🧹 清除结果</button>
+          <button onclick="exportResults()">📊 导出结果</button>
+        </div>
+
+        <div class="control-group">
+          <button onclick="toggleRenderer('chtml')" id="chtml-btn" class="success">
+            HTML-CSS 渲染
+          </button>
+          <button onclick="toggleRenderer('svg')" id="svg-btn">SVG 渲染</button>
+          <button onclick="reprocessMath()">🔄 重新处理</button>
+          <button onclick="showMathJaxMenu()">⚙️ MathJax 菜单</button>
+        </div>
+
+        <div id="status-display" class="status info">准备就绪 - 点击按钮开始测试</div>
+
+        <div class="performance-meter">
+          <div>渲染性能: <span id="perf-text">待测试</span></div>
+          <div class="meter-bar">
+            <div class="meter-fill" id="perf-bar" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="test-grid">
+        <!-- 基础数学测试 -->
+        <div class="test-section basic">
+          <h2>🔢 基础数学测试</h2>
+
+          <div class="test-item">
+            <h3>内联数学</h3>
+            <p>这是内联数学: $E = mc^2$ 和 $\pi \approx 3.14159$</p>
+            <p>更多内联: \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\)</p>
+          </div>
+
+          <div class="test-item">
+            <h3>显示数学</h3>
+            <div class="math-display">$$\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}$$</div>
+            <div class="math-display">\[\sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6}\]</div>
+          </div>
+
+          <div class="test-item">
+            <h3>分数和根式</h3>
+            <div class="math-display">
+              $$\frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}$$
             </div>
-            
-            <!-- 高级数学测试 -->
-            <div class="test-section advanced">
-                <h2>🎓 高级数学测试</h2>
-                
-                <div class="test-item">
-                    <h3>矩阵和行列式</h3>
-                    <div class="math-display">
-                        $$\begin{pmatrix}
-                        a & b & c \\
-                        d & e & f \\
-                        g & h & i
-                        \end{pmatrix} \cdot \begin{pmatrix}
-                        x \\ y \\ z
-                        \end{pmatrix} = \begin{pmatrix}
-                        ax + by + cz \\
-                        dx + ey + fz \\
-                        gx + hy + iz
-                        \end{pmatrix}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>多行公式</h3>
-                    <div class="math-display">
-                        $$\begin{align}
-                        f(x) &= x^2 + 2x + 1 \\
-                        &= (x + 1)^2 \\
-                        &= (x + 1)(x + 1)
-                        \end{align}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>极限和导数</h3>
-                    <div class="math-display">
-                        $$\lim_{x \to 0} \frac{\sin x}{x} = 1 \quad \text{和} \quad \frac{d}{dx}[x^n] = nx^{n-1}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>积分</h3>
-                    <div class="math-display">
-                        $$\oint_C \vec{F} \cdot d\vec{r} = \iint_S (\nabla \times \vec{F}) \cdot d\vec{S}$$
-                    </div>
-                </div>
+          </div>
+
+          <div class="test-item">
+            <h3>上下标</h3>
+            <div class="math-display">
+              $$x^{2^3} + y_{i,j}^{(k)} = z_{\text{max}}^{\alpha + \beta}$$
             </div>
-            
-            <!-- 物理学测试 -->
-            <div class="test-section physics">
-                <h2>⚛️ 物理学测试</h2>
-                
-                <div class="test-item">
-                    <h3>量子力学</h3>
-                    <div class="math-display">
-                        $$i\hbar\frac{\partial}{\partial t}|\psi\rangle = \hat{H}|\psi\rangle$$
-                    </div>
-                    <div class="math-display">
-                        $$\langle\psi|\hat{A}|\psi\rangle = \int_{-\infty}^{\infty} \psi^*(x) \hat{A} \psi(x) dx$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>电磁学</h3>
-                    <div class="math-display">
-                        $$\nabla \cdot \vec{E} = \frac{\rho}{\epsilon_0} \quad \nabla \times \vec{B} = \mu_0\vec{J} + \mu_0\epsilon_0\frac{\partial \vec{E}}{\partial t}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>相对论</h3>
-                    <div class="math-display">
-                        $$ds^2 = -c^2dt^2 + dx^2 + dy^2 + dz^2$$
-                    </div>
-                    <div class="math-display">
-                        $$E^2 = (pc)^2 + (mc^2)^2$$
-                    </div>
-                </div>
+          </div>
+        </div>
+
+        <!-- 高级数学测试 -->
+        <div class="test-section advanced">
+          <h2>🎓 高级数学测试</h2>
+
+          <div class="test-item">
+            <h3>矩阵和行列式</h3>
+            <div class="math-display">
+              $$\begin{pmatrix} a & b & c \\ d & e & f \\ g & h & i \end{pmatrix} \cdot
+              \begin{pmatrix} x \\ y \\ z \end{pmatrix} = \begin{pmatrix} ax + by + cz \\ dx + ey +
+              fz \\ gx + hy + iz \end{pmatrix}$$
             </div>
-            
-            <!-- 化学测试 -->
-            <div class="test-section chemistry">
-                <h2>🧪 化学测试</h2>
-                
-                <div class="test-item">
-                    <h3>化学方程式</h3>
-                    <div class="math-display">
-                        $$\ce{2H2 + O2 -> 2H2O}$$
-                    </div>
-                    <div class="math-display">
-                        $$\ce{CaCO3 + 2HCl -> CaCl2 + H2O + CO2 ^}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>复杂化学式</h3>
-                    <div class="math-display">
-                        $$\ce{Cr2O7^2- + 14H+ + 6e- -> 2Cr^3+ + 7H2O}$$
-                    </div>
-                    <div class="math-display">
-                        $$\ce{[Cu(NH3)4]^2+ + 4H2O <=> Cu^2+ + 4NH3 + 4H2O}$$
-                    </div>
-                </div>
+          </div>
+
+          <div class="test-item">
+            <h3>多行公式</h3>
+            <div class="math-display">
+              $$\begin{align} f(x) &= x^2 + 2x + 1 \\ &= (x + 1)^2 \\ &= (x + 1)(x + 1)
+              \end{align}$$
             </div>
-            
-            <!-- 几何学测试 -->
-            <div class="test-section geometry">
-                <h2>📐 几何学测试</h2>
-                
-                <div class="test-item">
-                    <h3>三角函数</h3>
-                    <div class="math-display">
-                        $$\sin^2\theta + \cos^2\theta = 1$$
-                    </div>
-                    <div class="math-display">
-                        $$e^{i\theta} = \cos\theta + i\sin\theta$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>向量运算</h3>
-                    <div class="math-display">
-                        $$\vec{a} \times \vec{b} = |\vec{a}||\vec{b}|\sin\theta \hat{n}$$
-                    </div>
-                    <div class="math-display">
-                        $$\vec{a} \cdot \vec{b} = a_x b_x + a_y b_y + a_z b_z$$
-                    </div>
-                </div>
+          </div>
+
+          <div class="test-item">
+            <h3>极限和导数</h3>
+            <div class="math-display">
+              $$\lim_{x \to 0} \frac{\sin x}{x} = 1 \quad \text{和} \quad \frac{d}{dx}[x^n] =
+              nx^{n-1}$$
             </div>
-            
-            <!-- 交互式测试 -->
-            <div class="test-section interactive">
-                <h2>🎮 交互式测试</h2>
-                
-                <div class="test-item">
-                    <h3>实时数学输入</h3>
-                    <input type="text" id="math-input" placeholder="输入数学公式，如: x^2 + y^2 = r^2" 
-                           oninput="renderLiveMath(this.value)">
-                    <div class="math-display" id="live-math">
-                        输入公式将在这里实时显示
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>多行公式编辑器</h3>
-                    <textarea id="multiline-input" rows="4" placeholder="输入多行公式...
+          </div>
+
+          <div class="test-item">
+            <h3>积分</h3>
+            <div class="math-display">
+              $$\oint_C \vec{F} \cdot d\vec{r} = \iint_S (\nabla \times \vec{F}) \cdot d\vec{S}$$
+            </div>
+          </div>
+        </div>
+
+        <!-- 物理学测试 -->
+        <div class="test-section physics">
+          <h2>⚛️ 物理学测试</h2>
+
+          <div class="test-item">
+            <h3>量子力学</h3>
+            <div class="math-display">
+              $$i\hbar\frac{\partial}{\partial t}|\psi\rangle = \hat{H}|\psi\rangle$$
+            </div>
+            <div class="math-display">
+              $$\langle\psi|\hat{A}|\psi\rangle = \int_{-\infty}^{\infty} \psi^*(x) \hat{A} \psi(x)
+              dx$$
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h3>电磁学</h3>
+            <div class="math-display">
+              $$\nabla \cdot \vec{E} = \frac{\rho}{\epsilon_0} \quad \nabla \times \vec{B} =
+              \mu_0\vec{J} + \mu_0\epsilon_0\frac{\partial \vec{E}}{\partial t}$$
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h3>相对论</h3>
+            <div class="math-display">$$ds^2 = -c^2dt^2 + dx^2 + dy^2 + dz^2$$</div>
+            <div class="math-display">$$E^2 = (pc)^2 + (mc^2)^2$$</div>
+          </div>
+        </div>
+
+        <!-- 化学测试 -->
+        <div class="test-section chemistry">
+          <h2>🧪 化学测试</h2>
+
+          <div class="test-item">
+            <h3>化学方程式</h3>
+            <div class="math-display">$$\ce{2H2 + O2 -> 2H2O}$$</div>
+            <div class="math-display">$$\ce{CaCO3 + 2HCl -> CaCl2 + H2O + CO2 ^}$$</div>
+          </div>
+
+          <div class="test-item">
+            <h3>复杂化学式</h3>
+            <div class="math-display">$$\ce{Cr2O7^2- + 14H+ + 6e- -> 2Cr^3+ + 7H2O}$$</div>
+            <div class="math-display">$$\ce{[Cu(NH3)4]^2+ + 4H2O <=> Cu^2+ + 4NH3 + 4H2O}$$</div>
+          </div>
+        </div>
+
+        <!-- 几何学测试 -->
+        <div class="test-section geometry">
+          <h2>📐 几何学测试</h2>
+
+          <div class="test-item">
+            <h3>三角函数</h3>
+            <div class="math-display">$$\sin^2\theta + \cos^2\theta = 1$$</div>
+            <div class="math-display">$$e^{i\theta} = \cos\theta + i\sin\theta$$</div>
+          </div>
+
+          <div class="test-item">
+            <h3>向量运算</h3>
+            <div class="math-display">
+              $$\vec{a} \times \vec{b} = |\vec{a}||\vec{b}|\sin\theta \hat{n}$$
+            </div>
+            <div class="math-display">$$\vec{a} \cdot \vec{b} = a_x b_x + a_y b_y + a_z b_z$$</div>
+          </div>
+        </div>
+
+        <!-- 交互式测试 -->
+        <div class="test-section interactive">
+          <h2>🎮 交互式测试</h2>
+
+          <div class="test-item">
+            <h3>实时数学输入</h3>
+            <input
+              type="text"
+              id="math-input"
+              placeholder="输入数学公式，如: x^2 + y^2 = r^2"
+              oninput="renderLiveMath(this.value)"
+            />
+            <div class="math-display" id="live-math">输入公式将在这里实时显示</div>
+          </div>
+
+          <div class="test-item">
+            <h3>多行公式编辑器</h3>
+            <textarea
+              id="multiline-input"
+              rows="4"
+              placeholder="输入多行公式...
 例如:
 \begin{align}
 x &= a + b \\
 y &= c + d
-\end{align}" oninput="renderMultilineMath(this.value)"></textarea>
-                    <div class="math-display" id="multiline-math">
-                        多行公式将在这里显示
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>公式库快速插入</h3>
-                    <div class="control-group">
-                        <button onclick="insertFormula('quadratic')">二次公式</button>
-                        <button onclick="insertFormula('integral')">积分公式</button>
-                        <button onclick="insertFormula('matrix')">矩阵</button>
-                        <button onclick="insertFormula('physics')">物理公式</button>
-                    </div>
-                </div>
+\end{align}"
+              oninput="renderMultilineMath(this.value)"
+            ></textarea>
+            <div class="math-display" id="multiline-math">多行公式将在这里显示</div>
+          </div>
+
+          <div class="test-item">
+            <h3>公式库快速插入</h3>
+            <div class="control-group">
+              <button onclick="insertFormula('quadratic')">二次公式</button>
+              <button onclick="insertFormula('integral')">积分公式</button>
+              <button onclick="insertFormula('matrix')">矩阵</button>
+              <button onclick="insertFormula('physics')">物理公式</button>
             </div>
+          </div>
         </div>
-        
-        <!-- 错误日志 -->
-        <div class="test-section">
-            <h2>📋 测试日志</h2>
-            <div id="error-log" class="error-log">
-                测试日志将在这里显示...
-            </div>
+      </div>
+
+      <!-- 错误日志 -->
+      <div class="test-section">
+        <h2>📋 测试日志</h2>
+        <div id="error-log" class="error-log">测试日志将在这里显示...</div>
+      </div>
+
+      <!-- 自定义宏测试 -->
+      <div class="test-section">
+        <h2>🔧 自定义宏测试</h2>
+        <div class="test-item">
+          <h3>预定义宏</h3>
+          <div class="math-display">$$\RR, \CC, \NN, \ZZ, \QQ \text{ (数集)}$$</div>
+          <div class="math-display">$$\vec{v}, \mat{A} \text{ (向量和矩阵)}$$</div>
+          <div class="math-display">$$\dd x, \pp f, \grad f \text{ (微积分)}$$</div>
+          <div class="math-display">
+            $$\ket{\psi}, \bra{\phi}, \braket{\phi}{\psi} \text{ (量子力学)}$$
+          </div>
         </div>
-        
-        <!-- 自定义宏测试 -->
-        <div class="test-section">
-            <h2>🔧 自定义宏测试</h2>
-            <div class="test-item">
-                <h3>预定义宏</h3>
-                <div class="math-display">
-                    $$\RR, \CC, \NN, \ZZ, \QQ \text{ (数集)}$$
-                </div>
-                <div class="math-display">
-                    $$\vec{v}, \mat{A} \text{ (向量和矩阵)}$$
-                </div>
-                <div class="math-display">
-                    $$\dd x, \pp f, \grad f \text{ (微积分)}$$
-                </div>
-                <div class="math-display">
-                    $$\ket{\psi}, \bra{\phi}, \braket{\phi}{\psi} \text{ (量子力学)}$$
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
     <script>
-        // 全局变量
-        let testResults = [];
-        let currentRenderer = 'chtml';
-        let performanceData = [];
-        
-        // 日志函数
-        function log(message, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString();
-            const logElement = document.getElementById('error-log');
-            const colorMap = {
-                'info': '#3498db',
-                'success': '#27ae60', 
-                'error': '#e74c3c',
-                'warning': '#f39c12'
-            };
-            
-            logElement.innerHTML += `<div style="color: ${colorMap[type]};">[${timestamp}] ${message}</div>`;
-            logElement.scrollTop = logElement.scrollHeight;
-            
-            console.log(`[MathJax Test] ${message}`);
+      // 全局变量
+      let testResults = []
+      let currentRenderer = 'chtml'
+      let performanceData = []
+
+      // 日志函数
+      function log(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString()
+        const logElement = document.getElementById('error-log')
+        const colorMap = {
+          info: '#3498db',
+          success: '#27ae60',
+          error: '#e74c3c',
+          warning: '#f39c12'
         }
-        
-        // 状态更新函数
-        function updateStatus(message, type = 'info') {
-            const statusElement = document.getElementById('status-display');
-            statusElement.className = `status ${type}`;
-            statusElement.textContent = message;
+
+        logElement.innerHTML += `<div style="color: ${colorMap[type]};">[${timestamp}] ${message}</div>`
+        logElement.scrollTop = logElement.scrollHeight
+
+        console.log(`[MathJax Test] ${message}`)
+      }
+
+      // 状态更新函数
+      function updateStatus(message, type = 'info') {
+        const statusElement = document.getElementById('status-display')
+        statusElement.className = `status ${type}`
+        statusElement.textContent = message
+      }
+
+      // 性能测试函数
+      function measurePerformance(testName, testFunction) {
+        const startTime = performance.now()
+
+        try {
+          const result = testFunction()
+          const endTime = performance.now()
+          const duration = endTime - startTime
+
+          performanceData.push({
+            test: testName,
+            duration: duration,
+            success: true
+          })
+
+          log(`✅ ${testName}: ${duration.toFixed(2)}ms`, 'success')
+          return { success: true, duration, result }
+        } catch (error) {
+          const endTime = performance.now()
+          const duration = endTime - startTime
+
+          performanceData.push({
+            test: testName,
+            duration: duration,
+            success: false,
+            error: error.message
+          })
+
+          log(`❌ ${testName}: ${error.message} (${duration.toFixed(2)}ms)`, 'error')
+          return { success: false, duration, error }
         }
-        
-        // 性能测试函数
-        function measurePerformance(testName, testFunction) {
-            const startTime = performance.now();
-            
-            try {
-                const result = testFunction();
-                const endTime = performance.now();
-                const duration = endTime - startTime;
-                
-                performanceData.push({
-                    test: testName,
-                    duration: duration,
-                    success: true
-                });
-                
-                log(`✅ ${testName}: ${duration.toFixed(2)}ms`, 'success');
-                return { success: true, duration, result };
-                
-            } catch (error) {
-                const endTime = performance.now();
-                const duration = endTime - startTime;
-                
-                performanceData.push({
-                    test: testName,
-                    duration: duration,
-                    success: false,
-                    error: error.message
-                });
-                
-                log(`❌ ${testName}: ${error.message} (${duration.toFixed(2)}ms)`, 'error');
-                return { success: false, duration, error };
+      }
+
+      // 综合测试函数
+      function runComprehensiveTests() {
+        log('🚀 开始运行综合测试套件', 'info')
+        updateStatus('正在运行综合测试...', 'info')
+
+        const tests = [
+          { name: 'MathJax 初始化检查', func: testMathJaxInit },
+          { name: '基础渲染测试', func: testBasicRendering },
+          { name: '高级数学测试', func: testAdvancedMath },
+          { name: '自定义宏测试', func: testCustomMacros },
+          { name: '多渲染器测试', func: testMultipleRenderers },
+          { name: '动态内容测试', func: testDynamicContent },
+          { name: '错误处理测试', func: testErrorHandling },
+          { name: '性能基准测试', func: testPerformanceBenchmark }
+        ]
+
+        let passedTests = 0
+        let totalTests = tests.length
+
+        tests.forEach((test, index) => {
+          setTimeout(() => {
+            const result = measurePerformance(test.name, test.func)
+            if (result.success) passedTests++
+
+            // 更新进度
+            const progress = ((index + 1) / totalTests) * 100
+            updateProgressBar(progress)
+
+            // 最后一个测试完成
+            if (index === totalTests - 1) {
+              const successRate = (passedTests / totalTests) * 100
+              updateStatus(
+                `测试完成: ${passedTests}/${totalTests} 通过 (${successRate.toFixed(1)}%)`,
+                successRate === 100 ? 'success' : 'warning'
+              )
+
+              log(
+                `🎉 测试套件完成: ${passedTests}/${totalTests} 通过`,
+                successRate === 100 ? 'success' : 'warning'
+              )
             }
+          }, index * 500) // 错开执行时间
+        })
+      }
+
+      // 具体测试函数
+      function testMathJaxInit() {
+        if (typeof MathJax === 'undefined') {
+          throw new Error('MathJax 未加载')
         }
-        
-        // 综合测试函数
-        function runComprehensiveTests() {
-            log('🚀 开始运行综合测试套件', 'info');
-            updateStatus('正在运行综合测试...', 'info');
-            
-            const tests = [
-                { name: 'MathJax 初始化检查', func: testMathJaxInit },
-                { name: '基础渲染测试', func: testBasicRendering },
-                { name: '高级数学测试', func: testAdvancedMath },
-                { name: '自定义宏测试', func: testCustomMacros },
-                { name: '多渲染器测试', func: testMultipleRenderers },
-                { name: '动态内容测试', func: testDynamicContent },
-                { name: '错误处理测试', func: testErrorHandling },
-                { name: '性能基准测试', func: testPerformanceBenchmark }
-            ];
-            
-            let passedTests = 0;
-            let totalTests = tests.length;
-            
-            tests.forEach((test, index) => {
-                setTimeout(() => {
-                    const result = measurePerformance(test.name, test.func);
-                    if (result.success) passedTests++;
-                    
-                    // 更新进度
-                    const progress = ((index + 1) / totalTests) * 100;
-                    updateProgressBar(progress);
-                    
-                    // 最后一个测试完成
-                    if (index === totalTests - 1) {
-                        const successRate = (passedTests / totalTests) * 100;
-                        updateStatus(`测试完成: ${passedTests}/${totalTests} 通过 (${successRate.toFixed(1)}%)`, 
-                                   successRate === 100 ? 'success' : 'warning');
-                        
-                        log(`🎉 测试套件完成: ${passedTests}/${totalTests} 通过`, 
-                            successRate === 100 ? 'success' : 'warning');
-                    }
-                }, index * 500); // 错开执行时间
-            });
+
+        if (!MathJax.startup || !MathJax.startup.document) {
+          throw new Error('MathJax 未正确初始化')
         }
-        
-        // 具体测试函数
-        function testMathJaxInit() {
-            if (typeof MathJax === 'undefined') {
-                throw new Error('MathJax 未加载');
-            }
-            
-            if (!MathJax.startup || !MathJax.startup.document) {
-                throw new Error('MathJax 未正确初始化');
-            }
-            
-            return 'MathJax 初始化正常';
+
+        return 'MathJax 初始化正常'
+      }
+
+      function testBasicRendering() {
+        const testElement = document.createElement('div')
+        testElement.innerHTML = '$$E = mc^2$$'
+        document.body.appendChild(testElement)
+
+        return new Promise((resolve, reject) => {
+          MathJax.typesetPromise([testElement])
+            .then(() => {
+              const mathElements = testElement.querySelectorAll('.MathJax')
+              document.body.removeChild(testElement)
+
+              if (mathElements.length > 0) {
+                resolve('基础渲染成功')
+              } else {
+                reject(new Error('基础渲染失败'))
+              }
+            })
+            .catch(reject)
+        })
+      }
+
+      function testAdvancedMath() {
+        const complexFormulas = [
+          '\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}',
+          '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}',
+          '\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}'
+        ]
+
+        const testElement = document.createElement('div')
+        testElement.innerHTML = complexFormulas.map(f => `$$${f}$$`).join('')
+        document.body.appendChild(testElement)
+
+        return new Promise((resolve, reject) => {
+          MathJax.typesetPromise([testElement])
+            .then(() => {
+              const mathElements = testElement.querySelectorAll('.MathJax')
+              document.body.removeChild(testElement)
+
+              if (mathElements.length === complexFormulas.length) {
+                resolve('高级数学渲染成功')
+              } else {
+                reject(new Error('高级数学渲染失败'))
+              }
+            })
+            .catch(reject)
+        })
+      }
+
+      function testCustomMacros() {
+        const macroTests = [
+          '\\RR \\subset \\CC',
+          '\\vec{v} = \\begin{pmatrix} x \\\\ y \\end{pmatrix}',
+          '\\dd x \\text{ and } \\pp f',
+          '\\ket{\\psi} \\text{ and } \\bra{\\phi}'
+        ]
+
+        const testElement = document.createElement('div')
+        testElement.innerHTML = macroTests.map(f => `$$${f}$$`).join('')
+        document.body.appendChild(testElement)
+
+        return new Promise((resolve, reject) => {
+          MathJax.typesetPromise([testElement])
+            .then(() => {
+              const mathElements = testElement.querySelectorAll('.MathJax')
+              document.body.removeChild(testElement)
+
+              if (mathElements.length === macroTests.length) {
+                resolve('自定义宏测试成功')
+              } else {
+                reject(new Error('自定义宏测试失败'))
+              }
+            })
+            .catch(reject)
+        })
+      }
+
+      function testMultipleRenderers() {
+        // 这个测试需要实际切换渲染器
+        return '多渲染器测试需要手动验证'
+      }
+
+      function testDynamicContent() {
+        const testElement = document.createElement('div')
+        testElement.innerHTML = '$$x^2 + y^2 = r^2$$'
+        document.body.appendChild(testElement)
+
+        return new Promise((resolve, reject) => {
+          MathJax.typesetPromise([testElement])
+            .then(() => {
+              // 动态更改内容
+              testElement.innerHTML = '$$a^2 + b^2 = c^2$$'
+
+              return MathJax.typesetPromise([testElement])
+            })
+            .then(() => {
+              const mathElements = testElement.querySelectorAll('.MathJax')
+              document.body.removeChild(testElement)
+
+              if (mathElements.length > 0) {
+                resolve('动态内容测试成功')
+              } else {
+                reject(new Error('动态内容测试失败'))
+              }
+            })
+            .catch(reject)
+        })
+      }
+
+      function testPerformanceBenchmark() {
+        const startTime = performance.now()
+        const formulas = []
+
+        // 生成100个复杂公式
+        for (let i = 0; i < 100; i++) {
+          formulas.push(`$$\\sum_{n=1}^{${i + 1}} \\frac{1}{n^2} = \\frac{\\pi^2}{6}$$`)
         }
-        
-        function testBasicRendering() {
-            const testElement = document.createElement('div');
-            testElement.innerHTML = '$$E = mc^2$$';
-            document.body.appendChild(testElement);
-            
-            return new Promise((resolve, reject) => {
-                MathJax.typesetPromise([testElement]).then(() => {
-                    const mathElements = testElement.querySelectorAll('.MathJax');
-                    document.body.removeChild(testElement);
-                    
-                    if (mathElements.length > 0) {
-                        resolve('基础渲染成功');
-                    } else {
-                        reject(new Error('基础渲染失败'));
-                    }
-                }).catch(reject);
-            });
+
+        const testElement = document.createElement('div')
+        testElement.innerHTML = formulas.join('')
+        document.body.appendChild(testElement)
+
+        return new Promise((resolve, reject) => {
+          MathJax.typesetPromise([testElement])
+            .then(() => {
+              const endTime = performance.now()
+              const duration = endTime - startTime
+              document.body.removeChild(testElement)
+
+              updatePerformanceMeter(duration)
+              resolve(`性能测试完成: ${duration.toFixed(2)}ms (100个公式)`)
+            })
+            .catch(reject)
+        })
+      }
+
+      // 更新性能计量器
+      function updatePerformanceMeter(duration) {
+        const perfText = document.getElementById('perf-text')
+        const perfBar = document.getElementById('perf-bar')
+
+        perfText.textContent = `${duration.toFixed(2)}ms`
+
+        // 根据性能设置颜色和宽度
+        let percentage, color
+        if (duration < 100) {
+          percentage = 25
+          color = '#27ae60'
+        } else if (duration < 500) {
+          percentage = 50
+          color = '#f39c12'
+        } else if (duration < 1000) {
+          percentage = 75
+          color = '#e67e22'
+        } else {
+          percentage = 100
+          color = '#e74c3c'
         }
-        
-        function testAdvancedMath() {
-            const complexFormulas = [
-                '\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}',
-                '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}',
-                '\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}'
-            ];
-            
-            const testElement = document.createElement('div');
-            testElement.innerHTML = complexFormulas.map(f => `$$${f}$$`).join('');
-            document.body.appendChild(testElement);
-            
-            return new Promise((resolve, reject) => {
-                MathJax.typesetPromise([testElement]).then(() => {
-                    const mathElements = testElement.querySelectorAll('.MathJax');
-                    document.body.removeChild(testElement);
-                    
-                    if (mathElements.length === complexFormulas.length) {
-                        resolve('高级数学渲染成功');
-                    } else {
-                        reject(new Error('高级数学渲染失败'));
-                    }
-                }).catch(reject);
-            });
+
+        perfBar.style.width = percentage + '%'
+        perfBar.style.background = color
+      }
+
+      // 更新进度条
+      function updateProgressBar(percentage) {
+        // 这里可以添加进度条更新逻辑
+        console.log(`测试进度: ${percentage.toFixed(1)}%`)
+      }
+
+      // 实时数学渲染
+      function renderLiveMath(input) {
+        const outputElement = document.getElementById('live-math')
+
+        if (!input.trim()) {
+          outputElement.innerHTML = '输入公式将在这里实时显示'
+          return
         }
-        
-        function testCustomMacros() {
-            const macroTests = [
-                '\\RR \\subset \\CC',
-                '\\vec{v} = \\begin{pmatrix} x \\\\ y \\end{pmatrix}',
-                '\\dd x \\text{ and } \\pp f',
-                '\\ket{\\psi} \\text{ and } \\bra{\\phi}'
-            ];
-            
-            const testElement = document.createElement('div');
-            testElement.innerHTML = macroTests.map(f => `$$${f}$$`).join('');
-            document.body.appendChild(testElement);
-            
-            return new Promise((resolve, reject) => {
-                MathJax.typesetPromise([testElement]).then(() => {
-                    const mathElements = testElement.querySelectorAll('.MathJax');
-                    document.body.removeChild(testElement);
-                    
-                    if (mathElements.length === macroTests.length) {
-                        resolve('自定义宏测试成功');
-                    } else {
-                        reject(new Error('自定义宏测试失败'));
-                    }
-                }).catch(reject);
-            });
+
+        // 自动添加数学分隔符
+        let mathInput = input
+        if (!mathInput.startsWith('$') && !mathInput.startsWith('\\[')) {
+          mathInput = `$$${mathInput}$$`
         }
-        
-        function testMultipleRenderers() {
-            // 这个测试需要实际切换渲染器
-            return '多渲染器测试需要手动验证';
+
+        outputElement.innerHTML = mathInput
+
+        MathJax.typesetPromise([outputElement]).catch(error => {
+          outputElement.innerHTML = `<span style="color: red;">渲染错误: ${error.message}</span>`
+        })
+      }
+
+      // 多行数学渲染
+      function renderMultilineMath(input) {
+        const outputElement = document.getElementById('multiline-math')
+
+        if (!input.trim()) {
+          outputElement.innerHTML = '多行公式将在这里显示'
+          return
         }
-        
-        function testDynamicContent() {
-            const testElement = document.createElement('div');
-            testElement.innerHTML = '$$x^2 + y^2 = r^2$$';
-            document.body.appendChild(testElement);
-            
-            return new Promise((resolve, reject) => {
-                MathJax.typesetPromise([testElement]).then(() => {
-                    // 动态更改内容
-                    testElement.innerHTML = '$$a^2 + b^2 = c^2$$';
-                    
-                    return MathJax.typesetPromise([testElement]);
-                }).then(() => {
-                    const mathElements = testElement.querySelectorAll('.MathJax');
-                    document.body.removeChild(testElement);
-                    
-                    if (mathElements.length > 0) {
-                        resolve('动态内容测试成功');
-                    } else {
-                        reject(new Error('动态内容测试失败'));
-                    }
-                }).catch(reject);
-            });
+
+        outputElement.innerHTML = `$$${input}$$`
+
+        MathJax.typesetPromise([outputElement]).catch(error => {
+          outputElement.innerHTML = `<span style="color: red;">渲染错误: ${error.message}</span>`
+        })
+      }
+
+      // 插入预定义公式
+      function insertFormula(type) {
+        const formulas = {
+          quadratic: 'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
+          integral: '\\int_{a}^{b} f(x) dx = F(b) - F(a)',
+          matrix:
+            '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix} \\begin{pmatrix} x \\\\ y \\end{pmatrix} = \\begin{pmatrix} ax + by \\\\ cx + dy \\end{pmatrix}',
+          physics: 'E = mc^2 \\quad \\text{and} \\quad F = ma'
         }
-        
-        function testPerformanceBenchmark() {
-            const startTime = performance.now();
-            const formulas = [];
-            
-            // 生成100个复杂公式
-            for (let i = 0; i < 100; i++) {
-                formulas.push(`$$\\sum_{n=1}^{${i+1}} \\frac{1}{n^2} = \\frac{\\pi^2}{6}$$`);
-            }
-            
-            const testElement = document.createElement('div');
-            testElement.innerHTML = formulas.join('');
-            document.body.appendChild(testElement);
-            
-            return new Promise((resolve, reject) => {
-                MathJax.typesetPromise([testElement]).then(() => {
-                    const endTime = performance.now();
-                    const duration = endTime - startTime;
-                    document.body.removeChild(testElement);
-                    
-                    updatePerformanceMeter(duration);
-                    resolve(`性能测试完成: ${duration.toFixed(2)}ms (100个公式)`);
-                }).catch(reject);
-            });
+
+        const input = document.getElementById('math-input')
+        input.value = formulas[type] || ''
+        renderLiveMath(input.value)
+      }
+
+      // 切换渲染器
+      function toggleRenderer(renderer) {
+        currentRenderer = renderer
+
+        // 更新按钮状态
+        document.querySelectorAll('#controls button[id$="-btn"]').forEach(btn => {
+          btn.classList.remove('success')
+        })
+        document.getElementById(`${renderer}-btn`).classList.add('success')
+
+        // 这里应该实际切换MathJax渲染器
+        log(`切换到 ${renderer} 渲染器`, 'info')
+        updateStatus(`当前渲染器: ${renderer}`, 'info')
+      }
+
+      // 重新处理数学
+      function reprocessMath() {
+        updateStatus('正在重新处理数学公式...', 'info')
+
+        MathJax.typesetClear()
+        MathJax.typesetPromise()
+          .then(() => {
+            updateStatus('数学公式重新处理完成', 'success')
+            log('✅ 数学公式重新处理完成', 'success')
+          })
+          .catch(error => {
+            updateStatus('重新处理失败', 'error')
+            log(`❌ 重新处理失败: ${error.message}`, 'error')
+          })
+      }
+
+      // 显示MathJax菜单
+      function showMathJaxMenu() {
+        // 触发MathJax上下文菜单
+        const mathElements = document.querySelectorAll('.MathJax')
+        if (mathElements.length > 0) {
+          // 模拟右键点击第一个数学元素
+          const event = new MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+            view: window
+          })
+          mathElements[0].dispatchEvent(event)
+        } else {
+          alert('没有找到数学元素来显示菜单')
         }
-        
-        // 更新性能计量器
-        function updatePerformanceMeter(duration) {
-            const perfText = document.getElementById('perf-text');
-            const perfBar = document.getElementById('perf-bar');
-            
-            perfText.textContent = `${duration.toFixed(2)}ms`;
-            
-            // 根据性能设置颜色和宽度
-            let percentage, color;
-            if (duration < 100) {
-                percentage = 25;
-                color = '#27ae60';
-            } else if (duration < 500) {
-                percentage = 50;
-                color = '#f39c12';
-            } else if (duration < 1000) {
-                percentage = 75;
-                color = '#e67e22';
-            } else {
-                percentage = 100;
-                color = '#e74c3c';
-            }
-            
-            perfBar.style.width = percentage + '%';
-            perfBar.style.background = color;
+      }
+
+      // 运行所有测试
+      function runAllTests() {
+        runComprehensiveTests()
+      }
+
+      // 运行性能测试
+      function runPerformanceTest() {
+        updateStatus('正在运行性能测试...', 'info')
+        measurePerformance('性能基准测试', testPerformanceBenchmark)
+      }
+
+      // 清除结果
+      function clearResults() {
+        document.getElementById('error-log').innerHTML = '测试日志已清除...'
+        testResults = []
+        performanceData = []
+        updateStatus('结果已清除', 'info')
+
+        // 重置性能计量器
+        document.getElementById('perf-text').textContent = '待测试'
+        document.getElementById('perf-bar').style.width = '0%'
+      }
+
+      // 导出结果
+      function exportResults() {
+        const results = {
+          timestamp: new Date().toISOString(),
+          testResults: testResults,
+          performanceData: performanceData,
+          mathJaxConfig: window.MathJax
         }
-        
-        // 更新进度条
-        function updateProgressBar(percentage) {
-            // 这里可以添加进度条更新逻辑
-            console.log(`测试进度: ${percentage.toFixed(1)}%`);
-        }
-        
-        // 实时数学渲染
-        function renderLiveMath(input) {
-            const outputElement = document.getElementById('live-math');
-            
-            if (!input.trim()) {
-                outputElement.innerHTML = '输入公式将在这里实时显示';
-                return;
-            }
-            
-            // 自动添加数学分隔符
-            let mathInput = input;
-            if (!mathInput.startsWith('$') && !mathInput.startsWith('\\[')) {
-                mathInput = `$$${mathInput}$$`;
-            }
-            
-            outputElement.innerHTML = mathInput;
-            
-            MathJax.typesetPromise([outputElement]).catch(error => {
-                outputElement.innerHTML = `<span style="color: red;">渲染错误: ${error.message}</span>`;
-            });
-        }
-        
-        // 多行数学渲染
-        function renderMultilineMath(input) {
-            const outputElement = document.getElementById('multiline-math');
-            
-            if (!input.trim()) {
-                outputElement.innerHTML = '多行公式将在这里显示';
-                return;
-            }
-            
-            outputElement.innerHTML = `$$${input}$$`;
-            
-            MathJax.typesetPromise([outputElement]).catch(error => {
-                outputElement.innerHTML = `<span style="color: red;">渲染错误: ${error.message}</span>`;
-            });
-        }
-        
-        // 插入预定义公式
-        function insertFormula(type) {
-            const formulas = {
-                quadratic: 'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
-                integral: '\\int_{a}^{b} f(x) dx = F(b) - F(a)',
-                matrix: '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix} \\begin{pmatrix} x \\\\ y \\end{pmatrix} = \\begin{pmatrix} ax + by \\\\ cx + dy \\end{pmatrix}',
-                physics: 'E = mc^2 \\quad \\text{and} \\quad F = ma'
-            };
-            
-            const input = document.getElementById('math-input');
-            input.value = formulas[type] || '';
-            renderLiveMath(input.value);
-        }
-        
-        // 切换渲染器
-        function toggleRenderer(renderer) {
-            currentRenderer = renderer;
-            
-            // 更新按钮状态
-            document.querySelectorAll('#controls button[id$="-btn"]').forEach(btn => {
-                btn.classList.remove('success');
-            });
-            document.getElementById(`${renderer}-btn`).classList.add('success');
-            
-            // 这里应该实际切换MathJax渲染器
-            log(`切换到 ${renderer} 渲染器`, 'info');
-            updateStatus(`当前渲染器: ${renderer}`, 'info');
-        }
-        
-        // 重新处理数学
-        function reprocessMath() {
-            updateStatus('正在重新处理数学公式...', 'info');
-            
-            MathJax.typesetClear();
-            MathJax.typesetPromise().then(() => {
-                updateStatus('数学公式重新处理完成', 'success');
-                log('✅ 数学公式重新处理完成', 'success');
-            }).catch(error => {
-                updateStatus('重新处理失败', 'error');
-                log(`❌ 重新处理失败: ${error.message}`, 'error');
-            });
-        }
-        
-        // 显示MathJax菜单
-        function showMathJaxMenu() {
-            // 触发MathJax上下文菜单
-            const mathElements = document.querySelectorAll('.MathJax');
-            if (mathElements.length > 0) {
-                // 模拟右键点击第一个数学元素
-                const event = new MouseEvent('contextmenu', {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window
-                });
-                mathElements[0].dispatchEvent(event);
-            } else {
-                alert('没有找到数学元素来显示菜单');
-            }
-        }
-        
-        // 运行所有测试
-        function runAllTests() {
-            runComprehensiveTests();
-        }
-        
-        // 运行性能测试
-        function runPerformanceTest() {
-            updateStatus('正在运行性能测试...', 'info');
-            measurePerformance('性能基准测试', testPerformanceBenchmark);
-        }
-        
-        // 清除结果
-        function clearResults() {
-            document.getElementById('error-log').innerHTML = '测试日志已清除...';
-            testResults = [];
-            performanceData = [];
-            updateStatus('结果已清除', 'info');
-            
-            // 重置性能计量器
-            document.getElementById('perf-text').textContent = '待测试';
-            document.getElementById('perf-bar').style.width = '0%';
-        }
-        
-        // 导出结果
-        function exportResults() {
-            const results = {
-                timestamp: new Date().toISOString(),
-                testResults: testResults,
-                performanceData: performanceData,
-                mathJaxConfig: window.MathJax
-            };
-            
-            const blob = new Blob([JSON.stringify(results, null, 2)], {
-                type: 'application/json'
-            });
-            
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `mathjax-test-results-${Date.now()}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            log('📊 测试结果已导出', 'success');
-        }
-        
-        // 页面加载完成后的初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            log('📄 页面加载完成', 'info');
-            updateStatus('MathJax 测试套件已准备就绪', 'success');
-        });
-        
-        // 窗口大小改变时重新渲染
-        window.addEventListener('resize', function() {
-            setTimeout(() => {
-                MathJax.typesetPromise().catch(error => {
-                    log(`窗口调整后重新渲染失败: ${error.message}`, 'error');
-                });
-            }, 100);
-        });
+
+        const blob = new Blob([JSON.stringify(results, null, 2)], {
+          type: 'application/json'
+        })
+
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `mathjax-test-results-${Date.now()}.json`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+
+        log('📊 测试结果已导出', 'success')
+      }
+
+      // 页面加载完成后的初始化
+      document.addEventListener('DOMContentLoaded', function () {
+        log('📄 页面加载完成', 'info')
+        updateStatus('MathJax 测试套件已准备就绪', 'success')
+      })
+
+      // 窗口大小改变时重新渲染
+      window.addEventListener('resize', function () {
+        setTimeout(() => {
+          MathJax.typesetPromise().catch(error => {
+            log(`窗口调整后重新渲染失败: ${error.message}`, 'error')
+          })
+        }, 100)
+      })
     </script>
-</body>
+  </body>
 </html>

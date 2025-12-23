@@ -3,6 +3,7 @@
 ## 🎯 问题描述
 
 之前遇到的问题：
+
 - ⚠️ 公式渲染失败
 - MathJax 配置文件损坏
 - 缺少统一的错误处理和重试机制
@@ -14,11 +15,18 @@
 **问题：** 配置文件中的 `inlineMath` 数组被破坏
 
 **修复：**
+
 ```javascript
 window.MathJax = {
   tex: {
-    inlineMath: [['\\(', '\\)'], ['$', '$']],
-    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    inlineMath: [
+      ['\\(', '\\)'],
+      ['$', '$']
+    ],
+    displayMath: [
+      ['$$', '$$'],
+      ['\\[', '\\]']
+    ],
     processEscapes: true,
     processEnvironments: true,
     macros: {
@@ -31,12 +39,12 @@ window.MathJax = {
   startup: {
     pageReady: () => {
       return window.MathJax.startup.defaultPageReady().then(() => {
-        console.log('✅ MathJax 已成功加载并初始化');
-        window.dispatchEvent(new Event('mathjax-ready'));
-      });
+        console.log('✅ MathJax 已成功加载并初始化')
+        window.dispatchEvent(new Event('mathjax-ready'))
+      })
     }
   }
-};
+}
 ```
 
 ### 2. 创建全局 MathJax 管理器
@@ -44,6 +52,7 @@ window.MathJax = {
 **文件：** `src/utils/mathjax.ts`
 
 **功能：**
+
 - ✅ 统一的 MathJax 初始化管理
 - ✅ 自动重试机制（指数退避）
 - ✅ 公式清理和包装
@@ -51,6 +60,7 @@ window.MathJax = {
 - ✅ 单例模式，全局共享
 
 **使用方法：**
+
 ```typescript
 import { mathJaxManager, typesetMath, cleanFormula } from '@/utils/mathjax'
 
@@ -72,6 +82,7 @@ const wrapped = mathJaxManager.wrapFormula('E = mc^2', false)
 **文件：** `src/components/MathFormula.vue`
 
 **改进：**
+
 - ✅ 使用全局管理器统一处理
 - ✅ 简化代码逻辑
 - ✅ 自动重试机制
@@ -79,9 +90,10 @@ const wrapped = mathJaxManager.wrapFormula('E = mc^2', false)
 - ✅ 清理资源管理
 
 **使用示例：**
+
 ```vue
 <template>
-  <MathFormula 
+  <MathFormula
     formula="x^0 = ct, \quad x^i = (x, y, z)"
     :inline="false"
     size="large"
@@ -93,9 +105,11 @@ const wrapped = mathJaxManager.wrapFormula('E = mc^2', false)
 ## 🧪 测试
 
 ### 测试文件
+
 - `mathjax-fix-test.html` - 独立测试页面
 
 ### 运行测试
+
 ```bash
 # 启动开发服务器
 npm run dev
@@ -105,6 +119,7 @@ http://localhost:5173/mathjax-fix-test.html
 ```
 
 ### 测试内容
+
 1. ✅ 时空同一化方程：`x^0 = ct, \quad x^i = (x, y, z)`
 2. ✅ 统一场方程：`\nabla^2 \phi = 4\pi G\rho`
 3. ✅ 向量场方程：`\vec{F} = m\vec{a}`
@@ -113,15 +128,17 @@ http://localhost:5173/mathjax-fix-test.html
 ## 🔧 配置选项
 
 ### MathJax 管理器配置
+
 ```typescript
 mathJaxManager.updateConfig({
-  maxRetries: 3,      // 最大重试次数
-  retryDelay: 1000,   // 重试延迟（毫秒）
-  timeout: 10000      // 加载超时（毫秒）
+  maxRetries: 3, // 最大重试次数
+  retryDelay: 1000, // 重试延迟（毫秒）
+  timeout: 10000 // 加载超时（毫秒）
 })
 ```
 
 ### 支持的公式格式
+
 - 行内公式：`$...$` 或 `\(...\)`
 - 显示公式：`$$...$$` 或 `\[...\]`
 - 向量符号：`\vec{x}` 自动转换为 `\overrightarrow{x}`
@@ -129,12 +146,14 @@ mathJaxManager.updateConfig({
 ## 📊 性能优化
 
 ### 自动重试机制
+
 - 第 1 次重试：延迟 1 秒
 - 第 2 次重试：延迟 2 秒
 - 第 3 次重试：延迟 4 秒
 - 超过 3 次：显示错误提示
 
 ### 资源管理
+
 - 组件卸载时自动清理 MathJax 渲染
 - 避免内存泄漏
 - 优化重复渲染
@@ -142,16 +161,19 @@ mathJaxManager.updateConfig({
 ## 🎨 UI 状态
 
 ### 加载状态
+
 ```
 🔄 渲染中...
 ```
 
 ### 错误状态
+
 ```
 ⚠️ 公式渲染失败 [重试]
 ```
 
 ### 成功状态
+
 ```
 显示渲染后的公式
 ```
@@ -159,21 +181,19 @@ mathJaxManager.updateConfig({
 ## 🚀 使用建议
 
 ### 1. 在组件中使用
+
 ```vue
 <script setup>
-import MathFormula from '@/components/MathFormula.vue'
+  import MathFormula from '@/components/MathFormula.vue'
 </script>
 
 <template>
-  <MathFormula 
-    formula="E = mc^2"
-    :inline="true"
-    size="medium"
-  />
+  <MathFormula formula="E = mc^2" :inline="true" size="medium" />
 </template>
 ```
 
 ### 2. 在代码中使用
+
 ```typescript
 import { mathJaxManager } from '@/utils/mathjax'
 
@@ -187,6 +207,7 @@ await mathJaxManager.typeset([element])
 ```
 
 ### 3. 批量渲染
+
 ```typescript
 const elements = document.querySelectorAll('.math-formula')
 await mathJaxManager.typeset(Array.from(elements))
@@ -195,19 +216,25 @@ await mathJaxManager.typeset(Array.from(elements))
 ## 🐛 故障排除
 
 ### 问题：公式一直显示"渲染中..."
+
 **解决：**
+
 1. 检查浏览器控制台是否有错误
 2. 确认 MathJax CDN 可访问
 3. 检查公式语法是否正确
 
 ### 问题：公式显示"渲染失败"
+
 **解决：**
+
 1. 点击"重试"按钮
 2. 检查公式语法
 3. 查看控制台错误信息
 
 ### 问题：向量符号显示异常
+
 **解决：**
+
 - 使用 `\vec{x}` 会自动转换为 `\overrightarrow{x}`
 - 或直接使用 `\overrightarrow{x}`
 
@@ -221,6 +248,7 @@ await mathJaxManager.typeset(Array.from(elements))
 ## 🎉 总结
 
 通过这次修复，我们实现了：
+
 - ✅ 修复了 MathJax 配置错误
 - ✅ 创建了统一的全局管理器
 - ✅ 实现了自动重试机制

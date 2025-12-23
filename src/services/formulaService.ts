@@ -1,10 +1,10 @@
-import { Formula } from '../types';
+import { Formula } from '../types'
 
 export class FormulaService {
-  private formulas: Map<number, Formula> = new Map();
+  private formulas: Map<number, Formula> = new Map()
 
   constructor() {
-    this.initializeFormulas();
+    this.initializeFormulas()
   }
 
   private initializeFormulas(): void {
@@ -22,7 +22,8 @@ export class FormulaService {
       {
         id: 2,
         name: '三维螺旋时空方程',
-        expression: '\\vec{r}(t) = r\\cos\\omega t \\cdot \\vec{i} + r\\sin\\omega t \\cdot \\vec{j} + ht \\cdot \\vec{k}',
+        expression:
+          '\\vec{r}(t) = r\\cos\\omega t \\cdot \\vec{i} + r\\sin\\omega t \\cdot \\vec{j} + ht \\cdot \\vec{k}',
         description: '描述物质点在三维空间中的螺旋运动轨迹',
         category: '时空方程',
         parameters: ['radius', 'angular_velocity', 'height'],
@@ -42,7 +43,8 @@ export class FormulaService {
       {
         id: 4,
         name: '引力场定义方程',
-        expression: '\\overrightarrow{A} = -Gk\\frac{\\Delta n}{\\Delta s}\\frac{\\overrightarrow{r}}{r}',
+        expression:
+          '\\overrightarrow{A} = -Gk\\frac{\\Delta n}{\\Delta s}\\frac{\\overrightarrow{r}}{r}',
         description: '引力场是空间的加速运动效应',
         category: '场方程',
         parameters: ['gravitational_constant', 'mass_density'],
@@ -72,7 +74,8 @@ export class FormulaService {
       {
         id: 7,
         name: '宇宙大统一方程（力方程）',
-        expression: 'F = \\frac{d\\vec{P}}{dt} = \\vec{C}\\frac{dm}{dt} - \\vec{V}\\frac{dm}{dt} + m\\frac{d\\vec{C}}{dt} - m\\frac{d\\vec{V}}{dt}',
+        expression:
+          'F = \\frac{d\\vec{P}}{dt} = \\vec{C}\\frac{dm}{dt} - \\vec{V}\\frac{dm}{dt} + m\\frac{d\\vec{C}}{dt} - m\\frac{d\\vec{V}}{dt}',
         description: '统一四种基本力的核心方程，揭示力的本质',
         category: '统一方程',
         parameters: ['mass_change', 'velocity_change'],
@@ -82,7 +85,8 @@ export class FormulaService {
       {
         id: 8,
         name: '空间波动方程',
-        expression: '\\frac{\\partial^2 L}{\\partial x^2} + \\frac{\\partial^2 L}{\\partial y^2} + \\frac{\\partial^2 L}{\\partial z^2} = \\frac{1}{c^2} \\frac{\\partial^2 L}{\\partial t^2}',
+        expression:
+          '\\frac{\\partial^2 L}{\\partial x^2} + \\frac{\\partial^2 L}{\\partial y^2} + \\frac{\\partial^2 L}{\\partial z^2} = \\frac{1}{c^2} \\frac{\\partial^2 L}{\\partial t^2}',
         description: '描述空间波动的传播规律',
         category: '场方程',
         parameters: ['wave_amplitude', 'frequency'],
@@ -102,7 +106,8 @@ export class FormulaService {
       {
         id: 10,
         name: '电场定义方程',
-        expression: '\\vec{E} = -\\frac{kk^{\\prime}}{4\\pi\\epsilon_0\\Omega^2}\\frac{d\\Omega}{dt}\\frac{\\vec{r}}{r^3}',
+        expression:
+          '\\vec{E} = -\\frac{kk^{\\prime}}{4\\pi\\epsilon_0\\Omega^2}\\frac{d\\Omega}{dt}\\frac{\\vec{r}}{r^3}',
         description: '电场是空间角动量变化产生的效应',
         category: '场方程',
         parameters: ['charge', 'distance'],
@@ -112,7 +117,8 @@ export class FormulaService {
       {
         id: 11,
         name: '磁场定义方程',
-        expression: '\\vec{B} = \\frac{\\mu_{0} \\gamma k k^{\\prime}}{4 \\pi \\Omega^{2}} \\frac{d \\Omega}{d t} \\frac{[(x-v t) \\vec{i}+y \\vec{j}+z \\vec{k}]}{[\\gamma^{2}(x-v t)^{2}+y^{2}+z^{2}]^{\\frac{3}{2}}}',
+        expression:
+          '\\vec{B} = \\frac{\\mu_{0} \\gamma k k^{\\prime}}{4 \\pi \\Omega^{2}} \\frac{d \\Omega}{d t} \\frac{[(x-v t) \\vec{i}+y \\vec{j}+z \\vec{k}]}{[\\gamma^{2}(x-v t)^{2}+y^{2}+z^{2}]^{\\frac{3}{2}}}',
         description: '磁场是运动电荷产生的相对论效应',
         category: '场方程',
         parameters: ['moving_charge', 'velocity'],
@@ -122,7 +128,8 @@ export class FormulaService {
       {
         id: 12,
         name: '变化的引力场产生电磁场',
-        expression: '\\frac{\\partial^{2}\\overline{A}}{\\partial t^{2}} = \\frac{\\overline{V}}{f}(\\overline{\\nabla}\\cdot\\overline{E}) - \\frac{C^{2}}{f}(\\overline{\\nabla}\\times\\overline{B})',
+        expression:
+          '\\frac{\\partial^{2}\\overline{A}}{\\partial t^{2}} = \\frac{\\overline{V}}{f}(\\overline{\\nabla}\\cdot\\overline{E}) - \\frac{C^{2}}{f}(\\overline{\\nabla}\\times\\overline{B})',
         description: '引力场与电磁场的相互转化关系',
         category: '统一方程',
         parameters: ['gravitational_field_change'],
@@ -152,7 +159,8 @@ export class FormulaService {
       {
         id: 15,
         name: '变化的磁场产生引力场和电场',
-        expression: '\\frac{d\\overrightarrow{B}}{dt} = \\frac{-\\overrightarrow{A}\\times\\overrightarrow{E}}{c^2} - \\frac{\\overrightarrow{V}}{c^{2}}\\times\\frac{d\\overrightarrow{E}}{dt}',
+        expression:
+          '\\frac{d\\overrightarrow{B}}{dt} = \\frac{-\\overrightarrow{A}\\times\\overrightarrow{E}}{c^2} - \\frac{\\overrightarrow{V}}{c^{2}}\\times\\frac{d\\overrightarrow{E}}{dt}',
         description: '磁场变化如何影响引力场和电场',
         category: '统一方程',
         parameters: ['magnetic_field_change'],
@@ -182,7 +190,8 @@ export class FormulaService {
       {
         id: 18,
         name: '核力场定义方程',
-        expression: '\\mathbf{D} = - G m \\frac{ \\mathbf{C} - 3 \\frac{\\mathbf{R}}{r} \\dot{r} }{r^3}',
+        expression:
+          '\\mathbf{D} = - G m \\frac{ \\mathbf{C} - 3 \\frac{\\mathbf{R}}{r} \\dot{r} }{r^3}',
         description: '核力场的数学表达式',
         category: '场方程',
         parameters: ['nuclear_constant', 'distance'],
@@ -199,91 +208,90 @@ export class FormulaService {
         visualizationType: 'fundamental',
         complexity: 2
       }
-    ];
+    ]
 
     formulas.forEach(formula => {
-      this.formulas.set(formula.id, formula);
-    });
+      this.formulas.set(formula.id, formula)
+    })
   }
 
   public getAllFormulas(): Formula[] {
-    return Array.from(this.formulas.values());
+    return Array.from(this.formulas.values())
   }
 
   public getFormulaById(id: number): Formula | undefined {
-    return this.formulas.get(id);
+    return this.formulas.get(id)
   }
 
   public getFormulasByCategory(category: string): Formula[] {
-    return this.getAllFormulas().filter(formula => formula.category === category);
+    return this.getAllFormulas().filter(formula => formula.category === category)
   }
 
   public getFormulasByVisualizationType(type: string): Formula[] {
-    return this.getAllFormulas().filter(formula => formula.visualizationType === type);
+    return this.getAllFormulas().filter(formula => formula.visualizationType === type)
   }
 
   public getCategories(): string[] {
-    const categories = new Set(this.getAllFormulas().map(formula => formula.category));
-    return Array.from(categories);
+    const categories = new Set(this.getAllFormulas().map(formula => formula.category))
+    return Array.from(categories)
   }
 
   public searchFormulas(query: string): Formula[] {
-    const lowerQuery = query.toLowerCase();
-    return this.getAllFormulas().filter(formula => 
-      formula.name.toLowerCase().includes(lowerQuery) ||
-      formula.description.toLowerCase().includes(lowerQuery) ||
-      formula.expression.toLowerCase().includes(lowerQuery)
-    );
+    const lowerQuery = query.toLowerCase()
+    return this.getAllFormulas().filter(
+      formula =>
+        formula.name.toLowerCase().includes(lowerQuery) ||
+        formula.description.toLowerCase().includes(lowerQuery) ||
+        formula.expression.toLowerCase().includes(lowerQuery)
+    )
   }
 
   public getRelatedFormulas(formulaId: number, limit: number = 3): Formula[] {
-    const currentFormula = this.getFormulaById(formulaId);
-    if (!currentFormula) return [];
+    const currentFormula = this.getFormulaById(formulaId)
+    if (!currentFormula) return []
 
     return this.getAllFormulas()
-      .filter(formula => 
-        formula.id !== formulaId && 
-        (formula.category === currentFormula.category || 
-         formula.visualizationType === currentFormula.visualizationType)
+      .filter(
+        formula =>
+          formula.id !== formulaId &&
+          (formula.category === currentFormula.category ||
+            formula.visualizationType === currentFormula.visualizationType)
       )
-      .slice(0, limit);
+      .slice(0, limit)
   }
 
   public validateFormulaParameters(formulaId: number, parameters: Record<string, any>): boolean {
-    const formula = this.getFormulaById(formulaId);
-    if (!formula || !formula.parameters) return false;
+    const formula = this.getFormulaById(formulaId)
+    if (!formula || !formula.parameters) return false
 
-    return formula.parameters.every(param => parameters.hasOwnProperty(param));
+    return formula.parameters.every(param => parameters.hasOwnProperty(param))
   }
 
   public calculateFormula(formulaId: number, parameters: Record<string, number>): number {
     // 简化的公式计算实现
     // 在实际应用中，这里应该实现具体的数学计算逻辑
-    const formula = this.getFormulaById(formulaId);
-    if (!formula) return 0;
+    const formula = this.getFormulaById(formulaId)
+    if (!formula) return 0
 
     // 基础计算示例
     switch (formulaId) {
       case 1: // 时空同一化方程
-        return parameters.time || 0;
+        return parameters.time || 0
       case 2: // 三维螺旋时空方程
-        return (parameters.radius || 1) * (parameters.angular_velocity || 1);
+        return (parameters.radius || 1) * (parameters.angular_velocity || 1)
       case 16: // 质能方程
-        return (parameters.mass || 0) * Math.pow(299792458, 2);
+        return (parameters.mass || 0) * Math.pow(299792458, 2)
       default:
-        return Math.random() * 100;
+        return Math.random() * 100
     }
   }
 
   public static formatFormulaExpression(expression: string | undefined | null): string {
     // 格式化公式表达式以便于显示
     if (!expression) {
-      return '';
+      return ''
     }
-    return expression
-      .replace(/\*/g, ' \\cdot ')
-      .replace(/\$/g, '')
-      .trim();
+    return expression.replace(/\*/g, ' \\cdot ').replace(/\$/g, '').trim()
   }
 
   // 新增公式求导方法
@@ -291,19 +299,19 @@ export class FormulaService {
     // 返回公式的导数表达式（简化实现）
     switch (formulaId) {
       case 1: // 时空同一化方程
-        return '\\frac{d\\vec{r}(t)}{dt} = \\vec{C}';
+        return '\\frac{d\\vec{r}(t)}{dt} = \\vec{C}'
       case 2: // 三维螺旋时空方程
-        return '\\frac{d\\vec{r}(t)}{dt} = -r\\omega\\sin(\\omega t) \\vec{i} + r\\omega\\cos(\\omega t) \\vec{j} + h \\vec{k}';
+        return '\\frac{d\\vec{r}(t)}{dt} = -r\\omega\\sin(\\omega t) \\vec{i} + r\\omega\\cos(\\omega t) \\vec{j} + h \\vec{k}'
       case 3: // 质量定义方程
-        return '\\frac{dm}{dt} = k \\cdot \\frac{d^2n}{d\\Omega dt}';
+        return '\\frac{dm}{dt} = k \\cdot \\frac{d^2n}{d\\Omega dt}'
       case 5: // 静止动量方程
-        return '\\frac{d\\vec{p}_0}{dt} = \\frac{d m_0}{dt} \\vec{C}_0'; // 如果m0是常数，则为0
+        return '\\frac{d\\vec{p}_0}{dt} = \\frac{d m_0}{dt} \\vec{C}_0' // 如果m0是常数，则为0
       case 6: // 运动动量方程
-        return '\\frac{d\\vec{P}}{dt} = \\frac{dm}{dt}(\\vec{C} - \\vec{V}) - m\\frac{d\\vec{V}}{dt}';
+        return '\\frac{d\\vec{P}}{dt} = \\frac{dm}{dt}(\\vec{C} - \\vec{V}) - m\\frac{d\\vec{V}}{dt}'
       case 16: // 统一场论能量方程
-        return '\\frac{de}{dt} = \\frac{d}{dt}(m_0 c^2) = 0'; // m0和c是常数
+        return '\\frac{de}{dt} = \\frac{d}{dt}(m_0 c^2) = 0' // m0和c是常数
       default:
-        return null; // 不支持求导的公式
+        return null // 不支持求导的公式
     }
   }
 }

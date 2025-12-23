@@ -3,11 +3,11 @@ import { parse } from '@babel/parser'
 import { traverse } from '@babel/traverse'
 import { generate } from '@babel/generator'
 import * as t from '@babel/types'
-import { 
-  ProgrammingLanguage, 
-  OptimizationResult, 
-  CodeIssue, 
-  IssueSeverity, 
+import {
+  ProgrammingLanguage,
+  OptimizationResult,
+  CodeIssue,
+  IssueSeverity,
   IssueCategory,
   CodePosition,
   OptimizationRule,
@@ -39,25 +39,25 @@ export class CodeOptimizer {
    */
   async optimize(code: string): Promise<OptimizationResult> {
     const startTime = performance.now()
-    
+
     try {
       // 解析代码
       const ast = this.parser.parseCode(code)
-      
+
       // 检测问题
       const issues = this.parser.detectIssues(code)
-      
+
       // 应用优化规则
       const optimizedCode = this.applyOptimizations(code, ast, issues)
-      
+
       // 计算性能指标
       const metrics = this.calculatePerformanceMetrics(code, optimizedCode)
-      
+
       // 生成优化总结
       const summary = this.generateOptimizationSummary(issues, metrics)
-      
+
       const executionTime = performance.now() - startTime
-      
+
       return {
         originalCode: code,
         optimizedCode,
@@ -76,32 +76,32 @@ export class CodeOptimizer {
    */
   private applyOptimizations(code: string, ast: any, issues: CodeIssue[]): string {
     let optimizedAst = ast
-    
+
     // 根据优化级别应用不同的规则
     const applicableRules = this.getApplicableRules()
-    
+
     // 遍历AST并应用优化
     traverse(optimizedAst, {
       // 优化变量声明
       VariableDeclaration(path) {
         this.optimizeVariableDeclarations(path, applicableRules)
       },
-      
+
       // 优化循环
       ForStatement(path) {
         this.optimizeLoops(path, applicableRules)
       },
-      
+
       // 优化函数调用
       CallExpression(path) {
         this.optimizeFunctionCalls(path, applicableRules)
       },
-      
+
       // 优化条件语句
       IfStatement(path) {
         this.optimizeConditionals(path, applicableRules)
       },
-      
+
       // 优化字符串操作
       StringLiteral(path) {
         this.optimizeStrings(path, applicableRules)
@@ -122,7 +122,7 @@ export class CodeOptimizer {
    */
   private optimizeVariableDeclarations(path: any, rules: OptimizationRule[]) {
     const node = path.node
-    
+
     // 应用const优先规则
     if (this.shouldApplyRule('const-first', rules)) {
       if (node.kind === 'let' && !node.declarations.some((decl: any) => decl.init === null)) {
@@ -133,12 +133,12 @@ export class CodeOptimizer {
         }
       }
     }
-    
+
     // 应用变量合并规则
     if (this.shouldApplyRule('variable-merge', rules)) {
       this.mergeVariableDeclarations(path)
     }
-    
+
     // 应用未使用变量删除规则
     if (this.shouldApplyRule('remove-unused-variables', rules)) {
       this.removeUnusedVariables(path)
@@ -150,18 +150,20 @@ export class CodeOptimizer {
    */
   private optimizeLoops(path: any, rules: OptimizationRule[]) {
     const node = path.node
-    
+
     // 应用循环展开规则（激进优化）
-    if (this.preferences.optimizationLevel === OptimizationLevel.AGGRESSIVE && 
-        this.shouldApplyRule('loop-unrolling', rules)) {
+    if (
+      this.preferences.optimizationLevel === OptimizationLevel.AGGRESSIVE &&
+      this.shouldApplyRule('loop-unrolling', rules)
+    ) {
       this.unrollSmallLoops(path)
     }
-    
+
     // 应用循环变量提取规则
     if (this.shouldApplyRule('loop-variable-extraction', rules)) {
       this.extractLoopVariables(path)
     }
-    
+
     // 应用提前终止规则
     if (this.shouldApplyRule('early-termination', rules)) {
       this.addEarlyTermination(path)
@@ -173,17 +175,17 @@ export class CodeOptimizer {
    */
   private optimizeFunctionCalls(path: any, rules: OptimizationRule[]) {
     const node = path.node
-    
+
     // 应用内联函数规则
     if (this.shouldApplyRule('function-inlining', rules)) {
       this.inlineSmallFunctions(path)
     }
-    
+
     // 应用尾调用优化
     if (this.shouldApplyRule('tail-call-optimization', rules)) {
       this.optimizeTailCalls(path)
     }
-    
+
     // 应用函数柯里化优化
     if (this.shouldApplyRule('currying-optimization', rules)) {
       this.optimizeCurrying(path)
@@ -195,17 +197,17 @@ export class CodeOptimizer {
    */
   private optimizeConditionals(path: any, rules: OptimizationRule[]) {
     const node = path.node
-    
+
     // 应用条件简化规则
     if (this.shouldApplyRule('conditional-simplification', rules)) {
       this.simplifyConditionals(path)
     }
-    
+
     // 应用短路评估优化
     if (this.shouldApplyRule('short-circuit-optimization', rules)) {
       this.optimizeShortCircuit(path)
     }
-    
+
     // 应用switch优化
     if (this.shouldApplyRule('switch-optimization', rules) && t.isSwitchStatement(node)) {
       this.optimizeSwitchStatements(path)
@@ -217,12 +219,12 @@ export class CodeOptimizer {
    */
   private optimizeStrings(path: any, rules: OptimizationRule[]) {
     const node = path.node
-    
+
     // 应用字符串模板优化
     if (this.shouldApplyRule('string-template-optimization', rules)) {
       this.convertToTemplateLiterals(path)
     }
-    
+
     // 应用字符串连接优化
     if (this.shouldApplyRule('string-concatenation-optimization', rules)) {
       this.optimizeStringConcatenation(path)
@@ -247,9 +249,7 @@ export class CodeOptimizer {
    * 获取应用的规则ID
    */
   private getAppliedRuleIds(): string[] {
-    return this.rules
-      .filter(rule => rule.enabled)
-      .map(rule => rule.id)
+    return this.rules.filter(rule => rule.enabled).map(rule => rule.id)
   }
 
   /**
@@ -376,11 +376,12 @@ export class CodeOptimizer {
   private calculatePerformanceMetrics(originalCode: string, optimizedCode: string): any {
     const originalMetrics = this.parser.calculateMetrics(originalCode)
     const optimizedMetrics = this.parser.calculateMetrics(optimizedCode)
-    
+
     // 估计执行时间改进（基于复杂度降低）
-    const complexityImprovement = (originalMetrics.cyclomaticComplexity - optimizedMetrics.cyclomaticComplexity) / 
-                                  originalMetrics.cyclomaticComplexity
-    
+    const complexityImprovement =
+      (originalMetrics.cyclomaticComplexity - optimizedMetrics.cyclomaticComplexity) /
+      originalMetrics.cyclomaticComplexity
+
     return {
       complexity: optimizedMetrics.cyclomaticComplexity,
       linesOfCode: optimizedCode.split('\n').length,
@@ -393,9 +394,10 @@ export class CodeOptimizer {
    * 生成优化总结
    */
   private generateOptimizationSummary(issues: CodeIssue[], metrics: any): any {
-    const fixedIssues = issues.filter(issue => issue.severity === IssueSeverity.ERROR || 
-                                              issue.severity === IssueSeverity.WARNING)
-    
+    const fixedIssues = issues.filter(
+      issue => issue.severity === IssueSeverity.ERROR || issue.severity === IssueSeverity.WARNING
+    )
+
     return {
       totalIssues: issues.length,
       fixedIssues: fixedIssues.length,

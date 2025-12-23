@@ -39,20 +39,26 @@
 ## 🎯 核心架构原则
 
 ### 1. 单一职责原则 (SRP)
+
 每个模块和类都有明确的单一职责：
+
 - `CodeAnalyzer` - 专门负责代码分析
 - `OptimizationEngine` - 专门负责代码优化
 - `PerformanceMonitor` - 专门负责性能监控
 - `RuleManager` - 专门负责规则管理
 
 ### 2. 开放封闭原则 (OCP)
+
 系统对扩展开放，对修改封闭：
+
 - 通过插件系统扩展功能
 - 通过规则引擎添加新优化策略
 - 通过中间件系统增强功能
 
 ### 3. 依赖倒置原则 (DIP)
+
 高层模块不依赖低层模块，都依赖于抽象：
+
 - 使用接口定义服务契约
 - 通过依赖注入管理组件关系
 - 通过组合式API提供抽象层
@@ -62,6 +68,7 @@
 ### 表现层 (Presentation Layer)
 
 #### 核心组件
+
 ```
 src/
 ├── components/
@@ -77,6 +84,7 @@ src/
 ```
 
 #### 设计模式
+
 - **组合式API模式** - 使用Composition API管理组件逻辑
 - **响应式设计模式** - 适配多种屏幕尺寸
 - **主题模式** - 支持明暗主题切换
@@ -84,35 +92,37 @@ src/
 ### 应用层 (Application Layer)
 
 #### 状态管理架构
+
 ```typescript
 // Pinia Store - 全局状态管理
 export const useCodeOptimizationStore = defineStore('codeOptimization', () => {
   // 状态定义
   const state = ref<CodeOptimizationState>({ ... })
-  
+
   // 计算属性
   const canAnalyze = computed(() => ...)
-  
+
   // Actions
   const analyzeCode = async () => { ... }
-  
+
   return { state, canAnalyze, analyzeCode }
 })
 ```
 
 #### 组合式API架构
+
 ```typescript
 // 业务逻辑抽象
 export function useCodeOptimization(options) {
   // 响应式状态
   const store = useCodeOptimizationStore()
-  
+
   // 计算属性
   const performanceScore = computed(...)
-  
+
   // 方法
   const performAnalysis = async () => { ... }
-  
+
   return { performanceScore, performAnalysis }
 }
 ```
@@ -120,11 +130,12 @@ export function useCodeOptimization(options) {
 ### 领域层 (Domain Layer)
 
 #### 代码分析领域
+
 ```typescript
 export class CodeAnalyzer {
   // 核心分析方法
   async analyzeCode(code: string, language: ProgrammingLanguage): Promise<CodeAnalysisResult>
-  
+
   // 私有方法
   private calculateComplexityMetrics(ast: t.File): Promise<CodeComplexityMetrics>
   private detectIssues(ast: t.File, language: ProgrammingLanguage): Promise<CodeIssue[]>
@@ -132,6 +143,7 @@ export class CodeAnalyzer {
 ```
 
 #### 优化引擎领域
+
 ```typescript
 export class OptimizationEngine {
   // 核心优化方法
@@ -140,7 +152,7 @@ export class OptimizationEngine {
     level: OptimizationLevel,
     customRules: OptimizationRule[]
   ): Promise<OptimizationReport>
-  
+
   // 优化步骤
   private optimizationSteps: OptimizationStep[] = [
     { name: 'unused-code-elimination', execute: ... },
@@ -151,6 +163,7 @@ export class OptimizationEngine {
 ```
 
 #### 规则管理领域
+
 ```typescript
 export class RuleManager {
   // 规则管理
@@ -163,13 +176,14 @@ export class RuleManager {
 ### 基础设施层 (Infrastructure Layer)
 
 #### 性能监控服务
+
 ```typescript
 export class PerformanceMonitor {
   // 监控核心
   startMonitoring(intervalMs: number): void
   stopMonitoring(): void
   recordOperation(duration: number): void
-  
+
   // 数据收集
   private captureSnapshot(): void
   private checkThresholds(): void
@@ -177,6 +191,7 @@ export class PerformanceMonitor {
 ```
 
 #### 中间件系统
+
 ```typescript
 // 路由守卫
 export function createCodeOptimizationGuard(options) {
@@ -192,6 +207,7 @@ export function createCodeOptimizationErrorHandler() {
 ## 🔄 数据流架构
 
 ### 分析流程
+
 ```
 用户输入代码 → CodeAnalyzer.parseCode() → AST生成
                ↓
@@ -205,6 +221,7 @@ export function createCodeOptimizationErrorHandler() {
 ```
 
 ### 优化流程
+
 ```
 分析结果 → OptimizationEngine.optimize() → 规则匹配
            ↓
@@ -218,6 +235,7 @@ export function createCodeOptimizationErrorHandler() {
 ## 🔌 插件系统架构
 
 ### 插件接口
+
 ```typescript
 export interface CodeOptimizationPlugin {
   name: string
@@ -228,12 +246,14 @@ export interface CodeOptimizationPlugin {
 ```
 
 ### 内置插件
+
 - **代码优化插件** (`CodeOptimizationPlugin`)
 - **性能监控插件** (`PerformancePlugin`)
 - **主题插件** (`ThemePlugin`)
 - **国际化插件** (`I18nPlugin`)
 
 ### 第三方插件支持
+
 ```typescript
 // 注册自定义插件
 app.use(createCustomPlugin({
@@ -246,17 +266,20 @@ app.use(createCustomPlugin({
 ## 📊 性能架构
 
 ### 缓存策略
+
 - **内存缓存** - 分析结果缓存 (LRU策略)
 - **本地存储** - 用户偏好和历史记录
 - **Service Worker** - 离线缓存支持
 
 ### 性能优化
+
 - **懒加载** - 路由和组件按需加载
 - **代码分割** - Vendor和应用代码分离
 - **Tree Shaking** - 移除未使用代码
 - **预加载** - 关键资源预加载
 
 ### 监控指标
+
 - **实时性能** - CPU、内存、执行时间
 - **用户体验** - 响应时间、交互延迟
 - **业务指标** - 优化成功率、用户满意度
@@ -264,11 +287,13 @@ app.use(createCustomPlugin({
 ## 🛡️ 安全架构
 
 ### 代码安全
+
 - **输入验证** - 代码长度和格式验证
 - **沙箱执行** - 隔离的代码执行环境
 - **权限控制** - 功能访问权限管理
 
 ### 数据安全
+
 - **本地加密** - 敏感数据加密存储
 - **HTTPS传输** - 网络传输加密
 - **CSP策略** - 内容安全策略
@@ -276,12 +301,14 @@ app.use(createCustomPlugin({
 ## 🔧 开发工具架构
 
 ### 开发环境
+
 - **热重载** - Vite开发服务器
 - **TypeScript** - 类型安全
 - **ESLint** - 代码质量检查
 - **Prettier** - 代码格式化
 
 ### 测试架构
+
 ```
 tests/
 ├── unit/           # 单元测试
@@ -291,6 +318,7 @@ tests/
 ```
 
 ### 构建架构
+
 - **Vite** - 现代化构建工具
 - **Rollup** - 打包优化
 - **Terser** - 代码压缩
@@ -299,6 +327,7 @@ tests/
 ## 🚀 部署架构
 
 ### 开发部署
+
 ```bash
 pnpm install
 pnpm dev        # 开发服务器
@@ -306,6 +335,7 @@ pnpm build      # 构建生产版本
 ```
 
 ### 生产部署
+
 - **静态托管** - Vercel、Netlify等
 - **CDN加速** - 全球内容分发
 - **容器化** - Docker支持
@@ -314,11 +344,13 @@ pnpm build      # 构建生产版本
 ## 📈 扩展架构
 
 ### 水平扩展
+
 - **微服务拆分** - 独立部署分析服务
 - **负载均衡** - 分布式处理
 - **消息队列** - 异步任务处理
 
 ### 垂直扩展
+
 - **AI集成** - 机器学习优化
 - **云原生** - Kubernetes部署
 - **边缘计算** - 就近处理
@@ -326,12 +358,14 @@ pnpm build      # 构建生产版本
 ## 🎯 质量保证
 
 ### 代码质量
+
 - **TypeScript严格模式** - 类型安全
 - **ESLint规则** - 代码规范
 - **SonarQube** - 代码质量分析
 - **代码审查** - Pull Request检查
 
 ### 性能质量
+
 - **Lighthouse** - 性能评分
 - **Web Vitals** - 核心Web指标
 - **内存泄漏检测** - 自动化测试
@@ -340,12 +374,14 @@ pnpm build      # 构建生产版本
 ## 📚 技术债务管理
 
 ### 技术债务识别
+
 - **代码复杂度监控** - 自动检测
 - **技术债务标签** - 问题标记
 - **重构优先级** - 智能排序
 - **债务偿还计划** - 渐进式优化
 
 ### 重构策略
+
 - **小步重构** - 持续改进
 - **测试驱动** - 安全重构
 - **版本控制** - 回滚机制
@@ -362,6 +398,6 @@ pnpm build      # 构建生产版本
 ✅ **高性能** - 多层缓存和优化策略  
 ✅ **安全性** - 全面的安全防护机制  
 ✅ **可测试性** - 完整的测试架构  
-✅ **可观测性** - 全方位监控和日志  
+✅ **可观测性** - 全方位监控和日志
 
 这是一个面向未来的、可持续发展的企业级代码优化系统架构。

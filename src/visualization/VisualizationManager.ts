@@ -3,117 +3,120 @@
  * 协调所有可视化相关的组件和系统，提供统一的可视化接口
  */
 
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js';
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
-import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
-import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
-import { GPUParticleSystemManager } from './GPUParticleSystem';
-import { FieldVisualizerManager } from './FieldVisualizer';
-import { VisualizationComponent } from './VisualizationComponent';
-import { ResourceManager } from '../utils/ResourceManager';
-import { PhysicsEngine } from '../core/PhysicsEngine';
-import { unifiedPerformanceManager, UnifiedPerformanceConfig } from '../performance/UnifiedPerformanceManager';
-import { eventSystem, APP_EVENTS } from '../utils/eventSystem';
-import { VISUALIZATION_CONFIG } from '../constants';
-import { LODSystem, lodSystem } from '../performance/LODSystem';
+import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
+import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js'
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js'
+import { GPUParticleSystemManager } from './GPUParticleSystem'
+import { FieldVisualizerManager } from './FieldVisualizer'
+import { VisualizationComponent } from './VisualizationComponent'
+import { ResourceManager } from '../utils/ResourceManager'
+import { PhysicsEngine } from '../core/PhysicsEngine'
+import {
+  unifiedPerformanceManager,
+  UnifiedPerformanceConfig
+} from '../performance/UnifiedPerformanceManager'
+import { eventSystem, APP_EVENTS } from '../utils/eventSystem'
+import { VISUALIZATION_CONFIG } from '../constants'
+import { LODSystem, lodSystem } from '../performance/LODSystem'
 
 // 可视化模块依赖注入类型
 export interface VisualizationDependencies {
   // 粒子系统管理器 - 可选，将在初始化时创建
-  particleSystemManager?: GPUParticleSystemManager;
-  
+  particleSystemManager?: GPUParticleSystemManager
+
   // 场可视化管理器 - 可选，将在初始化时创建
-  fieldVisualizerManager?: FieldVisualizerManager;
-  
+  fieldVisualizerManager?: FieldVisualizerManager
+
   // 资源管理器 - 可选，将在初始化时创建
-  resourceManager?: ResourceManager;
-  
+  resourceManager?: ResourceManager
+
   // 物理引擎 - 可选，用于场可视化
-  physicsEngine?: PhysicsEngine;
+  physicsEngine?: PhysicsEngine
 }
 
 // 可视化配置类型
 export interface VisualizationConfig {
   // 场景配置
   scene?: {
-    backgroundColor?: number;
+    backgroundColor?: number
     fog?: {
-      type: 'linear' | 'exponential';
-      near?: number;
-      far?: number;
-      color?: number;
-      density?: number;
-    };
-    enableGrid?: boolean;
-    enableAxes?: boolean;
-  };
-  
+      type: 'linear' | 'exponential'
+      near?: number
+      far?: number
+      color?: number
+      density?: number
+    }
+    enableGrid?: boolean
+    enableAxes?: boolean
+  }
+
   // 相机配置
   camera?: {
-    fov?: number;
-    near?: number;
-    far?: number;
-    position?: THREE.Vector3;
-    lookAt?: THREE.Vector3;
-  };
-  
+    fov?: number
+    near?: number
+    far?: number
+    position?: THREE.Vector3
+    lookAt?: THREE.Vector3
+  }
+
   // 渲染器配置
   renderer?: {
-    antialias?: boolean;
-    alpha?: boolean;
-    physicallyCorrectLights?: boolean;
-    shadowMapEnabled?: boolean;
-    outputEncoding?: THREE.TextureEncoding;
-  };
-  
+    antialias?: boolean
+    alpha?: boolean
+    physicallyCorrectLights?: boolean
+    shadowMapEnabled?: boolean
+    outputEncoding?: THREE.TextureEncoding
+  }
+
   // 控制器配置
   controls?: {
-    enableDamping?: boolean;
-    dampingFactor?: number;
-    rotateSpeed?: number;
-    zoomSpeed?: number;
-    enablePan?: boolean;
-    autoRotate?: boolean;
-    autoRotateSpeed?: number;
-  };
-  
+    enableDamping?: boolean
+    dampingFactor?: number
+    rotateSpeed?: number
+    zoomSpeed?: number
+    enablePan?: boolean
+    autoRotate?: boolean
+    autoRotateSpeed?: number
+  }
+
   // 后处理配置
   postProcessing?: {
-    enabled?: boolean;
-    quality?: 'low' | 'medium' | 'high' | 'auto';
+    enabled?: boolean
+    quality?: 'low' | 'medium' | 'high' | 'auto'
     bloom?: {
-      enabled?: boolean;
-      intensity?: number;
-      radius?: number;
-      threshold?: number;
-    };
+      enabled?: boolean
+      intensity?: number
+      radius?: number
+      threshold?: number
+    }
     film?: {
-      enabled?: boolean;
-      noiseIntensity?: number;
-      scanlineIntensity?: number;
-      scanlineCount?: number;
-    };
-    smaa?: boolean;
-    gammaCorrection?: boolean;
-  };
-  
+      enabled?: boolean
+      noiseIntensity?: number
+      scanlineIntensity?: number
+      scanlineCount?: number
+    }
+    smaa?: boolean
+    gammaCorrection?: boolean
+  }
+
   // 粒子系统配置
   particleSystem?: {
-    enabled?: boolean;
-    maxParticles?: number;
-    emissionRate?: number;
-  };
-  
+    enabled?: boolean
+    maxParticles?: number
+    emissionRate?: number
+  }
+
   // 性能配置
-  performance?: UnifiedPerformanceConfig;
-  
+  performance?: UnifiedPerformanceConfig
+
   // 依赖配置 - 用于依赖注入
-  dependencies?: VisualizationDependencies;
+  dependencies?: VisualizationDependencies
 }
 
 // 可视化模式类型
@@ -136,15 +139,15 @@ export enum VisualizationMode {
 
 // 可视化预设接口
 export interface VisualizationPreset {
-  id: string;
-  name: string;
-  description: string;
-  mode: VisualizationMode;
-  config: VisualizationConfig;
-  createdAt: number;
-  updatedAt: number;
-  tags: string[];
-  thumbnail?: string;
+  id: string
+  name: string
+  description: string
+  mode: VisualizationMode
+  config: VisualizationConfig
+  createdAt: number
+  updatedAt: number
+  tags: string[]
+  thumbnail?: string
 }
 
 // 可视化管理器事件类型
@@ -177,37 +180,37 @@ export enum VisualizationEvent {
  * 协调所有可视化相关的组件和系统
  */
 export class VisualizationManager {
-  private static instance: VisualizationManager;
-  
+  private static instance: VisualizationManager
+
   // 核心组件
-  private scene: THREE.Scene | null = null;
-  private camera: THREE.PerspectiveCamera | null = null;
-  private renderer: THREE.WebGLRenderer | null = null;
-  private controls: OrbitControls | null = null;
-  private composer: EffectComposer | null = null;
-  private particleSystemManager: GPUParticleSystemManager | null = null;
-  private fieldVisualizerManager: FieldVisualizerManager | null = null;
-  private resourceManager: ResourceManager | null = null;
-  private physicsEngine: PhysicsEngine | null = null;
-  
+  private scene: THREE.Scene | null = null
+  private camera: THREE.PerspectiveCamera | null = null
+  private renderer: THREE.WebGLRenderer | null = null
+  private controls: OrbitControls | null = null
+  private composer: EffectComposer | null = null
+  private particleSystemManager: GPUParticleSystemManager | null = null
+  private fieldVisualizerManager: FieldVisualizerManager | null = null
+  private resourceManager: ResourceManager | null = null
+  private physicsEngine: PhysicsEngine | null = null
+
   // 可视化组件管理
-  private components: Map<string, VisualizationComponent> = new Map();
-  
+  private components: Map<string, VisualizationComponent> = new Map()
+
   // 配置和状态
-  private config: VisualizationConfig;
-  private isInitialized: boolean = false;
-  private isRendering: boolean = false;
-  private animationFrameId: number | null = null;
-  private lastFrameTime: number = 0;
-  
+  private config: VisualizationConfig
+  private isInitialized: boolean = false
+  private isRendering: boolean = false
+  private animationFrameId: number | null = null
+  private lastFrameTime: number = 0
+
   // 性能监控
-  private fps: number = 60;
-  private frameTime: number = 0;
-  private lastMetricsUpdateTime: number = 0;
-  
+  private fps: number = 60
+  private frameTime: number = 0
+  private lastMetricsUpdateTime: number = 0
+
   // 可视化模式和预设相关属性
-  private currentMode: VisualizationMode = VisualizationMode.DEFAULT;
-  private presets: Map<string, VisualizationPreset> = new Map();
+  private currentMode: VisualizationMode = VisualizationMode.DEFAULT
+  private presets: Map<string, VisualizationPreset> = new Map()
   private defaultPresets: VisualizationPreset[] = [
     {
       id: 'preset-default',
@@ -385,13 +388,13 @@ export class VisualizationManager {
       tags: ['cosmology', 'universe', 'space'],
       thumbnail: ''
     }
-  ];
+  ]
 
   // 单例模式构造函数
   private constructor(config: Partial<VisualizationConfig> = {}) {
     // 提取依赖项
-    const dependencies = config.dependencies || {};
-    
+    const dependencies = config.dependencies || {}
+
     // 合并默认配置
     this.config = {
       scene: {
@@ -465,39 +468,39 @@ export class VisualizationManager {
         ...config.performance
       },
       dependencies: dependencies
-    };
-    
+    }
+
     // 初始化依赖项
-    this.particleSystemManager = dependencies.particleSystemManager || null;
-    this.fieldVisualizerManager = dependencies.fieldVisualizerManager || null;
-    this.resourceManager = dependencies.resourceManager || null;
-    this.physicsEngine = dependencies.physicsEngine || null;
-    
+    this.particleSystemManager = dependencies.particleSystemManager || null
+    this.fieldVisualizerManager = dependencies.fieldVisualizerManager || null
+    this.resourceManager = dependencies.resourceManager || null
+    this.physicsEngine = dependencies.physicsEngine || null
+
     // 初始化预设
-    this.initializePresets();
-    
+    this.initializePresets()
+
     // 初始化事件监听
-    this.initializeEventListeners();
+    this.initializeEventListeners()
   }
-  
+
   /**
    * 获取单例实例
    */
   public static getInstance(config?: Partial<VisualizationConfig>): VisualizationManager {
     if (!VisualizationManager.instance) {
-      VisualizationManager.instance = new VisualizationManager(config);
+      VisualizationManager.instance = new VisualizationManager(config)
     }
-    return VisualizationManager.instance;
+    return VisualizationManager.instance
   }
-  
+
   /**
    * 初始化预设
    */
   private initializePresets(): void {
     // 添加默认预设
     this.defaultPresets.forEach(preset => {
-      this.presets.set(preset.id, preset);
-    });
+      this.presets.set(preset.id, preset)
+    })
   }
 
   /**
@@ -505,67 +508,67 @@ export class VisualizationManager {
    */
   private initializeEventListeners(): void {
     // 监听性能模式变化
-    eventSystem.on(APP_EVENTS.PERFORMANCE_MODE_CHANGE, (data) => {
-      this.handlePerformanceModeChange(data.isPerformanceMode);
-    });
-    
+    eventSystem.on(APP_EVENTS.PERFORMANCE_MODE_CHANGE, data => {
+      this.handlePerformanceModeChange(data.isPerformanceMode)
+    })
+
     // 监听粒子密度变化
-    eventSystem.on(APP_EVENTS.PARTICLE_DENSITY_CHANGE, (data) => {
-      this.handleParticleDensityChange(data.density);
-    });
-    
+    eventSystem.on(APP_EVENTS.PARTICLE_DENSITY_CHANGE, data => {
+      this.handleParticleDensityChange(data.density)
+    })
+
     // 监听最大粒子数量变化
-    eventSystem.on(APP_EVENTS.MAX_PARTICLES_CHANGE, (data) => {
-      this.handleMaxParticlesChange(data.maxParticles);
-    });
-    
+    eventSystem.on(APP_EVENTS.MAX_PARTICLES_CHANGE, data => {
+      this.handleMaxParticlesChange(data.maxParticles)
+    })
+
     // 监听渲染缩放变化
-    eventSystem.on(APP_EVENTS.RENDER_SCALE_CHANGE, (data) => {
-      this.handleRenderScaleChange(data.scale);
-    });
-    
+    eventSystem.on(APP_EVENTS.RENDER_SCALE_CHANGE, data => {
+      this.handleRenderScaleChange(data.scale)
+    })
+
     // 监听阴影质量变化
-    eventSystem.on(APP_EVENTS.SHADOW_QUALITY_CHANGE, (data) => {
-      this.handleShadowQualityChange(data.quality);
-    });
-    
+    eventSystem.on(APP_EVENTS.SHADOW_QUALITY_CHANGE, data => {
+      this.handleShadowQualityChange(data.quality)
+    })
+
     // 监听后处理启用状态变化
-    eventSystem.on(APP_EVENTS.POST_PROCESSING_ENABLED_CHANGE, (data) => {
-      this.handlePostProcessingEnabledChange(data.enabled);
-    });
-    
+    eventSystem.on(APP_EVENTS.POST_PROCESSING_ENABLED_CHANGE, data => {
+      this.handlePostProcessingEnabledChange(data.enabled)
+    })
+
     // 监听纹理质量变化
-    eventSystem.on(APP_EVENTS.TEXTURE_QUALITY_CHANGE, (data) => {
-      this.handleTextureQualityChange(data.quality);
-    });
+    eventSystem.on(APP_EVENTS.TEXTURE_QUALITY_CHANGE, data => {
+      this.handleTextureQualityChange(data.quality)
+    })
   }
 
   /**
    * 设置可视化模式
    */
   public setMode(mode: VisualizationMode): void {
-    this.currentMode = mode;
-    
+    this.currentMode = mode
+
     // 根据模式应用默认配置
-    const modeConfig: Partial<VisualizationConfig> = {};
-    
+    const modeConfig: Partial<VisualizationConfig> = {}
+
     switch (mode) {
       case VisualizationMode.EQUATION:
         modeConfig.scene = {
           enableGrid: true,
           enableAxes: true
-        };
+        }
         modeConfig.postProcessing = {
           bloom: { enabled: false },
           film: { enabled: false }
-        };
-        break;
-        
+        }
+        break
+
       case VisualizationMode.FIELD:
         modeConfig.scene = {
           backgroundColor: 0x000022,
           fog: { type: 'exponential', color: 0x000022, density: 0.02 }
-        };
+        }
         modeConfig.postProcessing = {
           bloom: {
             enabled: true,
@@ -573,15 +576,15 @@ export class VisualizationManager {
             radius: 0.8,
             threshold: 0.05
           }
-        };
-        break;
-        
+        }
+        break
+
       case VisualizationMode.PARTICLE:
         modeConfig.particleSystem = {
           enabled: true,
           maxParticles: 200000,
           emissionRate: 1000
-        };
+        }
         modeConfig.postProcessing = {
           bloom: {
             enabled: true,
@@ -589,109 +592,111 @@ export class VisualizationManager {
             radius: 0.6,
             threshold: 0.1
           }
-        };
-        break;
-        
+        }
+        break
+
       default:
         // 使用默认配置
-        break;
+        break
     }
-    
+
     // 应用配置
-    this.updateConfig(modeConfig);
-    
+    this.updateConfig(modeConfig)
+
     // 发布模式变化事件
-    eventSystem.emit(VisualizationEvent.MODE_CHANGED, { mode });
+    eventSystem.emit(VisualizationEvent.MODE_CHANGED, { mode })
   }
 
   /**
    * 获取当前可视化模式
    */
   public getMode(): VisualizationMode {
-    return this.currentMode;
+    return this.currentMode
   }
 
   /**
    * 应用预设
    */
   public applyPreset(id: string): void {
-    const preset = this.presets.get(id);
+    const preset = this.presets.get(id)
     if (!preset) {
-      console.warn(`Preset ${id} not found`);
-      return;
+      console.warn(`Preset ${id} not found`)
+      return
     }
-    
+
     // 应用预设配置
-    this.updateConfig(preset.config);
-    
+    this.updateConfig(preset.config)
+
     // 更新当前模式
-    this.currentMode = preset.mode;
-    
+    this.currentMode = preset.mode
+
     // 发布预设应用事件
-    eventSystem.emit(VisualizationEvent.PRESET_APPLIED, { preset });
+    eventSystem.emit(VisualizationEvent.PRESET_APPLIED, { preset })
   }
 
   /**
    * 保存预设
    */
-  public savePreset(preset: Omit<VisualizationPreset, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }): string {
-    const id = preset.id || `preset-${Date.now()}`;
-    const now = Date.now();
-    
+  public savePreset(
+    preset: Omit<VisualizationPreset, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+  ): string {
+    const id = preset.id || `preset-${Date.now()}`
+    const now = Date.now()
+
     const newPreset: VisualizationPreset = {
       ...preset,
       id,
       createdAt: now,
       updatedAt: now
-    };
-    
-    this.presets.set(id, newPreset);
-    
+    }
+
+    this.presets.set(id, newPreset)
+
     // 发布预设保存事件
-    eventSystem.emit(VisualizationEvent.PRESET_SAVED, { preset: newPreset });
-    
-    return id;
+    eventSystem.emit(VisualizationEvent.PRESET_SAVED, { preset: newPreset })
+
+    return id
   }
 
   /**
    * 删除预设
    */
   public deletePreset(id: string): void {
-    const preset = this.presets.get(id);
-    if (!preset) return;
-    
-    this.presets.delete(id);
-    
+    const preset = this.presets.get(id)
+    if (!preset) return
+
+    this.presets.delete(id)
+
     // 发布预设删除事件
-    eventSystem.emit(VisualizationEvent.PRESET_DELETED, { id });
+    eventSystem.emit(VisualizationEvent.PRESET_DELETED, { id })
   }
 
   /**
    * 获取预设
    */
   public getPreset(id: string): VisualizationPreset | undefined {
-    return this.presets.get(id);
+    return this.presets.get(id)
   }
 
   /**
    * 获取所有预设
    */
   public getAllPresets(): VisualizationPreset[] {
-    return Array.from(this.presets.values());
+    return Array.from(this.presets.values())
   }
 
   /**
    * 根据标签获取预设
    */
   public getPresetsByTag(tag: string): VisualizationPreset[] {
-    return Array.from(this.presets.values()).filter(preset => preset.tags.includes(tag));
+    return Array.from(this.presets.values()).filter(preset => preset.tags.includes(tag))
   }
 
   /**
    * 根据模式获取预设
    */
   public getPresetsByMode(mode: VisualizationMode): VisualizationPreset[] {
-    return Array.from(this.presets.values()).filter(preset => preset.mode === mode);
+    return Array.from(this.presets.values()).filter(preset => preset.mode === mode)
   }
 
   /**
@@ -736,132 +741,129 @@ export class VisualizationManager {
         ...this.config.performance,
         ...config.performance
       }
-    };
-    
+    }
+
     // 应用配置到场景
-    this.applyConfigToScene();
+    this.applyConfigToScene()
   }
 
   /**
    * 应用配置到场景
    */
   private applyConfigToScene(): void {
-    if (!this.scene || !this.camera || !this.renderer) return;
-    
+    if (!this.scene || !this.camera || !this.renderer) return
+
     // 更新场景
     if (this.config.scene) {
       if (this.config.scene.backgroundColor !== undefined) {
-        this.scene.background = new THREE.Color(this.config.scene.backgroundColor);
+        this.scene.background = new THREE.Color(this.config.scene.backgroundColor)
       }
-      
+
       if (this.config.scene.fog) {
-        const fogConfig = this.config.scene.fog;
+        const fogConfig = this.config.scene.fog
         if (fogConfig.type === 'linear') {
           this.scene.fog = new THREE.Fog(
             fogConfig.color || 0x000000,
             fogConfig.near || 1,
             fogConfig.far || 100
-          );
+          )
         } else {
-          this.scene.fog = new THREE.FogExp2(
-            fogConfig.color || 0x000000,
-            fogConfig.density || 0.01
-          );
+          this.scene.fog = new THREE.FogExp2(fogConfig.color || 0x000000, fogConfig.density || 0.01)
         }
       } else {
-        this.scene.fog = null;
+        this.scene.fog = null
       }
     }
-    
+
     // 更新相机
     if (this.config.camera) {
       if (this.config.camera.fov !== undefined) {
-        this.camera.fov = this.config.camera.fov;
-        this.camera.updateProjectionMatrix();
+        this.camera.fov = this.config.camera.fov
+        this.camera.updateProjectionMatrix()
       }
-      
+
       if (this.config.camera.position) {
-        this.camera.position.copy(this.config.camera.position);
+        this.camera.position.copy(this.config.camera.position)
       }
-      
+
       if (this.config.camera.lookAt) {
-        this.camera.lookAt(this.config.camera.lookAt);
+        this.camera.lookAt(this.config.camera.lookAt)
       }
     }
-    
+
     // 更新后处理
-    this.reinitializePostProcessing();
-    
+    this.reinitializePostProcessing()
+
     // 更新粒子系统
     if (this.particleSystemManager && this.config.particleSystem) {
       // 这里可以添加粒子系统配置更新逻辑
     }
   }
-  
+
   /**
    * 初始化可视化系统
    */
   public initialize(container: HTMLElement): void {
     if (this.isInitialized) {
-      console.warn('VisualizationManager is already initialized');
-      return;
+      console.warn('VisualizationManager is already initialized')
+      return
     }
-    
+
     try {
       // 初始化性能管理器
       if (this.config.performance) {
-        unifiedPerformanceManager.updateConfig(this.config.performance);
+        unifiedPerformanceManager.updateConfig(this.config.performance)
       }
-      
+
       // 1. 创建场景
-      this.createScene();
-      
+      this.createScene()
+
       // 2. 创建相机
-      this.createCamera(container);
-      
+      this.createCamera(container)
+
       // 3. 创建渲染器
-      this.createRenderer(container);
-      
+      this.createRenderer(container)
+
       // 4. 创建控制器
-      this.createControls();
-      
+      this.createControls()
+
       // 5. 初始化后处理效果
-      this.initializePostProcessing();
-      
+      this.initializePostProcessing()
+
       // 6. 初始化粒子系统
-      this.initializeParticleSystem();
-      
+      this.initializeParticleSystem()
+
       // 7. 初始化场可视化系统
-      this.initializeFieldVisualization();
-      
+      this.initializeFieldVisualization()
+
       // 8. 初始化资源管理器
-      this.initializeResourceManager();
-      
+      this.initializeResourceManager()
+
       // 9. 初始化LOD系统
-      this.initializeLODSystem();
-      
+      this.initializeLODSystem()
+
       // 10. 初始化性能优化系统
       if (this.scene && this.camera && this.renderer) {
-        unifiedPerformanceManager.initialize(this.scene, this.camera, this.renderer);
+        unifiedPerformanceManager.initialize(this.scene, this.camera, this.renderer)
       }
-      
+
       // 11. 添加默认场景元素
-      this.addDefaultSceneElements();
-      
-      this.isInitialized = true;
-      
+      this.addDefaultSceneElements()
+
+      this.isInitialized = true
+
       // 发布初始化完成事件
       eventSystem.emit(VisualizationEvent.INITIALIZED, {
         scene: this.scene,
         camera: this.camera,
         renderer: this.renderer,
         controls: this.controls
-      });
-      
-      console.log('🎨 VisualizationManager initialized successfully');
+      })
+
+      console.log('🎨 VisualizationManager initialized successfully')
     } catch (error) {
-      console.error('❌ VisualizationManager initialization failed:', error);
-      throw error;
+      console.error('❌ VisualizationManager initialization failed:', error)
+      throw error
     }
   }
 
@@ -870,72 +872,69 @@ export class VisualizationManager {
    */
   private initializeLODSystem(): void {
     if (this.camera) {
-      lodSystem.setCamera(this.camera);
+      lodSystem.setCamera(this.camera)
     }
-    
-    console.log('📊 LOD system initialized');
+
+    console.log('📊 LOD system initialized')
   }
-  
+
   /**
    * 创建场景
    */
   private createScene(): void {
-    this.scene = new THREE.Scene();
-    
+    this.scene = new THREE.Scene()
+
     // 应用场景配置
     if (this.config.scene?.backgroundColor) {
-      this.scene.background = new THREE.Color(this.config.scene.backgroundColor);
+      this.scene.background = new THREE.Color(this.config.scene.backgroundColor)
     }
-    
+
     // 应用雾配置
     if (this.config.scene?.fog) {
-      const fogConfig = this.config.scene.fog;
+      const fogConfig = this.config.scene.fog
       if (fogConfig.type === 'linear') {
         this.scene.fog = new THREE.Fog(
           fogConfig.color || 0x000000,
           fogConfig.near || 1,
           fogConfig.far || 100
-        );
+        )
       } else {
-        this.scene.fog = new THREE.FogExp2(
-          fogConfig.color || 0x000000,
-          fogConfig.density || 0.01
-        );
+        this.scene.fog = new THREE.FogExp2(fogConfig.color || 0x000000, fogConfig.density || 0.01)
       }
     }
-    
+
     // 发布场景创建事件
-    eventSystem.emit(VisualizationEvent.SCENE_CREATED, { scene: this.scene });
+    eventSystem.emit(VisualizationEvent.SCENE_CREATED, { scene: this.scene })
   }
-  
+
   /**
    * 创建相机
    */
   private createCamera(container: HTMLElement): void {
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-    
+    const width = container.clientWidth
+    const height = container.clientHeight
+
     this.camera = new THREE.PerspectiveCamera(
       this.config.camera?.fov || 75,
       width / height,
       this.config.camera?.near || 0.1,
       this.config.camera?.far || 1000
-    );
-    
+    )
+
     // 设置相机位置
     if (this.config.camera?.position) {
-      this.camera.position.copy(this.config.camera.position);
+      this.camera.position.copy(this.config.camera.position)
     }
-    
+
     // 设置相机朝向
     if (this.config.camera?.lookAt) {
-      this.camera.lookAt(this.config.camera.lookAt);
+      this.camera.lookAt(this.config.camera.lookAt)
     }
-    
+
     // 发布相机创建事件
-    eventSystem.emit(VisualizationEvent.CAMERA_CREATED, { camera: this.camera });
+    eventSystem.emit(VisualizationEvent.CAMERA_CREATED, { camera: this.camera })
   }
-  
+
   /**
    * 创建渲染器
    */
@@ -948,164 +947,169 @@ export class VisualizationManager {
       premultipliedAlpha: false, // 减少透明度处理开销
       stencil: false, // 禁用不需要的模板缓冲区
       preserveDrawingBuffer: true // 保留绘制缓冲区用于截图等功能
-    });
-    
+    })
+
     // 设置渲染器大小
-    this.renderer.setSize(container.clientWidth, container.clientHeight);
-    
+    this.renderer.setSize(container.clientWidth, container.clientHeight)
+
     // 设置像素比率
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
     // 设置输出编码（使用新版本的outputColorSpace）
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace
+
     // 启用阴影映射并优化
     if (this.config.renderer?.shadowMapEnabled) {
-      this.renderer.shadowMap.enabled = true;
-      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      this.renderer.shadowMap.autoUpdate = false; // 手动控制阴影更新，减少开销
-      this.renderer.shadowMap.needsUpdate = true;
+      this.renderer.shadowMap.enabled = true
+      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+      this.renderer.shadowMap.autoUpdate = false // 手动控制阴影更新，减少开销
+      this.renderer.shadowMap.needsUpdate = true
     }
-    
+
     // 渲染质量和性能平衡设置
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.0;
-    
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping
+    this.renderer.toneMappingExposure = 1.0
+
     // 性能优化设置
-    this.renderer.localClippingEnabled = true; // 局部裁剪支持
-    this.renderer.autoClear = false; // 手动控制清除
-    this.renderer.info.autoReset = true; // 自动重置性能统计
-    this.renderer.capabilities.logarithmicDepthBuffer = true; // 对数深度缓冲区，改善远距离渲染
-    
+    this.renderer.localClippingEnabled = true // 局部裁剪支持
+    this.renderer.autoClear = false // 手动控制清除
+    this.renderer.info.autoReset = true // 自动重置性能统计
+    this.renderer.capabilities.logarithmicDepthBuffer = true // 对数深度缓冲区，改善远距离渲染
+
     // 添加到DOM
-    container.appendChild(this.renderer.domElement);
-    
+    container.appendChild(this.renderer.domElement)
+
     // 发布渲染器创建事件
-    eventSystem.emit(VisualizationEvent.RENDERER_CREATED, { renderer: this.renderer });
+    eventSystem.emit(VisualizationEvent.RENDERER_CREATED, { renderer: this.renderer })
   }
-  
+
   /**
    * 创建控制器
    */
   private createControls(): void {
-    if (!this.camera || !this.renderer) return;
-    
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    
+    if (!this.camera || !this.renderer) return
+
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement)
+
     // 应用控制器配置
-    this.controls.enableDamping = this.config.controls?.enableDamping || true;
-    this.controls.dampingFactor = this.config.controls?.dampingFactor || 0.05;
-    this.controls.rotateSpeed = this.config.controls?.rotateSpeed || 0.5;
-    this.controls.zoomSpeed = this.config.controls?.zoomSpeed || 0.8;
-    this.controls.enablePan = this.config.controls?.enablePan || true;
-    this.controls.autoRotate = this.config.controls?.autoRotate || false;
-    this.controls.autoRotateSpeed = this.config.controls?.autoRotateSpeed || 2.0;
-    
+    this.controls.enableDamping = this.config.controls?.enableDamping || true
+    this.controls.dampingFactor = this.config.controls?.dampingFactor || 0.05
+    this.controls.rotateSpeed = this.config.controls?.rotateSpeed || 0.5
+    this.controls.zoomSpeed = this.config.controls?.zoomSpeed || 0.8
+    this.controls.enablePan = this.config.controls?.enablePan || true
+    this.controls.autoRotate = this.config.controls?.autoRotate || false
+    this.controls.autoRotateSpeed = this.config.controls?.autoRotateSpeed || 2.0
+
     // 发布控制器创建事件
-    eventSystem.emit(VisualizationEvent.CONTROLS_CREATED, { controls: this.controls });
+    eventSystem.emit(VisualizationEvent.CONTROLS_CREATED, { controls: this.controls })
   }
-  
+
   /**
    * 初始化后处理效果
    */
   private initializePostProcessing(): void {
     if (!this.renderer || !this.camera || !this.scene || !this.config.postProcessing?.enabled) {
-      return;
+      return
     }
 
     // 创建效果合成器
-    this.composer = new EffectComposer(this.renderer);
-    
+    this.composer = new EffectComposer(this.renderer)
+
     // 创建渲染通道
-    const renderPass = new RenderPass(this.scene, this.camera);
-    this.composer.addPass(renderPass);
-    
+    const renderPass = new RenderPass(this.scene, this.camera)
+    this.composer.addPass(renderPass)
+
     // 添加FXAA抗锯齿通道
     if (this.config.postProcessing.smaa) {
-      const fxaaPass = new ShaderPass(FXAAShader);
-      const pixelRatio = this.renderer.getPixelRatio();
-      fxaaPass.material.uniforms['resolution'].value.x = 1 / (this.renderer.domElement.clientWidth * pixelRatio);
-      fxaaPass.material.uniforms['resolution'].value.y = 1 / (this.renderer.domElement.clientHeight * pixelRatio);
-      this.composer.addPass(fxaaPass);
+      const fxaaPass = new ShaderPass(FXAAShader)
+      const pixelRatio = this.renderer.getPixelRatio()
+      fxaaPass.material.uniforms['resolution'].value.x =
+        1 / (this.renderer.domElement.clientWidth * pixelRatio)
+      fxaaPass.material.uniforms['resolution'].value.y =
+        1 / (this.renderer.domElement.clientHeight * pixelRatio)
+      this.composer.addPass(fxaaPass)
     }
-    
+
     // 添加Unreal Bloom通道
     if (this.config.postProcessing.bloom?.enabled) {
       const bloomPass = new UnrealBloomPass(
-        new THREE.Vector2(this.renderer.domElement.clientWidth, this.renderer.domElement.clientHeight),
+        new THREE.Vector2(
+          this.renderer.domElement.clientWidth,
+          this.renderer.domElement.clientHeight
+        ),
         this.config.postProcessing.bloom.intensity || 0.5,
         this.config.postProcessing.bloom.radius || 0.85,
         this.config.postProcessing.bloom.threshold || 0.1
-      );
-      this.composer.addPass(bloomPass);
+      )
+      this.composer.addPass(bloomPass)
     }
-    
+
     // 添加电影颗粒效果通道
     if (this.config.postProcessing.film?.enabled) {
       // 创建电影效果通道（FilmPass构造函数只接受0-2个参数）
       const filmPass = new FilmPass(
         this.config.postProcessing.film.noiseIntensity || 0.1,
         this.config.postProcessing.film.scanlineIntensity || 0.1
-      );
-      this.composer.addPass(filmPass);
+      )
+      this.composer.addPass(filmPass)
     }
-    
+
     // 添加伽马校正通道
     if (this.config.postProcessing.gammaCorrection) {
-      const gammaCorrectionPass = new ShaderPass(GammaCorrectionShader);
-      gammaCorrectionPass.renderToScreen = true;
-      this.composer.addPass(gammaCorrectionPass);
+      const gammaCorrectionPass = new ShaderPass(GammaCorrectionShader)
+      gammaCorrectionPass.renderToScreen = true
+      this.composer.addPass(gammaCorrectionPass)
     }
-    
+
     // 发布后处理初始化事件
-    eventSystem.emit(VisualizationEvent.POST_PROCESSING_INITIALIZED, { composer: this.composer });
+    eventSystem.emit(VisualizationEvent.POST_PROCESSING_INITIALIZED, { composer: this.composer })
   }
-  
+
   /**
    * 初始化粒子系统
    */
   private initializeParticleSystem(): void {
-    if (!this.scene || !this.config.particleSystem?.enabled) return;
-    
+    if (!this.scene || !this.config.particleSystem?.enabled) return
+
     // 如果没有注入粒子系统管理器，创建新实例
     if (!this.particleSystemManager) {
-      this.particleSystemManager = new GPUParticleSystemManager(this.scene);
+      this.particleSystemManager = new GPUParticleSystemManager(this.scene)
     }
-    
+
     // 发布粒子系统初始化事件
     eventSystem.emit(VisualizationEvent.PARTICLE_SYSTEM_INITIALIZED, {
       particleSystemManager: this.particleSystemManager
-    });
+    })
   }
-  
+
   /**
    * 初始化场可视化系统
    */
   private initializeFieldVisualization(): void {
-    if (!this.scene) return;
-    
+    if (!this.scene) return
+
     // 如果没有注入场可视化管理器，创建新实例
     if (!this.fieldVisualizerManager) {
       // 如果没有注入物理引擎，创建一个默认实例
       if (!this.physicsEngine) {
-        this.physicsEngine = new PhysicsEngine();
+        this.physicsEngine = new PhysicsEngine()
       }
-      this.fieldVisualizerManager = new FieldVisualizerManager(this.scene, this.physicsEngine);
+      this.fieldVisualizerManager = new FieldVisualizerManager(this.scene, this.physicsEngine)
     }
-    
+
     // 发布场可视化初始化事件
     eventSystem.emit(VisualizationEvent.FIELD_VISUALIZATION_INITIALIZED, {
       fieldVisualizerManager: this.fieldVisualizerManager
-    });
+    })
   }
-  
+
   /**
    * 初始化资源管理器
    */
   private initializeResourceManager(): void {
     // 初始化资源管理器
     if (!this.resourceManager) {
-      this.resourceManager = ResourceManager.getInstance();
+      this.resourceManager = ResourceManager.getInstance()
     }
   }
 
@@ -1113,110 +1117,108 @@ export class VisualizationManager {
    * 添加可视化组件
    */
   public addComponent(component: VisualizationComponent): void {
-    this.components.set(component.getId(), component);
-    component.initialize();
-    
+    this.components.set(component.getId(), component)
+    component.initialize()
+
     // 发布组件添加事件
     eventSystem.emit(VisualizationEvent.COMPONENT_ADDED, {
       component,
       id: component.getId(),
       type: component.getType()
-    });
+    })
   }
-  
+
   /**
    * 获取可视化组件
    */
   public getComponent(id: string): VisualizationComponent | undefined {
-    return this.components.get(id);
+    return this.components.get(id)
   }
-  
+
   /**
    * 移除可视化组件
    */
   public removeComponent(id: string): void {
-    const component = this.components.get(id);
+    const component = this.components.get(id)
     if (component) {
-      component.dispose();
-      this.components.delete(id);
-      
+      component.dispose()
+      this.components.delete(id)
+
       // 发布组件移除事件
       eventSystem.emit(VisualizationEvent.COMPONENT_REMOVED, {
         id,
         type: component.getType()
-      });
+      })
     }
   }
-  
+
   /**
    * 获取所有可视化组件
    */
   public getAllComponents(): VisualizationComponent[] {
-    return Array.from(this.components.values());
+    return Array.from(this.components.values())
   }
-  
+
   /**
    * 获取指定类型的可视化组件
    */
   public getComponentsByType(type: string): VisualizationComponent[] {
-    return Array.from(this.components.values()).filter(
-      component => component.getType() === type
-    );
+    return Array.from(this.components.values()).filter(component => component.getType() === type)
   }
-  
+
   /**
    * 添加默认场景元素
    */
   private addDefaultSceneElements(): void {
-    if (!this.scene) return;
-    
+    if (!this.scene) return
+
     // 添加网格辅助线
     if (this.config.scene?.enableGrid) {
-      const gridHelper = new THREE.GridHelper(100, 50, 0x444444, 0x222222);
-      this.scene.add(gridHelper);
+      const gridHelper = new THREE.GridHelper(100, 50, 0x444444, 0x222222)
+      this.scene.add(gridHelper)
     }
-    
+
     // 添加坐标轴辅助线
     if (this.config.scene?.enableAxes) {
-      const axesHelper = new THREE.AxesHelper(10);
-      this.scene.add(axesHelper);
+      const axesHelper = new THREE.AxesHelper(10)
+      this.scene.add(axesHelper)
     }
-    
+
     // 添加环境光
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    this.scene.add(ambientLight);
-    
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
+    this.scene.add(ambientLight)
+
     // 添加方向光
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(5, 5, 5);
-    this.scene.add(directionalLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
+    directionalLight.position.set(5, 5, 5)
+    this.scene.add(directionalLight)
   }
-  
+
   /**
    * 开始渲染循环
    */
   public startRendering(): void {
     if (this.isRendering) {
-      console.warn('VisualizationManager is already rendering');
-      return;
+      console.warn('VisualizationManager is already rendering')
+      return
     }
-    
-    this.isRendering = true;
-    this.lastFrameTime = performance.now();
-    this.render();
+
+    this.isRendering = true
+    this.lastFrameTime = performance.now()
+    this.render()
   }
-  
+
   /**
    * 停止渲染循环
    */
   public stopRendering(): void {
-    this.isRendering = false;
+    this.isRendering = false
     if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = null;
+      cancelAnimationFrame(this.animationFrameId)
+      this.animationFrameId = null
     }
   }
-  
+
   // 渲染优化配置
   private renderConfig = {
     targetFPS: 60,
@@ -1225,62 +1227,80 @@ export class VisualizationManager {
     enableAdaptiveQuality: true,
     qualityLevels: [
       { minFPS: 50, shadowQuality: 1.0, renderScale: 1.0, bloomQuality: 'high', filmEnabled: true },
-      { minFPS: 40, shadowQuality: 0.75, renderScale: 0.9, bloomQuality: 'medium', filmEnabled: false },
+      {
+        minFPS: 40,
+        shadowQuality: 0.75,
+        renderScale: 0.9,
+        bloomQuality: 'medium',
+        filmEnabled: false
+      },
       { minFPS: 30, shadowQuality: 0.5, renderScale: 0.8, bloomQuality: 'low', filmEnabled: false },
-      { minFPS: 20, shadowQuality: 0.25, renderScale: 0.7, bloomQuality: 'off', filmEnabled: false },
+      {
+        minFPS: 20,
+        shadowQuality: 0.25,
+        renderScale: 0.7,
+        bloomQuality: 'off',
+        filmEnabled: false
+      },
       { minFPS: 0, shadowQuality: 0, renderScale: 0.5, bloomQuality: 'off', filmEnabled: false }
     ],
     qualityUpdateInterval: 500, // 每500ms更新一次质量设置
     lastQualityUpdate: 0
-  };
+  }
 
   /**
    * 渲染循环
    */
   private render = (): void => {
-    if (!this.isRendering || !this.scene || !this.camera || !this.renderer) return;
-    
+    if (!this.isRendering || !this.scene || !this.camera || !this.renderer) return
+
     // 计算时间差并限制最大deltaTime
-    const currentTime = performance.now();
-    const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, this.renderConfig.maxDeltaTime);
-    this.frameTime = currentTime - this.lastFrameTime;
-    this.fps = Math.min(1000 / Math.max(this.frameTime, 1), 120); // 限制最大显示FPS为120
-    
+    const currentTime = performance.now()
+    const deltaTime = Math.min(
+      (currentTime - this.lastFrameTime) / 1000,
+      this.renderConfig.maxDeltaTime
+    )
+    this.frameTime = currentTime - this.lastFrameTime
+    this.fps = Math.min(1000 / Math.max(this.frameTime, 1), 120) // 限制最大显示FPS为120
+
     // 更新控制器（如果启用了阻尼）
     if (this.controls && this.controls.enableDamping) {
-      this.controls.update();
+      this.controls.update()
     }
-    
+
     // 更新LOD系统
-    lodSystem.updateLOD();
-    
+    lodSystem.updateLOD()
+
     // 只在需要时更新粒子系统（根据性能设置）
     if (this.particleSystemManager) {
-      this.particleSystemManager.update(deltaTime);
+      this.particleSystemManager.update(deltaTime)
     }
-    
+
     // 只在场可视化启用时更新
     if (this.fieldVisualizerManager) {
-      this.fieldVisualizerManager.update(deltaTime);
+      this.fieldVisualizerManager.update(deltaTime)
     }
-    
+
     // 更新所有可视化组件
     this.components.forEach(component => {
-      component.update(deltaTime);
-    });
-    
+      component.update(deltaTime)
+    })
+
     // 应用性能优化
-    unifiedPerformanceManager.applyOptimizations(deltaTime);
-    
+    unifiedPerformanceManager.applyOptimizations(deltaTime)
+
     // 只在采样间隔更新性能指标，减少计算开销
-    const shouldUpdateMetrics = (currentTime - this.lastMetricsUpdateTime) > 100; // 每100ms更新一次
+    const shouldUpdateMetrics = currentTime - this.lastMetricsUpdateTime > 100 // 每100ms更新一次
     if (shouldUpdateMetrics) {
       unifiedPerformanceManager.updateMetrics({
         fps: this.fps,
         frameTime: this.frameTime,
         drawCalls: this.renderer.info.render.calls,
         triangleCount: this.renderer.info.render.triangles,
-        vertexCount: this.renderer.info.render.points + this.renderer.info.render.lines + this.renderer.info.render.triangles,
+        vertexCount:
+          this.renderer.info.render.points +
+          this.renderer.info.render.lines +
+          this.renderer.info.render.triangles,
         activeObjects: this.scene.children.length,
         particleCount: this.particleSystemManager?.getStats().particleCount || 0,
         sceneComplexity: this.scene.children.length,
@@ -1289,63 +1309,65 @@ export class VisualizationManager {
         renderScale: 1.0,
         particleDensity: 1.0,
         shadowQuality: 1.0
-      });
-      this.lastMetricsUpdateTime = currentTime;
+      })
+      this.lastMetricsUpdateTime = currentTime
     }
-    
+
     // 自适应质量调整（减少频繁调用）
-    if (this.renderConfig.enableAdaptiveQuality && 
-        currentTime - this.renderConfig.lastQualityUpdate > this.renderConfig.qualityUpdateInterval) {
-      this.applyAdaptiveQuality();
-      this.renderConfig.lastQualityUpdate = currentTime;
+    if (
+      this.renderConfig.enableAdaptiveQuality &&
+      currentTime - this.renderConfig.lastQualityUpdate > this.renderConfig.qualityUpdateInterval
+    ) {
+      this.applyAdaptiveQuality()
+      this.renderConfig.lastQualityUpdate = currentTime
     }
-    
+
     // 渲染场景
     if (this.composer && this.config.postProcessing?.enabled) {
-      this.composer.render(deltaTime);
+      this.composer.render(deltaTime)
     } else {
-      this.renderer.render(this.scene, this.camera);
+      this.renderer.render(this.scene, this.camera)
     }
-    
+
     // 更新时间
-    this.lastFrameTime = currentTime;
-    
+    this.lastFrameTime = currentTime
+
     // 继续渲染循环
-    this.animationFrameId = requestAnimationFrame(this.render);
-  };
+    this.animationFrameId = requestAnimationFrame(this.render)
+  }
 
   /**
    * 应用自适应质量设置
    * 根据当前性能动态调整渲染质量
    */
   private applyAdaptiveQuality(): void {
-    if (!this.renderer) return;
+    if (!this.renderer) return
 
     // 找到当前FPS对应的质量级别
-    let qualityLevel = this.renderConfig.qualityLevels[this.renderConfig.qualityLevels.length - 1];
+    let qualityLevel = this.renderConfig.qualityLevels[this.renderConfig.qualityLevels.length - 1]
     for (const level of this.renderConfig.qualityLevels) {
       if (this.fps >= level.minFPS) {
-        qualityLevel = level;
-        break;
+        qualityLevel = level
+        break
       }
     }
 
     // 应用阴影质量
     if (this.renderer.shadowMap.enabled) {
       if (qualityLevel.shadowQuality === 0) {
-        this.renderer.shadowMap.enabled = false;
+        this.renderer.shadowMap.enabled = false
       } else if (!this.renderer.shadowMap.enabled) {
-        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.enabled = true
       }
       // 根据shadowQuality调整阴影贴图大小等参数
     }
 
     // 应用渲染缩放
-    const currentPixelRatio = this.renderer.getPixelRatio();
-    const targetPixelRatio = Math.min(window.devicePixelRatio * qualityLevel.renderScale, 2);
+    const currentPixelRatio = this.renderer.getPixelRatio()
+    const targetPixelRatio = Math.min(window.devicePixelRatio * qualityLevel.renderScale, 2)
     if (Math.abs(currentPixelRatio - targetPixelRatio) > 0.1) {
-      this.renderer.setPixelRatio(targetPixelRatio);
-      this.onResize(); // 重新调整大小
+      this.renderer.setPixelRatio(targetPixelRatio)
+      this.onResize() // 重新调整大小
     }
 
     // 应用后处理质量
@@ -1353,17 +1375,37 @@ export class VisualizationManager {
       // 调整Bloom质量
       switch (qualityLevel.bloomQuality) {
         case 'high':
-          this.config.postProcessing.bloom = { enabled: true, intensity: 1.5, radius: 0.5, threshold: 0.1 };
-          break;
+          this.config.postProcessing.bloom = {
+            enabled: true,
+            intensity: 1.5,
+            radius: 0.5,
+            threshold: 0.1
+          }
+          break
         case 'medium':
-          this.config.postProcessing.bloom = { enabled: true, intensity: 0.7, radius: 0.3, threshold: 0.2 };
-          break;
+          this.config.postProcessing.bloom = {
+            enabled: true,
+            intensity: 0.7,
+            radius: 0.3,
+            threshold: 0.2
+          }
+          break
         case 'low':
-          this.config.postProcessing.bloom = { enabled: true, intensity: 0.3, radius: 0.2, threshold: 0.3 };
-          break;
+          this.config.postProcessing.bloom = {
+            enabled: true,
+            intensity: 0.3,
+            radius: 0.2,
+            threshold: 0.3
+          }
+          break
         case 'off':
-          this.config.postProcessing.bloom = { enabled: false, intensity: 0, radius: 0, threshold: 0 };
-          break;
+          this.config.postProcessing.bloom = {
+            enabled: false,
+            intensity: 0,
+            radius: 0,
+            threshold: 0
+          }
+          break
       }
 
       // 调整电影效果
@@ -1372,54 +1414,60 @@ export class VisualizationManager {
         noiseIntensity: 0.1,
         scanlineIntensity: 0.1,
         scanlineCount: 800
-      };
+      }
 
       // 只在配置变化时重新初始化后处理
-      this.reinitializePostProcessing();
+      this.reinitializePostProcessing()
     }
   }
-  
+
   // 移除旧的autoAdjustPostProcessingQuality方法，使用applyAdaptiveQuality替代
-  
+
   /**
    * 重新初始化后处理效果
    * 在配置变化时调用，更新后处理通道
    */
   private reinitializePostProcessing(): void {
-    if (!this.renderer || !this.camera || !this.scene || !this.config.postProcessing?.enabled) return;
-    
+    if (!this.renderer || !this.camera || !this.scene || !this.config.postProcessing?.enabled)
+      return
+
     // 清除现有的后处理通道
     if (this.composer) {
-      this.composer.dispose();
+      this.composer.dispose()
     }
-    
+
     // 重新创建效果合成器
-    this.composer = new EffectComposer(this.renderer);
-    
+    this.composer = new EffectComposer(this.renderer)
+
     // 创建渲染通道
-    const renderPass = new RenderPass(this.scene, this.camera);
-    this.composer.addPass(renderPass);
-    
+    const renderPass = new RenderPass(this.scene, this.camera)
+    this.composer.addPass(renderPass)
+
     // 添加FXAA抗锯齿通道
     if (this.config.postProcessing.smaa) {
-      const fxaaPass = new ShaderPass(FXAAShader);
-      const pixelRatio = this.renderer.getPixelRatio();
-      fxaaPass.material.uniforms['resolution'].value.x = 1 / (this.renderer.domElement.clientWidth * pixelRatio);
-      fxaaPass.material.uniforms['resolution'].value.y = 1 / (this.renderer.domElement.clientHeight * pixelRatio);
-      this.composer.addPass(fxaaPass);
+      const fxaaPass = new ShaderPass(FXAAShader)
+      const pixelRatio = this.renderer.getPixelRatio()
+      fxaaPass.material.uniforms['resolution'].value.x =
+        1 / (this.renderer.domElement.clientWidth * pixelRatio)
+      fxaaPass.material.uniforms['resolution'].value.y =
+        1 / (this.renderer.domElement.clientHeight * pixelRatio)
+      this.composer.addPass(fxaaPass)
     }
-    
+
     // 添加Unreal Bloom通道
     if (this.config.postProcessing.bloom?.enabled) {
       const bloomPass = new UnrealBloomPass(
-        new THREE.Vector2(this.renderer.domElement.clientWidth, this.renderer.domElement.clientHeight),
+        new THREE.Vector2(
+          this.renderer.domElement.clientWidth,
+          this.renderer.domElement.clientHeight
+        ),
         this.config.postProcessing.bloom.intensity || 0.5,
         this.config.postProcessing.bloom.radius || 0.85,
         this.config.postProcessing.bloom.threshold || 0.1
-      );
-      this.composer.addPass(bloomPass);
+      )
+      this.composer.addPass(bloomPass)
     }
-    
+
     // 添加电影颗粒效果通道
     if (this.config.postProcessing.film?.enabled) {
       const filmPass = new FilmPass(
@@ -1427,282 +1475,282 @@ export class VisualizationManager {
         this.config.postProcessing.film.scanlineIntensity || 0.1,
         this.config.postProcessing.film.scanlineCount || 800,
         false
-      );
-      this.composer.addPass(filmPass);
+      )
+      this.composer.addPass(filmPass)
     }
-    
+
     // 添加伽马校正通道
     if (this.config.postProcessing.gammaCorrection) {
-      const gammaCorrectionPass = new ShaderPass(GammaCorrectionShader);
-      gammaCorrectionPass.renderToScreen = true;
-      this.composer.addPass(gammaCorrectionPass);
+      const gammaCorrectionPass = new ShaderPass(GammaCorrectionShader)
+      gammaCorrectionPass.renderToScreen = true
+      this.composer.addPass(gammaCorrectionPass)
     }
   }
-  
+
   /**
    * 处理窗口大小变化
    */
   public handleResize(container: HTMLElement): void {
-    if (!this.camera || !this.renderer) return;
-    
+    if (!this.camera || !this.renderer) return
+
     // 更新相机
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-    this.camera.aspect = width / height;
-    this.camera.updateProjectionMatrix();
-    
+    const width = container.clientWidth
+    const height = container.clientHeight
+    this.camera.aspect = width / height
+    this.camera.updateProjectionMatrix()
+
     // 更新渲染器
-    this.renderer.setSize(width, height);
-    
+    this.renderer.setSize(width, height)
+
     // 更新后处理合成器
     if (this.composer) {
-      this.composer.setSize(width, height);
-      
+      this.composer.setSize(width, height)
+
       // 更新FXAA通道的分辨率
-      const passes = this.composer.passes;
+      const passes = this.composer.passes
       for (const pass of passes) {
         if (pass instanceof THREE.ShaderPass && pass.material.uniforms.resolution) {
-          const pixelRatio = this.renderer.getPixelRatio();
-          pass.material.uniforms.resolution.value.x = 1 / (width * pixelRatio);
-          pass.material.uniforms.resolution.value.y = 1 / (height * pixelRatio);
+          const pixelRatio = this.renderer.getPixelRatio()
+          pass.material.uniforms.resolution.value.x = 1 / (width * pixelRatio)
+          pass.material.uniforms.resolution.value.y = 1 / (height * pixelRatio)
         }
         // 更新Bloom通道的分辨率
         else if (pass instanceof THREE.UnrealBloomPass) {
-          pass.resolution.set(width, height);
+          pass.resolution.set(width, height)
         }
       }
     }
   }
-  
+
   /**
    * 处理性能模式变化
    */
   private handlePerformanceModeChange(isPerformanceMode: boolean): void {
     // 更新后处理质量
     if (this.config.postProcessing) {
-      this.config.postProcessing.quality = isPerformanceMode ? 'low' : 'high';
+      this.config.postProcessing.quality = isPerformanceMode ? 'low' : 'high'
     }
-    
+
     // 更新粒子系统配置
     if (this.particleSystemManager) {
-      const particleSystem = this.particleSystemManager.getParticleSystem('equationParticles');
+      const particleSystem = this.particleSystemManager.getParticleSystem('equationParticles')
       if (particleSystem) {
-        const config = particleSystem.getConfig();
-        config.rate = isPerformanceMode ? config.rate * 0.5 : config.rate * 2;
-        particleSystem.updateConfig(config);
+        const config = particleSystem.getConfig()
+        config.rate = isPerformanceMode ? config.rate * 0.5 : config.rate * 2
+        particleSystem.updateConfig(config)
       }
     }
-    
+
     // 发布性能模式变化事件
     eventSystem.emit(VisualizationEvent.PERFORMANCE_MODE_CHANGED, {
       isPerformanceMode
-    });
+    })
   }
-  
+
   /**
    * 处理粒子密度变化
    */
   private handleParticleDensityChange(density: number): void {
     if (this.particleSystemManager) {
-      const particleSystem = this.particleSystemManager.getParticleSystem('equationParticles');
+      const particleSystem = this.particleSystemManager.getParticleSystem('equationParticles')
       if (particleSystem) {
-        const config = particleSystem.getConfig();
-        config.rate = Math.max(10, config.rate * density);
-        particleSystem.updateConfig(config);
+        const config = particleSystem.getConfig()
+        config.rate = Math.max(10, config.rate * density)
+        particleSystem.updateConfig(config)
       }
     }
   }
-  
+
   /**
    * 处理最大粒子数量变化
    */
   private handleMaxParticlesChange(maxParticles: number): void {
     if (this.particleSystemManager) {
-      const particleSystem = this.particleSystemManager.getParticleSystem('equationParticles');
+      const particleSystem = this.particleSystemManager.getParticleSystem('equationParticles')
       if (particleSystem) {
-        const config = particleSystem.getConfig();
-        config.maxParticles = maxParticles;
-        particleSystem.updateConfig(config);
+        const config = particleSystem.getConfig()
+        config.maxParticles = maxParticles
+        particleSystem.updateConfig(config)
       }
     }
   }
-  
+
   /**
    * 处理渲染缩放变化
    */
   private handleRenderScaleChange(scale: number): void {
     if (this.renderer) {
-      const targetPixelRatio = Math.min(window.devicePixelRatio * scale, 2);
-      this.renderer.setPixelRatio(targetPixelRatio);
-      this.onResize();
+      const targetPixelRatio = Math.min(window.devicePixelRatio * scale, 2)
+      this.renderer.setPixelRatio(targetPixelRatio)
+      this.onResize()
     }
   }
-  
+
   /**
    * 处理阴影质量变化
    */
   private handleShadowQualityChange(quality: number): void {
     if (this.renderer) {
       if (quality === 0) {
-        this.renderer.shadowMap.enabled = false;
+        this.renderer.shadowMap.enabled = false
       } else {
-        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.enabled = true
         // 根据质量调整阴影贴图大小等参数
         // 这里简化处理，实际可以根据质量设置更详细的参数
       }
     }
   }
-  
+
   /**
    * 处理后处理启用状态变化
    */
   private handlePostProcessingEnabledChange(enabled: boolean): void {
     if (this.config.postProcessing) {
-      this.config.postProcessing.enabled = enabled;
-      this.reinitializePostProcessing();
+      this.config.postProcessing.enabled = enabled
+      this.reinitializePostProcessing()
     }
   }
-  
+
   /**
    * 处理纹理质量变化
    */
   private handleTextureQualityChange(quality: number): void {
     // 这里可以添加纹理质量调整逻辑
     // 例如：更新材质的纹理过滤方式、调整纹理分辨率等
-    eventSystem.emit(VisualizationEvent.TEXTURE_QUALITY_UPDATED, { quality });
+    eventSystem.emit(VisualizationEvent.TEXTURE_QUALITY_UPDATED, { quality })
   }
-  
+
   /**
    * 处理窗口大小变化（内部使用）
    */
   private onResize(): void {
-    if (!this.camera || !this.renderer) return;
-    
+    if (!this.camera || !this.renderer) return
+
     // 获取容器大小
-    const container = this.renderer.domElement.parentElement;
-    if (!container) return;
-    
-    this.handleResize(container);
+    const container = this.renderer.domElement.parentElement
+    if (!container) return
+
+    this.handleResize(container)
   }
-  
+
   /**
    * 获取场景
    */
   public getScene(): THREE.Scene | null {
-    return this.scene;
+    return this.scene
   }
-  
+
   /**
    * 获取相机
    */
   public getCamera(): THREE.PerspectiveCamera | null {
-    return this.camera;
+    return this.camera
   }
-  
+
   /**
    * 获取渲染器
    */
   public getRenderer(): THREE.WebGLRenderer | null {
-    return this.renderer;
+    return this.renderer
   }
-  
+
   /**
    * 获取控制器
    */
   public getControls(): OrbitControls | null {
-    return this.controls;
+    return this.controls
   }
-  
+
   /**
    * 获取粒子系统管理器
    */
   public getParticleSystemManager(): GPUParticleSystemManager | null {
-    return this.particleSystemManager;
+    return this.particleSystemManager
   }
-  
+
   /**
    * 获取资源管理器
    */
   public getResourceManager(): ResourceManager | null {
-    return this.resourceManager;
+    return this.resourceManager
   }
-  
+
   /**
    * 获取性能指标
    */
   public getPerformanceMetrics(): {
-    fps: number;
-    frameTime: number;
+    fps: number
+    frameTime: number
   } {
     return {
       fps: this.fps,
       frameTime: this.frameTime
-    };
+    }
   }
-  
+
   /**
    * 清理资源
    */
   public dispose(): void {
     // 停止渲染
-    this.stopRendering();
-    
+    this.stopRendering()
+
     // 清理所有可视化组件
     this.components.forEach(component => {
-      component.dispose();
-    });
-    this.components.clear();
-    
+      component.dispose()
+    })
+    this.components.clear()
+
     // 清理后处理效果
     if (this.composer) {
-      this.composer.dispose();
-      this.composer = null;
+      this.composer.dispose()
+      this.composer = null
     }
-    
+
     // 清理粒子系统
     if (this.particleSystemManager) {
-      this.particleSystemManager.dispose();
-      this.particleSystemManager = null;
+      this.particleSystemManager.dispose()
+      this.particleSystemManager = null
     }
-    
+
     // 清理场可视化系统
     if (this.fieldVisualizerManager) {
-      this.fieldVisualizerManager.clear();
-      this.fieldVisualizerManager = null;
+      this.fieldVisualizerManager.clear()
+      this.fieldVisualizerManager = null
     }
-    
+
     // 清理控制器
     if (this.controls) {
-      this.controls.dispose();
-      this.controls = null;
+      this.controls.dispose()
+      this.controls = null
     }
-    
+
     // 清理渲染器
     if (this.renderer) {
-      this.renderer.dispose();
-      this.renderer = null;
+      this.renderer.dispose()
+      this.renderer = null
     }
-    
+
     // 清理场景
     if (this.scene) {
-      this.scene.clear();
-      this.scene = null;
+      this.scene.clear()
+      this.scene = null
     }
-    
+
     // 清理相机
-    this.camera = null;
-    
+    this.camera = null
+
     // 清理性能管理器
-    unifiedPerformanceManager.dispose();
-    
+    unifiedPerformanceManager.dispose()
+
     // 发布清理完成事件
-    eventSystem.emit(VisualizationEvent.DISPOSED, null);
-    
-    this.isInitialized = false;
-    
-    console.log('🎨 VisualizationManager disposed successfully');
+    eventSystem.emit(VisualizationEvent.DISPOSED, null)
+
+    this.isInitialized = false
+
+    console.log('🎨 VisualizationManager disposed successfully')
   }
 }
 
 // 导出单例实例
-export const visualizationManager = VisualizationManager.getInstance();
+export const visualizationManager = VisualizationManager.getInstance()

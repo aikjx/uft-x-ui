@@ -40,7 +40,7 @@ export class ThreePerformanceOptimizer {
       // 启用WebGL优化
       this.renderer.autoClear = false
       this.renderer.sortObjects = true
-      
+
       // 启用深度测试和剔除
       const context = this.renderer.getContext()
       context.enable(context.DEPTH_TEST)
@@ -64,13 +64,13 @@ export class ThreePerformanceOptimizer {
   private initLODSystem(): void {
     // LOD距离阈值配置
     const lodConfig = {
-      high: 50,    // 高细节距离 (50单位内)
+      high: 50, // 高细节距离 (50单位内)
       medium: 100, // 中等细节距离 (50-100单位)
-      low: 200     // 低细节距离 (100-200单位)
+      low: 200 // 低细节距离 (100-200单位)
     }
 
     // 为场景中的对象添加LOD
-    this.scene?.traverse((object) => {
+    this.scene?.traverse(object => {
       if (object instanceof THREE.Mesh && object.geometry) {
         this.applyLODToMesh(object, lodConfig)
       }
@@ -82,7 +82,7 @@ export class ThreePerformanceOptimizer {
    */
   private applyLODToMesh(mesh: THREE.Mesh, lodConfig: any): void {
     const geometry = mesh.geometry
-    
+
     // 创建不同细节级别的几何体
     const highDetail = geometry.clone()
     const mediumDetail = this.createSimplifiedGeometry(geometry, 0.7)
@@ -90,10 +90,10 @@ export class ThreePerformanceOptimizer {
 
     // 创建LOD对象
     const lod = new THREE.LOD()
-    
-    lod.addLevel(highDetail, 0)           // 高细节 (0-50单位)
-    lod.addLevel(mediumDetail, lodConfig.high)  // 中等细节 (50-100单位)
-    lod.addLevel(lowDetail, lodConfig.medium)   // 低细节 (100-200单位)
+
+    lod.addLevel(highDetail, 0) // 高细节 (0-50单位)
+    lod.addLevel(mediumDetail, lodConfig.high) // 中等细节 (50-100单位)
+    lod.addLevel(lowDetail, lodConfig.medium) // 低细节 (100-200单位)
 
     // 替换原始网格
     mesh.parent?.remove(mesh)
@@ -103,7 +103,10 @@ export class ThreePerformanceOptimizer {
   /**
    * 创建简化几何体
    */
-  private createSimplifiedGeometry(geometry: THREE.BufferGeometry, ratio: number): THREE.BufferGeometry {
+  private createSimplifiedGeometry(
+    geometry: THREE.BufferGeometry,
+    ratio: number
+  ): THREE.BufferGeometry {
     // 这里可以使用更复杂的几何体简化算法
     // 目前返回原始几何体，实际项目应使用MeshSimplifier等库
     return geometry.clone()
@@ -137,9 +140,13 @@ export class ThreePerformanceOptimizer {
   /**
    * 从对象池获取网格
    */
-  getMeshFromPool(type: string, geometry: THREE.BufferGeometry, material: THREE.Material): THREE.Mesh {
+  getMeshFromPool(
+    type: string,
+    geometry: THREE.BufferGeometry,
+    material: THREE.Material
+  ): THREE.Mesh {
     const pool = this.objectPool.meshes.get(type)
-    
+
     if (pool && pool.length > 0) {
       const mesh = pool.pop()!
       mesh.geometry = geometry
@@ -150,10 +157,10 @@ export class ThreePerformanceOptimizer {
 
     // 池中没有可用对象，创建新对象
     const mesh = new THREE.Mesh(geometry, material)
-    
+
     // 将对象添加到池中以便后续重用
     this.addToPool('meshes', type, mesh)
-    
+
     return mesh
   }
 
@@ -192,7 +199,7 @@ export class ThreePerformanceOptimizer {
 
     // 合并几何体
     const geometries: THREE.BufferGeometry[] = []
-    
+
     meshes.forEach(mesh => {
       if (mesh.geometry) {
         geometries.push(mesh.geometry)
@@ -200,7 +207,7 @@ export class ThreePerformanceOptimizer {
     })
 
     const mergedGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries(geometries)
-    
+
     return new THREE.Mesh(mergedGeometry, firstMaterial)
   }
 
@@ -214,7 +221,7 @@ export class ThreePerformanceOptimizer {
     texture.magFilter = THREE.LinearFilter
     texture.wrapS = THREE.ClampToEdgeWrapping
     texture.wrapT = THREE.ClampToEdgeWrapping
-    
+
     // 压缩纹理质量
     if (this.renderer) {
       this.renderer.compressedTextureExtension = true
@@ -230,7 +237,7 @@ export class ThreePerformanceOptimizer {
     if (!this.scene) return
 
     const currentFPS = this.getCurrentFPS()
-    
+
     // 根据FPS调整细节级别
     if (currentFPS < targetFPS * 0.7) {
       // FPS过低，降低细节
@@ -245,7 +252,7 @@ export class ThreePerformanceOptimizer {
    * 降低细节级别
    */
   private reduceDetailLevel(cameraPosition: THREE.Vector3): void {
-    this.scene?.traverse((object) => {
+    this.scene?.traverse(object => {
       if (object instanceof THREE.LOD) {
         // 强制使用更低的LOD级别
         object.levels.forEach((level, index) => {
@@ -261,7 +268,7 @@ export class ThreePerformanceOptimizer {
    * 提高细节级别
    */
   private increaseDetailLevel(cameraPosition: THREE.Vector3): void {
-    this.scene?.traverse((object) => {
+    this.scene?.traverse(object => {
       if (object instanceof THREE.LOD) {
         // 使用更高的LOD级别
         object.levels.forEach((level, index) => {
@@ -305,14 +312,14 @@ export class ThreePerformanceOptimizer {
     const geometrySet = new Set()
     const materialSet = new Set()
 
-    this.scene.traverse((object) => {
+    this.scene.traverse(object => {
       if (object instanceof THREE.Mesh) {
         drawCalls++
-        
+
         if (object.geometry) {
           geometries++
           geometrySet.add(object.geometry.uuid)
-          
+
           // 估算三角形数量
           if (object.geometry.index) {
             triangles += object.geometry.index.count / 3
@@ -324,7 +331,7 @@ export class ThreePerformanceOptimizer {
         if (object.material) {
           materials++
           materialSet.add(object.material.uuid)
-          
+
           // 统计纹理
           const material = object.material
           if (material.map) textureSet.add(material.map.uuid)
@@ -355,7 +362,7 @@ export class ThreePerformanceOptimizer {
     this.objectPool.textures.clear()
 
     // 释放资源
-    this.scene?.traverse((object) => {
+    this.scene?.traverse(object => {
       if (object instanceof THREE.Mesh) {
         if (object.geometry) {
           object.geometry.dispose()
@@ -380,16 +387,24 @@ export const ThreeOptimizationUtils = {
   /**
    * 创建实例化网格以提高性能
    */
-  createInstancedMesh(geometry: THREE.BufferGeometry, material: THREE.Material, count: number): THREE.InstancedMesh {
+  createInstancedMesh(
+    geometry: THREE.BufferGeometry,
+    material: THREE.Material,
+    count: number
+  ): THREE.InstancedMesh {
     const instancedMesh = new THREE.InstancedMesh(geometry, material, count)
-    
+
     // 设置实例化矩阵
     const matrix = new THREE.Matrix4()
     for (let i = 0; i < count; i++) {
-      matrix.setPosition(Math.random() * 100 - 50, Math.random() * 100 - 50, Math.random() * 100 - 50)
+      matrix.setPosition(
+        Math.random() * 100 - 50,
+        Math.random() * 100 - 50,
+        Math.random() * 100 - 50
+      )
       instancedMesh.setMatrixAt(i, matrix)
     }
-    
+
     instancedMesh.instanceMatrix.needsUpdate = true
     return instancedMesh
   },
@@ -403,10 +418,10 @@ export const ThreeOptimizationUtils = {
     size?: number
   }): THREE.BufferGeometry[] {
     const geometries: THREE.BufferGeometry[] = []
-    
+
     for (let i = 0; i < config.count; i++) {
       let geometry: THREE.BufferGeometry
-      
+
       switch (config.type) {
         case 'box':
           geometry = new THREE.BoxGeometry(config.size || 1, config.size || 1, config.size || 1)
@@ -415,15 +430,19 @@ export const ThreeOptimizationUtils = {
           geometry = new THREE.SphereGeometry(config.size || 1, 32, 32)
           break
         case 'cylinder':
-          geometry = new THREE.CylinderGeometry(config.size || 1, config.size || 1, config.size || 2)
+          geometry = new THREE.CylinderGeometry(
+            config.size || 1,
+            config.size || 1,
+            config.size || 2
+          )
           break
         default:
           geometry = new THREE.BoxGeometry(1, 1, 1)
       }
-      
+
       geometries.push(geometry)
     }
-    
+
     return geometries
   },
 
@@ -436,7 +455,7 @@ export const ThreeOptimizationUtils = {
 
     // 这里可以添加更精确的内存计算逻辑
     // 目前返回估算值
-    
+
     return {
       geometries: geometriesMemory,
       textures: texturesMemory,

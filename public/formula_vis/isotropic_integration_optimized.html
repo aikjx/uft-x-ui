@@ -1,522 +1,557 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>各向同性积分与几何因子2可视化</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <style>
-        :root {
-            --primary: #2563eb;
-            --secondary: #f97316;
-            --accent: #10b981;
-            --light: #f3f4f6;
-            --dark: #1e293b;
-            --danger: #ef4444;
+      :root {
+        --primary: #2563eb;
+        --secondary: #f97316;
+        --accent: #10b981;
+        --light: #f3f4f6;
+        --dark: #1e293b;
+        --danger: #ef4444;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--dark);
+      }
+
+      /* 加载屏幕样式 */
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        transition: opacity 0.5s ease-out;
+      }
+
+      .loading-icon {
+        font-size: 4rem;
+        color: var(--primary);
+        animation: spin 1.5s linear infinite;
+        margin-bottom: 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
         }
-        
-        body { 
-            margin: 0; 
-            overflow: hidden; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--dark);
+        100% {
+          transform: rotate(360deg);
         }
-        
-        /* 加载屏幕样式 */
-        .loading-screen {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: white; display: flex;
-            flex-direction: column; justify-content: center;
-            align-items: center; z-index: 1000;
-            transition: opacity 0.5s ease-out;
+      }
+
+      .progress-bar {
+        width: 300px;
+        height: 8px;
+        background: var(--light);
+        border-radius: 4px;
+        margin: 20px 0;
+        overflow: hidden;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .progress {
+        height: 100%;
+        background: var(--primary);
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      /* 控制面板样式 */
+      .control-panel {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 15px;
+        font-size: 14px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        width: 280px;
+        transition:
+          transform 0.3s ease,
+          opacity 0.3s ease;
+      }
+
+      .control-panel h4 {
+        margin-top: 0;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .control-section {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--light);
+      }
+
+      .control-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      button {
+        margin: 5px 0;
+        padding: 8px 12px;
+        cursor: pointer;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        transition: all 0.2s;
+        width: 100%;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      button::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+      }
+
+      button:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      button:hover::after {
+        left: 100%;
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      button:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+        opacity: 0.7;
+        transform: none;
+        box-shadow: none;
+      }
+
+      button.highlight {
+        background: var(--secondary);
+      }
+
+      button.highlight:hover {
+        background: #ea580c;
+      }
+
+      .info-panel {
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        max-height: 30%;
+        overflow-y: auto;
+      }
+
+      .info-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .info-header h4 {
+        margin: 0;
+        color: var(--primary);
+      }
+
+      .formula {
+        font-family: 'Times New Roman', serif;
+        font-size: 1.1em;
+        padding: 5px 0;
+        color: #3b82f6;
+      }
+
+      #result {
+        padding: 10px;
+        background: var(--light);
+        border-radius: 4px;
+        margin: 10px 0;
+        line-height: 1.5;
+      }
+
+      .error-message {
+        color: var(--danger);
+        padding: 10px;
+        border: 1px solid #fecaca;
+        border-radius: 4px;
+        background: #fee2e2;
+        margin: 10px 0;
+        display: none;
+      }
+
+      .step-indicator {
+        display: flex;
+        margin: 15px 0;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 5px;
+      }
+
+      .step {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--light);
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .step::after {
+        content: '';
+        position: absolute;
+        top: 15px;
+        right: -15px;
+        width: 15px;
+        height: 2px;
+        background: var(--light);
+        z-index: -1;
+      }
+
+      .step:last-child::after {
+        display: none;
+      }
+
+      .step.active {
+        background: var(--primary);
+        color: white;
+        transform: scale(1.1);
+      }
+
+      .step.completed {
+        background: var(--accent);
+        color: white;
+      }
+
+      .step.completed::after {
+        background: var(--accent);
+      }
+
+      .chart-container {
+        margin-top: 15px;
+        height: 180px;
+      }
+
+      .toggle-btn {
+        background: none;
+        color: var(--primary);
+        border: none;
+        padding: 5px;
+        cursor: pointer;
+        font-size: 1.2em;
+      }
+
+      /* 交互提示 */
+      .interaction-hint {
+        position: fixed;
+        bottom: 15px;
+        right: 15px;
+        background: rgba(30, 41, 59, 0.8);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        z-index: 90;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+
+      .interaction-hint.visible {
+        opacity: 1;
+      }
+
+      /* 按钮提示 */
+      .button-tooltip {
+        position: absolute;
+        left: -220px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--dark);
+        color: white;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        width: 200px;
+        z-index: 101;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+
+      button:hover .button-tooltip {
+        opacity: 1;
+      }
+
+      /* 教程提示 */
+      .tutorial-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .tutorial-overlay.visible {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .tutorial-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .tutorial-card h3 {
+        margin-top: 0;
+        color: var(--primary);
+      }
+
+      .tutorial-steps {
+        margin: 15px 0;
+      }
+
+      .tutorial-step {
+        margin-bottom: 10px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .tutorial-step-number {
+        background: var(--primary);
+        color: white;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 12px;
+      }
+
+      .tutorial-controls {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      /* 响应式调整 */
+      @media (max-width: 768px) {
+        .control-panel {
+          width: 220px;
+          padding: 10px;
         }
-        
-        .loading-icon {
-            font-size: 4rem;
-            color: var(--primary);
-            animation: spin 1.5s linear infinite;
-            margin-bottom: 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .progress-bar {
-            width: 300px; height: 8px; background: var(--light);
-            border-radius: 4px; margin: 20px 0; overflow: hidden;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        .progress {
-            height: 100%; background: var(--primary); width: 0%;
-            transition: width 0.3s ease;
-        }
-        
-        /* 控制面板样式 */
-        .control-panel { 
-            position: fixed; top: 10px; right: 10px; 
-            background: rgba(255,255,255,0.95); padding: 15px; 
-            font-size: 14px; border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            z-index: 100;
-            width: 280px;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-        }
-        
-        .control-panel h4 {
-            margin-top: 0;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .control-section {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--light);
-        }
-        
-        .control-section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        
-        button { 
-            margin: 5px 0; padding: 8px 12px; cursor: pointer;
-            background: var(--primary); color: white; border: none;
-            border-radius: 4px; transition: all 0.2s;
-            width: 100%;
-            text-align: left;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        button::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s ease;
-        }
-        
-        button:hover { 
-            background: #1d4ed8;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        button:hover::after {
-            left: 100%;
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        button:disabled { 
-            background: #94a3b8; cursor: not-allowed;
-            opacity: 0.7;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        button.highlight {
-            background: var(--secondary);
-        }
-        
-        button.highlight:hover {
-            background: #ea580c;
-        }
-        
+
         .info-panel {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            right: 10px;
-            background: rgba(255,255,255,0.95);
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 -2px 12px rgba(0,0,0,0.1);
-            z-index: 100;
-            max-height: 30%;
-            overflow-y: auto;
+          max-height: 25%;
+          font-size: 0.9em;
         }
-        
-        .info-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .info-header h4 {
-            margin: 0;
-            color: var(--primary);
-        }
-        
-        .formula {
-            font-family: 'Times New Roman', serif;
-            font-size: 1.1em;
-            padding: 5px 0;
-            color: #3b82f6;
-        }
-        
-        #result { 
-            padding: 10px; 
-            background: var(--light); border-radius: 4px;
-            margin: 10px 0;
-            line-height: 1.5;
-        }
-        
-        .error-message {
-            color: var(--danger);
-            padding: 10px;
-            border: 1px solid #fecaca;
-            border-radius: 4px;
-            background: #fee2e2;
-            margin: 10px 0;
-            display: none;
-        }
-        
-        .step-indicator {
-            display: flex;
-            margin: 15px 0;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-        }
-        
-        .step {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: var(--light);
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            flex-shrink: 0;
-            transition: all 0.3s;
-            position: relative;
-        }
-        
-        .step::after {
-            content: '';
-            position: absolute;
-            top: 15px;
-            right: -15px;
-            width: 15px;
-            height: 2px;
-            background: var(--light);
-            z-index: -1;
-        }
-        
-        .step:last-child::after {
-            display: none;
-        }
-        
-        .step.active {
-            background: var(--primary);
-            color: white;
-            transform: scale(1.1);
-        }
-        
-        .step.completed {
-            background: var(--accent);
-            color: white;
-        }
-        
-        .step.completed::after {
-            background: var(--accent);
-        }
-        
+
         .chart-container {
-            margin-top: 15px;
-            height: 180px;
+          height: 150px;
         }
-        
-        .toggle-btn {
-            background: none;
-            color: var(--primary);
-            border: none;
-            padding: 5px;
-            cursor: pointer;
-            font-size: 1.2em;
-        }
-        
-        /* 交互提示 */
-        .interaction-hint {
-            position: fixed;
-            bottom: 15px;
-            right: 15px;
-            background: rgba(30, 41, 59, 0.8);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            z-index: 90;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-        
-        .interaction-hint.visible {
-            opacity: 1;
-        }
-        
-        /* 按钮提示 */
+
         .button-tooltip {
-            position: absolute;
-            left: -220px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: var(--dark);
-            color: white;
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            width: 200px;
-            z-index: 101;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+          display: none;
         }
-        
-        button:hover .button-tooltip {
-            opacity: 1;
-        }
-        
-        /* 教程提示 */
-        .tutorial-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        
-        .tutorial-overlay.visible {
-            opacity: 1;
-            pointer-events: all;
-        }
-        
+
         .tutorial-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+          padding: 15px;
         }
-        
-        .tutorial-card h3 {
-            margin-top: 0;
-            color: var(--primary);
-        }
-        
-        .tutorial-steps {
-            margin: 15px 0;
-        }
-        
-        .tutorial-step {
-            margin-bottom: 10px;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-        }
-        
-        .tutorial-step-number {
-            background: var(--primary);
-            color: white;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-size: 12px;
-        }
-        
-        .tutorial-controls {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        /* 响应式调整 */
-        @media (max-width: 768px) {
-            .control-panel {
-                width: 220px;
-                padding: 10px;
-            }
-            
-            .info-panel {
-                max-height: 25%;
-                font-size: 0.9em;
-            }
-            
-            .chart-container {
-                height: 150px;
-            }
-            
-            .button-tooltip {
-                display: none;
-            }
-            
-            .tutorial-card {
-                padding: 15px;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- 加载屏幕 -->
     <div class="loading-screen">
-        <div class="loading-icon">
-            <i class="fas fa-calculator"></i>
-        </div>
-        <h3>正在准备积分可视化演示...</h3>
-        <div class="progress-bar">
-            <div class="progress" id="loadProgress"></div>
-        </div>
-        <p id="loadStatus">初始化资源加载...</p>
+      <div class="loading-icon">
+        <i class="fas fa-calculator"></i>
+      </div>
+      <h3>正在准备积分可视化演示...</h3>
+      <div class="progress-bar">
+        <div class="progress" id="loadProgress"></div>
+      </div>
+      <p id="loadStatus">初始化资源加载...</p>
     </div>
 
     <!-- 3D 渲染容器 -->
     <div id="scene-container"></div>
-    
+
     <!-- 交互控制面板 -->
-    <div class="control-panel" style="display: none;">
-        <h4><i class="fas fa-sliders-h"></i> 积分控制</h4>
-        
-        <div class="control-section">
-            <p style="margin: 5px 0; color: #64748b; font-size: 0.9em;">基础几何元素</p>
-            <button id="showSphere" disabled>
-                <i class="fas fa-globe"></i> 显示单位球面
-                <span class="button-tooltip">创建代表各向同性空间的单位球面</span>
-            </button>
-            <button id="showThetaPhi" disabled>
-                <i class="fas fa-angle-double-right"></i> 显示角度标注 (θ, φ)
-                <span class="button-tooltip">展示球坐标系中的天顶角θ和方位角φ</span>
-            </button>
-        </div>
-        
-        <div class="control-section">
-            <p style="margin: 5px 0; color: #64748b; font-size: 0.9em;">积分计算</p>
-            <button id="integral0ToPi" disabled>
-                <i class="fas fa-calculator"></i> θ∈[0,π] 积分计算
-                <span class="button-tooltip">计算全空间的θ积分，结果为2</span>
-            </button>
-            <button id="integral0ToPi2" disabled>
-                <i class="fas fa-calculator"></i> θ∈[0,π/2] 积分计算
-                <span class="button-tooltip">计算半球空间的θ积分，结果为1</span>
-            </button>
-        </div>
-        
-        <div class="control-section">
-            <p style="margin: 5px 0; color: #64748b; font-size: 0.9em;">推导演示</p>
-            <button id="showFactor2" disabled class="highlight">
-                <i class="fas fa-lightbulb"></i> 几何因子2生成演示
-                <span class="button-tooltip">分步展示几何因子2的完整推导过程</span>
-            </button>
-            <button id="resetScene" disabled>
-                <i class="fas fa-refresh"></i> 重置场景
-                <span class="button-tooltip">清除所有元素，回到初始状态</span>
-            </button>
-        </div>
-        
-        <div class="step-indicator">
-            <div class="step" data-step="1">1</div>
-            <div class="step" data-step="2">2</div>
-            <div class="step" data-step="3">3</div>
-            <div class="step" data-step="4">4</div>
-        </div>
+    <div class="control-panel" style="display: none">
+      <h4><i class="fas fa-sliders-h"></i> 积分控制</h4>
+
+      <div class="control-section">
+        <p style="margin: 5px 0; color: #64748b; font-size: 0.9em">基础几何元素</p>
+        <button id="showSphere" disabled>
+          <i class="fas fa-globe"></i> 显示单位球面
+          <span class="button-tooltip">创建代表各向同性空间的单位球面</span>
+        </button>
+        <button id="showThetaPhi" disabled>
+          <i class="fas fa-angle-double-right"></i> 显示角度标注 (θ, φ)
+          <span class="button-tooltip">展示球坐标系中的天顶角θ和方位角φ</span>
+        </button>
+      </div>
+
+      <div class="control-section">
+        <p style="margin: 5px 0; color: #64748b; font-size: 0.9em">积分计算</p>
+        <button id="integral0ToPi" disabled>
+          <i class="fas fa-calculator"></i> θ∈[0,π] 积分计算
+          <span class="button-tooltip">计算全空间的θ积分，结果为2</span>
+        </button>
+        <button id="integral0ToPi2" disabled>
+          <i class="fas fa-calculator"></i> θ∈[0,π/2] 积分计算
+          <span class="button-tooltip">计算半球空间的θ积分，结果为1</span>
+        </button>
+      </div>
+
+      <div class="control-section">
+        <p style="margin: 5px 0; color: #64748b; font-size: 0.9em">推导演示</p>
+        <button id="showFactor2" disabled class="highlight">
+          <i class="fas fa-lightbulb"></i> 几何因子2生成演示
+          <span class="button-tooltip">分步展示几何因子2的完整推导过程</span>
+        </button>
+        <button id="resetScene" disabled>
+          <i class="fas fa-refresh"></i> 重置场景
+          <span class="button-tooltip">清除所有元素，回到初始状态</span>
+        </button>
+      </div>
+
+      <div class="step-indicator">
+        <div class="step" data-step="1">1</div>
+        <div class="step" data-step="2">2</div>
+        <div class="step" data-step="3">3</div>
+        <div class="step" data-step="4">4</div>
+      </div>
     </div>
 
     <!-- 信息面板 -->
     <div class="info-panel">
-        <div class="info-header">
-            <h4><i class="fas fa-info-circle"></i> 积分信息与推导</h4>
-            <button class="toggle-btn" id="toggleInfo">
-                <i class="fas fa-chevron-down"></i>
-            </button>
+      <div class="info-header">
+        <h4><i class="fas fa-info-circle"></i> 积分信息与推导</h4>
+        <button class="toggle-btn" id="toggleInfo">
+          <i class="fas fa-chevron-down"></i>
+        </button>
+      </div>
+
+      <div id="infoContent">
+        <p id="result">
+          欢迎使用各向同性积分可视化工具。请按照步骤按钮的顺序操作，了解几何因子2的推导过程。
+        </p>
+
+        <div class="formula">球坐标系立体角元：dΩ = sinθ dθ dφ</div>
+        <div class="formula">全空间积分：I = ∫(φ=0→2π) dφ ∫(θ=0→π) f(θ) sinθ dθ</div>
+
+        <div class="chart-container">
+          <canvas id="integralChart"></canvas>
         </div>
-        
-        <div id="infoContent">
-            <p id="result">欢迎使用各向同性积分可视化工具。请按照步骤按钮的顺序操作，了解几何因子2的推导过程。</p>
-            
-            <div class="formula">球坐标系立体角元：dΩ = sinθ dθ dφ</div>
-            <div class="formula">全空间积分：I = ∫(φ=0→2π) dφ ∫(θ=0→π) f(θ) sinθ dθ</div>
-            
-            <div class="chart-container">
-                <canvas id="integralChart"></canvas>
-            </div>
-        </div>
+      </div>
     </div>
 
     <!-- 交互提示 -->
     <div class="interaction-hint" id="interactionHint">
-        <i class="fas fa-mouse-pointer"></i>
-        <span id="hintText">拖动鼠标旋转场景</span>
+      <i class="fas fa-mouse-pointer"></i>
+      <span id="hintText">拖动鼠标旋转场景</span>
     </div>
 
     <!-- 教程提示 -->
     <div class="tutorial-overlay" id="tutorialOverlay">
-        <div class="tutorial-card">
-            <h3><i class="fas fa-graduation-cap"></i> 几何因子2可视化教程</h3>
-            <p>本工具将帮助您理解各向同性空间中几何因子2的数学推导过程。请按照以下步骤操作：</p>
-            
-            <div class="tutorial-steps">
-                <div class="tutorial-step">
-                    <div class="tutorial-step-number">1</div>
-                    <div>点击"显示单位球面"，创建代表各向同性空间的三维球体</div>
-                </div>
-                <div class="tutorial-step">
-                    <div class="tutorial-step-number">2</div>
-                    <div>点击"显示角度标注"，查看球坐标系中的θ（天顶角）和φ（方位角）</div>
-                </div>
-                <div class="tutorial-step">
-                    <div class="tutorial-step-number">3</div>
-                    <div>点击"θ∈[0,π]积分计算"，观察全空间积分过程与结果</div>
-                </div>
-                <div class="tutorial-step">
-                    <div class="tutorial-step-number">4</div>
-                    <div>点击"几何因子2生成演示"，查看完整推导过程</div>
-                </div>
-            </div>
-            
-            <p><strong>交互提示：</strong> 拖动鼠标旋转场景，滚轮缩放，右键拖动平移</p>
-            
-            <div class="tutorial-controls">
-                <button id="showTutorialLater">稍后显示</button>
-                <button id="startTutorial" class="highlight">开始探索</button>
-            </div>
+      <div class="tutorial-card">
+        <h3><i class="fas fa-graduation-cap"></i> 几何因子2可视化教程</h3>
+        <p>本工具将帮助您理解各向同性空间中几何因子2的数学推导过程。请按照以下步骤操作：</p>
+
+        <div class="tutorial-steps">
+          <div class="tutorial-step">
+            <div class="tutorial-step-number">1</div>
+            <div>点击"显示单位球面"，创建代表各向同性空间的三维球体</div>
+          </div>
+          <div class="tutorial-step">
+            <div class="tutorial-step-number">2</div>
+            <div>点击"显示角度标注"，查看球坐标系中的θ（天顶角）和φ（方位角）</div>
+          </div>
+          <div class="tutorial-step">
+            <div class="tutorial-step-number">3</div>
+            <div>点击"θ∈[0,π]积分计算"，观察全空间积分过程与结果</div>
+          </div>
+          <div class="tutorial-step">
+            <div class="tutorial-step-number">4</div>
+            <div>点击"几何因子2生成演示"，查看完整推导过程</div>
+          </div>
         </div>
+
+        <p><strong>交互提示：</strong> 拖动鼠标旋转场景，滚轮缩放，右键拖动平移</p>
+
+        <div class="tutorial-controls">
+          <button id="showTutorialLater">稍后显示</button>
+          <button id="startTutorial" class="highlight">开始探索</button>
+        </div>
+      </div>
     </div>
 
     <!-- 核心库 -->
@@ -525,769 +560,837 @@
 
     <!-- 主脚本 -->
     <script>
-        // 全局状态管理
-        const appState = {
-            step: 0,
-            resourcesLoaded: false,
-            sceneInitialized: false,
-            chart: null,
-            thetaValues: [],
-            isDragging: false,
-            isPanning: false,
-            lastMousePos: { x: 0, y: 0 },
-            cameraAngle: { x: 45, y: 45 }, // 相机角度（绕x轴、y轴）
-            cameraDistance: 8, // 相机到原点距离
-            interactionHints: [
-                "拖动鼠标旋转场景",
-                "滚轮缩放场景",
-                "右键拖动平移场景"
-            ],
-            currentHintIndex: 0,
-            hintTimeout: null
-        };
+      // 全局状态管理
+      const appState = {
+        step: 0,
+        resourcesLoaded: false,
+        sceneInitialized: false,
+        chart: null,
+        thetaValues: [],
+        isDragging: false,
+        isPanning: false,
+        lastMousePos: { x: 0, y: 0 },
+        cameraAngle: { x: 45, y: 45 }, // 相机角度（绕x轴、y轴）
+        cameraDistance: 8, // 相机到原点距离
+        interactionHints: ['拖动鼠标旋转场景', '滚轮缩放场景', '右键拖动平移场景'],
+        currentHintIndex: 0,
+        hintTimeout: null
+      }
 
-        // 资源加载进度管理
-        const resources = [
-            { id: 'three', loaded: false },
-            { id: 'mathjs', loaded: false }
-        ];
-        
-        let loadedCount = 0;
-        const progressBar = document.getElementById('loadProgress');
-        const loadStatus = document.getElementById('loadStatus');
-        const interactionHint = document.getElementById('interactionHint');
-        const hintText = document.getElementById('hintText');
-        
-        // 检查核心资源是否加载
-        function checkResources() {
-            loadedCount = 0;
-            resources[0].loaded = typeof THREE !== 'undefined';
-            resources[1].loaded = typeof math !== 'undefined';
-            
-            resources.forEach(res => res.loaded && loadedCount++);
-            const progress = (loadedCount / resources.length) * 100;
-            progressBar.style.width = `${progress}%`;
-            
-            return loadedCount === resources.length;
-        }
-        
-        // 显示错误/信息
-        function showError(message) {
-            const resultElement = document.getElementById('result');
-            resultElement.innerHTML = `<strong style="color: var(--danger);">错误:</strong> ${message.replace('\n', '<br>')}`;
-            resultElement.style.background = '#fee2e2';
-            resultElement.style.border = '1px solid #fecaca';
-        }
-        
-        function showInfo(message, isFormula = false) {
-            const resultElement = document.getElementById('result');
-            resultElement.style.background = 'var(--light)';
-            resultElement.style.border = 'none';
-            resultElement.innerHTML = isFormula ? `<div class="formula">${message}</div>` : message;
-            
-            // 添加信息出现动画
-            resultElement.style.transition = 'all 0.3s ease';
-            resultElement.style.opacity = '0.5';
-            setTimeout(() => {
-                resultElement.style.opacity = '1';
-            }, 50);
-        }
+      // 资源加载进度管理
+      const resources = [
+        { id: 'three', loaded: false },
+        { id: 'mathjs', loaded: false }
+      ]
 
-        // 更新步骤指示器
-        function updateStep(stepNumber) {
-            appState.step = stepNumber;
-            document.querySelectorAll('.step').forEach(step => {
-                const stepNum = parseInt(step.dataset.step);
-                step.classList.remove('active', 'completed');
-                if (stepNum < stepNumber) step.classList.add('completed');
-                else if (stepNum === stepNumber) step.classList.add('active');
-            });
-            
-            // 高亮显示下一步应该点击的按钮
-            highlightNextButton(stepNumber);
-        }
-        
+      let loadedCount = 0
+      const progressBar = document.getElementById('loadProgress')
+      const loadStatus = document.getElementById('loadStatus')
+      const interactionHint = document.getElementById('interactionHint')
+      const hintText = document.getElementById('hintText')
+
+      // 检查核心资源是否加载
+      function checkResources() {
+        loadedCount = 0
+        resources[0].loaded = typeof THREE !== 'undefined'
+        resources[1].loaded = typeof math !== 'undefined'
+
+        resources.forEach(res => res.loaded && loadedCount++)
+        const progress = (loadedCount / resources.length) * 100
+        progressBar.style.width = `${progress}%`
+
+        return loadedCount === resources.length
+      }
+
+      // 显示错误/信息
+      function showError(message) {
+        const resultElement = document.getElementById('result')
+        resultElement.innerHTML = `<strong style="color: var(--danger);">错误:</strong> ${message.replace('\n', '<br>')}`
+        resultElement.style.background = '#fee2e2'
+        resultElement.style.border = '1px solid #fecaca'
+      }
+
+      function showInfo(message, isFormula = false) {
+        const resultElement = document.getElementById('result')
+        resultElement.style.background = 'var(--light)'
+        resultElement.style.border = 'none'
+        resultElement.innerHTML = isFormula ? `<div class="formula">${message}</div>` : message
+
+        // 添加信息出现动画
+        resultElement.style.transition = 'all 0.3s ease'
+        resultElement.style.opacity = '0.5'
+        setTimeout(() => {
+          resultElement.style.opacity = '1'
+        }, 50)
+      }
+
+      // 更新步骤指示器
+      function updateStep(stepNumber) {
+        appState.step = stepNumber
+        document.querySelectorAll('.step').forEach(step => {
+          const stepNum = parseInt(step.dataset.step)
+          step.classList.remove('active', 'completed')
+          if (stepNum < stepNumber) step.classList.add('completed')
+          else if (stepNum === stepNumber) step.classList.add('active')
+        })
+
         // 高亮显示下一步应该点击的按钮
-        function highlightNextButton(stepNumber) {
-            // 移除所有高亮
-            document.querySelectorAll('button').forEach(btn => {
-                btn.classList.remove('next-step');
-            });
-            
-            // 根据当前步骤高亮下一步按钮
-            const buttons = {
-                1: 'showSphere',
-                2: 'showThetaPhi',
-                3: 'integral0ToPi',
-                4: 'showFactor2'
-            };
-            
-            const nextButtonId = buttons[stepNumber];
-            if (nextButtonId) {
-                const nextButton = document.getElementById(nextButtonId);
-                if (nextButton && !nextButton.disabled) {
-                    // 添加呼吸动画效果
-                    nextButton.classList.add('highlight');
-                    nextButton.style.animation = 'pulse 2s infinite';
-                    
-                    // 3秒后移除动画
-                    setTimeout(() => {
-                        nextButton.style.animation = '';
-                    }, 3000);
-                }
-            }
+        highlightNextButton(stepNumber)
+      }
+
+      // 高亮显示下一步应该点击的按钮
+      function highlightNextButton(stepNumber) {
+        // 移除所有高亮
+        document.querySelectorAll('button').forEach(btn => {
+          btn.classList.remove('next-step')
+        })
+
+        // 根据当前步骤高亮下一步按钮
+        const buttons = {
+          1: 'showSphere',
+          2: 'showThetaPhi',
+          3: 'integral0ToPi',
+          4: 'showFactor2'
         }
 
-        // 初始化积分图表
-        function initChart() {
-            const ctx = document.getElementById('integralChart').getContext('2d');
-            appState.thetaValues = [];
-            const sinThetaValues = [];
-            const integralValues = [];
-            
-            let integral = 0;
-            const step = Math.PI / 50;
-            
-            for (let theta = 0; theta <= Math.PI; theta += step) {
-                appState.thetaValues.push((theta * 180 / Math.PI).toFixed(0));
-                const sinTheta = Math.sin(theta);
-                sinThetaValues.push(sinTheta);
-                integral += sinTheta * step;
-                integralValues.push(integral);
-            }
-            
-            appState.chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: appState.thetaValues,
-                    datasets: [
-                        {
-                            label: 'sinθ',
-                            data: sinThetaValues,
-                            borderColor: 'rgba(59, 130, 246, 0.7)',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            borderWidth: 2,
-                            fill: false,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: '∫sinθ dθ',
-                            data: integralValues,
-                            borderColor: 'rgba(249, 115, 22, 0.7)',
-                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            fill: false,
-                            yAxisID: 'y1'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    scales: {
-                        x: { title: { display: true, text: 'θ角度 (度)' } },
-                        y: { type: 'linear', position: 'left', title: { display: true, text: 'sinθ 值' }, min: 0, max: 1.1 },
-                        y1: { type: 'linear', position: 'right', title: { display: true, text: '积分值' }, min: 0, max: 2.2, grid: { drawOnChartArea: false } }
-                    },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart'
-                    }
-                }
-            });
-        }
+        const nextButtonId = buttons[stepNumber]
+        if (nextButtonId) {
+          const nextButton = document.getElementById(nextButtonId)
+          if (nextButton && !nextButton.disabled) {
+            // 添加呼吸动画效果
+            nextButton.classList.add('highlight')
+            nextButton.style.animation = 'pulse 2s infinite'
 
-        // 检测WebGL支持
-        function checkWebGLSupport() {
-            try {
-                const canvas = document.createElement('canvas');
-                return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
-            } catch(e) {
-                return false;
-            }
-        }
-
-        // 显示交互提示
-        function showInteractionHint() {
-            // 清除之前的超时
-            if (appState.hintTimeout) {
-                clearTimeout(appState.hintTimeout);
-            }
-            
-            // 显示当前提示
-            hintText.textContent = appState.interactionHints[appState.currentHintIndex];
-            interactionHint.classList.add('visible');
-            
-            // 3秒后隐藏
-            appState.hintTimeout = setTimeout(() => {
-                interactionHint.classList.remove('visible');
-                
-                // 更新提示索引，循环显示
-                appState.currentHintIndex = (appState.currentHintIndex + 1) % appState.interactionHints.length;
-                
-                // 8秒后显示下一个提示
-                appState.hintTimeout = setTimeout(showInteractionHint, 8000);
-            }, 3000);
-        }
-        
-        // 停止交互提示
-        function stopInteractionHints() {
-            if (appState.hintTimeout) {
-                clearTimeout(appState.hintTimeout);
-            }
-            interactionHint.classList.remove('visible');
-        }
-
-        // 自定义3D交互控制器
-        function initCustomControls(camera, domElement) {
-            const config = {
-                rotateSpeed: 0.5,
-                zoomSpeed: 0.1,
-                panSpeed: 0.02,
-                damping: 0.05,
-                minDistance: 3,
-                maxDistance: 20
-            };
-
-            let rotateDamping = { x: 0, y: 0 };
-            let userInteracted = false; // 标记用户是否已交互
-
-            // 更新相机位置
-            function updateCameraPosition() {
-                const radX = appState.cameraAngle.x * Math.PI / 180;
-                const radY = appState.cameraAngle.y * Math.PI / 180;
-                
-                camera.position.x = appState.cameraDistance * Math.sin(radY) * Math.cos(radX);
-                camera.position.y = appState.cameraDistance * Math.sin(radX);
-                camera.position.z = appState.cameraDistance * Math.cos(radY) * Math.cos(radX);
-                camera.lookAt(0, 0, 0);
-            }
-
-            // 鼠标按下事件
-            domElement.addEventListener('mousedown', (e) => {
-                appState.lastMousePos = { x: e.clientX, y: e.clientY };
-                if (e.button === 0) {
-                    appState.isDragging = true;
-                    domElement.style.cursor = 'grabbing';
-                    // 显示旋转提示（首次交互）
-                    if (!userInteracted) {
-                        hintText.textContent = "拖动旋转视角";
-                        interactionHint.classList.add('visible');
-                        setTimeout(() => interactionHint.classList.remove('visible'), 2000);
-                    }
-                }
-                if (e.button === 2) {
-                    appState.isPanning = true;
-                    domElement.style.cursor = 'move';
-                    // 显示平移提示（首次交互）
-                    if (!userInteracted) {
-                        hintText.textContent = "右键拖动平移场景";
-                        interactionHint.classList.add('visible');
-                        setTimeout(() => interactionHint.classList.remove('visible'), 2000);
-                    }
-                }
-                userInteracted = true;
-                e.preventDefault();
-            });
-
-            // 鼠标移动事件
-            domElement.addEventListener('mousemove', (e) => {
-                const deltaX = e.clientX - appState.lastMousePos.x;
-                const deltaY = e.clientY - appState.lastMousePos.y;
-                
-                if (appState.isDragging) {
-                    rotateDamping.y = deltaX * config.rotateSpeed;
-                    rotateDamping.x = -deltaY * config.rotateSpeed;
-                    appState.cameraAngle.y += rotateDamping.y;
-                    appState.cameraAngle.x += rotateDamping.x;
-                    appState.cameraAngle.x = Math.max(-85, Math.min(85, appState.cameraAngle.x));
-                } else if (appState.isPanning && camera.position.z < 0) {
-                    camera.position.x -= deltaX * config.panSpeed * appState.cameraDistance;
-                    camera.position.y += deltaY * config.panSpeed * appState.cameraDistance;
-                }
-                
-                appState.lastMousePos = { x: e.clientX, y: e.clientY };
-                updateCameraPosition();
-            });
-
-            // 鼠标释放事件
-            domElement.addEventListener('mouseup', () => {
-                appState.isDragging = false;
-                appState.isPanning = false;
-                domElement.style.cursor = 'default';
-            });
-
-            // 鼠标离开事件
-            domElement.addEventListener('mouseleave', () => {
-                appState.isDragging = false;
-                appState.isPanning = false;
-                domElement.style.cursor = 'default';
-            });
-
-            // 滚轮缩放事件
-            domElement.addEventListener('wheel', (e) => {
-                const delta = e.deltaY > 0 ? -1 : 1;
-                appState.cameraDistance = Math.max(
-                    config.minDistance, 
-                    Math.min(config.maxDistance, 
-                    appState.cameraDistance + delta * config.zoomSpeed * appState.cameraDistance)
-                );
-                updateCameraPosition();
-                
-                // 显示缩放提示（首次交互）
-                if (!userInteracted) {
-                    hintText.textContent = "滚轮缩放场景";
-                    interactionHint.classList.add('visible');
-                    setTimeout(() => interactionHint.classList.remove('visible'), 2000);
-                    userInteracted = true;
-                }
-                
-                e.preventDefault();
-            });
-
-            // 右键菜单禁用
-            domElement.addEventListener('contextmenu', (e) => e.preventDefault());
-
-            // 阻尼动画更新
-            function updateDamping() {
-                if (Math.abs(rotateDamping.x) > 0.01 || Math.abs(rotateDamping.y) > 0.01) {
-                    rotateDamping.x *= (1 - config.damping);
-                    rotateDamping.y *= (1 - config.damping);
-                    appState.cameraAngle.x += rotateDamping.x;
-                    appState.cameraAngle.y += rotateDamping.y;
-                    appState.cameraAngle.x = Math.max(-85, Math.min(85, appState.cameraAngle.x));
-                    updateCameraPosition();
-                }
-                requestAnimationFrame(updateDamping);
-            }
-            updateDamping();
-
-            // 初始化相机位置
-            updateCameraPosition();
-
-            return { 
-                update: updateCameraPosition,
-                reset: () => {
-                    appState.cameraAngle = { x: 45, y: 45 };
-                    appState.cameraDistance = 8;
-                    updateCameraPosition();
-                }
-            };
-        }
-
-        // 初始化3D场景
-        function initScene() {
-            try {
-                // 创建场景
-                const scene = new THREE.Scene();
-                scene.background = new THREE.Color(0xf8fafc);
-
-                // 添加光照
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-                directionalLight.position.set(5, 5, 5);
-                scene.add(ambientLight, directionalLight);
-
-                // 创建相机
-                const camera = new THREE.PerspectiveCamera(
-                    75, window.innerWidth / window.innerHeight, 0.1, 1000
-                );
-
-                // 创建渲染器
-                const container = document.getElementById('scene-container');
-                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                container.appendChild(renderer.domElement);
-
-                // 初始化自定义交互控制器
-                const controls = initCustomControls(camera, renderer.domElement);
-
-                // 添加辅助元素
-                const axesHelper = new THREE.AxesHelper(3);
-                const gridHelper = new THREE.GridHelper(10, 10, 0xe2e8f0, 0xf1f5f9);
-                scene.add(axesHelper, gridHelper);
-
-                // 核心3D对象管理
-                let sphere, thetaLabel, phiLabel, integralMesh, thetaArc, phiArc;
-                let animationId = null;
-
-                // 创建单位球面（带动画）
-                function createSphere() {
-                    if (sphere) scene.remove(sphere);
-                    
-                    const geometry = new THREE.SphereGeometry(1, 32, 32);
-                    const material = new THREE.MeshStandardMaterial({
-                        color: 0x3b82f6, transparent: true, opacity: 0.2,
-                        wireframe: true, wireframeLinewidth: 1
-                    });
-                    
-                    sphere = new THREE.Mesh(geometry, material);
-                    sphere.scale.set(0.1, 0.1, 0.1); // 初始缩小
-                    scene.add(sphere);
-
-                    // 缩放动画
-                    const animate = () => {
-                        if (sphere.scale.x < 1) {
-                            sphere.scale.multiplyScalar(1.1);
-                            animationId = requestAnimationFrame(animate);
-                        } else {
-                            // 动画完成后提示下一步
-                            setTimeout(() => {
-                                showInfo("接下来，请点击'显示角度标注'按钮，了解球坐标系中的θ和φ角定义。");
-                            }, 500);
-                        }
-                    };
-                    animate();
-
-                    showInfo('单位球面代表各向同性空间，在所有方向上具有相同性质。球坐标系适用于此类对称问题的积分计算。');
-                    updateStep(2);
-                }
-
-                // 创建角度标注
-                function createAngleLabels() {
-                    // 移除旧元素
-                    [thetaLabel, phiLabel, thetaArc, phiArc].forEach(el => el && scene.remove(el));
-                    document.getElementById('thetaText')?.remove();
-                    document.getElementById('phiText')?.remove();
-
-                    // θ角标注（红色：z轴→原点→x轴）
-                    const thetaGeom = new THREE.BufferGeometry().setFromPoints([
-                        new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0)
-                    ]);
-                    thetaLabel = new THREE.Line(thetaGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 2 }));
-                    scene.add(thetaLabel);
-
-                    // φ角标注（绿色：x轴→原点→y轴）
-                    const phiGeom = new THREE.BufferGeometry().setFromPoints([
-                        new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0)
-                    ]);
-                    phiLabel = new THREE.Line(phiGeom, new THREE.LineBasicMaterial({ color: 0x10b981, linewidth: 2 }));
-                    scene.add(phiLabel);
-
-                    // θ角弧线（红色扇形）
-                    thetaArc = new THREE.Mesh(
-                        new THREE.RingGeometry(0.3, 0.4, 32, 1, 0, Math.PI/2),
-                        new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.7, side: THREE.DoubleSide })
-                    );
-                    thetaArc.rotation.z = -Math.PI/2;
-                    scene.add(thetaArc);
-
-                    // φ角弧线（绿色扇形）
-                    phiArc = new THREE.Mesh(
-                        new THREE.RingGeometry(0.5, 0.6, 32, 1, 0, Math.PI/2),
-                        new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.7, side: THREE.DoubleSide })
-                    );
-                    phiArc.rotation.x = -Math.PI/2;
-                    scene.add(phiArc);
-
-                    // θ/φ文本标签
-                    const thetaText = document.createElement('div');
-                    thetaText.id = 'thetaText';
-                    thetaText.textContent = 'θ';
-                    thetaText.style.cssText = 'position:absolute;color:#ef4444;font-weight:bold;pointer-events:none;';
-                    
-                    const phiText = document.createElement('div');
-                    phiText.id = 'phiText';
-                    phiText.textContent = 'φ';
-                    phiText.style.cssText = 'position:absolute;color:#10b981;font-weight:bold;pointer-events:none;';
-                    
-                    document.body.appendChild(thetaText);
-                    document.body.appendChild(phiText);
-
-                    // 实时更新标签位置
-                    function updateLabelPos() {
-                        const update = (textEl, pos3d) => {
-                            pos3d.project(camera);
-                            const x = (pos3d.x * 0.5 + 0.5) * window.innerWidth;
-                            const y = (-pos3d.y * 0.5 + 0.5) * window.innerHeight;
-                            textEl.style.left = `${x}px`;
-                            textEl.style.top = `${y}px`;
-                        };
-                        update(thetaText, new THREE.Vector3(0.35, 0, 0.35));
-                        update(phiText, new THREE.Vector3(0.55, 0.55, 0));
-                        requestAnimationFrame(updateLabelPos);
-                    }
-                    updateLabelPos();
-
-                    showInfo('θ（红色）为天顶角（与z轴的夹角），φ（绿色）为方位角（与x轴的夹角）。在球坐标系中，立体角元表示为 dΩ = sinθ dθ dφ。');
-                    
-                    // 提示下一步
-                    setTimeout(() => {
-                        showInfo("现在可以计算积分了，请点击'θ∈[0,π]积分计算'按钮，查看全空间积分结果。");
-                    }, 2000);
-                }
-
-                // 积分计算与可视化
-                function calculateIntegral(thetaMin, thetaMax, isFullSphere = false) {
-                    if (integralMesh) scene.remove(integralMesh);
-                    
-                    // 创建积分区域几何体
-                    const geometry = new THREE.SphereGeometry(
-                        1.02, 32, 32, 0, 2 * Math.PI, thetaMin, thetaMax - thetaMin
-                    );
-                    
-                    const material = new THREE.MeshStandardMaterial({
-                        color: isFullSphere ? 0xf97316 : 0x8b5cf6,
-                        transparent: true, opacity: 0.6, side: THREE.DoubleSide,
-                        emissive: isFullSphere ? 0xf97316 : 0x8b5cf6,
-                        emissiveIntensity: 0.2
-                    });
-                    
-                    integralMesh = new THREE.Mesh(geometry, material);
-                    integralMesh.scale.set(0.1, 0.1, 0.1);
-                    scene.add(integralMesh);
-
-                    // 缩放动画
-                    const animate = () => {
-                        if (integralMesh.scale.x < 1) {
-                            integralMesh.scale.multiplyScalar(1.1);
-                            requestAnimationFrame(animate);
-                        } else if (isFullSphere) {
-                            // 动画完成后提示下一步
-                            setTimeout(() => {
-                                showInfo("接下来，请点击'几何因子2生成演示'按钮，查看完整的推导过程。");
-                            }, 500);
-                        }
-                    };
-                    animate();
-
-                    // 数学计算
-                    const integral = math.integral(x => math.sin(x), thetaMin, thetaMax);
-                    const integralVal = math.evaluate(integral.toString());
-                    const thetaRange = thetaMin === 0 && thetaMax === Math.PI ? '[0, π]' : '[0, π/2]';
-                    const formula = `∫(θ=${thetaRange}) sinθ dθ = ${integralVal.toFixed(4)}`;
-                    showInfo(formula, true);
-
-                    if (isFullSphere) {
-                        updateStep(3);
-                        
-                        // 高亮图表中对应的积分区域
-                        if (appState.chart) {
-                            const lastPoint = appState.thetaValues.indexOf('180');
-                            appState.chart.data.datasets[1].pointBackgroundColor = appState.chart.data.datasets[1].data.map((_, i) => 
-                                i <= lastPoint ? 'rgba(249, 115, 22, 0.7)' : 'transparent'
-                            );
-                            appState.chart.update();
-                        }
-                    }
-                }
-
-                // 几何因子2推导演示
-                function showFactor2() {
-                    // 聚焦到完整球面
-                    if (integralMesh) scene.remove(integralMesh);
-                    
-                    const geometry = new THREE.SphereGeometry(1.02, 32, 32);
-                    const material = new THREE.MeshStandardMaterial({
-                        color: 0xf97316, transparent: true, opacity: 0.6,
-                        emissive: 0xf97316, emissiveIntensity: 0.2
-                    });
-                    
-                    integralMesh = new THREE.Mesh(geometry, material);
-                    scene.add(integralMesh);
-
-                    showInfo('几何因子2的推导分为两步：首先计算θ积分，然后考虑φ积分的归一化。');
-
-                    // 分步演示
-                    setTimeout(() => {
-                        showInfo('步骤1: ∫(θ=0→π) sinθ dθ = 2', true);
-                        
-                        // 图表高亮θ积分区域
-                        if (appState.chart) {
-                            appState.chart.data.datasets[1].pointBackgroundColor = appState.chart.data.datasets[1].data.map((_, i) => 
-                                'rgba(249, 115, 22, 0.7)'
-                            );
-                            appState.chart.update();
-                        }
-                    }, 1500);
-                    
-                    setTimeout(() => {
-                        showInfo('步骤2: ∫(φ=0→2π) dφ = 2π', true);
-                        
-                        // 添加φ角动画
-                        let phiRotation = 0;
-                        const animatePhi = () => {
-                            phiRotation += 0.05;
-                            if (phiRotation < 2 * Math.PI) {
-                                if (phiArc) {
-                                    phiArc.rotation.z = phiRotation;
-                                }
-                                requestAnimationFrame(animatePhi);
-                            }
-                        };
-                        animatePhi();
-                    }, 3500);
-                    
-                    setTimeout(() => {
-                        showInfo('最终结果: (2 × 2π) / (2π) = 2（φ积分归一化后）', true);
-                        updateStep(4);
-                        
-                        // 提示完成
-                        setTimeout(() => {
-                            showInfo("恭喜！您已完成几何因子2的推导过程。可以点击'重置场景'重新开始，或尝试计算半球空间的积分。");
-                        }, 1000);
-                    }, 5500);
-                }
-
-                // 场景重置
-                function resetScene() {
-                    // 清除3D对象
-                    [sphere, thetaLabel, phiLabel, integralMesh, thetaArc, phiArc].forEach(el => el && scene.remove(el));
-                    
-                    // 清除文本标签
-                    document.getElementById('thetaText')?.remove();
-                    document.getElementById('phiText')?.remove();
-                    
-                    // 重置相机状态
-                    controls.reset();
-                    
-                    // 清除动画
-                    if (animationId) cancelAnimationFrame(animationId);
-                    
-                    // 重置图表
-                    if (appState.chart) {
-                        appState.chart.data.datasets[1].pointBackgroundColor = appState.chart.data.datasets[1].data.map(() => 'transparent');
-                        appState.chart.update();
-                    }
-                    
-                    showInfo('场景已重置。请按照步骤按钮的顺序重新操作，了解几何因子2的推导过程。');
-                    updateStep(1);
-                }
-
-                // 绑定按钮事件，添加点击反馈
-                const bindButton = (id, callback) => {
-                    const btn = document.getElementById(id);
-                    btn.addEventListener('click', () => {
-                        // 添加点击效果
-                        btn.style.transform = 'translateY(2px)';
-                        setTimeout(() => {
-                            btn.style.transform = '';
-                            callback();
-                        }, 100);
-                    });
-                };
-                
-                bindButton('showSphere', createSphere);
-                bindButton('showThetaPhi', createAngleLabels);
-                bindButton('integral0ToPi', () => calculateIntegral(0, Math.PI, true));
-                bindButton('integral0ToPi2', () => calculateIntegral(0, Math.PI/2, false));
-                bindButton('showFactor2', showFactor2);
-                bindButton('resetScene', resetScene);
-
-                // 信息面板折叠/展开
-                let infoExpanded = true;
-                document.getElementById('toggleInfo').addEventListener('click', () => {
-                    const content = document.getElementById('infoContent');
-                    const icon = document.querySelector('#toggleInfo i');
-                    if (infoExpanded) {
-                        content.style.display = 'none';
-                        icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
-                    } else {
-                        content.style.display = 'block';
-                        icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
-                    }
-                    infoExpanded = !infoExpanded;
-                });
-
-                // 渲染循环
-                function animate() {
-                    requestAnimationFrame(animate);
-                    renderer.render(scene, camera);
-                }
-                animate();
-
-                // 窗口自适应
-                window.addEventListener('resize', () => {
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(window.innerWidth, window.innerHeight);
-                });
-
-                appState.sceneInitialized = true;
-                showInfo('准备就绪！请点击"显示单位球面"开始探索几何因子2的推导过程。');
-                
-                // 显示教程或交互提示
-                const hasSeenTutorial = localStorage.getItem('hasSeenTutorial');
-                if (!hasSeenTutorial) {
-                    document.getElementById('tutorialOverlay').classList.add('visible');
-                } else {
-                    // 显示交互提示
-                    setTimeout(showInteractionHint, 3000);
-                }
-                
-                // 教程按钮事件
-                document.getElementById('startTutorial').addEventListener('click', () => {
-                    document.getElementById('tutorialOverlay').classList.remove('visible');
-                    localStorage.setItem('hasSeenTutorial', 'true');
-                    setTimeout(showInteractionHint, 2000);
-                });
-                
-                document.getElementById('showTutorialLater').addEventListener('click', () => {
-                    document.getElementById('tutorialOverlay').classList.remove('visible');
-                    setTimeout(showInteractionHint, 2000);
-                });
-                
-            } catch (error) {
-                showError(`初始化场景失败: ${error.message}`);
-                console.error('场景初始化错误:', error);
-            }
-        }
-
-        // 应用初始化
-        function initApp() {
-            // 定期检查核心资源
-            const checkInterval = setInterval(() => {
-                if (checkResources()) {
-                    clearInterval(checkInterval);
-                    
-                    // 检查WebGL支持
-                    if (!checkWebGLSupport()) {
-                        showError('您的浏览器不支持WebGL，无法运行3D可视化。请使用Chrome、Firefox或Edge等现代浏览器。');
-                        document.querySelector('.loading-screen').style.display = 'none';
-                        document.querySelector('.control-panel').style.display = 'block';
-                        return;
-                    }
-                    
-                    // 初始化图表
-                    initChart();
-                    
-                    // 隐藏加载屏，显示控制面板
-                    const loadingScreen = document.querySelector('.loading-screen');
-                    loadingScreen.style.opacity = '0';
-                    setTimeout(() => {
-                        loadingScreen.style.display = 'none';
-                        document.querySelector('.control-panel').style.display = 'block';
-                        // 启用所有按钮
-                        document.querySelectorAll('button').forEach(btn => btn.disabled = false);
-                        // 初始化3D场景
-                        initScene();
-                        appState.resourcesLoaded = true;
-                        updateStep(1);
-                    }, 500);
-                } else {
-                    // 显示加载进度
-                    const missing = resources.filter(res => !res.loaded).map(res => res.id);
-                    loadStatus.textContent = `等待加载: ${missing.join(', ')}`;
-                }
-            }, 300);
-            
-            // 10秒超时保护
+            // 3秒后移除动画
             setTimeout(() => {
-                if (!appState.resourcesLoaded) {
-                    clearInterval(checkInterval);
-                    showError(`核心资源加载超时: ${resources.filter(res => !res.loaded).map(res => res.id).join(', ')}\n请检查网络连接或刷新页面重试。`);
-                    document.querySelector('.loading-screen').style.display = 'none';
-                    document.querySelector('.control-panel').style.display = 'block';
-                }
-            }, 10000);
+              nextButton.style.animation = ''
+            }, 3000)
+          }
+        }
+      }
+
+      // 初始化积分图表
+      function initChart() {
+        const ctx = document.getElementById('integralChart').getContext('2d')
+        appState.thetaValues = []
+        const sinThetaValues = []
+        const integralValues = []
+
+        let integral = 0
+        const step = Math.PI / 50
+
+        for (let theta = 0; theta <= Math.PI; theta += step) {
+          appState.thetaValues.push(((theta * 180) / Math.PI).toFixed(0))
+          const sinTheta = Math.sin(theta)
+          sinThetaValues.push(sinTheta)
+          integral += sinTheta * step
+          integralValues.push(integral)
         }
 
-        // DOM加载完成后启动应用
-        document.addEventListener('DOMContentLoaded', initApp);
+        appState.chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: appState.thetaValues,
+            datasets: [
+              {
+                label: 'sinθ',
+                data: sinThetaValues,
+                borderColor: 'rgba(59, 130, 246, 0.7)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                yAxisID: 'y'
+              },
+              {
+                label: '∫sinθ dθ',
+                data: integralValues,
+                borderColor: 'rgba(249, 115, 22, 0.7)',
+                backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                fill: false,
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+              x: { title: { display: true, text: 'θ角度 (度)' } },
+              y: {
+                type: 'linear',
+                position: 'left',
+                title: { display: true, text: 'sinθ 值' },
+                min: 0,
+                max: 1.1
+              },
+              y1: {
+                type: 'linear',
+                position: 'right',
+                title: { display: true, text: '积分值' },
+                min: 0,
+                max: 2.2,
+                grid: { drawOnChartArea: false }
+              }
+            },
+            animation: {
+              duration: 1000,
+              easing: 'easeOutQuart'
+            }
+          }
+        })
+      }
+
+      // 检测WebGL支持
+      function checkWebGLSupport() {
+        try {
+          const canvas = document.createElement('canvas')
+          return !!(
+            window.WebGLRenderingContext &&
+            (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+          )
+        } catch (e) {
+          return false
+        }
+      }
+
+      // 显示交互提示
+      function showInteractionHint() {
+        // 清除之前的超时
+        if (appState.hintTimeout) {
+          clearTimeout(appState.hintTimeout)
+        }
+
+        // 显示当前提示
+        hintText.textContent = appState.interactionHints[appState.currentHintIndex]
+        interactionHint.classList.add('visible')
+
+        // 3秒后隐藏
+        appState.hintTimeout = setTimeout(() => {
+          interactionHint.classList.remove('visible')
+
+          // 更新提示索引，循环显示
+          appState.currentHintIndex =
+            (appState.currentHintIndex + 1) % appState.interactionHints.length
+
+          // 8秒后显示下一个提示
+          appState.hintTimeout = setTimeout(showInteractionHint, 8000)
+        }, 3000)
+      }
+
+      // 停止交互提示
+      function stopInteractionHints() {
+        if (appState.hintTimeout) {
+          clearTimeout(appState.hintTimeout)
+        }
+        interactionHint.classList.remove('visible')
+      }
+
+      // 自定义3D交互控制器
+      function initCustomControls(camera, domElement) {
+        const config = {
+          rotateSpeed: 0.5,
+          zoomSpeed: 0.1,
+          panSpeed: 0.02,
+          damping: 0.05,
+          minDistance: 3,
+          maxDistance: 20
+        }
+
+        let rotateDamping = { x: 0, y: 0 }
+        let userInteracted = false // 标记用户是否已交互
+
+        // 更新相机位置
+        function updateCameraPosition() {
+          const radX = (appState.cameraAngle.x * Math.PI) / 180
+          const radY = (appState.cameraAngle.y * Math.PI) / 180
+
+          camera.position.x = appState.cameraDistance * Math.sin(radY) * Math.cos(radX)
+          camera.position.y = appState.cameraDistance * Math.sin(radX)
+          camera.position.z = appState.cameraDistance * Math.cos(radY) * Math.cos(radX)
+          camera.lookAt(0, 0, 0)
+        }
+
+        // 鼠标按下事件
+        domElement.addEventListener('mousedown', e => {
+          appState.lastMousePos = { x: e.clientX, y: e.clientY }
+          if (e.button === 0) {
+            appState.isDragging = true
+            domElement.style.cursor = 'grabbing'
+            // 显示旋转提示（首次交互）
+            if (!userInteracted) {
+              hintText.textContent = '拖动旋转视角'
+              interactionHint.classList.add('visible')
+              setTimeout(() => interactionHint.classList.remove('visible'), 2000)
+            }
+          }
+          if (e.button === 2) {
+            appState.isPanning = true
+            domElement.style.cursor = 'move'
+            // 显示平移提示（首次交互）
+            if (!userInteracted) {
+              hintText.textContent = '右键拖动平移场景'
+              interactionHint.classList.add('visible')
+              setTimeout(() => interactionHint.classList.remove('visible'), 2000)
+            }
+          }
+          userInteracted = true
+          e.preventDefault()
+        })
+
+        // 鼠标移动事件
+        domElement.addEventListener('mousemove', e => {
+          const deltaX = e.clientX - appState.lastMousePos.x
+          const deltaY = e.clientY - appState.lastMousePos.y
+
+          if (appState.isDragging) {
+            rotateDamping.y = deltaX * config.rotateSpeed
+            rotateDamping.x = -deltaY * config.rotateSpeed
+            appState.cameraAngle.y += rotateDamping.y
+            appState.cameraAngle.x += rotateDamping.x
+            appState.cameraAngle.x = Math.max(-85, Math.min(85, appState.cameraAngle.x))
+          } else if (appState.isPanning && camera.position.z < 0) {
+            camera.position.x -= deltaX * config.panSpeed * appState.cameraDistance
+            camera.position.y += deltaY * config.panSpeed * appState.cameraDistance
+          }
+
+          appState.lastMousePos = { x: e.clientX, y: e.clientY }
+          updateCameraPosition()
+        })
+
+        // 鼠标释放事件
+        domElement.addEventListener('mouseup', () => {
+          appState.isDragging = false
+          appState.isPanning = false
+          domElement.style.cursor = 'default'
+        })
+
+        // 鼠标离开事件
+        domElement.addEventListener('mouseleave', () => {
+          appState.isDragging = false
+          appState.isPanning = false
+          domElement.style.cursor = 'default'
+        })
+
+        // 滚轮缩放事件
+        domElement.addEventListener('wheel', e => {
+          const delta = e.deltaY > 0 ? -1 : 1
+          appState.cameraDistance = Math.max(
+            config.minDistance,
+            Math.min(
+              config.maxDistance,
+              appState.cameraDistance + delta * config.zoomSpeed * appState.cameraDistance
+            )
+          )
+          updateCameraPosition()
+
+          // 显示缩放提示（首次交互）
+          if (!userInteracted) {
+            hintText.textContent = '滚轮缩放场景'
+            interactionHint.classList.add('visible')
+            setTimeout(() => interactionHint.classList.remove('visible'), 2000)
+            userInteracted = true
+          }
+
+          e.preventDefault()
+        })
+
+        // 右键菜单禁用
+        domElement.addEventListener('contextmenu', e => e.preventDefault())
+
+        // 阻尼动画更新
+        function updateDamping() {
+          if (Math.abs(rotateDamping.x) > 0.01 || Math.abs(rotateDamping.y) > 0.01) {
+            rotateDamping.x *= 1 - config.damping
+            rotateDamping.y *= 1 - config.damping
+            appState.cameraAngle.x += rotateDamping.x
+            appState.cameraAngle.y += rotateDamping.y
+            appState.cameraAngle.x = Math.max(-85, Math.min(85, appState.cameraAngle.x))
+            updateCameraPosition()
+          }
+          requestAnimationFrame(updateDamping)
+        }
+        updateDamping()
+
+        // 初始化相机位置
+        updateCameraPosition()
+
+        return {
+          update: updateCameraPosition,
+          reset: () => {
+            appState.cameraAngle = { x: 45, y: 45 }
+            appState.cameraDistance = 8
+            updateCameraPosition()
+          }
+        }
+      }
+
+      // 初始化3D场景
+      function initScene() {
+        try {
+          // 创建场景
+          const scene = new THREE.Scene()
+          scene.background = new THREE.Color(0xf8fafc)
+
+          // 添加光照
+          const ambientLight = new THREE.AmbientLight(0xffffff, 0.7)
+          const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5)
+          directionalLight.position.set(5, 5, 5)
+          scene.add(ambientLight, directionalLight)
+
+          // 创建相机
+          const camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+          )
+
+          // 创建渲染器
+          const container = document.getElementById('scene-container')
+          const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+          renderer.setSize(window.innerWidth, window.innerHeight)
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+          container.appendChild(renderer.domElement)
+
+          // 初始化自定义交互控制器
+          const controls = initCustomControls(camera, renderer.domElement)
+
+          // 添加辅助元素
+          const axesHelper = new THREE.AxesHelper(3)
+          const gridHelper = new THREE.GridHelper(10, 10, 0xe2e8f0, 0xf1f5f9)
+          scene.add(axesHelper, gridHelper)
+
+          // 核心3D对象管理
+          let sphere, thetaLabel, phiLabel, integralMesh, thetaArc, phiArc
+          let animationId = null
+
+          // 创建单位球面（带动画）
+          function createSphere() {
+            if (sphere) scene.remove(sphere)
+
+            const geometry = new THREE.SphereGeometry(1, 32, 32)
+            const material = new THREE.MeshStandardMaterial({
+              color: 0x3b82f6,
+              transparent: true,
+              opacity: 0.2,
+              wireframe: true,
+              wireframeLinewidth: 1
+            })
+
+            sphere = new THREE.Mesh(geometry, material)
+            sphere.scale.set(0.1, 0.1, 0.1) // 初始缩小
+            scene.add(sphere)
+
+            // 缩放动画
+            const animate = () => {
+              if (sphere.scale.x < 1) {
+                sphere.scale.multiplyScalar(1.1)
+                animationId = requestAnimationFrame(animate)
+              } else {
+                // 动画完成后提示下一步
+                setTimeout(() => {
+                  showInfo("接下来，请点击'显示角度标注'按钮，了解球坐标系中的θ和φ角定义。")
+                }, 500)
+              }
+            }
+            animate()
+
+            showInfo(
+              '单位球面代表各向同性空间，在所有方向上具有相同性质。球坐标系适用于此类对称问题的积分计算。'
+            )
+            updateStep(2)
+          }
+
+          // 创建角度标注
+          function createAngleLabels() {
+            // 移除旧元素
+            ;[thetaLabel, phiLabel, thetaArc, phiArc].forEach(el => el && scene.remove(el))
+            document.getElementById('thetaText')?.remove()
+            document.getElementById('phiText')?.remove()
+
+            // θ角标注（红色：z轴→原点→x轴）
+            const thetaGeom = new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(0, 0, 1),
+              new THREE.Vector3(0, 0, 0),
+              new THREE.Vector3(1, 0, 0)
+            ])
+            thetaLabel = new THREE.Line(
+              thetaGeom,
+              new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 2 })
+            )
+            scene.add(thetaLabel)
+
+            // φ角标注（绿色：x轴→原点→y轴）
+            const phiGeom = new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(1, 0, 0),
+              new THREE.Vector3(0, 0, 0),
+              new THREE.Vector3(0, 1, 0)
+            ])
+            phiLabel = new THREE.Line(
+              phiGeom,
+              new THREE.LineBasicMaterial({ color: 0x10b981, linewidth: 2 })
+            )
+            scene.add(phiLabel)
+
+            // θ角弧线（红色扇形）
+            thetaArc = new THREE.Mesh(
+              new THREE.RingGeometry(0.3, 0.4, 32, 1, 0, Math.PI / 2),
+              new THREE.MeshBasicMaterial({
+                color: 0xef4444,
+                transparent: true,
+                opacity: 0.7,
+                side: THREE.DoubleSide
+              })
+            )
+            thetaArc.rotation.z = -Math.PI / 2
+            scene.add(thetaArc)
+
+            // φ角弧线（绿色扇形）
+            phiArc = new THREE.Mesh(
+              new THREE.RingGeometry(0.5, 0.6, 32, 1, 0, Math.PI / 2),
+              new THREE.MeshBasicMaterial({
+                color: 0x10b981,
+                transparent: true,
+                opacity: 0.7,
+                side: THREE.DoubleSide
+              })
+            )
+            phiArc.rotation.x = -Math.PI / 2
+            scene.add(phiArc)
+
+            // θ/φ文本标签
+            const thetaText = document.createElement('div')
+            thetaText.id = 'thetaText'
+            thetaText.textContent = 'θ'
+            thetaText.style.cssText =
+              'position:absolute;color:#ef4444;font-weight:bold;pointer-events:none;'
+
+            const phiText = document.createElement('div')
+            phiText.id = 'phiText'
+            phiText.textContent = 'φ'
+            phiText.style.cssText =
+              'position:absolute;color:#10b981;font-weight:bold;pointer-events:none;'
+
+            document.body.appendChild(thetaText)
+            document.body.appendChild(phiText)
+
+            // 实时更新标签位置
+            function updateLabelPos() {
+              const update = (textEl, pos3d) => {
+                pos3d.project(camera)
+                const x = (pos3d.x * 0.5 + 0.5) * window.innerWidth
+                const y = (-pos3d.y * 0.5 + 0.5) * window.innerHeight
+                textEl.style.left = `${x}px`
+                textEl.style.top = `${y}px`
+              }
+              update(thetaText, new THREE.Vector3(0.35, 0, 0.35))
+              update(phiText, new THREE.Vector3(0.55, 0.55, 0))
+              requestAnimationFrame(updateLabelPos)
+            }
+            updateLabelPos()
+
+            showInfo(
+              'θ（红色）为天顶角（与z轴的夹角），φ（绿色）为方位角（与x轴的夹角）。在球坐标系中，立体角元表示为 dΩ = sinθ dθ dφ。'
+            )
+
+            // 提示下一步
+            setTimeout(() => {
+              showInfo("现在可以计算积分了，请点击'θ∈[0,π]积分计算'按钮，查看全空间积分结果。")
+            }, 2000)
+          }
+
+          // 积分计算与可视化
+          function calculateIntegral(thetaMin, thetaMax, isFullSphere = false) {
+            if (integralMesh) scene.remove(integralMesh)
+
+            // 创建积分区域几何体
+            const geometry = new THREE.SphereGeometry(
+              1.02,
+              32,
+              32,
+              0,
+              2 * Math.PI,
+              thetaMin,
+              thetaMax - thetaMin
+            )
+
+            const material = new THREE.MeshStandardMaterial({
+              color: isFullSphere ? 0xf97316 : 0x8b5cf6,
+              transparent: true,
+              opacity: 0.6,
+              side: THREE.DoubleSide,
+              emissive: isFullSphere ? 0xf97316 : 0x8b5cf6,
+              emissiveIntensity: 0.2
+            })
+
+            integralMesh = new THREE.Mesh(geometry, material)
+            integralMesh.scale.set(0.1, 0.1, 0.1)
+            scene.add(integralMesh)
+
+            // 缩放动画
+            const animate = () => {
+              if (integralMesh.scale.x < 1) {
+                integralMesh.scale.multiplyScalar(1.1)
+                requestAnimationFrame(animate)
+              } else if (isFullSphere) {
+                // 动画完成后提示下一步
+                setTimeout(() => {
+                  showInfo("接下来，请点击'几何因子2生成演示'按钮，查看完整的推导过程。")
+                }, 500)
+              }
+            }
+            animate()
+
+            // 数学计算
+            const integral = math.integral(x => math.sin(x), thetaMin, thetaMax)
+            const integralVal = math.evaluate(integral.toString())
+            const thetaRange = thetaMin === 0 && thetaMax === Math.PI ? '[0, π]' : '[0, π/2]'
+            const formula = `∫(θ=${thetaRange}) sinθ dθ = ${integralVal.toFixed(4)}`
+            showInfo(formula, true)
+
+            if (isFullSphere) {
+              updateStep(3)
+
+              // 高亮图表中对应的积分区域
+              if (appState.chart) {
+                const lastPoint = appState.thetaValues.indexOf('180')
+                appState.chart.data.datasets[1].pointBackgroundColor =
+                  appState.chart.data.datasets[1].data.map((_, i) =>
+                    i <= lastPoint ? 'rgba(249, 115, 22, 0.7)' : 'transparent'
+                  )
+                appState.chart.update()
+              }
+            }
+          }
+
+          // 几何因子2推导演示
+          function showFactor2() {
+            // 聚焦到完整球面
+            if (integralMesh) scene.remove(integralMesh)
+
+            const geometry = new THREE.SphereGeometry(1.02, 32, 32)
+            const material = new THREE.MeshStandardMaterial({
+              color: 0xf97316,
+              transparent: true,
+              opacity: 0.6,
+              emissive: 0xf97316,
+              emissiveIntensity: 0.2
+            })
+
+            integralMesh = new THREE.Mesh(geometry, material)
+            scene.add(integralMesh)
+
+            showInfo('几何因子2的推导分为两步：首先计算θ积分，然后考虑φ积分的归一化。')
+
+            // 分步演示
+            setTimeout(() => {
+              showInfo('步骤1: ∫(θ=0→π) sinθ dθ = 2', true)
+
+              // 图表高亮θ积分区域
+              if (appState.chart) {
+                appState.chart.data.datasets[1].pointBackgroundColor =
+                  appState.chart.data.datasets[1].data.map((_, i) => 'rgba(249, 115, 22, 0.7)')
+                appState.chart.update()
+              }
+            }, 1500)
+
+            setTimeout(() => {
+              showInfo('步骤2: ∫(φ=0→2π) dφ = 2π', true)
+
+              // 添加φ角动画
+              let phiRotation = 0
+              const animatePhi = () => {
+                phiRotation += 0.05
+                if (phiRotation < 2 * Math.PI) {
+                  if (phiArc) {
+                    phiArc.rotation.z = phiRotation
+                  }
+                  requestAnimationFrame(animatePhi)
+                }
+              }
+              animatePhi()
+            }, 3500)
+
+            setTimeout(() => {
+              showInfo('最终结果: (2 × 2π) / (2π) = 2（φ积分归一化后）', true)
+              updateStep(4)
+
+              // 提示完成
+              setTimeout(() => {
+                showInfo(
+                  "恭喜！您已完成几何因子2的推导过程。可以点击'重置场景'重新开始，或尝试计算半球空间的积分。"
+                )
+              }, 1000)
+            }, 5500)
+          }
+
+          // 场景重置
+          function resetScene() {
+            // 清除3D对象
+            ;[sphere, thetaLabel, phiLabel, integralMesh, thetaArc, phiArc].forEach(
+              el => el && scene.remove(el)
+            )
+
+            // 清除文本标签
+            document.getElementById('thetaText')?.remove()
+            document.getElementById('phiText')?.remove()
+
+            // 重置相机状态
+            controls.reset()
+
+            // 清除动画
+            if (animationId) cancelAnimationFrame(animationId)
+
+            // 重置图表
+            if (appState.chart) {
+              appState.chart.data.datasets[1].pointBackgroundColor =
+                appState.chart.data.datasets[1].data.map(() => 'transparent')
+              appState.chart.update()
+            }
+
+            showInfo('场景已重置。请按照步骤按钮的顺序重新操作，了解几何因子2的推导过程。')
+            updateStep(1)
+          }
+
+          // 绑定按钮事件，添加点击反馈
+          const bindButton = (id, callback) => {
+            const btn = document.getElementById(id)
+            btn.addEventListener('click', () => {
+              // 添加点击效果
+              btn.style.transform = 'translateY(2px)'
+              setTimeout(() => {
+                btn.style.transform = ''
+                callback()
+              }, 100)
+            })
+          }
+
+          bindButton('showSphere', createSphere)
+          bindButton('showThetaPhi', createAngleLabels)
+          bindButton('integral0ToPi', () => calculateIntegral(0, Math.PI, true))
+          bindButton('integral0ToPi2', () => calculateIntegral(0, Math.PI / 2, false))
+          bindButton('showFactor2', showFactor2)
+          bindButton('resetScene', resetScene)
+
+          // 信息面板折叠/展开
+          let infoExpanded = true
+          document.getElementById('toggleInfo').addEventListener('click', () => {
+            const content = document.getElementById('infoContent')
+            const icon = document.querySelector('#toggleInfo i')
+            if (infoExpanded) {
+              content.style.display = 'none'
+              icon.classList.replace('fa-chevron-down', 'fa-chevron-up')
+            } else {
+              content.style.display = 'block'
+              icon.classList.replace('fa-chevron-up', 'fa-chevron-down')
+            }
+            infoExpanded = !infoExpanded
+          })
+
+          // 渲染循环
+          function animate() {
+            requestAnimationFrame(animate)
+            renderer.render(scene, camera)
+          }
+          animate()
+
+          // 窗口自适应
+          window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight
+            camera.updateProjectionMatrix()
+            renderer.setSize(window.innerWidth, window.innerHeight)
+          })
+
+          appState.sceneInitialized = true
+          showInfo('准备就绪！请点击"显示单位球面"开始探索几何因子2的推导过程。')
+
+          // 显示教程或交互提示
+          const hasSeenTutorial = localStorage.getItem('hasSeenTutorial')
+          if (!hasSeenTutorial) {
+            document.getElementById('tutorialOverlay').classList.add('visible')
+          } else {
+            // 显示交互提示
+            setTimeout(showInteractionHint, 3000)
+          }
+
+          // 教程按钮事件
+          document.getElementById('startTutorial').addEventListener('click', () => {
+            document.getElementById('tutorialOverlay').classList.remove('visible')
+            localStorage.setItem('hasSeenTutorial', 'true')
+            setTimeout(showInteractionHint, 2000)
+          })
+
+          document.getElementById('showTutorialLater').addEventListener('click', () => {
+            document.getElementById('tutorialOverlay').classList.remove('visible')
+            setTimeout(showInteractionHint, 2000)
+          })
+        } catch (error) {
+          showError(`初始化场景失败: ${error.message}`)
+          console.error('场景初始化错误:', error)
+        }
+      }
+
+      // 应用初始化
+      function initApp() {
+        // 定期检查核心资源
+        const checkInterval = setInterval(() => {
+          if (checkResources()) {
+            clearInterval(checkInterval)
+
+            // 检查WebGL支持
+            if (!checkWebGLSupport()) {
+              showError(
+                '您的浏览器不支持WebGL，无法运行3D可视化。请使用Chrome、Firefox或Edge等现代浏览器。'
+              )
+              document.querySelector('.loading-screen').style.display = 'none'
+              document.querySelector('.control-panel').style.display = 'block'
+              return
+            }
+
+            // 初始化图表
+            initChart()
+
+            // 隐藏加载屏，显示控制面板
+            const loadingScreen = document.querySelector('.loading-screen')
+            loadingScreen.style.opacity = '0'
+            setTimeout(() => {
+              loadingScreen.style.display = 'none'
+              document.querySelector('.control-panel').style.display = 'block'
+              // 启用所有按钮
+              document.querySelectorAll('button').forEach(btn => (btn.disabled = false))
+              // 初始化3D场景
+              initScene()
+              appState.resourcesLoaded = true
+              updateStep(1)
+            }, 500)
+          } else {
+            // 显示加载进度
+            const missing = resources.filter(res => !res.loaded).map(res => res.id)
+            loadStatus.textContent = `等待加载: ${missing.join(', ')}`
+          }
+        }, 300)
+
+        // 10秒超时保护
+        setTimeout(() => {
+          if (!appState.resourcesLoaded) {
+            clearInterval(checkInterval)
+            showError(
+              `核心资源加载超时: ${resources
+                .filter(res => !res.loaded)
+                .map(res => res.id)
+                .join(', ')}\n请检查网络连接或刷新页面重试。`
+            )
+            document.querySelector('.loading-screen').style.display = 'none'
+            document.querySelector('.control-panel').style.display = 'block'
+          }
+        }, 10000)
+      }
+
+      // DOM加载完成后启动应用
+      document.addEventListener('DOMContentLoaded', initApp)
     </script>
-</body>
+  </body>
 </html>
-    

@@ -54,10 +54,7 @@ export function useUnifiedField(container: HTMLElement | null) {
   /**
    * 可视化公式
    */
-  const visualizeFormula = (
-    formulaType: FormulaType,
-    params?: Partial<FormulaParameters>
-  ) => {
+  const visualizeFormula = (formulaType: FormulaType, params?: Partial<FormulaParameters>) => {
     if (!renderer.value) return
 
     currentFormula.value = formulaType

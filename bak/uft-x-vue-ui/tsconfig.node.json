@@ -1,10 +1,5 @@
 {
-  "include": [
-    "vite.config.*",
-    "vitest.config.*",
-    "playwright.config.*",
-    "package.json"
-  ],
+  "include": ["vite.config.*", "vitest.config.*", "playwright.config.*", "package.json"],
   "compilerOptions": {
     "composite": true,
     "noEmit": true,

@@ -1,167 +1,173 @@
-import * as THREE from 'three';
-import { PerformanceOptimizationManager, OptimizationStrategy, PerformanceMode } from './performanceOptimizationManager';
-import { VISUALIZATION_CONFIG } from '../constants';
+import * as THREE from 'three'
+import {
+  PerformanceOptimizationManager,
+  OptimizationStrategy,
+  PerformanceMode
+} from './performanceOptimizationManager'
+import { VISUALIZATION_CONFIG } from '../constants'
 
 // 设备性能级别
-export type DevicePerformanceTier = 'high' | 'medium' | 'low' | 'unknown';
+export type DevicePerformanceTier = 'high' | 'medium' | 'low' | 'unknown'
 
 // 设备信息接口
 export interface DeviceInfo {
-  deviceType: 'mobile' | 'tablet' | 'desktop' | 'unknown';
-  browser: string;
-  browserVersion: string;
-  os: string;
-  osVersion: string;
-  hardwareConcurrency: number;
-  deviceMemory: number;
-  gpu: string;
-  isTouchDevice: boolean;
-  screenResolution: { width: number; height: number };
-  pixelRatio: number;
-  supportsWebGL2: boolean;
-  supportsWebGP: boolean;
-  performanceTier: DevicePerformanceTier;
+  deviceType: 'mobile' | 'tablet' | 'desktop' | 'unknown'
+  browser: string
+  browserVersion: string
+  os: string
+  osVersion: string
+  hardwareConcurrency: number
+  deviceMemory: number
+  gpu: string
+  isTouchDevice: boolean
+  screenResolution: { width: number; height: number }
+  pixelRatio: number
+  supportsWebGL2: boolean
+  supportsWebGP: boolean
+  performanceTier: DevicePerformanceTier
 }
 
 // 设备性能测试结果
 export interface PerformanceTestResult {
-  score: number;
-  tier: DevicePerformanceTier;
-  gpuScore: number;
-  cpuScore: number;
-  memoryScore: number;
-  recommendedMode: PerformanceMode;
-  optimalSettings: Partial<OptimizationStrategy>;
+  score: number
+  tier: DevicePerformanceTier
+  gpuScore: number
+  cpuScore: number
+  memoryScore: number
+  recommendedMode: PerformanceMode
+  optimalSettings: Partial<OptimizationStrategy>
 }
 
 // 设备性能分析器类
 export class DevicePerformanceAnalyzer {
-  private deviceInfo: DeviceInfo;
-  private testResult: PerformanceTestResult | null = null;
-  private isTestRunning: boolean = false;
-  private testStartTime: number = 0;
-  private testDuration: number = 3000; // 3秒测试
-  private testScene: THREE.Scene | null = null;
-  private testCamera: THREE.PerspectiveCamera | null = null;
-  private testRenderer: THREE.WebGLRenderer | null = null;
-  private testCanvas: HTMLCanvasElement | null = null;
-  private testCube: THREE.Mesh | null = null;
-  private testParticles: THREE.Points | null = null;
-  private frameCount: number = 0;
-  private fpsHistory: number[] = [];
-  private startTime: number = 0;
-  
+  private deviceInfo: DeviceInfo
+  private testResult: PerformanceTestResult | null = null
+  private isTestRunning: boolean = false
+  private testStartTime: number = 0
+  private testDuration: number = 3000 // 3秒测试
+  private testScene: THREE.Scene | null = null
+  private testCamera: THREE.PerspectiveCamera | null = null
+  private testRenderer: THREE.WebGLRenderer | null = null
+  private testCanvas: HTMLCanvasElement | null = null
+  private testCube: THREE.Mesh | null = null
+  private testParticles: THREE.Points | null = null
+  private frameCount: number = 0
+  private fpsHistory: number[] = []
+  private startTime: number = 0
+
   constructor() {
     // 初始化设备信息
-    this.deviceInfo = this.detectDeviceInfo();
+    this.deviceInfo = this.detectDeviceInfo()
   }
-  
+
   // 检测设备信息
   private detectDeviceInfo(): DeviceInfo {
-    const ua = navigator.userAgent;
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
-    const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua);
-    
+    const ua = navigator.userAgent
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(ua)
+    const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua)
+
     // 检测浏览器
-    let browser = 'unknown';
-    let browserVersion = 'unknown';
+    let browser = 'unknown'
+    let browserVersion = 'unknown'
     if (ua.includes('Chrome')) {
-      browser = 'Chrome';
-      const match = ua.match(/Chrome\/(\d+)/);
-      browserVersion = match ? match[1] : 'unknown';
+      browser = 'Chrome'
+      const match = ua.match(/Chrome\/(\d+)/)
+      browserVersion = match ? match[1] : 'unknown'
     } else if (ua.includes('Firefox')) {
-      browser = 'Firefox';
-      const match = ua.match(/Firefox\/(\d+)/);
-      browserVersion = match ? match[1] : 'unknown';
+      browser = 'Firefox'
+      const match = ua.match(/Firefox\/(\d+)/)
+      browserVersion = match ? match[1] : 'unknown'
     } else if (ua.includes('Safari') && !ua.includes('Chrome')) {
-      browser = 'Safari';
-      const match = ua.match(/Version\/(\d+)/);
-      browserVersion = match ? match[1] : 'unknown';
+      browser = 'Safari'
+      const match = ua.match(/Version\/(\d+)/)
+      browserVersion = match ? match[1] : 'unknown'
     } else if (ua.includes('Edge')) {
-      browser = 'Edge';
-      const match = ua.match(/Edge\/(\d+)/);
-      browserVersion = match ? match[1] : 'unknown';
+      browser = 'Edge'
+      const match = ua.match(/Edge\/(\d+)/)
+      browserVersion = match ? match[1] : 'unknown'
     }
-    
+
     // 检测操作系统
-    let os = 'unknown';
-    let osVersion = 'unknown';
+    let os = 'unknown'
+    let osVersion = 'unknown'
     if (ua.includes('Windows')) {
-      os = 'Windows';
-      const match = ua.match(/Windows NT (\d+\.\d+)/);
-      osVersion = match ? match[1] : 'unknown';
+      os = 'Windows'
+      const match = ua.match(/Windows NT (\d+\.\d+)/)
+      osVersion = match ? match[1] : 'unknown'
     } else if (ua.includes('Mac OS X')) {
-      os = 'macOS';
-      const match = ua.match(/Mac OS X (\d+_\d+)/);
-      osVersion = match ? match[1].replace('_', '.') : 'unknown';
+      os = 'macOS'
+      const match = ua.match(/Mac OS X (\d+_\d+)/)
+      osVersion = match ? match[1].replace('_', '.') : 'unknown'
     } else if (ua.includes('Android')) {
-      os = 'Android';
-      const match = ua.match(/Android (\d+\.\d+)/);
-      osVersion = match ? match[1] : 'unknown';
+      os = 'Android'
+      const match = ua.match(/Android (\d+\.\d+)/)
+      osVersion = match ? match[1] : 'unknown'
     } else if (ua.includes('iOS')) {
-      os = 'iOS';
-      const match = ua.match(/iPhone OS (\d+_\d+)/);
-      osVersion = match ? match[1].replace('_', '.') : 'unknown';
+      os = 'iOS'
+      const match = ua.match(/iPhone OS (\d+_\d+)/)
+      osVersion = match ? match[1].replace('_', '.') : 'unknown'
     }
-    
+
     // 检测GPU信息，添加严格的错误处理以支持测试环境
-    let gpu = 'unknown';
-    let supportsWebGL2 = false;
-    let supportsWebGP = false;
-    
+    let gpu = 'unknown'
+    let supportsWebGL2 = false
+    let supportsWebGP = false
+
     // 检测是否为测试环境（JSDOM）
-    const isTestEnvironment = typeof process !== 'undefined' && (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true');
-    
+    const isTestEnvironment =
+      typeof process !== 'undefined' &&
+      (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true')
+
     if (!isTestEnvironment) {
       try {
         // 仅在非测试环境中检测GPU和WebGL支持
         if (typeof document !== 'undefined') {
-          const canvas = document.createElement('canvas');
-          
+          const canvas = document.createElement('canvas')
+
           // 使用try-catch包裹每个getContext调用，确保一个失败不会影响其他检测
-          let gl: WebGLRenderingContext | null = null;
+          let gl: WebGLRenderingContext | null = null
           try {
-            gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
           } catch (e) {
             // JSDOM环境中会抛出错误
-            gl = null;
+            gl = null
           }
-          
+
           if (gl) {
             try {
-              const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+              const debugInfo = gl.getExtension('WEBGL_debug_renderer_info')
               if (debugInfo) {
-                gpu = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || 'unknown';
+                gpu = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || 'unknown'
               }
             } catch (e) {
-              gpu = 'unknown';
+              gpu = 'unknown'
             }
           }
-          
+
           // 检测WebGL2支持
           try {
-            supportsWebGL2 = !!canvas.getContext('webgl2');
+            supportsWebGL2 = !!canvas.getContext('webgl2')
           } catch (e) {
-            supportsWebGL2 = false;
+            supportsWebGL2 = false
           }
         }
-        
+
         // 检测WebGPU支持
-        supportsWebGP = typeof navigator !== 'undefined' && 
-                      typeof (navigator as any).gpu !== 'undefined';
+        supportsWebGP =
+          typeof navigator !== 'undefined' && typeof (navigator as any).gpu !== 'undefined'
       } catch (error) {
         // 在测试环境中捕获错误，使用默认值
-        gpu = 'test-environment';
-        supportsWebGL2 = false;
-        supportsWebGP = false;
+        gpu = 'test-environment'
+        supportsWebGL2 = false
+        supportsWebGP = false
       }
     } else {
       // 明确的测试环境，直接使用默认值
-      gpu = 'test-environment';
-      supportsWebGL2 = false;
-      supportsWebGP = false;
+      gpu = 'test-environment'
+      supportsWebGL2 = false
+      supportsWebGP = false
     }
-    
+
     // 确定性能级别
     const performanceTier = this.determinePerformanceTier(
       navigator.hardwareConcurrency || 2,
@@ -169,8 +175,8 @@ export class DevicePerformanceAnalyzer {
       isMobile || isTablet,
       supportsWebGL2,
       gpu
-    );
-    
+    )
+
     return {
       deviceType: isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop',
       browser,
@@ -189,9 +195,9 @@ export class DevicePerformanceAnalyzer {
       supportsWebGL2,
       supportsWebGP,
       performanceTier
-    };
+    }
   }
-  
+
   // 根据硬件规格确定性能级别
   private determinePerformanceTier(
     hardwareConcurrency: number,
@@ -203,182 +209,184 @@ export class DevicePerformanceAnalyzer {
     // 移动设备默认降低一个级别
     if (isMobile) {
       if (hardwareConcurrency >= 8 && deviceMemory >= 6 && supportsWebGL2) {
-        return 'medium'; // 高端移动设备视为中等
+        return 'medium' // 高端移动设备视为中等
       } else if (hardwareConcurrency >= 4 && deviceMemory >= 4) {
-        return 'medium';
+        return 'medium'
       } else {
-        return 'low';
+        return 'low'
       }
     }
-    
+
     // 桌面设备
     if (hardwareConcurrency >= 8 && deviceMemory >= 8 && supportsWebGL2) {
       // 检查GPU是否为高端型号
-      const highEndGPUs = ['RTX', 'GTX 10', 'GTX 20', 'GTX 30', 'AMD Radeon RX', 'AMD Radeon Pro'];
+      const highEndGPUs = ['RTX', 'GTX 10', 'GTX 20', 'GTX 30', 'AMD Radeon RX', 'AMD Radeon Pro']
       if (highEndGPUs.some(gpuName => gpu.includes(gpuName))) {
-        return 'high';
+        return 'high'
       }
-      return 'medium';
+      return 'medium'
     } else if (hardwareConcurrency >= 4 && deviceMemory >= 4) {
-      return 'medium';
+      return 'medium'
     } else {
-      return 'low';
+      return 'low'
     }
   }
-  
+
   // 获取设备信息
   public getDeviceInfo(): DeviceInfo {
-    return { ...this.deviceInfo };
+    return { ...this.deviceInfo }
   }
-  
+
   // 运行性能测试
   public async runPerformanceTest(): Promise<PerformanceTestResult> {
     if (this.isTestRunning) {
-      throw new Error('性能测试已在运行中');
+      throw new Error('性能测试已在运行中')
     }
-    
-    this.isTestRunning = true;
-    this.testStartTime = performance.now();
-    this.frameCount = 0;
-    this.fpsHistory = [];
-    this.startTime = this.testStartTime;
-    
+
+    this.isTestRunning = true
+    this.testStartTime = performance.now()
+    this.frameCount = 0
+    this.fpsHistory = []
+    this.startTime = this.testStartTime
+
     // 创建测试场景
-    this.setupTestScene();
-    
+    this.setupTestScene()
+
     // 运行测试动画循环
-    await new Promise<void>((resolve) => {
+    await new Promise<void>(resolve => {
       const animate = () => {
-        const currentTime = performance.now();
-        
+        const currentTime = performance.now()
+
         // 每100毫秒记录一次FPS
         if (currentTime - this.startTime >= 100) {
-          const fps = this.frameCount * 10;
-          this.fpsHistory.push(fps);
-          this.frameCount = 0;
-          this.startTime = currentTime;
+          const fps = this.frameCount * 10
+          this.fpsHistory.push(fps)
+          this.frameCount = 0
+          this.startTime = currentTime
         }
-        
+
         if (currentTime - this.testStartTime < this.testDuration) {
-          this.updateTestScene();
-          this.frameCount++;
-          requestAnimationFrame(animate);
+          this.updateTestScene()
+          this.frameCount++
+          requestAnimationFrame(animate)
         } else {
-          this.cleanupTestScene();
-          this.isTestRunning = false;
-          this.calculateTestResults();
-          resolve();
+          this.cleanupTestScene()
+          this.isTestRunning = false
+          this.calculateTestResults()
+          resolve()
         }
-      };
-      
-      requestAnimationFrame(animate);
-    });
-    
-    return this.testResult!;
+      }
+
+      requestAnimationFrame(animate)
+    })
+
+    return this.testResult!
   }
-  
+
   // 设置测试场景
   private setupTestScene(): void {
     // 创建测试Canvas（不添加到DOM）
-    this.testCanvas = document.createElement('canvas');
-    this.testCanvas.width = 500;
-    this.testCanvas.height = 500;
-    
+    this.testCanvas = document.createElement('canvas')
+    this.testCanvas.width = 500
+    this.testCanvas.height = 500
+
     // 创建渲染器
-    this.testRenderer = new THREE.WebGLRenderer({ 
+    this.testRenderer = new THREE.WebGLRenderer({
       canvas: this.testCanvas,
       antialias: false,
       alpha: true
-    });
-    
+    })
+
     // 创建场景
-    this.testScene = new THREE.Scene();
-    
+    this.testScene = new THREE.Scene()
+
     // 创建相机
-    this.testCamera = new THREE.PerspectiveCamera(
-      75,
-      1,
-      0.1,
-      1000
-    );
-    this.testCamera.position.z = 5;
-    
+    this.testCamera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000)
+    this.testCamera.position.z = 5
+
     // 创建测试几何体（立方体）
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshStandardMaterial({ 
+    const geometry = new THREE.BoxGeometry(1, 1, 1)
+    const material = new THREE.MeshStandardMaterial({
       color: 0x00ff00,
       wireframe: false
-    });
-    this.testCube = new THREE.Mesh(geometry, material);
-    this.testScene.add(this.testCube);
-    
+    })
+    this.testCube = new THREE.Mesh(geometry, material)
+    this.testScene.add(this.testCube)
+
     // 添加光源
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    this.testScene.add(ambientLight);
-    
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(1, 1, 1);
-    this.testScene.add(directionalLight);
-    
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
+    this.testScene.add(ambientLight)
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5)
+    directionalLight.position.set(1, 1, 1)
+    this.testScene.add(directionalLight)
+
     // 创建大量粒子来测试GPU性能
-    const particleGeometry = new THREE.BufferGeometry();
-    const particlesCount = 10000;
-    const posArray = new Float32Array(particlesCount * 3);
-    
+    const particleGeometry = new THREE.BufferGeometry()
+    const particlesCount = 10000
+    const posArray = new Float32Array(particlesCount * 3)
+
     for (let i = 0; i < particlesCount * 3; i++) {
-      posArray[i] = (Math.random() - 0.5) * 10;
+      posArray[i] = (Math.random() - 0.5) * 10
     }
-    
-    particleGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-    
+
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3))
+
     const particleMaterial = new THREE.PointsMaterial({
       size: 0.01,
       color: 0x0000ff
-    });
-    
-    this.testParticles = new THREE.Points(particleGeometry, particleMaterial);
-    this.testScene.add(this.testParticles);
+    })
+
+    this.testParticles = new THREE.Points(particleGeometry, particleMaterial)
+    this.testScene.add(this.testParticles)
   }
-  
+
   // 更新测试场景
   private updateTestScene(): void {
-    if (!this.testCube || !this.testParticles || !this.testRenderer || !this.testScene || !this.testCamera) return;
-    
+    if (
+      !this.testCube ||
+      !this.testParticles ||
+      !this.testRenderer ||
+      !this.testScene ||
+      !this.testCamera
+    )
+      return
+
     // 旋转立方体
-    this.testCube.rotation.x += 0.01;
-    this.testCube.rotation.y += 0.01;
-    
+    this.testCube.rotation.x += 0.01
+    this.testCube.rotation.y += 0.01
+
     // 旋转粒子系统
-    this.testParticles.rotation.y += 0.001;
-    
+    this.testParticles.rotation.y += 0.001
+
     // 渲染场景
-    this.testRenderer.render(this.testScene, this.testCamera);
+    this.testRenderer.render(this.testScene, this.testCamera)
   }
-  
+
   // 清理测试场景
   private cleanupTestScene(): void {
     if (this.testRenderer) {
-      this.testRenderer.dispose();
-      this.testRenderer = null;
+      this.testRenderer.dispose()
+      this.testRenderer = null
     }
-    
+
     if (this.testCube) {
-      this.testCube.geometry.dispose();
-      (this.testCube.material as THREE.Material).dispose();
-      this.testCube = null;
+      this.testCube.geometry.dispose()
+      ;(this.testCube.material as THREE.Material).dispose()
+      this.testCube = null
     }
-    
+
     if (this.testParticles) {
-      this.testParticles.geometry.dispose();
-      (this.testParticles.material as THREE.Material).dispose();
-      this.testParticles = null;
+      this.testParticles.geometry.dispose()
+      ;(this.testParticles.material as THREE.Material).dispose()
+      this.testParticles = null
     }
-    
-    this.testScene = null;
-    this.testCamera = null;
-    this.testCanvas = null;
+
+    this.testScene = null
+    this.testCamera = null
+    this.testCanvas = null
   }
-  
+
   // 计算测试结果
   private calculateTestResults(): void {
     if (this.fpsHistory.length === 0) {
@@ -390,110 +398,121 @@ export class DevicePerformanceAnalyzer {
         memoryScore: 0,
         recommendedMode: 'low',
         optimalSettings: this.getOptimalSettingsForTier('low')
-      };
-      return;
+      }
+      return
     }
-    
+
     // 计算平均FPS并移除异常值
-    const sortedFPS = [...this.fpsHistory].sort((a, b) => a - b);
-    const middleFPS = sortedFPS.slice(Math.floor(sortedFPS.length * 0.1), Math.floor(sortedFPS.length * 0.9));
-    const avgFPS = middleFPS.reduce((sum, fps) => sum + fps, 0) / middleFPS.length;
-    
+    const sortedFPS = [...this.fpsHistory].sort((a, b) => a - b)
+    const middleFPS = sortedFPS.slice(
+      Math.floor(sortedFPS.length * 0.1),
+      Math.floor(sortedFPS.length * 0.9)
+    )
+    const avgFPS = middleFPS.reduce((sum, fps) => sum + fps, 0) / middleFPS.length
+
     // 计算性能分数（0-100）
-    const fpsScore = Math.min(100, Math.max(0, (avgFPS / 60) * 100));
-    const hardwareScore = this.calculateHardwareScore();
-    
+    const fpsScore = Math.min(100, Math.max(0, (avgFPS / 60) * 100))
+    const hardwareScore = this.calculateHardwareScore()
+
     // 综合分数
-    const totalScore = (fpsScore * 0.6) + (hardwareScore * 0.4);
-    
+    const totalScore = fpsScore * 0.6 + hardwareScore * 0.4
+
     // 确定性能级别
-    let tier: DevicePerformanceTier;
+    let tier: DevicePerformanceTier
     if (totalScore >= 70) {
-      tier = 'high';
+      tier = 'high'
     } else if (totalScore >= 40) {
-      tier = 'medium';
+      tier = 'medium'
     } else {
-      tier = 'low';
+      tier = 'low'
     }
-    
+
     // 确定推荐的性能模式
-    const recommendedMode: PerformanceMode = tier === 'high' ? 'high' : tier === 'medium' ? 'medium' : 'low';
-    
+    const recommendedMode: PerformanceMode =
+      tier === 'high' ? 'high' : tier === 'medium' ? 'medium' : 'low'
+
     this.testResult = {
       score: Math.round(totalScore),
       tier,
       gpuScore: Math.round(fpsScore),
-      cpuScore: Math.round(this.deviceInfo.hardwareConcurrency / 16 * 100),
-      memoryScore: Math.round(this.deviceInfo.deviceMemory / 16 * 100),
+      cpuScore: Math.round((this.deviceInfo.hardwareConcurrency / 16) * 100),
+      memoryScore: Math.round((this.deviceInfo.deviceMemory / 16) * 100),
       recommendedMode,
       optimalSettings: this.getOptimalSettingsForTier(tier)
-    };
-    
+    }
+
     // 更新设备性能级别
-    this.deviceInfo.performanceTier = tier;
-    
-    console.log('性能测试结果:', this.testResult);
+    this.deviceInfo.performanceTier = tier
+
+    console.log('性能测试结果:', this.testResult)
   }
-  
+
   // 计算硬件分数
   private calculateHardwareScore(): number {
-    const cpuScore = Math.min(100, (this.deviceInfo.hardwareConcurrency / 16) * 100);
-    const memoryScore = Math.min(100, (this.deviceInfo.deviceMemory / 16) * 100);
-    const gpuScore = this.calculateGPUScore();
-    const screenScore = this.calculateScreenScore();
-    
-    return (cpuScore * 0.25) + (memoryScore * 0.25) + (gpuScore * 0.35) + (screenScore * 0.15);
+    const cpuScore = Math.min(100, (this.deviceInfo.hardwareConcurrency / 16) * 100)
+    const memoryScore = Math.min(100, (this.deviceInfo.deviceMemory / 16) * 100)
+    const gpuScore = this.calculateGPUScore()
+    const screenScore = this.calculateScreenScore()
+
+    return cpuScore * 0.25 + memoryScore * 0.25 + gpuScore * 0.35 + screenScore * 0.15
   }
-  
+
   // 计算GPU分数
   private calculateGPUScore(): number {
-    if (!this.deviceInfo.supportsWebGL2) return 40;
-    
-    const gpu = this.deviceInfo.gpu.toLowerCase();
-    let score = 80;
-    
+    if (!this.deviceInfo.supportsWebGL2) return 40
+
+    const gpu = this.deviceInfo.gpu.toLowerCase()
+    let score = 80
+
     // 高端GPU检测
-    const highEndGPUs = ['rtx', 'gtx 30', 'gtx 40', 'amd radeon rx 6', 'amd radeon rx 7', 'intel arc a7'];
-    const midEndGPUs = ['gtx 10', 'gtx 20', 'amd radeon rx 5', 'intel arc a5'];
-    const lowEndGPUs = ['gtx 9', 'amd radeon rx 4', 'intel uhd', 'intel iris xe'];
-    
+    const highEndGPUs = [
+      'rtx',
+      'gtx 30',
+      'gtx 40',
+      'amd radeon rx 6',
+      'amd radeon rx 7',
+      'intel arc a7'
+    ]
+    const midEndGPUs = ['gtx 10', 'gtx 20', 'amd radeon rx 5', 'intel arc a5']
+    const lowEndGPUs = ['gtx 9', 'amd radeon rx 4', 'intel uhd', 'intel iris xe']
+
     if (highEndGPUs.some(gpuName => gpu.includes(gpuName))) {
-      score = 100;
+      score = 100
     } else if (midEndGPUs.some(gpuName => gpu.includes(gpuName))) {
-      score = 80;
+      score = 80
     } else if (lowEndGPUs.some(gpuName => gpu.includes(gpuName))) {
-      score = 60;
+      score = 60
     } else {
-      score = 70;
+      score = 70
     }
-    
-    return score;
+
+    return score
   }
-  
+
   // 计算屏幕分数
   private calculateScreenScore(): number {
-    const { width, height } = this.deviceInfo.screenResolution;
-    const pixelCount = width * height;
-    const pixelRatio = this.deviceInfo.pixelRatio;
-    
+    const { width, height } = this.deviceInfo.screenResolution
+    const pixelCount = width * height
+    const pixelRatio = this.deviceInfo.pixelRatio
+
     // 4K及以上屏幕
     if (pixelCount >= 3840 * 2160) {
-      return pixelRatio > 1 ? 90 : 80;
+      return pixelRatio > 1 ? 90 : 80
     }
     // 2K屏幕
     else if (pixelCount >= 2560 * 1440) {
-      return pixelRatio > 1 ? 85 : 75;
+      return pixelRatio > 1 ? 85 : 75
     }
     // 1080p屏幕
     else if (pixelCount >= 1920 * 1080) {
-      return pixelRatio > 1 ? 80 : 70;
+      return pixelRatio > 1 ? 80 : 70
     }
     // 低于1080p
     else {
-      return 60;
+      return 60
     }
   }
-  
+
   // 获取特定性能级别的最佳设置
   private getOptimalSettingsForTier(tier: DevicePerformanceTier): Partial<OptimizationStrategy> {
     switch (tier) {
@@ -506,7 +525,7 @@ export class DevicePerformanceAnalyzer {
           enableShadows: true,
           enableLOD: false,
           pixelRatio: Math.min(window.devicePixelRatio, 2.0)
-        };
+        }
       case 'medium':
         return {
           particleCount: 200,
@@ -516,7 +535,7 @@ export class DevicePerformanceAnalyzer {
           enableShadows: true,
           enableLOD: true,
           pixelRatio: Math.min(window.devicePixelRatio, 1.5)
-        };
+        }
       case 'low':
       default:
         return {
@@ -527,125 +546,129 @@ export class DevicePerformanceAnalyzer {
           enableShadows: false,
           enableLOD: true,
           pixelRatio: 1.0
-        };
+        }
     }
   }
-  
+
   // 应用最佳配置到性能优化管理器
   public applyOptimalSettings(optimizer: PerformanceOptimizationManager): void {
     if (this.testResult) {
       // 使用测试结果的设置
-      const currentStrategy = optimizer.getCurrentStrategy();
+      const currentStrategy = optimizer.getCurrentStrategy()
       const optimalStrategy = {
         ...currentStrategy,
         ...this.testResult.optimalSettings
-      };
-      
-      optimizer.applyStrategy(optimalStrategy);
-      optimizer.setPerformanceMode(this.testResult.recommendedMode);
+      }
+
+      optimizer.applyStrategy(optimalStrategy)
+      optimizer.setPerformanceMode(this.testResult.recommendedMode)
     } else {
       // 使用基于设备规格的默认设置
-      const optimalSettings = this.getOptimalSettingsForTier(this.deviceInfo.performanceTier);
-      const currentStrategy = optimizer.getCurrentStrategy();
+      const optimalSettings = this.getOptimalSettingsForTier(this.deviceInfo.performanceTier)
+      const currentStrategy = optimizer.getCurrentStrategy()
       const strategy = {
         ...currentStrategy,
         ...optimalSettings
-      };
-      
-      optimizer.applyStrategy(strategy);
-      
+      }
+
+      optimizer.applyStrategy(strategy)
+
       // 设置推荐的性能模式
-      const recommendedMode: PerformanceMode = 
-        this.deviceInfo.performanceTier === 'high' ? 'high' :
-        this.deviceInfo.performanceTier === 'medium' ? 'medium' : 'low';
-      optimizer.setPerformanceMode(recommendedMode);
+      const recommendedMode: PerformanceMode =
+        this.deviceInfo.performanceTier === 'high'
+          ? 'high'
+          : this.deviceInfo.performanceTier === 'medium'
+            ? 'medium'
+            : 'low'
+      optimizer.setPerformanceMode(recommendedMode)
     }
   }
-  
+
   // 获取缓存的测试结果
   public getTestResult(): PerformanceTestResult | null {
-    return this.testResult;
+    return this.testResult
   }
-  
+
   // 检测设备性能级别（公开方法）
   public async detectPerformanceTier(): Promise<DevicePerformanceTier> {
     // 直接返回已检测的性能级别
-    return this.deviceInfo.performanceTier;
+    return this.deviceInfo.performanceTier
   }
-  
+
   // 运行完整性能测试
   public async runFullPerformanceTest(): Promise<PerformanceTestResult> {
     // 调用现有的性能测试方法
-    return this.runPerformanceTest();
+    return this.runPerformanceTest()
   }
-  
+
   // 获取推荐设置
   public getRecommendedSettings(results: PerformanceTestResult): { mode: PerformanceMode } {
     return {
       mode: results.recommendedMode
-    };
+    }
   }
-  
+
   // 检查是否支持特定功能
   public isFeatureSupported(feature: string): boolean {
     switch (feature) {
       case 'webgl2':
-        return this.deviceInfo.supportsWebGL2;
+        return this.deviceInfo.supportsWebGL2
       case 'webgpu':
-        return this.deviceInfo.supportsWebGP;
+        return this.deviceInfo.supportsWebGP
       case 'shadows':
-        return this.deviceInfo.performanceTier !== 'low' || this.deviceInfo.supportsWebGL2;
+        return this.deviceInfo.performanceTier !== 'low' || this.deviceInfo.supportsWebGL2
       case 'high-res-textures':
-        return this.deviceInfo.deviceMemory >= 4 && this.deviceInfo.performanceTier !== 'low';
+        return this.deviceInfo.deviceMemory >= 4 && this.deviceInfo.performanceTier !== 'low'
       default:
-        return false;
+        return false
     }
   }
-  
+
   // 生成设备兼容性报告
-  public generateCompatibilityReport(): { 
-    isCompatible: boolean; 
-    warnings: string[]; 
-    recommendations: string[];
+  public generateCompatibilityReport(): {
+    isCompatible: boolean
+    warnings: string[]
+    recommendations: string[]
   } {
-    const warnings: string[] = [];
-    const recommendations: string[] = [];
-    
+    const warnings: string[] = []
+    const recommendations: string[] = []
+
     // 检查基本兼容性
-    const isCompatible = this.deviceInfo.supportsWebGL2 || !!document.createElement('canvas').getContext('webgl');
-    
+    const isCompatible =
+      this.deviceInfo.supportsWebGL2 || !!document.createElement('canvas').getContext('webgl')
+
     if (!isCompatible) {
-      warnings.push('您的设备不支持WebGL，无法运行可视化效果');
-      return { isCompatible: false, warnings, recommendations };
+      warnings.push('您的设备不支持WebGL，无法运行可视化效果')
+      return { isCompatible: false, warnings, recommendations }
     }
-    
+
     // 性能警告
     if (this.deviceInfo.performanceTier === 'low') {
-      warnings.push('您的设备性能较低，可能会影响可视化效果的流畅度');
-      recommendations.push('建议使用低性能模式运行');
-      recommendations.push('降低浏览器中其他标签页的数量');
+      warnings.push('您的设备性能较低，可能会影响可视化效果的流畅度')
+      recommendations.push('建议使用低性能模式运行')
+      recommendations.push('降低浏览器中其他标签页的数量')
     }
-    
+
     // 移动设备警告
     if (this.deviceInfo.deviceType === 'mobile') {
-      warnings.push('移动设备上可能会消耗较多电量');
-      recommendations.push('考虑在桌面设备上查看以获得最佳体验');
+      warnings.push('移动设备上可能会消耗较多电量')
+      recommendations.push('考虑在桌面设备上查看以获得最佳体验')
     }
-    
+
     // 内存警告
     if (this.deviceInfo.deviceMemory < 4) {
-      warnings.push('可用内存较少，可能会影响复杂场景的加载');
-      recommendations.push('关闭其他应用程序以释放内存');
+      warnings.push('可用内存较少，可能会影响复杂场景的加载')
+      recommendations.push('关闭其他应用程序以释放内存')
     }
-    
+
     // GPU警告
     if (!this.deviceInfo.supportsWebGL2) {
-      warnings.push('您的GPU不支持WebGL2，某些高级效果将不可用');
+      warnings.push('您的GPU不支持WebGL2，某些高级效果将不可用')
     }
-    
-    return { isCompatible, warnings, recommendations };
+
+    return { isCompatible, warnings, recommendations }
   }
 }
 
 // 导出单例实例
-export const devicePerformanceAnalyzer = new DevicePerformanceAnalyzer();
+export const devicePerformanceAnalyzer = new DevicePerformanceAnalyzer()

@@ -1,410 +1,426 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>质量定义可视化</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            color: #fff;
-            overflow-x: hidden;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        h1 {
-            text-align: center;
-            font-size: 2.5em;
-            margin: 30px 0;
-            text-shadow: 0 0 20px rgba(100, 200, 255, 0.8);
-        }
-        
-        .formula {
-            text-align: center;
-            font-size: 2em;
-            margin: 20px 0;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .canvas-container {
-            position: relative;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 30px 0;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-        
-        canvas {
-            display: block;
-            width: 100%;
-            border-radius: 10px;
-            background: radial-gradient(circle at center, #1a1a2e, #0a0a15);
-        }
-        
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin: 30px 0;
-            flex-wrap: wrap;
-        }
-        
-        .control-group {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            min-width: 250px;
-        }
-        
-        .control-group label {
-            display: block;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-        }
-        
-        input[type="range"] {
-            width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.2);
-            outline: none;
-            border-radius: 3px;
-        }
-        
-        input[type="range"]::-webkit-slider-thumb {
-            width: 20px;
-            height: 20px;
-            background: #64b5f6;
-            cursor: pointer;
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(100, 181, 246, 0.8);
-        }
-        
-        .info-box {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 25px;
-            border-radius: 10px;
-            margin: 20px 0;
-            backdrop-filter: blur(10px);
-            line-height: 1.8;
-        }
-        
-        .highlight {
-            color: #64b5f6;
-            font-weight: bold;
-        }
-        
-        .value-display {
-            font-size: 1.2em;
-            color: #4fc3f7;
-            margin-top: 10px;
-        }
-        
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: transform 0.3s;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-        
-        .legend {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .legend-color {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        color: #fff;
+        overflow-x: hidden;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 2.5em;
+        margin: 30px 0;
+        text-shadow: 0 0 20px rgba(100, 200, 255, 0.8);
+      }
+
+      .formula {
+        text-align: center;
+        font-size: 2em;
+        margin: 20px 0;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+      }
+
+      .canvas-container {
+        position: relative;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 30px 0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        border-radius: 10px;
+        background: radial-gradient(circle at center, #1a1a2e, #0a0a15);
+      }
+
+      .controls {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin: 30px 0;
+        flex-wrap: wrap;
+      }
+
+      .control-group {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+        min-width: 250px;
+      }
+
+      .control-group label {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+      }
+
+      input[type='range'] {
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.2);
+        outline: none;
+        border-radius: 3px;
+      }
+
+      input[type='range']::-webkit-slider-thumb {
+        width: 20px;
+        height: 20px;
+        background: #64b5f6;
+        cursor: pointer;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(100, 181, 246, 0.8);
+      }
+
+      .info-box {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 25px;
+        border-radius: 10px;
+        margin: 20px 0;
+        backdrop-filter: blur(10px);
+        line-height: 1.8;
+      }
+
+      .highlight {
+        color: #64b5f6;
+        font-weight: bold;
+      }
+
+      .value-display {
+        font-size: 1.2em;
+        color: #4fc3f7;
+        margin-top: 10px;
+      }
+
+      button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: transform 0.3s;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+      }
+
+      .legend {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .legend-color {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>统一场论：质量定义可视化</h1>
-        
-        <div class="formula">
-            m = k · dn/dΩ
+      <h1>统一场论：质量定义可视化</h1>
+
+      <div class="formula">m = k · dn/dΩ</div>
+
+      <div class="info-box">
+        <h3>核心概念：</h3>
+        <p>• <span class="highlight">n（总条数）= 无限</span> - 空间位移矢量充满整个空间</p>
+        <p>• <span class="highlight">dn/dΩ（密度）= 有限</span> - 单位立体角内的矢量条数是有限的</p>
+        <p>• <span class="highlight">m（质量）= 有限</span> - 由密度决定，而非总条数</p>
+      </div>
+
+      <div class="canvas-container">
+        <canvas id="vizCanvas"></canvas>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color" style="background: #ff6b6b"></div>
+          <span>物体（质量源）</span>
         </div>
-        
-        <div class="info-box">
-            <h3>核心概念：</h3>
-            <p>• <span class="highlight">n（总条数）= 无限</span> - 空间位移矢量充满整个空间</p>
-            <p>• <span class="highlight">dn/dΩ（密度）= 有限</span> - 单位立体角内的矢量条数是有限的</p>
-            <p>• <span class="highlight">m（质量）= 有限</span> - 由密度决定，而非总条数</p>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #4ecdc4"></div>
+          <span>空间位移矢量</span>
         </div>
-        
-        <div class="canvas-container">
-            <canvas id="vizCanvas"></canvas>
+        <div class="legend-item">
+          <div
+            class="legend-color"
+            style="background: rgba(255, 215, 0, 0.3); border: 2px solid gold"
+          ></div>
+          <span>立体角 dΩ</span>
         </div>
-        
-        <div class="legend">
-            <div class="legend-item">
-                <div class="legend-color" style="background: #ff6b6b;"></div>
-                <span>物体（质量源）</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #4ecdc4;"></div>
-                <span>空间位移矢量</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: rgba(255, 215, 0, 0.3); border: 2px solid gold;"></div>
-                <span>立体角 dΩ</span>
-            </div>
+      </div>
+
+      <div class="controls">
+        <div class="control-group">
+          <label>矢量密度 (dn/dΩ)</label>
+          <input type="range" id="density" min="5" max="50" value="20" step="1" />
+          <div class="value-display">密度: <span id="densityValue">20</span> 条/单位立体角</div>
         </div>
-        
-        <div class="controls">
-            <div class="control-group">
-                <label>矢量密度 (dn/dΩ)</label>
-                <input type="range" id="density" min="5" max="50" value="20" step="1">
-                <div class="value-display">密度: <span id="densityValue">20</span> 条/单位立体角</div>
-            </div>
-            
-            <div class="control-group">
-                <label>立体角大小 (dΩ)</label>
-                <input type="range" id="angle" min="20" max="80" value="45" step="1">
-                <div class="value-display">角度: <span id="angleValue">45</span>°</div>
-            </div>
-            
-            <div class="control-group">
-                <label>旋转速度</label>
-                <input type="range" id="speed" min="0" max="5" value="1" step="0.1">
-                <div class="value-display">速度: <span id="speedValue">1.0</span>x</div>
-            </div>
+
+        <div class="control-group">
+          <label>立体角大小 (dΩ)</label>
+          <input type="range" id="angle" min="20" max="80" value="45" step="1" />
+          <div class="value-display">角度: <span id="angleValue">45</span>°</div>
         </div>
-        
-        <div style="text-align: center; margin: 20px 0;">
-            <button id="toggleBtn">暂停动画</button>
+
+        <div class="control-group">
+          <label>旋转速度</label>
+          <input type="range" id="speed" min="0" max="5" value="1" step="0.1" />
+          <div class="value-display">速度: <span id="speedValue">1.0</span>x</div>
         </div>
-        
-        <div class="info-box">
-            <h3>计算结果：</h3>
-            <div class="value-display">
-                <p>立体角内矢量条数: <span id="vectorCount">0</span> 条</p>
-                <p>相对质量 m ∝ dn/dΩ: <span id="massValue">0</span></p>
-            </div>
+      </div>
+
+      <div style="text-align: center; margin: 20px 0">
+        <button id="toggleBtn">暂停动画</button>
+      </div>
+
+      <div class="info-box">
+        <h3>计算结果：</h3>
+        <div class="value-display">
+          <p>立体角内矢量条数: <span id="vectorCount">0</span> 条</p>
+          <p>相对质量 m ∝ dn/dΩ: <span id="massValue">0</span></p>
         </div>
-        
-        <div class="info-box">
-            <h3>🔍 物理意义：</h3>
-            <p><strong>为什么总条数无限，质量却有限？</strong></p>
-            <p>类比：想象一个无限大的沙滩（空间），上面有无限颗沙子（空间位移矢量）。</p>
-            <p>当你用勺子取一小勺沙子（立体角 dΩ），勺子里的沙子数量是<span class="highlight">有限且可测的</span>。</p>
-            <p>质量就像这勺沙子的重量，取决于<span class="highlight">局部密度</span>，而非整个沙滩的沙子总量！</p>
-        </div>
+      </div>
+
+      <div class="info-box">
+        <h3>🔍 物理意义：</h3>
+        <p><strong>为什么总条数无限，质量却有限？</strong></p>
+        <p>类比：想象一个无限大的沙滩（空间），上面有无限颗沙子（空间位移矢量）。</p>
+        <p>
+          当你用勺子取一小勺沙子（立体角 dΩ），勺子里的沙子数量是<span class="highlight"
+            >有限且可测的</span
+          >。
+        </p>
+        <p>
+          质量就像这勺沙子的重量，取决于<span class="highlight">局部密度</span
+          >，而非整个沙滩的沙子总量！
+        </p>
+      </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('vizCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        canvas.width = 800;
-        canvas.height = 600;
-        
-        let density = 20;
-        let coneAngle = 45;
-        let rotationSpeed = 1;
-        let rotation = 0;
-        let isPaused = false;
-        
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-        
-        // 更新控制器
-        document.getElementById('density').addEventListener('input', (e) => {
-            density = parseInt(e.target.value);
-            document.getElementById('densityValue').textContent = density;
-            updateCalculations();
-        });
-        
-        document.getElementById('angle').addEventListener('input', (e) => {
-            coneAngle = parseInt(e.target.value);
-            document.getElementById('angleValue').textContent = coneAngle;
-            updateCalculations();
-        });
-        
-        document.getElementById('speed').addEventListener('input', (e) => {
-            rotationSpeed = parseFloat(e.target.value);
-            document.getElementById('speedValue').textContent = rotationSpeed.toFixed(1);
-        });
-        
-        document.getElementById('toggleBtn').addEventListener('click', () => {
-            isPaused = !isPaused;
-            document.getElementById('toggleBtn').textContent = isPaused ? '继续动画' : '暂停动画';
-        });
-        
-        function updateCalculations() {
-            const solidAngle = 2 * Math.PI * (1 - Math.cos(coneAngle * Math.PI / 180));
-            const vectorCount = Math.round(density * solidAngle);
-            const mass = density;
-            
-            document.getElementById('vectorCount').textContent = vectorCount;
-            document.getElementById('massValue').textContent = mass.toFixed(1);
+      const canvas = document.getElementById('vizCanvas')
+      const ctx = canvas.getContext('2d')
+
+      canvas.width = 800
+      canvas.height = 600
+
+      let density = 20
+      let coneAngle = 45
+      let rotationSpeed = 1
+      let rotation = 0
+      let isPaused = false
+
+      const centerX = canvas.width / 2
+      const centerY = canvas.height / 2
+
+      // 更新控制器
+      document.getElementById('density').addEventListener('input', e => {
+        density = parseInt(e.target.value)
+        document.getElementById('densityValue').textContent = density
+        updateCalculations()
+      })
+
+      document.getElementById('angle').addEventListener('input', e => {
+        coneAngle = parseInt(e.target.value)
+        document.getElementById('angleValue').textContent = coneAngle
+        updateCalculations()
+      })
+
+      document.getElementById('speed').addEventListener('input', e => {
+        rotationSpeed = parseFloat(e.target.value)
+        document.getElementById('speedValue').textContent = rotationSpeed.toFixed(1)
+      })
+
+      document.getElementById('toggleBtn').addEventListener('click', () => {
+        isPaused = !isPaused
+        document.getElementById('toggleBtn').textContent = isPaused ? '继续动画' : '暂停动画'
+      })
+
+      function updateCalculations() {
+        const solidAngle = 2 * Math.PI * (1 - Math.cos((coneAngle * Math.PI) / 180))
+        const vectorCount = Math.round(density * solidAngle)
+        const mass = density
+
+        document.getElementById('vectorCount').textContent = vectorCount
+        document.getElementById('massValue').textContent = mass.toFixed(1)
+      }
+
+      function drawVectors() {
+        // 绘制背景星空效果
+        for (let i = 0; i < 50; i++) {
+          const x = Math.random() * canvas.width
+          const y = Math.random() * canvas.height
+          const size = Math.random() * 2
+          ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5})`
+          ctx.fillRect(x, y, size, size)
         }
-        
-        function drawVectors() {
-            // 绘制背景星空效果
-            for (let i = 0; i < 50; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const size = Math.random() * 2;
-                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5})`;
-                ctx.fillRect(x, y, size, size);
-            }
-            
-            // 绘制全空间的矢量（表示n无限）
-            const totalVectors = 300;
-            for (let i = 0; i < totalVectors; i++) {
-                const angle = (i / totalVectors) * Math.PI * 2 + rotation;
-                const radius = 250;
-                const x = centerX + Math.cos(angle) * radius;
-                const y = centerY + Math.sin(angle) * radius;
-                
-                const alpha = 0.15;
-                ctx.strokeStyle = `rgba(78, 205, 196, ${alpha})`;
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(centerX, centerY);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-                
-                // 箭头
-                const arrowSize = 5;
-                const arrowAngle = Math.atan2(y - centerY, x - centerX);
-                ctx.fillStyle = `rgba(78, 205, 196, ${alpha})`;
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.lineTo(x - arrowSize * Math.cos(arrowAngle - Math.PI / 6), 
-                          y - arrowSize * Math.sin(arrowAngle - Math.PI / 6));
-                ctx.lineTo(x - arrowSize * Math.cos(arrowAngle + Math.PI / 6), 
-                          y - arrowSize * Math.sin(arrowAngle + Math.PI / 6));
-                ctx.closePath();
-                ctx.fill();
-            }
-            
-            // 绘制立体角区域
-            const halfAngle = (coneAngle * Math.PI / 180) / 2;
-            ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
-            ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.arc(centerX, centerY, 250, rotation - halfAngle, rotation + halfAngle);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-            
-            // 绘制立体角内的矢量（高亮显示）
-            const solidAngle = 2 * Math.PI * (1 - Math.cos(coneAngle * Math.PI / 180));
-            const vectorsInCone = Math.round(density * solidAngle);
-            
-            for (let i = 0; i < vectorsInCone; i++) {
-                const angle = rotation - halfAngle + (i / vectorsInCone) * (halfAngle * 2);
-                const radius = 250;
-                const x = centerX + Math.cos(angle) * radius;
-                const y = centerY + Math.sin(angle) * radius;
-                
-                ctx.strokeStyle = '#4ecdc4';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(centerX, centerY);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-                
-                // 箭头
-                const arrowSize = 8;
-                const arrowAngle = angle;
-                ctx.fillStyle = '#4ecdc4';
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.lineTo(x - arrowSize * Math.cos(arrowAngle - Math.PI / 6), 
-                          y - arrowSize * Math.sin(arrowAngle - Math.PI / 6));
-                ctx.lineTo(x - arrowSize * Math.cos(arrowAngle + Math.PI / 6), 
-                          y - arrowSize * Math.sin(arrowAngle + Math.PI / 6));
-                ctx.closePath();
-                ctx.fill();
-            }
-            
-            // 绘制中心物体
-            const gradient = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, 30);
-            gradient.addColorStop(0, '#ff6b6b');
-            gradient.addColorStop(0.5, '#ee5a6f');
-            gradient.addColorStop(1, 'rgba(238, 90, 111, 0.2)');
-            
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.strokeStyle = '#ff6b6b';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            
-            // 绘制标签
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 16px Microsoft YaHei';
-            ctx.textAlign = 'center';
-            ctx.fillText('质量源', centerX, centerY + 5);
-            
-            // 绘制立体角标签
-            ctx.fillStyle = '#ffd700';
-            ctx.font = '14px Microsoft YaHei';
-            const labelX = centerX + Math.cos(rotation) * 120;
-            const labelY = centerY + Math.sin(rotation) * 120;
-            ctx.fillText('dΩ', labelX, labelY);
+
+        // 绘制全空间的矢量（表示n无限）
+        const totalVectors = 300
+        for (let i = 0; i < totalVectors; i++) {
+          const angle = (i / totalVectors) * Math.PI * 2 + rotation
+          const radius = 250
+          const x = centerX + Math.cos(angle) * radius
+          const y = centerY + Math.sin(angle) * radius
+
+          const alpha = 0.15
+          ctx.strokeStyle = `rgba(78, 205, 196, ${alpha})`
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.moveTo(centerX, centerY)
+          ctx.lineTo(x, y)
+          ctx.stroke()
+
+          // 箭头
+          const arrowSize = 5
+          const arrowAngle = Math.atan2(y - centerY, x - centerX)
+          ctx.fillStyle = `rgba(78, 205, 196, ${alpha})`
+          ctx.beginPath()
+          ctx.moveTo(x, y)
+          ctx.lineTo(
+            x - arrowSize * Math.cos(arrowAngle - Math.PI / 6),
+            y - arrowSize * Math.sin(arrowAngle - Math.PI / 6)
+          )
+          ctx.lineTo(
+            x - arrowSize * Math.cos(arrowAngle + Math.PI / 6),
+            y - arrowSize * Math.sin(arrowAngle + Math.PI / 6)
+          )
+          ctx.closePath()
+          ctx.fill()
         }
-        
-        function animate() {
-            ctx.fillStyle = 'rgba(26, 26, 46, 0.3)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            drawVectors();
-            
-            if (!isPaused) {
-                rotation += 0.01 * rotationSpeed;
-            }
-            
-            requestAnimationFrame(animate);
+
+        // 绘制立体角区域
+        const halfAngle = (coneAngle * Math.PI) / 180 / 2
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.15)'
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)'
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.moveTo(centerX, centerY)
+        ctx.arc(centerX, centerY, 250, rotation - halfAngle, rotation + halfAngle)
+        ctx.closePath()
+        ctx.fill()
+        ctx.stroke()
+
+        // 绘制立体角内的矢量（高亮显示）
+        const solidAngle = 2 * Math.PI * (1 - Math.cos((coneAngle * Math.PI) / 180))
+        const vectorsInCone = Math.round(density * solidAngle)
+
+        for (let i = 0; i < vectorsInCone; i++) {
+          const angle = rotation - halfAngle + (i / vectorsInCone) * (halfAngle * 2)
+          const radius = 250
+          const x = centerX + Math.cos(angle) * radius
+          const y = centerY + Math.sin(angle) * radius
+
+          ctx.strokeStyle = '#4ecdc4'
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.moveTo(centerX, centerY)
+          ctx.lineTo(x, y)
+          ctx.stroke()
+
+          // 箭头
+          const arrowSize = 8
+          const arrowAngle = angle
+          ctx.fillStyle = '#4ecdc4'
+          ctx.beginPath()
+          ctx.moveTo(x, y)
+          ctx.lineTo(
+            x - arrowSize * Math.cos(arrowAngle - Math.PI / 6),
+            y - arrowSize * Math.sin(arrowAngle - Math.PI / 6)
+          )
+          ctx.lineTo(
+            x - arrowSize * Math.cos(arrowAngle + Math.PI / 6),
+            y - arrowSize * Math.sin(arrowAngle + Math.PI / 6)
+          )
+          ctx.closePath()
+          ctx.fill()
         }
-        
-        updateCalculations();
-        animate();
+
+        // 绘制中心物体
+        const gradient = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, 30)
+        gradient.addColorStop(0, '#ff6b6b')
+        gradient.addColorStop(0.5, '#ee5a6f')
+        gradient.addColorStop(1, 'rgba(238, 90, 111, 0.2)')
+
+        ctx.fillStyle = gradient
+        ctx.beginPath()
+        ctx.arc(centerX, centerY, 30, 0, Math.PI * 2)
+        ctx.fill()
+
+        ctx.strokeStyle = '#ff6b6b'
+        ctx.lineWidth = 3
+        ctx.stroke()
+
+        // 绘制标签
+        ctx.fillStyle = '#fff'
+        ctx.font = 'bold 16px Microsoft YaHei'
+        ctx.textAlign = 'center'
+        ctx.fillText('质量源', centerX, centerY + 5)
+
+        // 绘制立体角标签
+        ctx.fillStyle = '#ffd700'
+        ctx.font = '14px Microsoft YaHei'
+        const labelX = centerX + Math.cos(rotation) * 120
+        const labelY = centerY + Math.sin(rotation) * 120
+        ctx.fillText('dΩ', labelX, labelY)
+      }
+
+      function animate() {
+        ctx.fillStyle = 'rgba(26, 26, 46, 0.3)'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+        drawVectors()
+
+        if (!isPaused) {
+          rotation += 0.01 * rotationSpeed
+        }
+
+        requestAnimationFrame(animate)
+      }
+
+      updateCalculations()
+      animate()
     </script>
-</body>
+  </body>
 </html>

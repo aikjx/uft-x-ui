@@ -173,15 +173,16 @@ export class PerformanceMonitor {
    */
   private addAlert(alert: PerformanceAlert): void {
     // 避免重复警告
-    const isDuplicate = this.alerts.some(existing =>
-      existing.type === alert.type &&
-      existing.message === alert.message &&
-      (alert.timestamp - existing.timestamp) < 5000 // 5秒内不重复
+    const isDuplicate = this.alerts.some(
+      existing =>
+        existing.type === alert.type &&
+        existing.message === alert.message &&
+        alert.timestamp - existing.timestamp < 5000 // 5秒内不重复
     )
 
     if (!isDuplicate) {
       this.alerts.push(alert)
-      
+
       // 保持最近20个警告
       if (this.alerts.length > 20) {
         this.alerts.shift()
@@ -233,14 +234,14 @@ export class PerformanceMonitor {
 
     // 监听性能API
     if ('PerformanceObserver' in window) {
-      const observer = new PerformanceObserver((list) => {
-        list.getEntries().forEach((entry) => {
+      const observer = new PerformanceObserver(list => {
+        list.getEntries().forEach(entry => {
           if (entry.entryType === 'measure' && entry.name.includes('code-optimization')) {
             this.recordOperation(entry.duration)
           }
         })
       })
-      
+
       observer.observe({ entryTypes: ['measure'] })
     }
   }
@@ -314,15 +315,19 @@ export class PerformanceMonitor {
     const dashboard = this.getDashboard()
     const statistics = this.getStatistics()
 
-    return JSON.stringify({
-      timestamp: new Date().toISOString(),
-      statistics,
-      dashboard,
-      configuration: {
-        thresholds: this.thresholds,
-        isMonitoring: this.isMonitoring
-      }
-    }, null, 2)
+    return JSON.stringify(
+      {
+        timestamp: new Date().toISOString(),
+        statistics,
+        dashboard,
+        configuration: {
+          thresholds: this.thresholds,
+          isMonitoring: this.isMonitoring
+        }
+      },
+      null,
+      2
+    )
   }
 
   /**

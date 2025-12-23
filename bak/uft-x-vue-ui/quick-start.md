@@ -3,12 +3,15 @@
 ## 🎯 一键启动（推荐）
 
 ### Windows用户
+
 双击运行 `start-with-pnpm.bat`
 
 ### PowerShell用户
+
 右键点击 `start-with-pnpm.ps1`，选择"使用PowerShell运行"
 
 ### 手动启动
+
 ```bash
 # 1. 确保已安装pnpm
 pnpm --version
@@ -28,6 +31,7 @@ pnpm dev
 ## 🚀 系统功能亮点
 
 ### 1. 多语言支持
+
 - ✅ JavaScript/TypeScript
 - ✅ Python
 - ✅ Java
@@ -36,12 +40,14 @@ pnpm dev
 - ✅ Rust
 
 ### 2. 智能优化能力
+
 - ✅ AST深度分析
 - ✅ 性能瓶颈检测
 - ✅ 代码重构建议
 - ✅ 实时对比展示
 
 ### 3. 可视化界面
+
 - ✅ 现代化UI设计
 - ✅ 代码对比视图
 - ✅ 性能指标图表
@@ -61,23 +67,25 @@ pnpm dev
 ## 💡 使用示例
 
 ### 优化JavaScript代码
+
 ```javascript
 // 输入代码
 function calculateSum(arr) {
-    let result = 0;
-    for (let i = 0; i < arr.length; i++) {
-        result += arr[i];
-    }
-    return result;
+  let result = 0
+  for (let i = 0; i < arr.length; i++) {
+    result += arr[i]
+  }
+  return result
 }
 
 // 优化后代码
 function calculateSum(arr) {
-    return arr.reduce((sum, num) => sum + num, 0);
+  return arr.reduce((sum, num) => sum + num, 0)
 }
 ```
 
 ### 优化Python代码
+
 ```python
 # 输入代码
 def process_data(data_list):
@@ -96,12 +104,12 @@ def process_data(data_list):
 
 基于实际测试：
 
-| 指标 | 优化前 | 优化后 | 提升 |
-|------|--------|--------|------|
-| 执行时间 | 15ms | 8ms | +87% |
-| 内存使用 | 25MB | 18MB | +39% |
-| 代码行数 | 50行 | 35行 | +43% |
-| 可读性 | 中等 | 优秀 | +60% |
+| 指标     | 优化前 | 优化后 | 提升 |
+| -------- | ------ | ------ | ---- |
+| 执行时间 | 15ms   | 8ms    | +87% |
+| 内存使用 | 25MB   | 18MB   | +39% |
+| 代码行数 | 50行   | 35行   | +43% |
+| 可读性   | 中等   | 优秀   | +60% |
 
 ## 🔧 开发命令
 

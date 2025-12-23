@@ -7,6 +7,7 @@
 **问题**: 页面加载后公式显示为 LaTeX 代码而不是渲染后的数学公式
 
 **解决方案**:
+
 ```bash
 # 1. 检查网络连接
 # MathJax 从 CDN 加载，需要网络连接
@@ -31,6 +32,7 @@
 **原因**: 这是浏览器扩展的问题，不影响网站功能
 
 **解决方案**:
+
 - 可以安全忽略这些错误
 - 或者禁用相关的 Chrome 扩展
 - 使用无痕模式测试（Ctrl+Shift+N）
@@ -40,6 +42,7 @@
 **问题**: `npm run dev` 命令失败
 
 **解决方案**:
+
 ```bash
 # 1. 检查 Node.js 版本
 node --version  # 需要 >= 16.0.0
@@ -62,6 +65,7 @@ pnpm dev
 **问题**: 构建时出现类型错误
 
 **解决方案**:
+
 ```bash
 # 1. 运行类型检查
 npm run type-check
@@ -78,6 +82,7 @@ npm install
 **问题**: 自定义样式不显示
 
 **解决方案**:
+
 ```bash
 # 1. 检查 tailwind.config.js 的 content 配置
 # 确保包含所有 Vue 文件路径
@@ -95,6 +100,7 @@ npm run dev
 **问题**: 刷新页面后显示 404
 
 **解决方案**:
+
 ```bash
 # 开发环境：
 # Vite 自动处理，不应该出现此问题
@@ -109,6 +115,7 @@ npm run dev
 **问题**: 页面加载后公式渲染需要很长时间
 
 **优化方案**:
+
 ```typescript
 // 已实现：使用 setTimeout 延迟渲染
 setTimeout(() => typeset(), 100)
@@ -122,16 +129,19 @@ setTimeout(() => typeset(), 100)
 **状态**: 3D 可视化框架已搭建，Three.js 实现待完成
 
 **临时方案**:
+
 - 当前显示占位符界面
 - 可以选择不同场景
 - 参数控制面板已就绪
 
 **开发计划**:
+
 - 将在后续版本中实现完整的 Three.js 场景
 
 ## 性能优化建议
 
 ### 1. 开发环境优化
+
 ```bash
 # 使用 pnpm 代替 npm（更快）
 npm install -g pnpm
@@ -142,6 +152,7 @@ pnpm install
 ```
 
 ### 2. 生产环境优化
+
 ```bash
 # 构建前进行类型检查
 npm run type-check
@@ -157,6 +168,7 @@ npm run preview
 ```
 
 ### 3. 浏览器优化
+
 - 使用最新版本的 Chrome/Firefox/Safari
 - 启用硬件加速
 - 清除浏览器缓存
@@ -165,6 +177,7 @@ npm run preview
 ## 调试技巧
 
 ### 1. 查看 MathJax 状态
+
 ```javascript
 // 在浏览器控制台运行
 console.log('MathJax:', window.MathJax)
@@ -172,6 +185,7 @@ console.log('MathJax Ready:', !!window.MathJax?.typesetPromise)
 ```
 
 ### 2. 手动触发公式渲染
+
 ```javascript
 // 在浏览器控制台运行
 if (window.MathJax?.typesetPromise) {
@@ -182,12 +196,14 @@ if (window.MathJax?.typesetPromise) {
 ```
 
 ### 3. 检查路由状态
+
 ```javascript
 // 在浏览器控制台运行
 console.log('Current Route:', window.location.pathname)
 ```
 
 ### 4. Vue DevTools
+
 ```bash
 # 安装 Vue DevTools 浏览器扩展
 # Chrome: https://chrome.google.com/webstore

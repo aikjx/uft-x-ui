@@ -36,7 +36,7 @@ export class OptimizedTestRunner {
   async runTests(options: TestRunOptions = {}): Promise<TestRunResult> {
     const startTime = Date.now()
     const testName = options.testName || 'all-tests'
-    
+
     // 开始性能监控
     testPerformanceMonitor.startTestRun()
     testPerformanceMonitor.startTest(testName)
@@ -44,7 +44,7 @@ export class OptimizedTestRunner {
     try {
       const args = this.buildVitestArgs(options)
       const result = await this.executeVitest(args)
-      
+
       const endTime = Date.now()
       const runResult: TestRunResult = {
         success: result.exitCode === 0,
@@ -71,7 +71,7 @@ export class OptimizedTestRunner {
       console.log(`  • 通过: ${runResult.passed}`)
       console.log(`  • 失败: ${runResult.failed}`)
       console.log(`  • 跳过: ${runResult.skipped}`)
-      
+
       if (performanceReport.performance.recommendations.length > 0) {
         console.log(`💡 优化建议:`)
         performanceReport.performance.recommendations.forEach(rec => {
@@ -83,7 +83,7 @@ export class OptimizedTestRunner {
     } catch (error) {
       testPerformanceMonitor.endTest(testName, 'failed')
       testPerformanceMonitor.endTestRun()
-      
+
       throw error
     }
   }
@@ -160,17 +160,17 @@ export class OptimizedTestRunner {
       let output = ''
       let error = ''
 
-      child.stdout?.on('data', (data) => {
+      child.stdout?.on('data', data => {
         output += data.toString()
         process.stdout.write(data)
       })
 
-      child.stderr?.on('data', (data) => {
+      child.stderr?.on('data', data => {
         error += data.toString()
         process.stderr.write(data)
       })
 
-      child.on('close', (code) => {
+      child.on('close', code => {
         const result: VitestResult = {
           exitCode: code || 0,
           output,
@@ -208,17 +208,17 @@ export class OptimizedTestRunner {
   private saveResults(): void {
     const resultsFile = join(__dirname, 'test-results.json')
     try {
-      const existingData = existsSync(resultsFile) 
-        ? JSON.parse(readFileSync(resultsFile, 'utf8')) 
+      const existingData = existsSync(resultsFile)
+        ? JSON.parse(readFileSync(resultsFile, 'utf8'))
         : { runs: [] }
-      
+
       existingData.runs.push(...this.results)
-      
+
       // 只保留最近20次运行结果
       if (existingData.runs.length > 20) {
         existingData.runs = existingData.runs.slice(-20)
       }
-      
+
       require('fs').writeFileSync(resultsFile, JSON.stringify(existingData, null, 2))
       this.results = [] // 清空当前结果
     } catch (error) {
@@ -260,31 +260,34 @@ export class OptimizedTestRunner {
     }
   }
 
-  private calculateTrend(durations: number[], successRates: number[]): 'improving' | 'declining' | 'stable' {
+  private calculateTrend(
+    durations: number[],
+    successRates: number[]
+  ): 'improving' | 'declining' | 'stable' {
     const durationTrend = this.linearRegression(durations)
     const successTrend = this.linearRegression(successRates)
-    
+
     if (durationTrend.slope < -0.1 && successTrend.slope > 0.1) {
       return 'improving'
     } else if (durationTrend.slope > 0.1 && successTrend.slope < -0.1) {
       return 'declining'
     }
-    
+
     return 'stable'
   }
 
   private linearRegression(data: number[]): { slope: number; intercept: number } {
     const n = data.length
     const x = Array.from({ length: n }, (_, i) => i)
-    
+
     const sumX = x.reduce((a, b) => a + b, 0)
     const sumY = data.reduce((a, b) => a + b, 0)
     const sumXY = x.reduce((sum, xi, i) => sum + xi * data[i], 0)
     const sumXX = x.reduce((sum, xi) => sum + xi * xi, 0)
-    
+
     const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX)
     const intercept = (sumY - slope * sumX) / n
-    
+
     return { slope, intercept }
   }
 

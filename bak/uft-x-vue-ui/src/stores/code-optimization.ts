@@ -57,22 +57,20 @@ export const useCodeOptimizationStore = defineStore('codeOptimization', () => {
   // 计算属性
   const hasCode = computed(() => state.value.inputCode.trim().length > 0)
 
-  const canAnalyze = computed(() =>
-    hasCode.value &&
-    !state.value.isAnalyzing &&
-    !state.value.isOptimizing
+  const canAnalyze = computed(
+    () => hasCode.value && !state.value.isAnalyzing && !state.value.isOptimizing
   )
 
-  const canOptimize = computed(() =>
-    hasCode.value &&
-    state.value.analysisResult !== null &&
-    !state.value.isAnalyzing &&
-    !state.value.isOptimizing
+  const canOptimize = computed(
+    () =>
+      hasCode.value &&
+      state.value.analysisResult !== null &&
+      !state.value.isAnalyzing &&
+      !state.value.isOptimizing
   )
 
-  const hasOptimizationResult = computed(() =>
-    state.value.optimizedCode.trim().length > 0 &&
-    state.value.optimizationReport !== null
+  const hasOptimizationResult = computed(
+    () => state.value.optimizedCode.trim().length > 0 && state.value.optimizationReport !== null
   )
 
   // Actions

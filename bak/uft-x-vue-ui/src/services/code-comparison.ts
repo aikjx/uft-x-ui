@@ -57,11 +57,7 @@ export class CodeComparisonService {
     const optimizedLines = optimizedCode.split(this.LINE_SEPARATOR)
 
     // 计算差异
-    const differences = await this.calculateDifferences(
-      originalLines,
-      optimizedLines,
-      language
-    )
+    const differences = await this.calculateDifferences(originalLines, optimizedLines, language)
 
     // 生成总结
     const summary = this.generateSummary(differences, originalLines, optimizedLines)
@@ -116,7 +112,7 @@ export class CodeComparisonService {
 
     // 使用LCS算法计算最长公共子序列
     const lcsResult = this.longestCommonSubsequence(originalLines, optimizedLines)
-    
+
     // 分析差异
     let originalIndex = 0
     let optimizedIndex = 0
@@ -205,13 +201,12 @@ export class CodeComparisonService {
   /**
    * 最长公共子序列算法
    */
-  private longestCommonSubsequence(
-    a: string[],
-    b: string[]
-  ): [number, number][] {
+  private longestCommonSubsequence(a: string[], b: string[]): [number, number][] {
     const m = a.length
     const n = b.length
-    const dp: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0))
+    const dp: number[][] = Array(m + 1)
+      .fill(null)
+      .map(() => Array(n + 1).fill(0))
 
     // 构建DP表
     for (let i = 1; i <= m; i++) {
@@ -226,7 +221,8 @@ export class CodeComparisonService {
 
     // 回溯找到LCS
     const result: [number, number][] = []
-    let i = m, j = n
+    let i = m,
+      j = n
 
     while (i > 0 && j > 0) {
       if (this.normalizeLine(a[i - 1]) === this.normalizeLine(b[j - 1])) {
@@ -247,7 +243,11 @@ export class CodeComparisonService {
    * 标准化行内容（去除空白和注释影响）
    */
   private normalizeLine(line: string): string {
-    return line.trim().replace(/\s+/g, ' ').replace(/\/\/.*$/, '').replace(/\/\*.*?\*\//g, '')
+    return line
+      .trim()
+      .replace(/\s+/g, ' ')
+      .replace(/\/\/.*$/, '')
+      .replace(/\/\*.*?\*\//g, '')
   }
 
   /**
@@ -280,7 +280,9 @@ export class CodeComparisonService {
   private detectFunction(lines: string[], index: number): string | null {
     for (let i = index; i >= Math.max(0, index - 10); i--) {
       const line = lines[i]
-      const match = line.match(/^\s*(?:async\s+)?(?:function\s+(\w+)|const\s+(\w+)\s*=\s*(?:async\s+)?(?:function|\([^)]*\)\s*=>))/)
+      const match = line.match(
+        /^\s*(?:async\s+)?(?:function\s+(\w+)|const\s+(\w+)\s*=\s*(?:async\s+)?(?:function|\([^)]*\)\s*=>))/
+      )
       if (match) {
         return match[1] || match[2]
       }
@@ -321,23 +323,23 @@ export class CodeComparisonService {
    */
   private describeRemoval(line: string): string {
     const trimmed = line.trim()
-    
+
     if (trimmed.startsWith('console.') || trimmed.startsWith('debugger')) {
       return '移除调试代码'
     }
-    
+
     if (trimmed.match(/^\s*\/\*[\s\S]*?\*\/\s*$/)) {
       return '移除注释'
     }
-    
+
     if (trimmed.match(/^\s*$/)) {
       return '移除空行'
     }
-    
+
     if (trimmed.match(/(let|const|var)\s+\w+\s*=.*\{.*\}/)) {
       return '简化对象声明'
     }
-    
+
     return '移除冗余代码'
   }
 
@@ -346,19 +348,19 @@ export class CodeComparisonService {
    */
   private describeAddition(line: string): string {
     const trimmed = line.trim()
-    
+
     if (trimmed.includes('const length = ')) {
       return '添加长度缓存优化'
     }
-    
+
     if (trimmed.includes('reduce(') || trimmed.includes('map(') || trimmed.includes('filter(')) {
       return '添加函数式编程优化'
     }
-    
+
     if (trimmed.includes('async') || trimmed.includes('await')) {
       return '添加异步处理优化'
     }
-    
+
     return '添加优化代码'
   }
 
@@ -368,43 +370,46 @@ export class CodeComparisonService {
   private describeModification(original: string, optimized: string): string {
     const originalTrim = original.trim()
     const optimizedTrim = optimized.trim()
-    
+
     if (originalTrim.includes('.length') && optimizedTrim.includes('const length = ')) {
       return '缓存长度属性以提升循环性能'
     }
-    
+
     if (originalTrim.includes('for(') && optimizedTrim.includes('for(const')) {
       return '改进循环变量声明'
     }
-    
+
     if (originalTrim.includes('if(') && optimizedTrim.includes('?')) {
       return '简化条件表达式'
     }
-    
+
     return '代码结构优化'
   }
 
   /**
    * 分析影响级别
    */
-  private analyzeImpact(line: string, type: 'added' | 'removed' | 'modified'): 'low' | 'medium' | 'high' {
+  private analyzeImpact(
+    line: string,
+    type: 'added' | 'removed' | 'modified'
+  ): 'low' | 'medium' | 'high' {
     const trimmed = line.trim()
-    
+
     // 高影响
     if (trimmed.includes('for(') || trimmed.includes('while(') || trimmed.includes('function')) {
       return 'high'
     }
-    
+
     // 中等影响
     if (trimmed.includes('if(') || trimmed.includes('switch(') || trimmed.includes('.length')) {
       return 'medium'
     }
-    
+
     // 低影响
     if (trimmed.includes('console.') || trimmed.match(/^\s*\/\/.*$/) || trimmed.match(/^\s*$/)) {
       return 'low'
     }
-    
+
     return 'medium'
   }
 
@@ -429,7 +434,7 @@ export class CodeComparisonService {
     // 计算性能影响
     const highImpactChanges = differences.filter(d => d.impact === 'high').length
     const totalLines = Math.max(originalLines.length, optimizedLines.length)
-    
+
     if (highImpactChanges > totalLines * 0.1) {
       summary.performanceImpact = 'significant'
     } else if (highImpactChanges > totalLines * 0.05) {

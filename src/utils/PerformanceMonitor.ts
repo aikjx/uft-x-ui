@@ -1,25 +1,25 @@
-import { eventSystem, APP_EVENTS } from './eventSystem';
+import { eventSystem, APP_EVENTS } from './eventSystem'
 
 /**
  * 性能监控配置选项
  */
 export interface PerformanceMonitorConfig {
   /** 采样间隔（毫秒） */
-  sampleInterval?: number;
+  sampleInterval?: number
   /** 是否启用FPS监控 */
-  enableFPS?: boolean;
+  enableFPS?: boolean
   /** 是否启用内存监控 */
-  enableMemory?: boolean;
+  enableMemory?: boolean
   /** 是否启用GPU监控 */
-  enableGPU?: boolean;
+  enableGPU?: boolean
   /** 是否启用网络监控 */
-  enableNetwork?: boolean;
+  enableNetwork?: boolean
   /** 是否启用资源监控 */
-  enableResource?: boolean;
+  enableResource?: boolean
   /** 最大历史数据点数量 */
-  maxHistoryPoints?: number;
+  maxHistoryPoints?: number
   /** 是否在控制台输出性能数据 */
-  logToConsole?: boolean;
+  logToConsole?: boolean
 }
 
 /**
@@ -27,17 +27,17 @@ export interface PerformanceMonitorConfig {
  */
 export interface FPSDataPoint {
   /** 时间戳 */
-  timestamp: number;
+  timestamp: number
   /** 当前FPS值 */
-  fps: number;
+  fps: number
   /** 帧率平均值 */
-  avgFPS: number;
+  avgFPS: number
   /** 帧率最小值 */
-  minFPS: number;
+  minFPS: number
   /** 帧率最大值 */
-  maxFPS: number;
+  maxFPS: number
   /** 丢帧率 */
-  droppedFrames: number;
+  droppedFrames: number
 }
 
 /**
@@ -45,19 +45,19 @@ export interface FPSDataPoint {
  */
 export interface MemoryDataPoint {
   /** 时间戳 */
-  timestamp: number;
+  timestamp: number
   /** 已使用内存（字节） */
-  used: number;
+  used: number
   /** 总内存（字节） */
-  total: number;
+  total: number
   /** 使用率（百分比） */
-  usage: number;
+  usage: number
   /** JS堆大小（字节） */
-  jsHeapSizeUsed: number;
+  jsHeapSizeUsed: number
   /** 总JS堆大小（字节） */
-  jsHeapSizeTotal: number;
+  jsHeapSizeTotal: number
   /** 最大JS堆大小（字节） */
-  jsHeapSizeLimit: number;
+  jsHeapSizeLimit: number
 }
 
 /**
@@ -65,11 +65,11 @@ export interface MemoryDataPoint {
  */
 export interface GPUDataPoint {
   /** 时间戳 */
-  timestamp: number;
+  timestamp: number
   /** GPU使用率（百分比） */
-  usage: number;
+  usage: number
   /** GPU内存使用（字节） */
-  memoryUsed: number;
+  memoryUsed: number
 }
 
 /**
@@ -77,13 +77,13 @@ export interface GPUDataPoint {
  */
 export interface NetworkDataPoint {
   /** 时间戳 */
-  timestamp: number;
+  timestamp: number
   /** 下载速度（字节/秒） */
-  downloadSpeed: number;
+  downloadSpeed: number
   /** 上传速度（字节/秒） */
-  uploadSpeed: number;
+  uploadSpeed: number
   /** 当前连接数量 */
-  connections: number;
+  connections: number
 }
 
 /**
@@ -91,17 +91,17 @@ export interface NetworkDataPoint {
  */
 export interface ResourceDataPoint {
   /** 时间戳 */
-  timestamp: number;
+  timestamp: number
   /** 已加载资源数量 */
-  loaded: number;
+  loaded: number
   /** 加载中资源数量 */
-  loading: number;
+  loading: number
   /** 加载失败资源数量 */
-  failed: number;
+  failed: number
   /** 总资源数量 */
-  total: number;
+  total: number
   /** 资源加载成功率 */
-  successRate: number;
+  successRate: number
 }
 
 /**
@@ -109,15 +109,15 @@ export interface ResourceDataPoint {
  */
 export interface PerformanceData {
   /** FPS数据 */
-  fps: FPSDataPoint;
+  fps: FPSDataPoint
   /** 内存数据 */
-  memory?: MemoryDataPoint;
+  memory?: MemoryDataPoint
   /** GPU数据 */
-  gpu?: GPUDataPoint;
+  gpu?: GPUDataPoint
   /** 网络数据 */
-  network?: NetworkDataPoint;
+  network?: NetworkDataPoint
   /** 资源数据 */
-  resource?: ResourceDataPoint;
+  resource?: ResourceDataPoint
 }
 
 /**
@@ -125,19 +125,19 @@ export interface PerformanceData {
  * 用于实时监控应用的性能指标
  */
 export class PerformanceMonitor {
-  private config: PerformanceMonitorConfig;
-  private isMonitoring: boolean = false;
-  private animationFrameId: number | null = null;
-  private startTime: number = 0;
-  private lastSampleTime: number = 0;
-  private frameCount: number = 0;
-  private droppedFrameCount: number = 0;
-  private fpsHistory: FPSDataPoint[] = [];
-  private memoryHistory: MemoryDataPoint[] = [];
-  private gpuHistory: GPUDataPoint[] = [];
-  private networkHistory: NetworkDataPoint[] = [];
-  private resourceHistory: ResourceDataPoint[] = [];
-  private eventListeners: Map<string, Array<(data: PerformanceData) => void>> = new Map();
+  private config: PerformanceMonitorConfig
+  private isMonitoring: boolean = false
+  private animationFrameId: number | null = null
+  private startTime: number = 0
+  private lastSampleTime: number = 0
+  private frameCount: number = 0
+  private droppedFrameCount: number = 0
+  private fpsHistory: FPSDataPoint[] = []
+  private memoryHistory: MemoryDataPoint[] = []
+  private gpuHistory: GPUDataPoint[] = []
+  private networkHistory: NetworkDataPoint[] = []
+  private resourceHistory: ResourceDataPoint[] = []
+  private eventListeners: Map<string, Array<(data: PerformanceData) => void>> = new Map()
 
   /**
    * 构造函数
@@ -153,12 +153,12 @@ export class PerformanceMonitor {
       maxHistoryPoints: 60,
       logToConsole: false,
       ...config
-    };
+    }
 
     // 初始化事件监听器
-    this.eventListeners.set('update', []);
-    this.eventListeners.set('fps-drop', []);
-    this.eventListeners.set('high-memory', []);
+    this.eventListeners.set('update', [])
+    this.eventListeners.set('fps-drop', [])
+    this.eventListeners.set('high-memory', [])
   }
 
   /**
@@ -166,16 +166,16 @@ export class PerformanceMonitor {
    */
   start(): void {
     if (this.isMonitoring) {
-      return;
+      return
     }
 
-    this.isMonitoring = true;
-    this.startTime = performance.now();
-    this.lastSampleTime = this.startTime;
-    this.frameCount = 0;
-    this.droppedFrameCount = 0;
+    this.isMonitoring = true
+    this.startTime = performance.now()
+    this.lastSampleTime = this.startTime
+    this.frameCount = 0
+    this.droppedFrameCount = 0
 
-    this.monitorLoop();
+    this.monitorLoop()
   }
 
   /**
@@ -183,18 +183,18 @@ export class PerformanceMonitor {
    */
   stop(): void {
     if (!this.isMonitoring) {
-      return;
+      return
     }
 
-    this.isMonitoring = false;
+    this.isMonitoring = false
     if (this.animationFrameId !== null) {
       // 同时支持requestAnimationFrame和setTimeout的清理
       if (typeof cancelAnimationFrame !== 'undefined') {
-        cancelAnimationFrame(this.animationFrameId);
+        cancelAnimationFrame(this.animationFrameId)
       } else {
-        clearTimeout(this.animationFrameId);
+        clearTimeout(this.animationFrameId)
       }
-      this.animationFrameId = null;
+      this.animationFrameId = null
     }
   }
 
@@ -202,15 +202,15 @@ export class PerformanceMonitor {
    * 重置监控数据
    */
   reset(): void {
-    this.fpsHistory = [];
-    this.memoryHistory = [];
-    this.gpuHistory = [];
-    this.networkHistory = [];
-    this.resourceHistory = [];
-    this.startTime = performance.now();
-    this.lastSampleTime = this.startTime;
-    this.frameCount = 0;
-    this.droppedFrameCount = 0;
+    this.fpsHistory = []
+    this.memoryHistory = []
+    this.gpuHistory = []
+    this.networkHistory = []
+    this.resourceHistory = []
+    this.startTime = performance.now()
+    this.lastSampleTime = this.startTime
+    this.frameCount = 0
+    this.droppedFrameCount = 0
   }
 
   /**
@@ -218,46 +218,49 @@ export class PerformanceMonitor {
    */
   private monitorLoop(): void {
     if (!this.isMonitoring) {
-      return;
+      return
     }
 
-    const currentTime = performance.now();
-    this.frameCount++;
+    const currentTime = performance.now()
+    this.frameCount++
 
     // 只在采样间隔时执行昂贵的操作
     if (currentTime - this.lastSampleTime >= this.config.sampleInterval!) {
-      const elapsedTime = currentTime - this.lastSampleTime;
-      const fps = Math.round((this.frameCount * 1000) / elapsedTime);
+      const elapsedTime = currentTime - this.lastSampleTime
+      const fps = Math.round((this.frameCount * 1000) / elapsedTime)
 
       // 收集性能数据
-      const performanceData = this.collectPerformanceData(fps);
+      const performanceData = this.collectPerformanceData(fps)
 
       // 触发更新事件
-      this.triggerEvent('update', performanceData);
+      this.triggerEvent('update', performanceData)
 
       // 检查性能警告
-      this.checkPerformanceWarnings(performanceData);
+      this.checkPerformanceWarnings(performanceData)
 
       // 触发全局性能指标更新事件
       eventSystem.emit(APP_EVENTS.PERFORMANCE_METRICS_UPDATE, {
         timestamp: Date.now(),
         performanceData,
         score: this.getPerformanceScore()
-      });
+      })
 
       // 输出到控制台
       if (this.config.logToConsole) {
-        this.logPerformanceData(performanceData);
+        this.logPerformanceData(performanceData)
       }
 
       // 重置计数器
-      this.frameCount = 0;
-      this.lastSampleTime = currentTime;
+      this.frameCount = 0
+      this.lastSampleTime = currentTime
     }
 
     // 使用setTimeout代替requestAnimationFrame，减少不必要的渲染循环
     // 只在采样间隔的1/4时间后检查，减少CPU占用
-    this.animationFrameId = window.setTimeout(() => this.monitorLoop(), this.config.sampleInterval! / 4) as unknown as number;
+    this.animationFrameId = window.setTimeout(
+      () => this.monitorLoop(),
+      this.config.sampleInterval! / 4
+    ) as unknown as number
   }
 
   /**
@@ -267,25 +270,25 @@ export class PerformanceMonitor {
   private collectPerformanceData(currentFPS: number): PerformanceData {
     const data: PerformanceData = {
       fps: this.collectFPSData(currentFPS)
-    };
+    }
 
     if (this.config.enableMemory) {
-      data.memory = this.collectMemoryData();
+      data.memory = this.collectMemoryData()
     }
 
     if (this.config.enableGPU) {
-      data.gpu = this.collectGPUData();
+      data.gpu = this.collectGPUData()
     }
 
     if (this.config.enableNetwork) {
-      data.network = this.collectNetworkData();
+      data.network = this.collectNetworkData()
     }
 
     if (this.config.enableResource) {
-      data.resource = this.collectResourceData();
+      data.resource = this.collectResourceData()
     }
 
-    return data;
+    return data
   }
 
   /**
@@ -294,13 +297,13 @@ export class PerformanceMonitor {
    */
   private collectFPSData(currentFPS: number): FPSDataPoint {
     // 计算历史数据的统计值
-    const allFPS = [...this.fpsHistory.map(d => d.fps), currentFPS];
-    const avgFPS = Math.round(allFPS.reduce((sum, fps) => sum + fps, 0) / allFPS.length);
-    const minFPS = Math.min(...allFPS);
-    const maxFPS = Math.max(...allFPS);
+    const allFPS = [...this.fpsHistory.map(d => d.fps), currentFPS]
+    const avgFPS = Math.round(allFPS.reduce((sum, fps) => sum + fps, 0) / allFPS.length)
+    const minFPS = Math.min(...allFPS)
+    const maxFPS = Math.max(...allFPS)
 
     // 计算丢帧率
-    const droppedFrames = currentFPS < 30 ? Math.round((30 - currentFPS) / 30 * 100) : 0;
+    const droppedFrames = currentFPS < 30 ? Math.round(((30 - currentFPS) / 30) * 100) : 0
 
     const fpsData: FPSDataPoint = {
       timestamp: Date.now(),
@@ -309,15 +312,15 @@ export class PerformanceMonitor {
       minFPS,
       maxFPS,
       droppedFrames
-    };
-
-    // 更新历史数据
-    this.fpsHistory.push(fpsData);
-    if (this.fpsHistory.length > this.config.maxHistoryPoints!) {
-      this.fpsHistory.shift();
     }
 
-    return fpsData;
+    // 更新历史数据
+    this.fpsHistory.push(fpsData)
+    if (this.fpsHistory.length > this.config.maxHistoryPoints!) {
+      this.fpsHistory.shift()
+    }
+
+    return fpsData
   }
 
   /**
@@ -325,12 +328,12 @@ export class PerformanceMonitor {
    */
   private collectMemoryData(): MemoryDataPoint | undefined {
     if (typeof performance === 'undefined' || !('memory' in performance)) {
-      return undefined;
+      return undefined
     }
 
-    const memory = (performance as any).memory;
-    const navigatorMemory = navigator.deviceMemory || 0;
-    const totalMemory = navigatorMemory * 1024 * 1024 * 1024; // 转换为字节
+    const memory = (performance as any).memory
+    const navigatorMemory = navigator.deviceMemory || 0
+    const totalMemory = navigatorMemory * 1024 * 1024 * 1024 // 转换为字节
 
     const memoryData: MemoryDataPoint = {
       timestamp: Date.now(),
@@ -340,15 +343,15 @@ export class PerformanceMonitor {
       jsHeapSizeUsed: memory.usedJSHeapSize,
       jsHeapSizeTotal: memory.totalJSHeapSize,
       jsHeapSizeLimit: memory.jsHeapSizeLimit
-    };
-
-    // 更新历史数据
-    this.memoryHistory.push(memoryData);
-    if (this.memoryHistory.length > this.config.maxHistoryPoints!) {
-      this.memoryHistory.shift();
     }
 
-    return memoryData;
+    // 更新历史数据
+    this.memoryHistory.push(memoryData)
+    if (this.memoryHistory.length > this.config.maxHistoryPoints!) {
+      this.memoryHistory.shift()
+    }
+
+    return memoryData
   }
 
   /**
@@ -356,8 +359,8 @@ export class PerformanceMonitor {
    */
   private collectGPUData(): GPUDataPoint | undefined {
     // 尝试获取真实GPU数据
-    let gpuData: GPUDataPoint | undefined;
-    
+    let gpuData: GPUDataPoint | undefined
+
     // 1. 尝试使用WebGPU API获取GPU信息
     if (typeof (navigator as any).gpu !== 'undefined') {
       // WebGPU API支持情况有限，这里使用基本信息
@@ -365,7 +368,7 @@ export class PerformanceMonitor {
         timestamp: Date.now(),
         usage: 0, // 目前WebGPU不直接暴露使用率
         memoryUsed: 0 // 目前WebGPU不直接暴露内存使用
-      };
+      }
     }
     // 2. 尝试使用PerformanceObserver获取GPU相关指标
     else if (typeof PerformanceObserver !== 'undefined') {
@@ -374,53 +377,52 @@ export class PerformanceMonitor {
         timestamp: Date.now(),
         usage: Math.round(Math.random() * 50),
         memoryUsed: Math.round(Math.random() * 1024 * 1024 * 100)
-      };
-    }
-    
-    if (gpuData) {
-      // 更新历史数据
-      this.gpuHistory.push(gpuData);
-      if (this.gpuHistory.length > this.config.maxHistoryPoints!) {
-        this.gpuHistory.shift();
       }
     }
 
-    return gpuData;
+    if (gpuData) {
+      // 更新历史数据
+      this.gpuHistory.push(gpuData)
+      if (this.gpuHistory.length > this.config.maxHistoryPoints!) {
+        this.gpuHistory.shift()
+      }
+    }
+
+    return gpuData
   }
 
   /**
    * 收集网络数据
    */
   private collectNetworkData(): NetworkDataPoint | undefined {
-    let networkData: NetworkDataPoint | undefined;
-    
+    let networkData: NetworkDataPoint | undefined
+
     // 尝试获取真实网络数据
     if (typeof navigator !== 'undefined' && 'connection' in navigator) {
-      const connection = navigator.connection as any;
+      const connection = navigator.connection as any
       networkData = {
         timestamp: Date.now(),
         downloadSpeed: connection.downlink ? connection.downlink * 1024 * 1024 : 0, // Mbps to Bps
         uploadSpeed: 0, // 目前navigator.connection不支持上传速度
         connections: 0 // 目前navigator.connection不支持连接数
-      };
-    }
-    else {
+      }
+    } else {
       // 降级使用模拟数据
       networkData = {
         timestamp: Date.now(),
         downloadSpeed: Math.round(Math.random() * 100 * 1024 * 1024),
         uploadSpeed: Math.round(Math.random() * 50 * 1024 * 1024),
         connections: Math.round(Math.random() * 10)
-      };
+      }
     }
 
     // 更新历史数据
-    this.networkHistory.push(networkData);
+    this.networkHistory.push(networkData)
     if (this.networkHistory.length > this.config.maxHistoryPoints!) {
-      this.networkHistory.shift();
+      this.networkHistory.shift()
     }
 
-    return networkData;
+    return networkData
   }
 
   /**
@@ -428,26 +430,26 @@ export class PerformanceMonitor {
    */
   private collectResourceData(): ResourceDataPoint | undefined {
     // 尝试获取真实的性能资源数据
-    let resourceData: ResourceDataPoint | undefined;
-    
+    let resourceData: ResourceDataPoint | undefined
+
     if (typeof performance !== 'undefined' && 'getEntriesByType' in performance) {
-      const resources = performance.getEntriesByType('resource');
-      const resourceCount = resources.length;
-      
+      const resources = performance.getEntriesByType('resource')
+      const resourceCount = resources.length
+
       // 统计资源加载情况
-      let loaded = 0;
-      let failed = 0;
-      
+      let loaded = 0
+      let failed = 0
+
       resources.forEach((resource: PerformanceResourceTiming) => {
         if (resource.responseEnd > 0) {
-          loaded++;
+          loaded++
         } else {
-          failed++;
+          failed++
         }
-      });
-      
-      const successRate = resourceCount > 0 ? Math.round((loaded / resourceCount) * 100) : 100;
-      
+      })
+
+      const successRate = resourceCount > 0 ? Math.round((loaded / resourceCount) * 100) : 100
+
       resourceData = {
         timestamp: Date.now(),
         loaded,
@@ -455,7 +457,7 @@ export class PerformanceMonitor {
         failed,
         total: resourceCount,
         successRate
-      };
+      }
     } else {
       // 降级使用模拟数据
       resourceData = {
@@ -465,16 +467,16 @@ export class PerformanceMonitor {
         failed: Math.round(Math.random() * 5),
         total: Math.round(Math.random() * 115),
         successRate: Math.round(Math.random() * 20 + 80)
-      };
+      }
     }
 
     // 更新历史数据
-    this.resourceHistory.push(resourceData);
+    this.resourceHistory.push(resourceData)
     if (this.resourceHistory.length > this.config.maxHistoryPoints!) {
-      this.resourceHistory.shift();
+      this.resourceHistory.shift()
     }
 
-    return resourceData;
+    return resourceData
   }
 
   /**
@@ -484,31 +486,31 @@ export class PerformanceMonitor {
   private checkPerformanceWarnings(data: PerformanceData): void {
     // 检查低帧率
     if (data.fps.fps < 30) {
-      this.triggerEvent('fps-drop', data);
+      this.triggerEvent('fps-drop', data)
       // 触发全局性能下降事件
       eventSystem.emit(APP_EVENTS.PERFORMANCE_DROP, {
         fps: data.fps.fps,
         avgFPS: data.fps.avgFPS,
         timestamp: Date.now()
-      });
+      })
     } else if (data.fps.fps >= 50) {
       // 触发性能恢复事件
       eventSystem.emit(APP_EVENTS.PERFORMANCE_RECOVER, {
         fps: data.fps.fps,
         avgFPS: data.fps.avgFPS,
         timestamp: Date.now()
-      });
+      })
     }
 
     // 检查高内存使用率
     if (data.memory && data.memory.usage > 80) {
-      this.triggerEvent('high-memory', data);
+      this.triggerEvent('high-memory', data)
       // 触发全局内存警告事件
       eventSystem.emit(APP_EVENTS.MEMORY_WARNING, {
         memoryUsage: data.memory.usage,
         jsHeapSizeUsed: data.memory.jsHeapSizeUsed,
         timestamp: Date.now()
-      });
+      })
     }
   }
 
@@ -517,26 +519,41 @@ export class PerformanceMonitor {
    * @param data 性能数据
    */
   private logPerformanceData(data: PerformanceData): void {
-    console.groupCollapsed(`Performance Update (${new Date().toLocaleTimeString()})`);
-    console.log('FPS:', `${data.fps.fps} (avg: ${data.fps.avgFPS}, min: ${data.fps.minFPS}, max: ${data.fps.maxFPS})`);
-    
+    console.groupCollapsed(`Performance Update (${new Date().toLocaleTimeString()})`)
+    console.log(
+      'FPS:',
+      `${data.fps.fps} (avg: ${data.fps.avgFPS}, min: ${data.fps.minFPS}, max: ${data.fps.maxFPS})`
+    )
+
     if (data.memory) {
-      console.log('Memory:', `${this.formatBytes(data.memory.used)} / ${this.formatBytes(data.memory.total)} (${data.memory.usage}%)`);
+      console.log(
+        'Memory:',
+        `${this.formatBytes(data.memory.used)} / ${this.formatBytes(data.memory.total)} (${data.memory.usage}%)`
+      )
     }
-    
+
     if (data.gpu) {
-      console.log('GPU:', `${data.gpu.usage}% usage, ${this.formatBytes(data.gpu.memoryUsed)} memory`);
+      console.log(
+        'GPU:',
+        `${data.gpu.usage}% usage, ${this.formatBytes(data.gpu.memoryUsed)} memory`
+      )
     }
-    
+
     if (data.network) {
-      console.log('Network:', `${this.formatBytes(data.network.downloadSpeed)}/s down, ${this.formatBytes(data.network.uploadSpeed)}/s up`);
+      console.log(
+        'Network:',
+        `${this.formatBytes(data.network.downloadSpeed)}/s down, ${this.formatBytes(data.network.uploadSpeed)}/s up`
+      )
     }
-    
+
     if (data.resource) {
-      console.log('Resources:', `${data.resource.loaded}/${data.resource.total} loaded, ${data.resource.successRate}% success`);
+      console.log(
+        'Resources:',
+        `${data.resource.loaded}/${data.resource.total} loaded, ${data.resource.successRate}% success`
+      )
     }
-    
-    console.groupEnd();
+
+    console.groupEnd()
   }
 
   /**
@@ -544,11 +561,11 @@ export class PerformanceMonitor {
    * @param bytes 字节数
    */
   private formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
   }
 
   /**
@@ -557,9 +574,9 @@ export class PerformanceMonitor {
    * @param data 事件数据
    */
   private triggerEvent(eventName: string, data: PerformanceData): void {
-    const listeners = this.eventListeners.get(eventName);
+    const listeners = this.eventListeners.get(eventName)
     if (listeners) {
-      listeners.forEach(listener => listener(data));
+      listeners.forEach(listener => listener(data))
     }
   }
 
@@ -570,9 +587,9 @@ export class PerformanceMonitor {
    */
   on(eventName: string, callback: (data: PerformanceData) => void): void {
     if (!this.eventListeners.has(eventName)) {
-      this.eventListeners.set(eventName, []);
+      this.eventListeners.set(eventName, [])
     }
-    this.eventListeners.get(eventName)?.push(callback);
+    this.eventListeners.get(eventName)?.push(callback)
   }
 
   /**
@@ -581,12 +598,12 @@ export class PerformanceMonitor {
    * @param callback 回调函数
    */
   off(eventName: string, callback: (data: PerformanceData) => void): void {
-    const listeners = this.eventListeners.get(eventName);
+    const listeners = this.eventListeners.get(eventName)
     if (listeners) {
       this.eventListeners.set(
         eventName,
         listeners.filter(listener => listener !== callback)
-      );
+      )
     }
   }
 
@@ -594,7 +611,7 @@ export class PerformanceMonitor {
    * 停止监控
    */
   stopMonitoring(): void {
-    this.stop();
+    this.stop()
   }
 
   /**
@@ -607,7 +624,7 @@ export class PerformanceMonitor {
       gpu: [...this.gpuHistory],
       network: [...this.networkHistory],
       resource: [...this.resourceHistory]
-    };
+    }
   }
 
   /**
@@ -615,63 +632,63 @@ export class PerformanceMonitor {
    */
   getCurrentStatus(): PerformanceData | null {
     if (this.fpsHistory.length === 0) {
-      return null;
+      return null
     }
 
-    return this.collectPerformanceData(this.fpsHistory[this.fpsHistory.length - 1].fps);
+    return this.collectPerformanceData(this.fpsHistory[this.fpsHistory.length - 1].fps)
   }
 
   /**
    * 清空历史数据
    */
   clearHistory(): void {
-    this.fpsHistory = [];
-    this.memoryHistory = [];
-    this.gpuHistory = [];
-    this.networkHistory = [];
-    this.resourceHistory = [];
+    this.fpsHistory = []
+    this.memoryHistory = []
+    this.gpuHistory = []
+    this.networkHistory = []
+    this.resourceHistory = []
   }
 
   /**
    * 获取性能评分（0-100）
    */
   getPerformanceScore(): number {
-    let score = 100;
-    const currentData = this.getCurrentStatus();
+    let score = 100
+    const currentData = this.getCurrentStatus()
 
     if (!currentData) {
-      return 0;
+      return 0
     }
 
     // 根据FPS评分
     if (currentData.fps.fps < 30) {
-      score -= 50;
+      score -= 50
     } else if (currentData.fps.fps < 50) {
-      score -= 20;
+      score -= 20
     }
 
     // 根据内存评分
     if (currentData.memory && currentData.memory.usage > 80) {
-      score -= 30;
+      score -= 30
     } else if (currentData.memory && currentData.memory.usage > 60) {
-      score -= 10;
+      score -= 10
     }
 
     // 根据资源加载评分
     if (currentData.resource && currentData.resource.successRate < 90) {
-      score -= 20;
+      score -= 20
     }
 
-    return Math.max(0, Math.min(100, score));
+    return Math.max(0, Math.min(100, score))
   }
 
   /**
    * 销毁性能监控器
    */
   dispose(): void {
-    this.stop();
-    this.eventListeners.clear();
-    this.clearHistory();
+    this.stop()
+    this.eventListeners.clear()
+    this.clearHistory()
   }
 }
 
@@ -679,10 +696,10 @@ export class PerformanceMonitor {
  * 创建性能监控器实例
  */
 export const createPerformanceMonitor = (config?: Partial<PerformanceMonitorConfig>) => {
-  return new PerformanceMonitor(config);
-};
+  return new PerformanceMonitor(config)
+}
 
 /**
  * 全局性能监控器实例
  */
-export const performanceMonitor = new PerformanceMonitor();
+export const performanceMonitor = new PerformanceMonitor()

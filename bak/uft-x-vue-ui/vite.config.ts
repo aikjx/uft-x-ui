@@ -10,7 +10,7 @@ export default defineConfig({
     vue({
       template: {
         compilerOptions: {
-          isCustomElement: (tag) => tag.includes('-')
+          isCustomElement: tag => tag.includes('-')
         }
       }
     }),
@@ -44,7 +44,7 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
+        manualChunks: id => {
           // 更精细的代码分割策略
           if (id.includes('node_modules')) {
             if (id.includes('vue')) {
@@ -71,5 +71,5 @@ export default defineConfig({
     // 为 Babel types 提供基础 process 环境变量
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
     global: 'globalThis'
-  },
+  }
 })

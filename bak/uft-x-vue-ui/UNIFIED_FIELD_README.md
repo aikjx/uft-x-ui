@@ -83,10 +83,12 @@ src/
 ## 📐 19个核心公式
 
 ### 时空方程
+
 1. **时空同一化方程** - `r(t) = Ct`
 2. **三维螺旋时空方程** - 描述空间的螺旋运动
 
 ### 动力学方程
+
 3. **质量定义方程** - `m = k·dn/dΩ`
 4. **引力场定义方程** - 从空间运动角度定义引力
 5. **静止动量方程** - `p₀ = m₀C₀`
@@ -94,13 +96,15 @@ src/
 7. **宇宙大统一方程** - 力的完整表达
 
 ### 场方程
+
 8. **空间波动方程** - 波动传播机制
 9. **电荷定义方程** - 电荷的本质
 10. **电场定义方程** - 电场的空间表示
 11. **磁场定义方程** - 磁场的运动表示
-12-15. **场的相互转化方程** - 引力场、电场、磁场的统一
+    12-15. **场的相互转化方程** - 引力场、电场、磁场的统一
 
 ### 统一方程
+
 16. **统一场论能量方程** - `E = mc²`
 17. **光速飞行器动力学** - 人工场应用
 18. **核力场定义方程** - 强相互作用
@@ -112,24 +116,21 @@ src/
 
 ```typescript
 // 量子粒子着色器
-- 量子波动效果
-- 距离衰减
-- 辉光效果
-
-// 引力场扭曲着色器
-- 时空弯曲
-- 三色渐变
-- 脉动效果
-
-// 时空涟漪着色器
-- 波纹传播
-- 高度映射
-- 网格线
-
-// 全息投影着色器
-- 菲涅尔效果
-- 扫描线
-- 闪烁效果
+;-量子波动效果 -
+  距离衰减 -
+  辉光效果 -
+  // 引力场扭曲着色器
+  时空弯曲 -
+  三色渐变 -
+  脉动效果 -
+  // 时空涟漪着色器
+  波纹传播 -
+  高度映射 -
+  网格线 -
+  // 全息投影着色器
+  菲涅尔效果 -
+  扫描线 -
+  闪烁效果
 ```
 
 ## ⚡ 性能优化
@@ -172,7 +173,7 @@ if (changed) {
 // 高效的对象复用
 const pool = new ObjectPool(
   () => new Particle(),
-  (particle) => particle.reset(),
+  particle => particle.reset(),
   1000 // 预创建1000个对象
 )
 
@@ -234,27 +235,23 @@ npm run test:e2e
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useUnifiedField } from '@/composables/useUnifiedField'
-import { FormulaType } from '@/types/unified-field-theory'
+  import { ref, onMounted } from 'vue'
+  import { useUnifiedField } from '@/composables/useUnifiedField'
+  import { FormulaType } from '@/types/unified-field-theory'
 
-const container = ref<HTMLElement | null>(null)
+  const container = ref<HTMLElement | null>(null)
 
-const {
-  initialize,
-  visualizeFormula,
-  updateParameters
-} = useUnifiedField(container.value)
+  const { initialize, visualizeFormula, updateParameters } = useUnifiedField(container.value)
 
-onMounted(() => {
-  initialize()
-  
-  // 可视化时空同一化方程
-  visualizeFormula(FormulaType.SPACETIME_UNITY, {
-    c: 299792458,
-    t: 1
+  onMounted(() => {
+    initialize()
+
+    // 可视化时空同一化方程
+    visualizeFormula(FormulaType.SPACETIME_UNITY, {
+      c: 299792458,
+      t: 1
+    })
   })
-})
 </script>
 ```
 
@@ -319,18 +316,21 @@ const config: VisualizationConfig = {
 ## 🌟 未来规划
 
 ### 短期目标 (Q1 2026)
+
 - [ ] WebXR支持 (VR/AR)
 - [ ] 多人协作模式
 - [ ] AI辅助学习系统
 - [ ] 移动端优化
 
 ### 中期目标 (Q2-Q3 2026)
+
 - [ ] 量子计算模拟器
 - [ ] 脑机接口支持
 - [ ] 元宇宙集成
 - [ ] 区块链验证系统
 
 ### 长期目标 (2027+)
+
 - [ ] 全球分布式计算网络
 - [ ] 星际探索模拟器
 - [ ] AI理论生成器

@@ -1,125 +1,132 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>公式渲染调试</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>公式渲染调试</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-      background: #f5f5f5;
-    }
+      .formula-test {
+        background: white;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
 
-    .formula-test {
-      background: white;
-      padding: 20px;
-      margin: 20px 0;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
+      .formula-test h3 {
+        color: #333;
+        margin-top: 0;
+      }
 
-    .formula-test h3 {
-      color: #333;
-      margin-top: 0;
-    }
+      .formula {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        margin: 10px 0;
+        min-height: 40px;
+      }
 
-    .formula {
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 4px;
-      margin: 10px 0;
-      min-height: 40px;
-    }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
 
-    .status {
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 4px;
-    }
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+      }
 
-    .status.success {
-      background: #d4edda;
-      color: #155724;
-    }
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+      }
 
-    .status.error {
-      background: #f8d7da;
-      color: #721c24;
-    }
+      .status.loading {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+    </style>
+  </head>
 
-    .status.loading {
-      background: #d1ecf1;
-      color: #0c5460;
-    }
-  </style>
-</head>
+  <body>
+    <h1>公式渲染调试页面</h1>
+    <div id="status" class="status loading">正在加载 MathJax...</div>
 
-<body>
-  <h1>公式渲染调试页面</h1>
-  <div id="status" class="status loading">正在加载 MathJax...</div>
+    <div class="formula-test">
+      <h3>测试 1: 简单公式</h3>
+      <div class="formula">\(E = mc^2\)</div>
+    </div>
 
-  <div class="formula-test">
-    <h3>测试 1: 简单公式</h3>
-    <div class="formula">\(E = mc^2\)</div>
-  </div>
+    <div class="formula-test">
+      <h3>测试 2: 向量公式</h3>
+      <div class="formula">\[\vec{r}(t) = \vec{C}t = x\vec{i} + y\vec{j} + z\vec{k}\]</div>
+    </div>
 
-  <div class="formula-test">
-    <h3>测试 2: 向量公式</h3>
-    <div class="formula">\[\vec{r}(t) = \vec{C}t = x\vec{i} + y\vec{j} + z\vec{k}\]</div>
-  </div>
+    <div class="formula-test">
+      <h3>测试 3: 复杂公式</h3>
+      <div class="formula">
+        \[\vec{F} = \frac{d\vec{P}}{dt} = \vec{C}\frac{dm}{dt} - \vec{V}\frac{dm}{dt} +
+        m\frac{d\vec{C}}{dt} - m\frac{d\vec{V}}{dt}\]
+      </div>
+    </div>
 
-  <div class="formula-test">
-    <h3>测试 3: 复杂公式</h3>
-    <div class="formula">\[\vec{F} = \frac{d\vec{P}}{dt} = \vec{C}\frac{dm}{dt} - \vec{V}\frac{dm}{dt} +
-      m\frac{d\vec{C}}{dt} - m\frac{d\vec{V}}{dt}\]</div>
-  </div>
+    <div class="formula-test">
+      <h3>测试 4: 分数和希腊字母</h3>
+      <div class="formula">\[m = k \cdot \frac{dn}{d\Omega}\]</div>
+    </div>
 
-  <div class="formula-test">
-    <h3>测试 4: 分数和希腊字母</h3>
-    <div class="formula">\[m = k \cdot \frac{dn}{d\Omega}\]</div>
-  </div>
+    <div class="formula-test">
+      <h3>测试 5: 偏微分方程</h3>
+      <div class="formula">
+        \[\frac{\partial^2 L}{\partial x^2} + \frac{\partial^2 L}{\partial y^2} + \frac{\partial^2
+        L}{\partial z^2} = \frac{1}{c^2} \frac{\partial^2 L}{\partial t^2}\]
+      </div>
+    </div>
 
-  <div class="formula-test">
-    <h3>测试 5: 偏微分方程</h3>
-    <div class="formula">\[\frac{\partial^2 L}{\partial x^2} + \frac{\partial^2 L}{\partial y^2} + \frac{\partial^2
-      L}{\partial z^2} = \frac{1}{c^2} \frac{\partial^2 L}{\partial t^2}\]</div>
-  </div>
-
-  <!-- MathJax 配置 -->
-  <script>
-    window.MathJax = {
-      tex: {
-        inlineMath: [['\\(', '\\)']],
-        displayMath: [['\\[', '\\]']],
-        processEscapes: true,
-        macros: {
-          vec: ['\\overrightarrow{#1}', 1]
-        }
-      },
-      svg: {
-        scale: 1.2,
-        fontCache: 'global'
-      },
-      startup: {
-        pageReady: () => {
-          return window.MathJax.startup.defaultPageReady().then(() => {
-            console.log('✅ MathJax 加载成功');
-            document.getElementById('status').className = 'status success';
-            document.getElementById('status').textContent = '✅ MathJax 加载成功，公式应该已经渲染';
-          }).catch((err) => {
-            console.error('❌ MathJax 加载失败:', err);
-            document.getElementById('status').className = 'status error';
-            document.getElementById('status').textContent = '❌ MathJax 加载失败: ' + err.message;
-          });
+    <!-- MathJax 配置 -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['\\(', '\\)']],
+          displayMath: [['\\[', '\\]']],
+          processEscapes: true,
+          macros: {
+            vec: ['\\overrightarrow{#1}', 1]
+          }
+        },
+        svg: {
+          scale: 1.2,
+          fontCache: 'global'
+        },
+        startup: {
+          pageReady: () => {
+            return window.MathJax.startup
+              .defaultPageReady()
+              .then(() => {
+                console.log('✅ MathJax 加载成功')
+                document.getElementById('status').className = 'status success'
+                document.getElementById('status').textContent =
+                  '✅ MathJax 加载成功，公式应该已经渲染'
+              })
+              .catch(err => {
+                console.error('❌ MathJax 加载失败:', err)
+                document.getElementById('status').className = 'status error'
+                document.getElementById('status').textContent =
+                  '❌ MathJax 加载失败: ' + err.message
+              })
+          }
         }
       }
-    };
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
-</body>
-
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  </body>
 </html>

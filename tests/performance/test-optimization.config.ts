@@ -85,12 +85,7 @@ export const TEST_EXECUTION_STRATEGY = {
   // 依赖预加载
   preloading: {
     // 预加载常用模块
-    modules: [
-      'react',
-      'react-dom',
-      '@testing-library/react',
-      'three'
-    ],
+    modules: ['react', 'react-dom', '@testing-library/react', 'three'],
     // 模块缓存策略
     cacheStrategy: 'aggressive'
   },

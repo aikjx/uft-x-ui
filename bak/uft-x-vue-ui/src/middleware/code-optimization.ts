@@ -35,23 +35,26 @@ export function createCodeOptimizationGuard(options: CodeOptimizationGuardOption
     try {
       // 自动保存当前状态
       if (autoSave) {
-        localStorage.setItem('code-optimizer-last-state', JSON.stringify({
-          code: store.inputCode,
-          language: store.selectedLanguage,
-          analysisResult: store.analysisResult,
-          optimizationReport: store.optimizationReport,
-          timestamp: Date.now()
-        }))
+        localStorage.setItem(
+          'code-optimizer-last-state',
+          JSON.stringify({
+            code: store.inputCode,
+            language: store.selectedLanguage,
+            analysisResult: store.analysisResult,
+            optimizationReport: store.optimizationReport,
+            timestamp: Date.now()
+          })
+        )
       }
 
       // 验证代码长度
       if (validateCode && store.inputCode.length > maxCodeLength) {
-        next({ 
-          path: '/error', 
-          query: { 
+        next({
+          path: '/error',
+          query: {
             error: 'code_too_long',
             max: maxCodeLength.toString()
-          } 
+          }
         })
         return
       }
@@ -125,9 +128,7 @@ export function createCodeOptimizationErrorHandler() {
       store.resetState()
 
       // 记录错误统计
-      const errorStats = JSON.parse(
-        localStorage.getItem('code-optimizer-errors') || '{}'
-      )
+      const errorStats = JSON.parse(localStorage.getItem('code-optimizer-errors') || '{}')
       errorStats[error.name] = (errorStats[error.name] || 0) + 1
       localStorage.setItem('code-optimizer-errors', JSON.stringify(errorStats))
     }
@@ -143,14 +144,14 @@ export function createPerformanceMonitor() {
 
     // 监控代码优化相关性能
     if (window.PerformanceObserver) {
-      const observer = new PerformanceObserver((list) => {
-        list.getEntries().forEach((entry) => {
+      const observer = new PerformanceObserver(list => {
+        list.getEntries().forEach(entry => {
           if (entry.name.includes('code-optimization')) {
             console.log(`📊 代码优化性能: ${entry.name} - ${entry.duration}ms`)
           }
         })
       })
-      
+
       observer.observe({ entryTypes: ['measure', 'navigation'] })
     }
   }
@@ -160,10 +161,14 @@ export function createPerformanceMonitor() {
  * 权限控制中间件
  */
 export function createPermissionGuard() {
-  return (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
+  return (
+    to: RouteLocationNormalized,
+    from: RouteLocationNormalized,
+    next: NavigationGuardNext
+  ) => {
     // 检查是否有访问代码优化功能的权限
     const hasPermission = localStorage.getItem('code-optimizer-permission') !== 'denied'
-    
+
     if (to.path.startsWith('/code-optimizer') && !hasPermission) {
       next({ path: '/permission-denied' })
     } else {
@@ -182,12 +187,15 @@ export function createStatePersistenceMiddleware() {
       window.addEventListener('beforeunload', () => {
         const store = useCodeOptimizationStore()
         if (store.userPreferences.autoSave) {
-          localStorage.setItem('code-optimizer-final-state', JSON.stringify({
-            inputCode: store.inputCode,
-            selectedLanguage: store.selectedLanguage,
-            optimizationLevel: store.optimizationLevel,
-            timestamp: Date.now()
-          }))
+          localStorage.setItem(
+            'code-optimizer-final-state',
+            JSON.stringify({
+              inputCode: store.inputCode,
+              selectedLanguage: store.selectedLanguage,
+              optimizationLevel: store.optimizationLevel,
+              timestamp: Date.now()
+            })
+          )
         }
       })
     }
@@ -211,7 +219,14 @@ export function createSecurityCheckMiddleware() {
 
     dangerousPatterns.forEach((pattern, index) => {
       if (pattern.test(code)) {
-        const patterns = ['eval', 'Function构造器', 'setTimeout字符串', 'setInterval字符串', 'innerHTML', 'outerHTML']
+        const patterns = [
+          'eval',
+          'Function构造器',
+          'setTimeout字符串',
+          'setInterval字符串',
+          'innerHTML',
+          'outerHTML'
+        ]
         warnings.push(`检测到潜在安全风险: ${patterns[index]}`)
       }
     })

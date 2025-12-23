@@ -48,14 +48,9 @@ export class CodeAnalyzer {
     try {
       // 解析AST
       const ast = await this.parseCode(code, language)
-      
+
       // 并行执行各种分析
-      const [
-        complexityMetrics,
-        issues,
-        performanceMetrics,
-        securityIssues
-      ] = await Promise.all([
+      const [complexityMetrics, issues, performanceMetrics, securityIssues] = await Promise.all([
         this.calculateComplexityMetrics(ast, code),
         this.detectIssues(ast, language),
         this.analyzePerformance(ast, code),
@@ -87,7 +82,7 @@ export class CodeAnalyzer {
    */
   private async parseCode(code: string, language: ProgrammingLanguage): Promise<t.File> {
     const parseOptions = this.getParseOptions(language)
-    
+
     try {
       return parser.parse(code, parseOptions) as t.File
     } catch (error) {
@@ -123,25 +118,16 @@ export class CodeAnalyzer {
       case 'typescript':
         return {
           ...baseOptions,
-          plugins: [
-            ...baseOptions.plugins,
-            'typescript',
-            'decorators-legacy',
-            'classProperties'
-          ]
+          plugins: [...baseOptions.plugins, 'typescript', 'decorators-legacy', 'classProperties']
         }
-        
+
       case 'jsx':
       case 'react':
         return {
           ...baseOptions,
-          plugins: [
-            ...baseOptions.plugins,
-            'jsx',
-            'typescript'
-          ]
+          plugins: [...baseOptions.plugins, 'jsx', 'typescript']
         }
-        
+
       default:
         return baseOptions
     }
@@ -150,7 +136,10 @@ export class CodeAnalyzer {
   /**
    * 计算复杂度指标
    */
-  private async calculateComplexityMetrics(ast: t.File, code: string): Promise<CodeComplexityMetrics> {
+  private async calculateComplexityMetrics(
+    ast: t.File,
+    code: string
+  ): Promise<CodeComplexityMetrics> {
     let cyclomaticComplexity = 1 // 基础复杂度
     let cognitiveComplexity = 0
     let totalLinesOfCode = 0
@@ -174,7 +163,7 @@ export class CodeAnalyzer {
         totalFunctions++
         cyclomaticComplexity++
       },
-      
+
       // 控制流语句
       IfStatement: () => {
         cyclomaticComplexity++
@@ -219,14 +208,19 @@ export class CodeAnalyzer {
 
     // 计算代码行数
     const lines = code.split('\n')
-    totalLinesOfCode = lines.filter(line => 
-      line.trim() !== '' && !line.trim().startsWith('//')
+    totalLinesOfCode = lines.filter(
+      line => line.trim() !== '' && !line.trim().startsWith('//')
     ).length
 
     // 计算可维护性指数（Microsoft公式）
-    const maintainabilityIndex = Math.max(0,
-      Math.round(171 - 5.2 * Math.log(totalLinesOfCode) - 
-      0.23 * cyclomaticComplexity - 16.2 * Math.log(totalStatements))
+    const maintainabilityIndex = Math.max(
+      0,
+      Math.round(
+        171 -
+          5.2 * Math.log(totalLinesOfCode) -
+          0.23 * cyclomaticComplexity -
+          16.2 * Math.log(totalStatements)
+      )
     )
 
     // 计算技术债务比率
@@ -289,10 +283,12 @@ export class CodeAnalyzer {
         // 检查for循环中的length属性重复访问
         if (path.node.test?.type === 'BinaryExpression') {
           const test = path.node.test
-          if (test.operator === '<' && 
-              test.right.type === 'MemberExpression' &&
-              test.right.property.type === 'Identifier' &&
-              test.right.property.name === 'length') {
+          if (
+            test.operator === '<' &&
+            test.right.type === 'MemberExpression' &&
+            test.right.property.type === 'Identifier' &&
+            test.right.property.name === 'length'
+          ) {
             issues.push({
               type: 'performance',
               severity: 'info',
@@ -335,17 +331,19 @@ export class CodeAnalyzer {
       FunctionDeclaration: () => functionCount++,
       FunctionExpression: () => functionCount++,
       ArrowFunctionExpression: () => functionCount++,
-      
+
       ForStatement: () => loopCount++,
       WhileStatement: () => loopCount++,
       DoWhileStatement: () => loopCount++,
-      
+
       CallExpression(path) {
         // 检测递归调用
         const funcName = (path.parent as t.FunctionDeclaration)?.id?.name
-        if (funcName && 
-            path.node.callee.type === 'Identifier' && 
-            path.node.callee.name === funcName) {
+        if (
+          funcName &&
+          path.node.callee.type === 'Identifier' &&
+          path.node.callee.name === funcName
+        ) {
           recursionDepth = Math.max(recursionDepth, 3) // 简化的递归检测
         }
       }
@@ -391,8 +389,7 @@ export class CodeAnalyzer {
     traverse(ast, {
       // 检测eval使用
       CallExpression(path) {
-        if (path.node.callee.type === 'Identifier' && 
-            path.node.callee.name === 'eval') {
+        if (path.node.callee.type === 'Identifier' && path.node.callee.name === 'eval') {
           securityIssues.push({
             type: 'security',
             severity: 'error',
@@ -405,9 +402,11 @@ export class CodeAnalyzer {
 
       // 检测innerHTML使用
       AssignmentExpression(path) {
-        if (path.node.left.type === 'MemberExpression' &&
-            path.node.left.property.type === 'Identifier' &&
-            path.node.left.property.name === 'innerHTML') {
+        if (
+          path.node.left.type === 'MemberExpression' &&
+          path.node.left.property.type === 'Identifier' &&
+          path.node.left.property.name === 'innerHTML'
+        ) {
           securityIssues.push({
             type: 'security',
             severity: 'warning',
@@ -461,7 +460,7 @@ export class CodeAnalyzer {
     })
 
     // 简化的内存估算（字节）
-    return (variableCount * 64) + (objectCount * 256) + (arrayCount * 128)
+    return variableCount * 64 + objectCount * 256 + arrayCount * 128
   }
 
   /**
@@ -471,11 +470,11 @@ export class CodeAnalyzer {
     let complexityScore = 0
 
     traverse(ast, {
-      FunctionDeclaration: () => complexityScore += 1,
-      CallExpression: () => complexityScore += 0.5,
-      ForStatement: () => complexityScore += 2,
-      WhileStatement: () => complexityScore += 2,
-      IfStatement: () => complexityScore += 0.5
+      FunctionDeclaration: () => (complexityScore += 1),
+      CallExpression: () => (complexityScore += 0.5),
+      ForStatement: () => (complexityScore += 2),
+      WhileStatement: () => (complexityScore += 2),
+      IfStatement: () => (complexityScore += 0.5)
     })
 
     return Math.round(complexityScore * 10) // 毫秒

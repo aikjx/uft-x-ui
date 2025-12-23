@@ -36,7 +36,7 @@ interface MathFormulaProps {
   size: 'small' | 'medium' | 'large' | 'xl'
   renderDelay: number
   maxRetries: number
-  
+
   // New props
   validate: boolean
   interactive: boolean
@@ -274,21 +274,25 @@ interface PerformanceMetrics {
 ## Implementation Phases
 
 ### Phase 1: Core Enhancements
+
 - Enhanced validation system
 - Performance optimizations (caching, lazy loading)
 - Improved error handling
 
 ### Phase 2: Accessibility & Interaction
+
 - Accessibility improvements
 - Interactive features (tooltips, copy, zoom)
 - Mobile responsiveness enhancements
 
 ### Phase 3: Advanced Features
+
 - Formula editor component
 - Visual formula builder
 - Batch processing utilities
 
 ### Phase 4: Polish & Optimization
+
 - Performance fine-tuning
 - Advanced caching strategies
 - Comprehensive testing and bug fixes

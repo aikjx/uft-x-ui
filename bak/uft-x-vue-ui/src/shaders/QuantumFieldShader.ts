@@ -264,11 +264,13 @@ export const quantumEntanglementFragmentShader = `
 /**
  * 创建量子粒子材质
  */
-export function createQuantumParticleMaterial(params: {
-  color?: THREE.Color
-  size?: number
-  opacity?: number
-} = {}): THREE.ShaderMaterial {
+export function createQuantumParticleMaterial(
+  params: {
+    color?: THREE.Color
+    size?: number
+    opacity?: number
+  } = {}
+): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: {
       time: { value: 0 },
@@ -287,11 +289,13 @@ export function createQuantumParticleMaterial(params: {
 /**
  * 创建引力场扭曲材质
  */
-export function createGravityDistortionMaterial(params: {
-  strength?: number
-  gravityCenter?: THREE.Vector3
-  colors?: THREE.Color[]
-} = {}): THREE.ShaderMaterial {
+export function createGravityDistortionMaterial(
+  params: {
+    strength?: number
+    gravityCenter?: THREE.Vector3
+    colors?: THREE.Color[]
+  } = {}
+): THREE.ShaderMaterial {
   const colors = params.colors || [
     new THREE.Color(0x00d4ff),
     new THREE.Color(0xb400ff),
@@ -317,12 +321,14 @@ export function createGravityDistortionMaterial(params: {
 /**
  * 创建时空涟漪材质
  */
-export function createSpacetimeRippleMaterial(params: {
-  amplitude?: number
-  frequency?: number
-  colorLow?: THREE.Color
-  colorHigh?: THREE.Color
-} = {}): THREE.ShaderMaterial {
+export function createSpacetimeRippleMaterial(
+  params: {
+    amplitude?: number
+    frequency?: number
+    colorLow?: THREE.Color
+    colorHigh?: THREE.Color
+  } = {}
+): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: {
       time: { value: 0 },
@@ -341,10 +347,12 @@ export function createSpacetimeRippleMaterial(params: {
 /**
  * 创建全息投影材质
  */
-export function createHolographicMaterial(params: {
-  color?: THREE.Color
-  opacity?: number
-} = {}): THREE.ShaderMaterial {
+export function createHolographicMaterial(
+  params: {
+    color?: THREE.Color
+    opacity?: number
+  } = {}
+): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: {
       time: { value: 0 },
@@ -362,9 +370,11 @@ export function createHolographicMaterial(params: {
 /**
  * 创建量子纠缠连接线材质
  */
-export function createQuantumEntanglementMaterial(params: {
-  opacity?: number
-} = {}): THREE.ShaderMaterial {
+export function createQuantumEntanglementMaterial(
+  params: {
+    opacity?: number
+  } = {}
+): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: {
       time: { value: 0 },

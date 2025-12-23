@@ -1,516 +1,531 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>空间螺旋运动的Frenet-Serret标架可视化</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
-            color: #fff;
-            overflow-x: hidden;
-        }
-        .container {
-            display: flex;
-            height: 100vh;
-        }
-        #canvas-container {
-            flex: 1;
-            position: relative;
-        }
-        .sidebar {
-            width: 350px;
-            background: rgba(20, 20, 40, 0.95);
-            padding: 20px;
-            overflow-y: auto;
-            border-left: 2px solid rgba(100, 150, 255, 0.3);
-        }
-        h1 {
-            font-size: 20px;
-            margin-bottom: 10px;
-            color: #6495ff;
-            text-shadow: 0 0 10px rgba(100, 149, 255, 0.5);
-        }
-        h2 {
-            font-size: 16px;
-            margin: 20px 0 10px 0;
-            color: #88b3ff;
-            border-bottom: 1px solid rgba(100, 150, 255, 0.3);
-            padding-bottom: 5px;
-        }
-        .control-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 13px;
-            color: #aac8ff;
-        }
-        input[type="range"] {
-            width: 100%;
-            margin-bottom: 5px;
-        }
-        .value-display {
-            text-align: right;
-            font-size: 12px;
-            color: #6495ff;
-            font-weight: bold;
-        }
-        .checkbox-group {
-            margin: 10px 0;
-        }
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .checkbox-group input {
-            margin-right: 8px;
-        }
-        .formula-box {
-            background: rgba(50, 50, 80, 0.5);
-            padding: 12px;
-            border-radius: 8px;
-            margin: 10px 0;
-            border: 1px solid rgba(100, 150, 255, 0.2);
-            font-size: 12px;
-            line-height: 1.6;
-        }
-        .formula-box code {
-            color: #ffd700;
-            font-family: 'Courier New', monospace;
-        }
-        .legend {
-            display: flex;
-            align-items: center;
-            margin: 8px 0;
-            font-size: 12px;
-        }
-        .legend-color {
-            width: 20px;
-            height: 3px;
-            margin-right: 8px;
-            border-radius: 2px;
-        }
-        .info-text {
-            font-size: 11px;
-            color: #aaa;
-            line-height: 1.5;
-            margin-top: 10px;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 5px;
-        }
-        button {
-            background: linear-gradient(135deg, #6495ff 0%, #4169e1 100%);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            margin: 5px 5px 5px 0;
-            transition: all 0.3s;
-        }
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(100, 149, 255, 0.4);
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: 'Arial', sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+        color: #fff;
+        overflow-x: hidden;
+      }
+      .container {
+        display: flex;
+        height: 100vh;
+      }
+      #canvas-container {
+        flex: 1;
+        position: relative;
+      }
+      .sidebar {
+        width: 350px;
+        background: rgba(20, 20, 40, 0.95);
+        padding: 20px;
+        overflow-y: auto;
+        border-left: 2px solid rgba(100, 150, 255, 0.3);
+      }
+      h1 {
+        font-size: 20px;
+        margin-bottom: 10px;
+        color: #6495ff;
+        text-shadow: 0 0 10px rgba(100, 149, 255, 0.5);
+      }
+      h2 {
+        font-size: 16px;
+        margin: 20px 0 10px 0;
+        color: #88b3ff;
+        border-bottom: 1px solid rgba(100, 150, 255, 0.3);
+        padding-bottom: 5px;
+      }
+      .control-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 13px;
+        color: #aac8ff;
+      }
+      input[type='range'] {
+        width: 100%;
+        margin-bottom: 5px;
+      }
+      .value-display {
+        text-align: right;
+        font-size: 12px;
+        color: #6495ff;
+        font-weight: bold;
+      }
+      .checkbox-group {
+        margin: 10px 0;
+      }
+      .checkbox-group label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .checkbox-group input {
+        margin-right: 8px;
+      }
+      .formula-box {
+        background: rgba(50, 50, 80, 0.5);
+        padding: 12px;
+        border-radius: 8px;
+        margin: 10px 0;
+        border: 1px solid rgba(100, 150, 255, 0.2);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .formula-box code {
+        color: #ffd700;
+        font-family: 'Courier New', monospace;
+      }
+      .legend {
+        display: flex;
+        align-items: center;
+        margin: 8px 0;
+        font-size: 12px;
+      }
+      .legend-color {
+        width: 20px;
+        height: 3px;
+        margin-right: 8px;
+        border-radius: 2px;
+      }
+      .info-text {
+        font-size: 11px;
+        color: #aaa;
+        line-height: 1.5;
+        margin-top: 10px;
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 5px;
+      }
+      button {
+        background: linear-gradient(135deg, #6495ff 0%, #4169e1 100%);
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 12px;
+        margin: 5px 5px 5px 0;
+        transition: all 0.3s;
+      }
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(100, 149, 255, 0.4);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <div id="canvas-container"></div>
-        <div class="sidebar">
-            <h1>空间螺旋线Frenet-Serret标架</h1>
-            <p class="info-text">本可视化展示了论文中的核心概念：圆柱螺旋线及其Frenet标架的三个相互垂直的单位向量</p>
-            
-            <h2>螺旋线参数</h2>
-            <div class="control-group">
-                <label>半径 r: <span class="value-display" id="r-value">2.0</span></label>
-                <input type="range" id="radius" min="0.5" max="5" step="0.1" value="2">
-            </div>
-            <div class="control-group">
-                <label>角速度 ω: <span class="value-display" id="omega-value">1.0</span></label>
-                <input type="range" id="omega" min="0.1" max="3" step="0.1" value="1">
-            </div>
-            <div class="control-group">
-                <label>轴向速度 v: <span class="value-display" id="v-value">1.0</span></label>
-                <input type="range" id="axial-velocity" min="0.1" max="3" step="0.1" value="1">
-            </div>
-            <div class="control-group">
-                <label>时间参数 t: <span class="value-display" id="t-value">3.14</span></label>
-                <input type="range" id="time-param" min="0" max="12.57" step="0.01" value="3.14">
-            </div>
-            
-            <h2>显示选项</h2>
-            <div class="checkbox-group">
-                <label><input type="checkbox" id="show-helix" checked> 螺旋线轨迹</label>
-                <label><input type="checkbox" id="show-tangent" checked> 切向量 T (红色)</label>
-                <label><input type="checkbox" id="show-normal" checked> 主法向量 N (绿色)</label>
-                <label><input type="checkbox" id="show-binormal" checked> 次法向量 B (蓝色)</label>
-                <label><input type="checkbox" id="show-planes" checked> 三个垂直平面</label>
-                <label><input type="checkbox" id="show-axes" checked> 坐标轴</label>
-            </div>
-            
-            <button id="animate-btn">开始动画</button>
-            <button id="reset-btn">重置视角</button>
-            
-            <h2>计算结果</h2>
-            <div class="formula-box">
-                <div><strong>速度模长 a:</strong></div>
-                <code id="velocity-mag">2.236</code>
-            </div>
-            <div class="formula-box">
-                <div><strong>曲率 κ:</strong></div>
-                <code id="curvature">0.400</code>
-            </div>
-            <div class="formula-box">
-                <div><strong>单位切向量 T̂:</strong></div>
-                <code id="tangent-vec">(-0.000, 0.894, 0.447)</code>
-            </div>
-            <div class="formula-box">
-                <div><strong>单位主法向量 N̂:</strong></div>
-                <code id="normal-vec">(-1.000, 0.000, 0.000)</code>
-            </div>
-            <div class="formula-box">
-                <div><strong>单位次法向量 B̂:</strong></div>
-                <code id="binormal-vec">(0.000, -0.447, 0.894)</code>
-            </div>
-            
-            <h2>向量图例</h2>
-            <div class="legend">
-                <div class="legend-color" style="background: #ff3333;"></div>
-                <span>切向量 T̂ (运动方向)</span>
-            </div>
-            <div class="legend">
-                <div class="legend-color" style="background: #33ff33;"></div>
-                <span>主法向量 N̂ (弯曲方向)</span>
-            </div>
-            <div class="legend">
-                <div class="legend-color" style="background: #3333ff;"></div>
-                <span>次法向量 B̂ (螺旋轴向)</span>
-            </div>
-            
-            <p class="info-text">
-                <strong>验证正交性：</strong><br>
-                T̂·N̂ = 0<br>
-                T̂·B̂ = 0<br>
-                N̂·B̂ = 0<br>
-                这三个向量相互垂直，构成标准正交基。
-            </p>
+      <div id="canvas-container"></div>
+      <div class="sidebar">
+        <h1>空间螺旋线Frenet-Serret标架</h1>
+        <p class="info-text">
+          本可视化展示了论文中的核心概念：圆柱螺旋线及其Frenet标架的三个相互垂直的单位向量
+        </p>
+
+        <h2>螺旋线参数</h2>
+        <div class="control-group">
+          <label>半径 r: <span class="value-display" id="r-value">2.0</span></label>
+          <input type="range" id="radius" min="0.5" max="5" step="0.1" value="2" />
         </div>
+        <div class="control-group">
+          <label>角速度 ω: <span class="value-display" id="omega-value">1.0</span></label>
+          <input type="range" id="omega" min="0.1" max="3" step="0.1" value="1" />
+        </div>
+        <div class="control-group">
+          <label>轴向速度 v: <span class="value-display" id="v-value">1.0</span></label>
+          <input type="range" id="axial-velocity" min="0.1" max="3" step="0.1" value="1" />
+        </div>
+        <div class="control-group">
+          <label>时间参数 t: <span class="value-display" id="t-value">3.14</span></label>
+          <input type="range" id="time-param" min="0" max="12.57" step="0.01" value="3.14" />
+        </div>
+
+        <h2>显示选项</h2>
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="show-helix" checked /> 螺旋线轨迹</label>
+          <label><input type="checkbox" id="show-tangent" checked /> 切向量 T (红色)</label>
+          <label><input type="checkbox" id="show-normal" checked /> 主法向量 N (绿色)</label>
+          <label><input type="checkbox" id="show-binormal" checked /> 次法向量 B (蓝色)</label>
+          <label><input type="checkbox" id="show-planes" checked /> 三个垂直平面</label>
+          <label><input type="checkbox" id="show-axes" checked /> 坐标轴</label>
+        </div>
+
+        <button id="animate-btn">开始动画</button>
+        <button id="reset-btn">重置视角</button>
+
+        <h2>计算结果</h2>
+        <div class="formula-box">
+          <div><strong>速度模长 a:</strong></div>
+          <code id="velocity-mag">2.236</code>
+        </div>
+        <div class="formula-box">
+          <div><strong>曲率 κ:</strong></div>
+          <code id="curvature">0.400</code>
+        </div>
+        <div class="formula-box">
+          <div><strong>单位切向量 T̂:</strong></div>
+          <code id="tangent-vec">(-0.000, 0.894, 0.447)</code>
+        </div>
+        <div class="formula-box">
+          <div><strong>单位主法向量 N̂:</strong></div>
+          <code id="normal-vec">(-1.000, 0.000, 0.000)</code>
+        </div>
+        <div class="formula-box">
+          <div><strong>单位次法向量 B̂:</strong></div>
+          <code id="binormal-vec">(0.000, -0.447, 0.894)</code>
+        </div>
+
+        <h2>向量图例</h2>
+        <div class="legend">
+          <div class="legend-color" style="background: #ff3333"></div>
+          <span>切向量 T̂ (运动方向)</span>
+        </div>
+        <div class="legend">
+          <div class="legend-color" style="background: #33ff33"></div>
+          <span>主法向量 N̂ (弯曲方向)</span>
+        </div>
+        <div class="legend">
+          <div class="legend-color" style="background: #3333ff"></div>
+          <span>次法向量 B̂ (螺旋轴向)</span>
+        </div>
+
+        <p class="info-text">
+          <strong>验证正交性：</strong><br />
+          T̂·N̂ = 0<br />
+          T̂·B̂ = 0<br />
+          N̂·B̂ = 0<br />
+          这三个向量相互垂直，构成标准正交基。
+        </p>
+      </div>
     </div>
 
     <script>
-        // 场景设置
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0a1a);
-        
-        const container = document.getElementById('canvas-container');
-        const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.set(8, 8, 8);
-        camera.lookAt(0, 0, 0);
-        
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        container.appendChild(renderer.domElement);
-        
-        // 光照
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(5, 10, 7);
-        scene.add(directionalLight);
-        
-        // 参数
-        let params = {
-            r: 2.0,
-            omega: 1.0,
-            v: 1.0,
-            t: Math.PI,
-            animating: false
-        };
-        
-        // 对象存储
-        let helixLine, tangentArrow, normalArrow, binormalArrow;
-        let planes = [];
-        let pointMarker;
-        
-        // 创建坐标轴
-        const axesHelper = new THREE.AxesHelper(6);
-        scene.add(axesHelper);
-        
-        // 辅助函数：计算螺旋线位置
-        function helixPosition(t) {
-            return new THREE.Vector3(
-                params.r * Math.cos(params.omega * t),
-                params.r * Math.sin(params.omega * t),
-                params.v * t
-            );
+      // 场景设置
+      const scene = new THREE.Scene()
+      scene.background = new THREE.Color(0x0a0a1a)
+
+      const container = document.getElementById('canvas-container')
+      const camera = new THREE.PerspectiveCamera(
+        60,
+        container.clientWidth / container.clientHeight,
+        0.1,
+        1000
+      )
+      camera.position.set(8, 8, 8)
+      camera.lookAt(0, 0, 0)
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true })
+      renderer.setSize(container.clientWidth, container.clientHeight)
+      container.appendChild(renderer.domElement)
+
+      // 光照
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
+      scene.add(ambientLight)
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
+      directionalLight.position.set(5, 10, 7)
+      scene.add(directionalLight)
+
+      // 参数
+      let params = {
+        r: 2.0,
+        omega: 1.0,
+        v: 1.0,
+        t: Math.PI,
+        animating: false
+      }
+
+      // 对象存储
+      let helixLine, tangentArrow, normalArrow, binormalArrow
+      let planes = []
+      let pointMarker
+
+      // 创建坐标轴
+      const axesHelper = new THREE.AxesHelper(6)
+      scene.add(axesHelper)
+
+      // 辅助函数：计算螺旋线位置
+      function helixPosition(t) {
+        return new THREE.Vector3(
+          params.r * Math.cos(params.omega * t),
+          params.r * Math.sin(params.omega * t),
+          params.v * t
+        )
+      }
+
+      // 辅助函数：计算Frenet标架
+      function computeFrenetFrame(t) {
+        const r = params.r
+        const omega = params.omega
+        const v = params.v
+        const a = Math.sqrt(r * r * omega * omega + v * v)
+
+        // 单位切向量
+        const T = new THREE.Vector3(
+          ((-r * omega) / a) * Math.sin(omega * t),
+          ((r * omega) / a) * Math.cos(omega * t),
+          v / a
+        )
+
+        // 单位主法向量
+        const N = new THREE.Vector3(-Math.cos(omega * t), -Math.sin(omega * t), 0)
+
+        // 单位次法向量
+        const B = new THREE.Vector3(
+          (v / a) * Math.sin(omega * t),
+          (-v / a) * Math.cos(omega * t),
+          (r * omega) / a
+        )
+
+        // 曲率
+        const kappa = (r * omega * omega) / (a * a)
+
+        return { T, N, B, kappa, a }
+      }
+
+      // 创建箭头辅助函数
+      function createArrow(direction, color, origin) {
+        const length = 1.5
+        const arrow = new THREE.ArrowHelper(direction, origin, length, color, 0.3, 0.2)
+        return arrow
+      }
+
+      // 创建平面
+      function createPlane(normal, color, opacity = 0.15) {
+        const size = 3
+        const geometry = new THREE.PlaneGeometry(size, size)
+        const material = new THREE.MeshBasicMaterial({
+          color: color,
+          transparent: true,
+          opacity: opacity,
+          side: THREE.DoubleSide
+        })
+        const plane = new THREE.Mesh(geometry, material)
+
+        // 对齐平面法向量
+        const quaternion = new THREE.Quaternion()
+        quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal.clone().normalize())
+        plane.quaternion.copy(quaternion)
+
+        return plane
+      }
+
+      // 更新场景
+      function updateScene() {
+        // 清除旧对象
+        if (helixLine) scene.remove(helixLine)
+        if (tangentArrow) scene.remove(tangentArrow)
+        if (normalArrow) scene.remove(normalArrow)
+        if (binormalArrow) scene.remove(binormalArrow)
+        if (pointMarker) scene.remove(pointMarker)
+        planes.forEach(p => scene.remove(p))
+        planes = []
+
+        // 创建螺旋线
+        if (document.getElementById('show-helix').checked) {
+          const points = []
+          for (let t = 0; t <= 4 * Math.PI; t += 0.05) {
+            points.push(helixPosition(t))
+          }
+          const geometry = new THREE.BufferGeometry().setFromPoints(points)
+          const material = new THREE.LineBasicMaterial({ color: 0xffaa00, linewidth: 2 })
+          helixLine = new THREE.Line(geometry, material)
+          scene.add(helixLine)
         }
-        
-        // 辅助函数：计算Frenet标架
-        function computeFrenetFrame(t) {
-            const r = params.r;
-            const omega = params.omega;
-            const v = params.v;
-            const a = Math.sqrt(r * r * omega * omega + v * v);
-            
-            // 单位切向量
-            const T = new THREE.Vector3(
-                -r * omega / a * Math.sin(omega * t),
-                r * omega / a * Math.cos(omega * t),
-                v / a
-            );
-            
-            // 单位主法向量
-            const N = new THREE.Vector3(
-                -Math.cos(omega * t),
-                -Math.sin(omega * t),
-                0
-            );
-            
-            // 单位次法向量
-            const B = new THREE.Vector3(
-                v / a * Math.sin(omega * t),
-                -v / a * Math.cos(omega * t),
-                r * omega / a
-            );
-            
-            // 曲率
-            const kappa = (r * omega * omega) / (a * a);
-            
-            return { T, N, B, kappa, a };
+
+        // 当前点
+        const pos = helixPosition(params.t)
+        const frame = computeFrenetFrame(params.t)
+
+        // 点标记
+        const sphereGeometry = new THREE.SphereGeometry(0.12, 16, 16)
+        const sphereMaterial = new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          emissive: 0xffff00
+        })
+        pointMarker = new THREE.Mesh(sphereGeometry, sphereMaterial)
+        pointMarker.position.copy(pos)
+        scene.add(pointMarker)
+
+        // Frenet向量
+        if (document.getElementById('show-tangent').checked) {
+          tangentArrow = createArrow(frame.T, 0xff3333, pos)
+          scene.add(tangentArrow)
         }
-        
-        // 创建箭头辅助函数
-        function createArrow(direction, color, origin) {
-            const length = 1.5;
-            const arrow = new THREE.ArrowHelper(direction, origin, length, color, 0.3, 0.2);
-            return arrow;
+        if (document.getElementById('show-normal').checked) {
+          normalArrow = createArrow(frame.N, 0x33ff33, pos)
+          scene.add(normalArrow)
         }
-        
-        // 创建平面
-        function createPlane(normal, color, opacity = 0.15) {
-            const size = 3;
-            const geometry = new THREE.PlaneGeometry(size, size);
-            const material = new THREE.MeshBasicMaterial({
-                color: color,
-                transparent: true,
-                opacity: opacity,
-                side: THREE.DoubleSide
-            });
-            const plane = new THREE.Mesh(geometry, material);
-            
-            // 对齐平面法向量
-            const quaternion = new THREE.Quaternion();
-            quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal.clone().normalize());
-            plane.quaternion.copy(quaternion);
-            
-            return plane;
+        if (document.getElementById('show-binormal').checked) {
+          binormalArrow = createArrow(frame.B, 0x3333ff, pos)
+          scene.add(binormalArrow)
         }
-        
-        // 更新场景
-        function updateScene() {
-            // 清除旧对象
-            if (helixLine) scene.remove(helixLine);
-            if (tangentArrow) scene.remove(tangentArrow);
-            if (normalArrow) scene.remove(normalArrow);
-            if (binormalArrow) scene.remove(binormalArrow);
-            if (pointMarker) scene.remove(pointMarker);
-            planes.forEach(p => scene.remove(p));
-            planes = [];
-            
-            // 创建螺旋线
-            if (document.getElementById('show-helix').checked) {
-                const points = [];
-                for (let t = 0; t <= 4 * Math.PI; t += 0.05) {
-                    points.push(helixPosition(t));
-                }
-                const geometry = new THREE.BufferGeometry().setFromPoints(points);
-                const material = new THREE.LineBasicMaterial({ color: 0xffaa00, linewidth: 2 });
-                helixLine = new THREE.Line(geometry, material);
-                scene.add(helixLine);
-            }
-            
-            // 当前点
-            const pos = helixPosition(params.t);
-            const frame = computeFrenetFrame(params.t);
-            
-            // 点标记
-            const sphereGeometry = new THREE.SphereGeometry(0.12, 16, 16);
-            const sphereMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffff00 });
-            pointMarker = new THREE.Mesh(sphereGeometry, sphereMaterial);
-            pointMarker.position.copy(pos);
-            scene.add(pointMarker);
-            
-            // Frenet向量
-            if (document.getElementById('show-tangent').checked) {
-                tangentArrow = createArrow(frame.T, 0xff3333, pos);
-                scene.add(tangentArrow);
-            }
-            if (document.getElementById('show-normal').checked) {
-                normalArrow = createArrow(frame.N, 0x33ff33, pos);
-                scene.add(normalArrow);
-            }
-            if (document.getElementById('show-binormal').checked) {
-                binormalArrow = createArrow(frame.B, 0x3333ff, pos);
-                scene.add(binormalArrow);
-            }
-            
-            // 三个平面
-            if (document.getElementById('show-planes').checked) {
-                // 密切平面 (T, N) - 法向量为B
-                const oscPlane = createPlane(frame.B, 0x3333ff, 0.12);
-                oscPlane.position.copy(pos);
-                planes.push(oscPlane);
-                scene.add(oscPlane);
-                
-                // 法平面 (N, B) - 法向量为T
-                const normalPlane = createPlane(frame.T, 0xff3333, 0.12);
-                normalPlane.position.copy(pos);
-                planes.push(normalPlane);
-                scene.add(normalPlane);
-                
-                // 从切平面 (B, T) - 法向量为N
-                const rectPlane = createPlane(frame.N, 0x33ff33, 0.12);
-                rectPlane.position.copy(pos);
-                planes.push(rectPlane);
-                scene.add(rectPlane);
-            }
-            
-            // 更新显示数值
-            document.getElementById('velocity-mag').textContent = frame.a.toFixed(3);
-            document.getElementById('curvature').textContent = frame.kappa.toFixed(3);
-            document.getElementById('tangent-vec').textContent = 
-                `(${frame.T.x.toFixed(3)}, ${frame.T.y.toFixed(3)}, ${frame.T.z.toFixed(3)})`;
-            document.getElementById('normal-vec').textContent = 
-                `(${frame.N.x.toFixed(3)}, ${frame.N.y.toFixed(3)}, ${frame.N.z.toFixed(3)})`;
-            document.getElementById('binormal-vec').textContent = 
-                `(${frame.B.x.toFixed(3)}, ${frame.B.y.toFixed(3)}, ${frame.B.z.toFixed(3)})`;
+
+        // 三个平面
+        if (document.getElementById('show-planes').checked) {
+          // 密切平面 (T, N) - 法向量为B
+          const oscPlane = createPlane(frame.B, 0x3333ff, 0.12)
+          oscPlane.position.copy(pos)
+          planes.push(oscPlane)
+          scene.add(oscPlane)
+
+          // 法平面 (N, B) - 法向量为T
+          const normalPlane = createPlane(frame.T, 0xff3333, 0.12)
+          normalPlane.position.copy(pos)
+          planes.push(normalPlane)
+          scene.add(normalPlane)
+
+          // 从切平面 (B, T) - 法向量为N
+          const rectPlane = createPlane(frame.N, 0x33ff33, 0.12)
+          rectPlane.position.copy(pos)
+          planes.push(rectPlane)
+          scene.add(rectPlane)
         }
-        
-        // 控件事件
-        document.getElementById('radius').addEventListener('input', (e) => {
-            params.r = parseFloat(e.target.value);
-            document.getElementById('r-value').textContent = params.r.toFixed(1);
-            updateScene();
-        });
-        
-        document.getElementById('omega').addEventListener('input', (e) => {
-            params.omega = parseFloat(e.target.value);
-            document.getElementById('omega-value').textContent = params.omega.toFixed(1);
-            updateScene();
-        });
-        
-        document.getElementById('axial-velocity').addEventListener('input', (e) => {
-            params.v = parseFloat(e.target.value);
-            document.getElementById('v-value').textContent = params.v.toFixed(1);
-            updateScene();
-        });
-        
-        document.getElementById('time-param').addEventListener('input', (e) => {
-            params.t = parseFloat(e.target.value);
-            document.getElementById('t-value').textContent = params.t.toFixed(2);
-            updateScene();
-        });
-        
-        ['show-helix', 'show-tangent', 'show-normal', 'show-binormal', 'show-planes', 'show-axes'].forEach(id => {
-            document.getElementById(id).addEventListener('change', (e) => {
-                if (id === 'show-axes') {
-                    axesHelper.visible = e.target.checked;
-                } else {
-                    updateScene();
-                }
-            });
-        });
-        
-        document.getElementById('animate-btn').addEventListener('click', () => {
-            params.animating = !params.animating;
-            document.getElementById('animate-btn').textContent = params.animating ? '停止动画' : '开始动画';
-        });
-        
-        document.getElementById('reset-btn').addEventListener('click', () => {
-            camera.position.set(8, 8, 8);
-            camera.lookAt(0, 0, 0);
-        });
-        
-        // 鼠标控制
-        let isDragging = false;
-        let previousMousePosition = { x: 0, y: 0 };
-        
-        container.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            previousMousePosition = { x: e.clientX, y: e.clientY };
-        });
-        
-        container.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const deltaX = e.clientX - previousMousePosition.x;
-                const deltaY = e.clientY - previousMousePosition.y;
-                
-                const radius = camera.position.length();
-                const theta = Math.atan2(camera.position.x, camera.position.z);
-                const phi = Math.acos(camera.position.y / radius);
-                
-                const newTheta = theta - deltaX * 0.01;
-                const newPhi = Math.max(0.1, Math.min(Math.PI - 0.1, phi - deltaY * 0.01));
-                
-                camera.position.x = radius * Math.sin(newPhi) * Math.sin(newTheta);
-                camera.position.y = radius * Math.cos(newPhi);
-                camera.position.z = radius * Math.sin(newPhi) * Math.cos(newTheta);
-                camera.lookAt(0, 0, 0);
-                
-                previousMousePosition = { x: e.clientX, y: e.clientY };
-            }
-        });
-        
-        container.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
-        
-        container.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const delta = e.deltaY * 0.01;
-            const direction = camera.position.clone().normalize();
-            camera.position.addScaledVector(direction, delta);
-        });
-        
-        // 动画循环
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            if (params.animating) {
-                params.t += 0.02;
-                if (params.t > 12.57) params.t = 0;
-                document.getElementById('time-param').value = params.t;
-                document.getElementById('t-value').textContent = params.t.toFixed(2);
-                updateScene();
-            }
-            
-            renderer.render(scene, camera);
+
+        // 更新显示数值
+        document.getElementById('velocity-mag').textContent = frame.a.toFixed(3)
+        document.getElementById('curvature').textContent = frame.kappa.toFixed(3)
+        document.getElementById('tangent-vec').textContent =
+          `(${frame.T.x.toFixed(3)}, ${frame.T.y.toFixed(3)}, ${frame.T.z.toFixed(3)})`
+        document.getElementById('normal-vec').textContent =
+          `(${frame.N.x.toFixed(3)}, ${frame.N.y.toFixed(3)}, ${frame.N.z.toFixed(3)})`
+        document.getElementById('binormal-vec').textContent =
+          `(${frame.B.x.toFixed(3)}, ${frame.B.y.toFixed(3)}, ${frame.B.z.toFixed(3)})`
+      }
+
+      // 控件事件
+      document.getElementById('radius').addEventListener('input', e => {
+        params.r = parseFloat(e.target.value)
+        document.getElementById('r-value').textContent = params.r.toFixed(1)
+        updateScene()
+      })
+
+      document.getElementById('omega').addEventListener('input', e => {
+        params.omega = parseFloat(e.target.value)
+        document.getElementById('omega-value').textContent = params.omega.toFixed(1)
+        updateScene()
+      })
+
+      document.getElementById('axial-velocity').addEventListener('input', e => {
+        params.v = parseFloat(e.target.value)
+        document.getElementById('v-value').textContent = params.v.toFixed(1)
+        updateScene()
+      })
+
+      document.getElementById('time-param').addEventListener('input', e => {
+        params.t = parseFloat(e.target.value)
+        document.getElementById('t-value').textContent = params.t.toFixed(2)
+        updateScene()
+      })
+
+      ;[
+        'show-helix',
+        'show-tangent',
+        'show-normal',
+        'show-binormal',
+        'show-planes',
+        'show-axes'
+      ].forEach(id => {
+        document.getElementById(id).addEventListener('change', e => {
+          if (id === 'show-axes') {
+            axesHelper.visible = e.target.checked
+          } else {
+            updateScene()
+          }
+        })
+      })
+
+      document.getElementById('animate-btn').addEventListener('click', () => {
+        params.animating = !params.animating
+        document.getElementById('animate-btn').textContent = params.animating
+          ? '停止动画'
+          : '开始动画'
+      })
+
+      document.getElementById('reset-btn').addEventListener('click', () => {
+        camera.position.set(8, 8, 8)
+        camera.lookAt(0, 0, 0)
+      })
+
+      // 鼠标控制
+      let isDragging = false
+      let previousMousePosition = { x: 0, y: 0 }
+
+      container.addEventListener('mousedown', e => {
+        isDragging = true
+        previousMousePosition = { x: e.clientX, y: e.clientY }
+      })
+
+      container.addEventListener('mousemove', e => {
+        if (isDragging) {
+          const deltaX = e.clientX - previousMousePosition.x
+          const deltaY = e.clientY - previousMousePosition.y
+
+          const radius = camera.position.length()
+          const theta = Math.atan2(camera.position.x, camera.position.z)
+          const phi = Math.acos(camera.position.y / radius)
+
+          const newTheta = theta - deltaX * 0.01
+          const newPhi = Math.max(0.1, Math.min(Math.PI - 0.1, phi - deltaY * 0.01))
+
+          camera.position.x = radius * Math.sin(newPhi) * Math.sin(newTheta)
+          camera.position.y = radius * Math.cos(newPhi)
+          camera.position.z = radius * Math.sin(newPhi) * Math.cos(newTheta)
+          camera.lookAt(0, 0, 0)
+
+          previousMousePosition = { x: e.clientX, y: e.clientY }
         }
-        
-        // 窗口调整
-        window.addEventListener('resize', () => {
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        });
-        
-        // 初始化
-        updateScene();
-        animate();
+      })
+
+      container.addEventListener('mouseup', () => {
+        isDragging = false
+      })
+
+      container.addEventListener('wheel', e => {
+        e.preventDefault()
+        const delta = e.deltaY * 0.01
+        const direction = camera.position.clone().normalize()
+        camera.position.addScaledVector(direction, delta)
+      })
+
+      // 动画循环
+      function animate() {
+        requestAnimationFrame(animate)
+
+        if (params.animating) {
+          params.t += 0.02
+          if (params.t > 12.57) params.t = 0
+          document.getElementById('time-param').value = params.t
+          document.getElementById('t-value').textContent = params.t.toFixed(2)
+          updateScene()
+        }
+
+        renderer.render(scene, camera)
+      }
+
+      // 窗口调整
+      window.addEventListener('resize', () => {
+        camera.aspect = container.clientWidth / container.clientHeight
+        camera.updateProjectionMatrix()
+        renderer.setSize(container.clientWidth, container.clientHeight)
+      })
+
+      // 初始化
+      updateScene()
+      animate()
     </script>
-</body>
+  </body>
 </html>

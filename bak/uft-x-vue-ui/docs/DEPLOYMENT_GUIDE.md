@@ -7,6 +7,7 @@
 ## 🛠️ 环境要求
 
 ### 基础要求
+
 - **Node.js**: >= 16.0.0
 - **pnpm**: >= 7.0.0 (推荐)
 - **现代浏览器**: Chrome 90+, Firefox 88+, Safari 14+
@@ -14,6 +15,7 @@
 - **存储**: 最少 2GB 可用空间
 
 ### 推荐配置
+
 - **Node.js**: 18.x LTS
 - **内存**: 8GB+ RAM
 - **SSD存储**: 10GB+ 可用空间
@@ -22,12 +24,14 @@
 ## 🏠 本地开发部署
 
 ### 1. 克隆项目
+
 ```bash
 git clone <repository-url>
 cd uft-x-vue-ui
 ```
 
 ### 2. 安装依赖
+
 ```bash
 # 使用pnpm (推荐)
 pnpm install
@@ -37,15 +41,18 @@ npm install
 ```
 
 ### 3. 启动开发服务器
+
 ```bash
 pnpm dev
 ```
 
 ### 4. 访问应用
+
 - **主应用**: http://localhost:3000
 - **代码优化器**: http://localhost:3000/code-optimizer
 
 ### 5. 开发工具
+
 ```bash
 # 代码检查
 pnpm lint
@@ -66,6 +73,7 @@ pnpm test:e2e
 ## 🐳 Docker部署
 
 ### 创建Dockerfile
+
 ```dockerfile
 # 多阶段构建
 FROM node:18-alpine as builder
@@ -104,6 +112,7 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 ### Docker Compose配置
+
 ```yaml
 version: '3.8'
 
@@ -111,18 +120,18 @@ services:
   code-optimizer:
     build: .
     ports:
-      - "3000:80"
+      - '3000:80'
     environment:
       - NODE_ENV=production
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     restart: unless-stopped
-    
+
   # 可选：Redis缓存服务
   redis:
     image: redis:alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -132,6 +141,7 @@ volumes:
 ```
 
 ### 部署命令
+
 ```bash
 # 构建并启动
 docker-compose up -d
@@ -146,6 +156,7 @@ docker-compose down
 ## 🌐 云平台部署
 
 ### Vercel部署
+
 ```bash
 # 安装Vercel CLI
 npm install -g vercel
@@ -158,6 +169,7 @@ vercel --prod --domains code-optimizer.yourdomain.com
 ```
 
 **vercel.json配置:**
+
 ```json
 {
   "version": 2,
@@ -187,6 +199,7 @@ vercel --prod --domains code-optimizer.yourdomain.com
 ```
 
 ### Netlify部署
+
 ```bash
 # 安装Netlify CLI
 npm install -g netlify-cli
@@ -196,6 +209,7 @@ netlify deploy --prod --dir=dist
 ```
 
 **netlify.toml配置:**
+
 ```toml
 [build]
   command = "pnpm build"
@@ -214,6 +228,7 @@ netlify deploy --prod --dir=dist
 ```
 
 ### AWS S3 + CloudFront
+
 ```bash
 # 构建应用
 pnpm build
@@ -231,6 +246,7 @@ aws s3 sync dist/ s3://your-bucket-name --delete --acl public-read
 ## ⚙️ Nginx配置
 
 ### 基础配置
+
 ```nginx
 events {
     worker_connections 1024;
@@ -239,35 +255,35 @@ events {
 http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
-    
+
     # Gzip压缩
     gzip on;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-    
+
     server {
         listen 80;
         server_name localhost;
         root /usr/share/nginx/html;
         index index.html;
-        
+
         # 启用缓存
         location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
             expires 1y;
             add_header Cache-Control "public, immutable";
         }
-        
+
         # SPA路由支持
         location / {
             try_files $uri $uri/ /index.html;
         }
-        
+
         # API代理 (可选)
         location /api/ {
             proxy_pass http://backend:8080/;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
         }
-        
+
         # 安全头
         add_header X-Frame-Options "SAMEORIGIN" always;
         add_header X-Content-Type-Options "nosniff" always;
@@ -281,6 +297,7 @@ http {
 ## 🔧 环境配置
 
 ### 开发环境
+
 ```bash
 # .env.development
 VITE_API_URL=http://localhost:8080
@@ -290,6 +307,7 @@ VITE_LOG_LEVEL=debug
 ```
 
 ### 生产环境
+
 ```bash
 # .env.production
 VITE_API_URL=https://api.yourdomain.com
@@ -300,6 +318,7 @@ VITE_SENTRY_DSN=your-sentry-dsn
 ```
 
 ### 测试环境
+
 ```bash
 # .env.test
 VITE_API_URL=http://test-api.yourdomain.com
@@ -311,6 +330,7 @@ VITE_LOG_LEVEL=warn
 ## 📊 性能优化
 
 ### 构建优化
+
 ```typescript
 // vite.config.ts
 export default defineConfig({
@@ -338,17 +358,13 @@ export default defineConfig({
 ```
 
 ### 缓存策略
+
 ```typescript
 // Service Worker
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open('code-optimizer-v1').then((cache) => {
-      return cache.addAll([
-        '/',
-        '/code-optimizer',
-        '/static/js/main.js',
-        '/static/css/main.css'
-      ])
+    caches.open('code-optimizer-v1').then(cache => {
+      return cache.addAll(['/', '/code-optimizer', '/static/js/main.js', '/static/css/main.css'])
     })
   )
 })
@@ -357,18 +373,22 @@ self.addEventListener('install', (event) => {
 ## 🔍 监控和日志
 
 ### 错误监控 (Sentry)
+
 ```typescript
 // main.ts
 import * as Sentry from '@sentry/vue'
 
-app.use(Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN,
-  environment: import.meta.env.MODE,
-  release: '1.0.0'
-}))
+app.use(
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    environment: import.meta.env.MODE,
+    release: '1.0.0'
+  })
+)
 ```
 
 ### 性能监控
+
 ```typescript
 // 性能指标收集
 import { createPerformanceMonitor } from './services/performance-monitor'
@@ -389,23 +409,28 @@ setInterval(() => {
 ## 🔒 安全配置
 
 ### HTTPS配置
+
 ```bash
 # 使用Let's Encrypt
 certbot --nginx -d yourdomain.com
 ```
 
 ### CSP策略
+
 ```html
-<meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self'; 
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self'; 
                script-src 'self' 'unsafe-inline'; 
                style-src 'self' 'unsafe-inline'; 
-               img-src 'self' data: https:;">
+               img-src 'self' data: https:;"
+/>
 ```
 
 ## 🚀 CI/CD流水线
 
 ### GitHub Actions
+
 ```yaml
 name: Deploy Code Optimizer
 
@@ -425,7 +450,7 @@ jobs:
         with:
           node-version: '18'
           cache: 'pnpm'
-      
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm type-check
@@ -436,7 +461,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2
@@ -444,10 +469,10 @@ jobs:
         with:
           node-version: '18'
           cache: 'pnpm'
-      
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      
+
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v20
         with:
@@ -462,6 +487,7 @@ jobs:
 ### 常见问题
 
 #### 1. 内存不足
+
 ```bash
 # 增加Node.js内存限制
 export NODE_OPTIONS="--max-old-space-size=4096"
@@ -469,6 +495,7 @@ pnpm build
 ```
 
 #### 2. 构建失败
+
 ```bash
 # 清理缓存
 rm -rf node_modules
@@ -479,6 +506,7 @@ pnpm build
 ```
 
 #### 3. 性能问题
+
 ```bash
 # 启用生产模式调试
 export VITE_DEBUG=true
@@ -487,6 +515,7 @@ pnpm dev
 ```
 
 ### 日志分析
+
 ```bash
 # 查看构建日志
 tail -f logs/build.log
@@ -501,6 +530,7 @@ tail -f logs/error.log
 ## 📈 扩展部署
 
 ### 微服务架构
+
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   前端应用      │    │   分析服务      │    │   优化服务      │
@@ -515,6 +545,7 @@ tail -f logs/error.log
 ```
 
 ### Kubernetes部署
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -531,20 +562,20 @@ spec:
         app: code-optimizer
     spec:
       containers:
-      - name: frontend
-        image: your-registry/code-optimizer:latest
-        ports:
-        - containerPort: 80
-        env:
-        - name: NODE_ENV
-          value: "production"
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
+        - name: frontend
+          image: your-registry/code-optimizer:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: NODE_ENV
+              value: 'production'
+          resources:
+            requests:
+              memory: '256Mi'
+              cpu: '250m'
+            limits:
+              memory: '512Mi'
+              cpu: '500m'
 ```
 
 ---
@@ -552,6 +583,7 @@ spec:
 ## 🎯 部署检查清单
 
 ### 部署前
+
 - [ ] 代码通过所有测试
 - [ ] 类型检查无错误
 - [ ] 构建成功
@@ -559,6 +591,7 @@ spec:
 - [ ] 安全审查通过
 
 ### 部署后
+
 - [ ] 应用正常启动
 - [ ] 所有页面可访问
 - [ ] 性能指标正常
@@ -567,6 +600,7 @@ spec:
 - [ ] 备份完成
 
 ### 监控检查
+
 - [ ] 响应时间 < 2秒
 - [ ] 错误率 < 1%
 - [ ] 内存使用 < 80%

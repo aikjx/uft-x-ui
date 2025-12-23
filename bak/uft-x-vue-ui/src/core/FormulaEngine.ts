@@ -33,10 +33,7 @@ export class FormulaEngine {
   /**
    * 计算指定公式
    */
-  public calculate(
-    formulaType: FormulaType,
-    params: FormulaParameters
-  ): any {
+  public calculate(formulaType: FormulaType, params: FormulaParameters): any {
     const cacheKey = this.getCacheKey(formulaType, params)
 
     if (this.cache.has(cacheKey)) {
@@ -135,7 +132,7 @@ export class FormulaEngine {
     const r = params.r || 1
 
     // 引力场强度（负值表示吸引力）
-    const magnitude = -G * k * n / (r * r)
+    const magnitude = (-G * k * n) / (r * r)
     // 默认指向负z方向
     const direction = new THREE.Vector3(0, 0, 1)
 
@@ -289,7 +286,10 @@ export class FormulaEngine {
     switch (formulaType) {
       case FormulaType.GRAVITY_FIELD:
         const r = point.length() || 0.1
-        return point.clone().normalize().multiplyScalar(-1 / (r * r))
+        return point
+          .clone()
+          .normalize()
+          .multiplyScalar(-1 / (r * r))
       default:
         return new THREE.Vector3(0, 0, 0)
     }
@@ -340,7 +340,8 @@ export const FORMULA_METADATA: Record<FormulaType, FormulaMetadata> = {
     id: FormulaType.SPIRAL_SPACETIME,
     name: '三维螺旋时空方程',
     nameEn: '3D Spiral Spacetime Equation',
-    latex: '\\vec{r}(t) = r\\cos\\omega t \\cdot \\vec{i} + r\\sin\\omega t \\cdot \\vec{j} + ht \\cdot \\vec{k}',
+    latex:
+      '\\vec{r}(t) = r\\cos\\omega t \\cdot \\vec{i} + r\\sin\\omega t \\cdot \\vec{j} + ht \\cdot \\vec{k}',
     description: '描述空间的螺旋运动模式',
     category: 'spacetime',
     difficulty: 'intermediate',

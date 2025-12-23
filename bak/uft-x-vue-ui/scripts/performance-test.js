@@ -39,30 +39,32 @@ function simulatePerformanceTest(config) {
   console.log(`   粒子数: ${config.particleCount.toLocaleString()}`)
   console.log(`   场分辨率: ${config.fieldResolution}³`)
   console.log(`   质量等级: ${config.quality}`)
-  
+
   // 模拟计算时间
   const particleTime = config.particleCount / 10000 // ms
   const fieldTime = Math.pow(config.fieldResolution, 3) / 1000 // ms
   const totalTime = particleTime + fieldTime
-  
+
   // 估算FPS
   const frameTime = totalTime / 60
   const estimatedFPS = Math.min(1000 / frameTime, 120)
-  
+
   // 估算内存
   const particleMemory = (config.particleCount * 48) / 1024 / 1024 // MB
   const fieldMemory = (Math.pow(config.fieldResolution, 3) * 12) / 1024 / 1024 // MB
   const totalMemory = particleMemory + fieldMemory + 50 // 基础内存
-  
+
   console.log(`\n   ⚡ 性能指标:`)
   console.log(`   - 初始化时间: ${totalTime.toFixed(2)}ms`)
   console.log(`   - 预估FPS: ${estimatedFPS.toFixed(0)}`)
   console.log(`   - 内存占用: ${totalMemory.toFixed(2)}MB`)
-  console.log(`   - 状态: ${estimatedFPS >= 60 ? '✅ 优秀' : estimatedFPS >= 30 ? '⚠️  可接受' : '❌ 需要优化'}`)
+  console.log(
+    `   - 状态: ${estimatedFPS >= 60 ? '✅ 优秀' : estimatedFPS >= 30 ? '⚠️  可接受' : '❌ 需要优化'}`
+  )
 }
 
 // 运行所有测试
-console.log('=' .repeat(60))
+console.log('='.repeat(60))
 testConfigs.forEach(config => {
   simulatePerformanceTest(config)
 })

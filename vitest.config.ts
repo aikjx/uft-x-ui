@@ -6,7 +6,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
-    
+
     include: [
       'tests/unit/**/*.{test,spec}.{ts,tsx}',
       'tests/components/**/*.{test,spec}.{ts,tsx}',
@@ -23,7 +23,7 @@ export default defineConfig({
       'tests/e2e/**',
       'tests/benchmark/**'
     ],
-    
+
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
@@ -45,18 +45,18 @@ export default defineConfig({
       all: true,
       clean: true
     },
-    
+
     testTimeout: 15000,
     hookTimeout: 10000,
-    
+
     deps: {
       interopDefault: true
     },
-    
+
     reporters: ['default'],
-    outputFile: { html: 'test-results/index.html' },
+    outputFile: { html: 'test-results/index.html' }
   },
-  
+
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')

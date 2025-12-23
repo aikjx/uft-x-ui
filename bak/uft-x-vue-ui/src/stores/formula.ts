@@ -21,18 +21,19 @@ export const useFormulaStore = defineStore('formula', () => {
   const isLoading = ref(false)
 
   // 计算属性
-  const selectedFormula = computed(() => 
-    formulas.value.find(f => f.id === selectedFormulaId.value)
-  )
+  const selectedFormula = computed(() => formulas.value.find(f => f.id === selectedFormulaId.value))
 
   const formulasByCategory = computed(() => {
-    return formulas.value.reduce((acc, formula) => {
-      if (!acc[formula.category]) {
-        acc[formula.category] = []
-      }
-      acc[formula.category].push(formula)
-      return acc
-    }, {} as Record<string, Formula[]>)
+    return formulas.value.reduce(
+      (acc, formula) => {
+        if (!acc[formula.category]) {
+          acc[formula.category] = []
+        }
+        acc[formula.category].push(formula)
+        return acc
+      },
+      {} as Record<string, Formula[]>
+    )
   })
 
   // Actions
@@ -42,7 +43,7 @@ export const useFormulaStore = defineStore('formula', () => {
       // 这里将来可以替换为真实的API调用
       // const response = await fetch('/api/formulas')
       // formulas.value = await response.json()
-      
+
       // 模拟数据
       formulas.value = [
         {

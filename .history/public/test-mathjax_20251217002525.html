@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathJax Test</title>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['\\(', '\\)'], ['$', '$']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true,
+          processRefs: true,
+          packages: {'[+]': ['ams', 'newcommand', 'configmacros', 'boldsymbol']}
+        },
+        loader: {
+          load: ['[tex]/ams', '[tex]/newcommand', '[tex]/configmacros', '[tex]/boldsymbol']
+        },
+        startup: {
+          typeset: true,
+          ready: () => {
+            console.log('MathJax is loaded and ready.');
+            MathJax.startup.defaultReady();
+          }
+        }
+      };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>MathJax 测试页面</h1>
+    
+    <div class="test-section">
+        <h2>内联公式测试</h2>
+        <p>这是一个内联公式：\(E = mc^2\)</p>
+        <p>另一个内联公式：\(\sqrt{a^2 + b^2}\)</p>
+        <p>使用 $ 分隔符：$E = mc^2$</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>块级公式测试</h2>
+        <p>使用 $$ 分隔符：</p>
+        $$E = mc^2$$
+        
+        <p>微积分公式：</p>
+        $$\frac{d}{dx}\int_a^x f(t)dt = f(x)$$
+        
+        <p>求和公式：</p>
+        $$\sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6}$$
+    </div>
+    
+    <div class="test-section">
+        <h2>复杂公式测试</h2>
+        <p>矩阵：</p>
+        $$\begin{pmatrix} a & b \\ c & d \end{pmatrix}$$
+        
+        <p>积分：</p>
+        $$\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}$$
+    </div>
+    
+    <script>
+        // 检查 MathJax 状态
+        setTimeout(() => {
+            console.log('MathJax 状态:', {
+                loaded: !!window.MathJax,
+                hasTypeset: !!(window.MathJax && window.MathJax.typesetPromise),
+                hasStartup: !!(window.MathJax && window.MathJax.startup)
+            });
+        }, 2000);
+    </script>
+</body>
+</html>

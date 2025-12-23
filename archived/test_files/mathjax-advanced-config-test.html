@@ -1,1113 +1,1118 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MathJax 高级配置与边界测试</title>
-    
+
     <!-- 最强 MathJax 配置 -->
     <script>
-        window.MathJax = {
-            // 启动配置
-            startup: {
-                ready() {
-                    console.log('🚀 MathJax 高级配置启动');
-                    MathJax.startup.defaultReady();
-                    
-                    // 启动后立即运行测试
-                    setTimeout(() => {
-                        runAdvancedTests();
-                    }, 500);
-                },
-                // 自定义启动元素
-                elements: ['.math-content', '.formula-test']
-            },
-            
-            // TeX 输入处理器 - 完整配置
-            tex: {
-                // 所有可能的分隔符
-                inlineMath: [
-                    ['$', '$'],
-                    ['\\(', '\\)'],
-                    ['\\$', '\\$']  // 转义美元符号
-                ],
-                displayMath: [
-                    ['$$', '$$'],
-                    ['\\[', '\\]'],
-                    ['\\begin{equation}', '\\end{equation}'],
-                    ['\\begin{equation*}', '\\end{equation*}'],
-                    ['\\begin{align}', '\\end{align}'],
-                    ['\\begin{align*}', '\\end{align*}']
-                ],
-                
-                // 启用所有扩展包
-                packages: {
-                    '[+]': [
-                        'base',           // 基础包
-                        'ams',            // AMS 数学
-                        'newcommand',     // 新命令
-                        'configmacros',   // 配置宏
-                        'action',         // 动作
-                        'bbox',           // 边界框
-                        'boldsymbol',     // 粗体符号
-                        'braket',         // 量子力学符号
-                        'cancel',         // 删除线
-                        'color',          // 颜色
-                        'enclose',        // 包围
-                        'extpfeil',       // 扩展箭头
-                        'html',           // HTML
-                        'mathtools',      // 数学工具
-                        'mhchem',         // 化学
-                        'physics',        // 物理
-                        'textmacros',     // 文本宏
-                        'unicode',        // Unicode
-                        'verb',           // 逐字
-                        'cases',          // 分情况
-                        'empheq',         // 强调方程
-                        'gensymb',        // 通用符号
-                        'textcomp'        // 文本符号
-                    ]
-                },
-                
-                // 自定义宏 - 超级全面
-                macros: {
-                    // 数集
-                    RR: "\\mathbb{R}",
-                    CC: "\\mathbb{C}",
-                    NN: "\\mathbb{N}",
-                    ZZ: "\\mathbb{Z}",
-                    QQ: "\\mathbb{Q}",
-                    PP: "\\mathbb{P}",
-                    FF: "\\mathbb{F}",
-                    
-                    // 向量和矩阵
-                    vec: ["\\mathbf{#1}", 1],
-                    mat: ["\\mathbf{#1}", 1],
-                    tensor: ["\\mathsf{#1}", 1],
-                    
-                    // 微积分
-                    dd: "\\mathrm{d}",
-                    pp: "\\partial",
-                    grad: "\\nabla",
-                    div: "\\nabla \\cdot",
-                    curl: "\\nabla \\times",
-                    laplacian: "\\nabla^2",
-                    
-                    // 物理学
-                    hbar: "\\hslash",
-                    ket: ["|#1\\rangle", 1],
-                    bra: ["\\langle#1|", 1],
-                    braket: ["\\langle#1|#2\\rangle", 2],
-                    ketbra: ["|#1\\rangle\\langle#2|", 2],
-                    expectation: ["\\langle#1\\rangle", 1],
-                    
-                    // 概率统计
-                    Prob: ["\\mathbb{P}\\left(#1\\right)", 1],
-                    Expect: ["\\mathbb{E}\\left[#1\\right]", 1],
-                    Var: ["\\text{Var}\\left(#1\\right)", 1],
-                    Cov: ["\\text{Cov}\\left(#1, #2\\right)", 2],
-                    
-                    // 函数
-                    sinc: "\\operatorname{sinc}",
-                    rect: "\\operatorname{rect}",
-                    sgn: "\\operatorname{sgn}",
-                    erf: "\\operatorname{erf}",
-                    erfc: "\\operatorname{erfc}",
-                    
-                    // 逻辑符号
-                    implies: "\\Rightarrow",
-                    iff: "\\Leftrightarrow",
-                    contradiction: "\\rightarrow\\leftarrow",
-                    
-                    // 集合论
-                    powerset: ["\\mathcal{P}\\left(#1\\right)", 1],
-                    card: ["\\left|#1\\right|", 1],
-                    
-                    // 拓扑学
-                    interior: ["\\text{int}\\left(#1\\right)", 1],
-                    closure: ["\\overline{#1}", 1],
-                    boundary: ["\\partial #1", 1],
-                    
-                    // 代数
-                    Hom: ["\\text{Hom}\\left(#1, #2\\right)", 2],
-                    End: ["\\text{End}\\left(#1\\right)", 1],
-                    Aut: ["\\text{Aut}\\left(#1\\right)", 1],
-                    
-                    // 自定义运算符
-                    argmax: "\\operatorname*{arg\\,max}",
-                    argmin: "\\operatorname*{arg\\,min}",
-                    
-                    // 特殊函数
-                    Li: "\\operatorname{Li}",
-                    Ei: "\\operatorname{Ei}",
-                    Si: "\\operatorname{Si}",
-                    Ci: "\\operatorname{Ci}"
-                },
-                
-                // 标签和引用
-                tags: 'ams',
-                tagSide: 'right',
-                tagIndent: '0.8em',
-                useLabelIds: true,
-                
-                // 多行公式
-                multlineWidth: '85%',
-                
-                // 数字处理
-                digits: /^(?:[0-9]+(?:\\{,\\}[0-9]{3})*(?:\\.[0-9]*)?|\\.[0-9]+)/,
-                
-                // 错误处理
-                formatError: (jax, err) => {
-                    console.error('MathJax TeX 错误:', err);
-                    return `<span style="color: red; font-weight: bold;">数学错误: ${err.message}</span>`;
-                },
-                
-                // 自动换行
-                linebreaks: {
-                    automatic: true,
-                    width: "container"
-                }
-            },
-            
-            // MathML 输入处理器
-            mathml: {
-                forceReparse: true,
-                parseAs: 'html',
-                verify: {
-                    checkArity: true,
-                    checkAttributes: true,
-                    fullErrors: true,
-                    fixMmultiscripts: true,
-                    fixMtables: true
-                }
-            },
-            
-            // AsciiMath 输入处理器
-            asciimath: {
-                delimiters: [
-                    ['`', '`'],
-                    ['am:', ':am'],
-                    ['ascii:', ':ascii']
-                ],
-                fixphi: true,
-                displaystyle: true,
-                decimalsign: '.'
-            },
-            
-            // CHTML 输出处理器
-            chtml: {
-                scale: 1,
-                minScale: 0.5,
-                matchFontHeight: false,
-                displayAlign: 'center',
-                displayIndent: '0',
-                fontURL: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
-                adaptiveCSS: true,
-                exFactor: 0.5,
-                merrorInheritsFontSize: true
-            },
-            
-            // SVG 输出处理器
-            svg: {
-                scale: 1,
-                minScale: 0.5,
-                displayAlign: 'center',
-                displayIndent: '0',
-                fontCache: 'local',
-                localID: null,
-                internalSpeechTitles: true,
-                titleID: 0
-            },
-            
-            // 菜单和选项
-            options: {
-                menuOptions: {
-                    settings: {
-                        assistiveMml: true,
-                        collapsible: true,
-                        explorer: true,
-                        inTabOrder: true
-                    }
-                },
-                renderActions: {
-                    addMenu: [0, '', ''],
-                    checkLoading: [1, '', '']
-                },
-                skipHtmlTags: [
-                    'script', 'noscript', 'style', 'textarea', 'pre',
-                    'code', 'annotation', 'annotation-xml'
-                ],
-                includeHtmlTags: {
-                    br: '\\n',
-                    wbr: '',
-                    '#comment': ''
-                },
-                processHtmlClass: 'tex2jax_process|mathjax_process',
-                ignoreHtmlClass: 'tex2jax_ignore|mathjax_ignore',
-                compileError: function (doc, math, err) {
-                    console.error('MathJax 编译错误:', err);
-                    doc.compileError(math, err);
-                },
-                typesetError: function (doc, math, err) {
-                    console.error('MathJax 排版错误:', err);
-                    doc.typesetError(math, err);
-                }
-            },
-            
-            // 加载器配置
-            loader: {
-                load: [
-                    '[tex]/ams',
-                    '[tex]/newcommand',
-                    '[tex]/configmacros',
-                    '[tex]/action',
-                    '[tex]/bbox',
-                    '[tex]/boldsymbol',
-                    '[tex]/braket',
-                    '[tex]/cancel',
-                    '[tex]/color',
-                    '[tex]/enclose',
-                    '[tex]/extpfeil',
-                    '[tex]/html',
-                    '[tex]/mathtools',
-                    '[tex]/mhchem',
-                    '[tex]/physics',
-                    '[tex]/textmacros',
-                    '[tex]/unicode',
-                    '[tex]/verb'
-                ],
-                paths: {
-                    mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5'
-                },
-                require: function (url) {
-                    console.log('MathJax 加载:', url);
-                },
-                failed: function (err) {
-                    console.error('MathJax 加载失败:', err);
-                }
+      window.MathJax = {
+        // 启动配置
+        startup: {
+          ready() {
+            console.log('🚀 MathJax 高级配置启动')
+            MathJax.startup.defaultReady()
+
+            // 启动后立即运行测试
+            setTimeout(() => {
+              runAdvancedTests()
+            }, 500)
+          },
+          // 自定义启动元素
+          elements: ['.math-content', '.formula-test']
+        },
+
+        // TeX 输入处理器 - 完整配置
+        tex: {
+          // 所有可能的分隔符
+          inlineMath: [
+            ['$', '$'],
+            ['\\(', '\\)'],
+            ['\\$', '\\$'] // 转义美元符号
+          ],
+          displayMath: [
+            ['$$', '$$'],
+            ['\\[', '\\]'],
+            ['\\begin{equation}', '\\end{equation}'],
+            ['\\begin{equation*}', '\\end{equation*}'],
+            ['\\begin{align}', '\\end{align}'],
+            ['\\begin{align*}', '\\end{align*}']
+          ],
+
+          // 启用所有扩展包
+          packages: {
+            '[+]': [
+              'base', // 基础包
+              'ams', // AMS 数学
+              'newcommand', // 新命令
+              'configmacros', // 配置宏
+              'action', // 动作
+              'bbox', // 边界框
+              'boldsymbol', // 粗体符号
+              'braket', // 量子力学符号
+              'cancel', // 删除线
+              'color', // 颜色
+              'enclose', // 包围
+              'extpfeil', // 扩展箭头
+              'html', // HTML
+              'mathtools', // 数学工具
+              'mhchem', // 化学
+              'physics', // 物理
+              'textmacros', // 文本宏
+              'unicode', // Unicode
+              'verb', // 逐字
+              'cases', // 分情况
+              'empheq', // 强调方程
+              'gensymb', // 通用符号
+              'textcomp' // 文本符号
+            ]
+          },
+
+          // 自定义宏 - 超级全面
+          macros: {
+            // 数集
+            RR: '\\mathbb{R}',
+            CC: '\\mathbb{C}',
+            NN: '\\mathbb{N}',
+            ZZ: '\\mathbb{Z}',
+            QQ: '\\mathbb{Q}',
+            PP: '\\mathbb{P}',
+            FF: '\\mathbb{F}',
+
+            // 向量和矩阵
+            vec: ['\\mathbf{#1}', 1],
+            mat: ['\\mathbf{#1}', 1],
+            tensor: ['\\mathsf{#1}', 1],
+
+            // 微积分
+            dd: '\\mathrm{d}',
+            pp: '\\partial',
+            grad: '\\nabla',
+            div: '\\nabla \\cdot',
+            curl: '\\nabla \\times',
+            laplacian: '\\nabla^2',
+
+            // 物理学
+            hbar: '\\hslash',
+            ket: ['|#1\\rangle', 1],
+            bra: ['\\langle#1|', 1],
+            braket: ['\\langle#1|#2\\rangle', 2],
+            ketbra: ['|#1\\rangle\\langle#2|', 2],
+            expectation: ['\\langle#1\\rangle', 1],
+
+            // 概率统计
+            Prob: ['\\mathbb{P}\\left(#1\\right)', 1],
+            Expect: ['\\mathbb{E}\\left[#1\\right]', 1],
+            Var: ['\\text{Var}\\left(#1\\right)', 1],
+            Cov: ['\\text{Cov}\\left(#1, #2\\right)', 2],
+
+            // 函数
+            sinc: '\\operatorname{sinc}',
+            rect: '\\operatorname{rect}',
+            sgn: '\\operatorname{sgn}',
+            erf: '\\operatorname{erf}',
+            erfc: '\\operatorname{erfc}',
+
+            // 逻辑符号
+            implies: '\\Rightarrow',
+            iff: '\\Leftrightarrow',
+            contradiction: '\\rightarrow\\leftarrow',
+
+            // 集合论
+            powerset: ['\\mathcal{P}\\left(#1\\right)', 1],
+            card: ['\\left|#1\\right|', 1],
+
+            // 拓扑学
+            interior: ['\\text{int}\\left(#1\\right)', 1],
+            closure: ['\\overline{#1}', 1],
+            boundary: ['\\partial #1', 1],
+
+            // 代数
+            Hom: ['\\text{Hom}\\left(#1, #2\\right)', 2],
+            End: ['\\text{End}\\left(#1\\right)', 1],
+            Aut: ['\\text{Aut}\\left(#1\\right)', 1],
+
+            // 自定义运算符
+            argmax: '\\operatorname*{arg\\,max}',
+            argmin: '\\operatorname*{arg\\,min}',
+
+            // 特殊函数
+            Li: '\\operatorname{Li}',
+            Ei: '\\operatorname{Ei}',
+            Si: '\\operatorname{Si}',
+            Ci: '\\operatorname{Ci}'
+          },
+
+          // 标签和引用
+          tags: 'ams',
+          tagSide: 'right',
+          tagIndent: '0.8em',
+          useLabelIds: true,
+
+          // 多行公式
+          multlineWidth: '85%',
+
+          // 数字处理
+          digits: /^(?:[0-9]+(?:\\{,\\}[0-9]{3})*(?:\\.[0-9]*)?|\\.[0-9]+)/,
+
+          // 错误处理
+          formatError: (jax, err) => {
+            console.error('MathJax TeX 错误:', err)
+            return `<span style="color: red; font-weight: bold;">数学错误: ${err.message}</span>`
+          },
+
+          // 自动换行
+          linebreaks: {
+            automatic: true,
+            width: 'container'
+          }
+        },
+
+        // MathML 输入处理器
+        mathml: {
+          forceReparse: true,
+          parseAs: 'html',
+          verify: {
+            checkArity: true,
+            checkAttributes: true,
+            fullErrors: true,
+            fixMmultiscripts: true,
+            fixMtables: true
+          }
+        },
+
+        // AsciiMath 输入处理器
+        asciimath: {
+          delimiters: [
+            ['`', '`'],
+            ['am:', ':am'],
+            ['ascii:', ':ascii']
+          ],
+          fixphi: true,
+          displaystyle: true,
+          decimalsign: '.'
+        },
+
+        // CHTML 输出处理器
+        chtml: {
+          scale: 1,
+          minScale: 0.5,
+          matchFontHeight: false,
+          displayAlign: 'center',
+          displayIndent: '0',
+          fontURL: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
+          adaptiveCSS: true,
+          exFactor: 0.5,
+          merrorInheritsFontSize: true
+        },
+
+        // SVG 输出处理器
+        svg: {
+          scale: 1,
+          minScale: 0.5,
+          displayAlign: 'center',
+          displayIndent: '0',
+          fontCache: 'local',
+          localID: null,
+          internalSpeechTitles: true,
+          titleID: 0
+        },
+
+        // 菜单和选项
+        options: {
+          menuOptions: {
+            settings: {
+              assistiveMml: true,
+              collapsible: true,
+              explorer: true,
+              inTabOrder: true
             }
-        };
+          },
+          renderActions: {
+            addMenu: [0, '', ''],
+            checkLoading: [1, '', '']
+          },
+          skipHtmlTags: [
+            'script',
+            'noscript',
+            'style',
+            'textarea',
+            'pre',
+            'code',
+            'annotation',
+            'annotation-xml'
+          ],
+          includeHtmlTags: {
+            br: '\\n',
+            wbr: '',
+            '#comment': ''
+          },
+          processHtmlClass: 'tex2jax_process|mathjax_process',
+          ignoreHtmlClass: 'tex2jax_ignore|mathjax_ignore',
+          compileError: function (doc, math, err) {
+            console.error('MathJax 编译错误:', err)
+            doc.compileError(math, err)
+          },
+          typesetError: function (doc, math, err) {
+            console.error('MathJax 排版错误:', err)
+            doc.typesetError(math, err)
+          }
+        },
+
+        // 加载器配置
+        loader: {
+          load: [
+            '[tex]/ams',
+            '[tex]/newcommand',
+            '[tex]/configmacros',
+            '[tex]/action',
+            '[tex]/bbox',
+            '[tex]/boldsymbol',
+            '[tex]/braket',
+            '[tex]/cancel',
+            '[tex]/color',
+            '[tex]/enclose',
+            '[tex]/extpfeil',
+            '[tex]/html',
+            '[tex]/mathtools',
+            '[tex]/mhchem',
+            '[tex]/physics',
+            '[tex]/textmacros',
+            '[tex]/unicode',
+            '[tex]/verb'
+          ],
+          paths: {
+            mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5'
+          },
+          require: function (url) {
+            console.log('MathJax 加载:', url)
+          },
+          failed: function (err) {
+            console.error('MathJax 加载失败:', err)
+          }
+        }
+      }
     </script>
-    
+
     <!-- 加载 MathJax -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #2c3e50, #3498db, #9b59b6, #e74c3c);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        min-height: 100vh;
+        color: #333;
+        padding: 20px;
+      }
+
+      @keyframes gradientShift {
+        0% {
+          background-position: 0% 50%;
         }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #2c3e50, #3498db, #9b59b6, #e74c3c);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
-            min-height: 100vh;
-            color: #333;
-            padding: 20px;
+        50% {
+          background-position: 100% 50%;
         }
-        
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        100% {
+          background-position: 0% 50%;
         }
-        
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px;
-            border-radius: 25px;
-            text-align: center;
-            margin-bottom: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(20px);
-        }
-        
-        .header h1 {
-            font-size: 3em;
-            background: linear-gradient(45deg, #3498db, #9b59b6, #e74c3c);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 15px;
-        }
-        
-        .test-section {
-            background: rgba(255, 255, 255, 0.95);
-            margin-bottom: 30px;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .test-section h2 {
-            color: #2c3e50;
-            margin-bottom: 25px;
-            font-size: 1.8em;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
+      }
+
+      .container {
+        max-width: 1600px;
+        margin: 0 auto;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 40px;
+        border-radius: 25px;
+        text-align: center;
+        margin-bottom: 40px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(20px);
+      }
+
+      .header h1 {
+        font-size: 3em;
+        background: linear-gradient(45deg, #3498db, #9b59b6, #e74c3c);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 15px;
+      }
+
+      .test-section {
+        background: rgba(255, 255, 255, 0.95);
+        margin-bottom: 30px;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .test-section h2 {
+        color: #2c3e50;
+        margin-bottom: 25px;
+        font-size: 1.8em;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .test-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 25px;
+      }
+
+      .test-item {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 15px;
+        border-left: 5px solid #3498db;
+        transition: all 0.3s ease;
+      }
+
+      .test-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(52, 152, 219, 0.2);
+      }
+
+      .test-item h3 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+        font-size: 1.2em;
+      }
+
+      .math-display {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 15px 0;
+        border: 2px solid #e9ecef;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: border-color 0.3s ease;
+      }
+
+      .math-display:hover {
+        border-color: #3498db;
+      }
+
+      .controls {
+        background: rgba(44, 62, 80, 0.95);
+        color: white;
+        padding: 30px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(15px);
+      }
+
+      .controls h2 {
+        margin-bottom: 25px;
+        color: #ecf0f1;
+      }
+
+      .control-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      button {
+        background: linear-gradient(45deg, #3498db, #2980b9);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        font-size: 14px;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
+      }
+
+      button.success {
+        background: linear-gradient(45deg, #27ae60, #2ecc71);
+      }
+
+      button.danger {
+        background: linear-gradient(45deg, #e74c3c, #c0392b);
+      }
+
+      button.warning {
+        background: linear-gradient(45deg, #f39c12, #e67e22);
+      }
+
+      .status-panel {
+        background: rgba(52, 73, 94, 0.95);
+        color: white;
+        padding: 25px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(15px);
+      }
+
+      .status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+      }
+
+      .status-item {
+        text-align: center;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .status-value {
+        font-size: 2em;
+        font-weight: bold;
+        color: #4ecdc4;
+        margin-bottom: 5px;
+      }
+
+      .status-label {
+        font-size: 0.9em;
+        opacity: 0.8;
+      }
+
+      .log-panel {
+        background: rgba(44, 62, 80, 0.95);
+        color: #ecf0f1;
+        padding: 25px;
+        border-radius: 15px;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        max-height: 300px;
+        overflow-y: auto;
+        backdrop-filter: blur(15px);
+      }
+
+      .error-highlight {
+        color: #e74c3c;
+        background: rgba(231, 76, 60, 0.1);
+        padding: 3px 6px;
+        border-radius: 4px;
+      }
+
+      .success-highlight {
+        color: #27ae60;
+        background: rgba(39, 174, 96, 0.1);
+        padding: 3px 6px;
+        border-radius: 4px;
+      }
+
+      .warning-highlight {
+        color: #f39c12;
+        background: rgba(243, 156, 18, 0.1);
+        padding: 3px 6px;
+        border-radius: 4px;
+      }
+
+      @media (max-width: 768px) {
         .test-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 25px;
+          grid-template-columns: 1fr;
         }
-        
-        .test-item {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 15px;
-            border-left: 5px solid #3498db;
-            transition: all 0.3s ease;
+
+        .container {
+          padding: 10px;
         }
-        
-        .test-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(52, 152, 219, 0.2);
+
+        .header h1 {
+          font-size: 2.2em;
         }
-        
-        .test-item h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 1.2em;
-        }
-        
-        .math-display {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 15px 0;
-            border: 2px solid #e9ecef;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: border-color 0.3s ease;
-        }
-        
-        .math-display:hover {
-            border-color: #3498db;
-        }
-        
-        .controls {
-            background: rgba(44, 62, 80, 0.95);
-            color: white;
-            padding: 30px;
-            border-radius: 20px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(15px);
-        }
-        
-        .controls h2 {
-            margin-bottom: 25px;
-            color: #ecf0f1;
-        }
-        
-        .control-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        button {
-            background: linear-gradient(45deg, #3498db, #2980b9);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
-        }
-        
-        button.success {
-            background: linear-gradient(45deg, #27ae60, #2ecc71);
-        }
-        
-        button.danger {
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
-        }
-        
-        button.warning {
-            background: linear-gradient(45deg, #f39c12, #e67e22);
-        }
-        
-        .status-panel {
-            background: rgba(52, 73, 94, 0.95);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(15px);
-        }
-        
-        .status-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-        
-        .status-item {
-            text-align: center;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-        
-        .status-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #4ecdc4;
-            margin-bottom: 5px;
-        }
-        
-        .status-label {
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
-        
-        .log-panel {
-            background: rgba(44, 62, 80, 0.95);
-            color: #ecf0f1;
-            padding: 25px;
-            border-radius: 15px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            max-height: 300px;
-            overflow-y: auto;
-            backdrop-filter: blur(15px);
-        }
-        
-        .error-highlight {
-            color: #e74c3c;
-            background: rgba(231, 76, 60, 0.1);
-            padding: 3px 6px;
-            border-radius: 4px;
-        }
-        
-        .success-highlight {
-            color: #27ae60;
-            background: rgba(39, 174, 96, 0.1);
-            padding: 3px 6px;
-            border-radius: 4px;
-        }
-        
-        .warning-highlight {
-            color: #f39c12;
-            background: rgba(243, 156, 18, 0.1);
-            padding: 3px 6px;
-            border-radius: 4px;
-        }
-        
-        @media (max-width: 768px) {
-            .test-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .container {
-                padding: 10px;
-            }
-            
-            .header h1 {
-                font-size: 2.2em;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <div class="header">
-            <h1>🔬 MathJax 高级配置与边界测试</h1>
-            <p>测试最复杂的数学公式、边界情况和高级配置</p>
+      <div class="header">
+        <h1>🔬 MathJax 高级配置与边界测试</h1>
+        <p>测试最复杂的数学公式、边界情况和高级配置</p>
+      </div>
+
+      <div class="controls">
+        <h2>🎛️ 高级测试控制</h2>
+        <div class="control-group">
+          <button onclick="runAdvancedTests()" class="success">🚀 运行高级测试</button>
+          <button onclick="runBoundaryTests()" class="warning">⚠️ 边界测试</button>
+          <button onclick="runStressTests()" class="danger">💥 压力测试</button>
+          <button onclick="runConfigTests()">⚙️ 配置测试</button>
+          <button onclick="clearAllTests()">🧹 清除所有</button>
         </div>
-        
-        <div class="controls">
-            <h2>🎛️ 高级测试控制</h2>
-            <div class="control-group">
-                <button onclick="runAdvancedTests()" class="success">🚀 运行高级测试</button>
-                <button onclick="runBoundaryTests()" class="warning">⚠️ 边界测试</button>
-                <button onclick="runStressTests()" class="danger">💥 压力测试</button>
-                <button onclick="runConfigTests()">⚙️ 配置测试</button>
-                <button onclick="clearAllTests()">🧹 清除所有</button>
-            </div>
-            
-            <div class="control-group">
-                <button onclick="testCustomMacros()">🔧 自定义宏测试</button>
-                <button onclick="testExtensions()">🧩 扩展测试</button>
-                <button onclick="testErrorHandling()">🐛 错误处理</button>
-                <button onclick="testAccessibility()">♿ 可访问性</button>
-            </div>
+
+        <div class="control-group">
+          <button onclick="testCustomMacros()">🔧 自定义宏测试</button>
+          <button onclick="testExtensions()">🧩 扩展测试</button>
+          <button onclick="testErrorHandling()">🐛 错误处理</button>
+          <button onclick="testAccessibility()">♿ 可访问性</button>
         </div>
-        
-        <div class="status-panel">
-            <h2>📊 测试状态</h2>
-            <div class="status-grid">
-                <div class="status-item">
-                    <div class="status-value" id="tests-passed">0</div>
-                    <div class="status-label">测试通过</div>
-                </div>
-                <div class="status-item">
-                    <div class="status-value" id="tests-failed">0</div>
-                    <div class="status-label">测试失败</div>
-                </div>
-                <div class="status-item">
-                    <div class="status-value" id="render-time">0ms</div>
-                    <div class="status-label">渲染时间</div>
-                </div>
-                <div class="status-item">
-                    <div class="status-value" id="memory-usage">0MB</div>
-                    <div class="status-label">内存使用</div>
-                </div>
-            </div>
+      </div>
+
+      <div class="status-panel">
+        <h2>📊 测试状态</h2>
+        <div class="status-grid">
+          <div class="status-item">
+            <div class="status-value" id="tests-passed">0</div>
+            <div class="status-label">测试通过</div>
+          </div>
+          <div class="status-item">
+            <div class="status-value" id="tests-failed">0</div>
+            <div class="status-label">测试失败</div>
+          </div>
+          <div class="status-item">
+            <div class="status-value" id="render-time">0ms</div>
+            <div class="status-label">渲染时间</div>
+          </div>
+          <div class="status-item">
+            <div class="status-value" id="memory-usage">0MB</div>
+            <div class="status-label">内存使用</div>
+          </div>
         </div>
-        
-        <!-- 超复杂数学公式测试 -->
-        <div class="test-section math-content">
-            <h2>🧮 超复杂数学公式测试</h2>
-            <div class="test-grid">
-                <div class="test-item">
-                    <h3>量子场论</h3>
-                    <div class="math-display">
-                        $$\mathcal{L} = \bar{\psi}(i\gamma^\mu D_\mu - m)\psi - \frac{1}{4}F_{\mu\nu}F^{\mu\nu}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>广义相对论</h3>
-                    <div class="math-display">
-                        $$G_{\mu\nu} = R_{\mu\nu} - \frac{1}{2}Rg_{\mu\nu} = \frac{8\pi G}{c^4}T_{\mu\nu}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>复分析</h3>
-                    <div class="math-display">
-                        $$\oint_C f(z)dz = 2\pi i \sum_{k} \text{Res}(f, z_k)$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>拓扑学</h3>
-                    <div class="math-display">
-                        $$\pi_n(S^m) = \begin{cases}
-                        \ZZ & \text{if } n = m \\
-                        0 & \text{if } n < m \\
-                        \text{complicated} & \text{if } n > m
-                        \end{cases}$$
-                    </div>
-                </div>
+      </div>
+
+      <!-- 超复杂数学公式测试 -->
+      <div class="test-section math-content">
+        <h2>🧮 超复杂数学公式测试</h2>
+        <div class="test-grid">
+          <div class="test-item">
+            <h3>量子场论</h3>
+            <div class="math-display">
+              $$\mathcal{L} = \bar{\psi}(i\gamma^\mu D_\mu - m)\psi -
+              \frac{1}{4}F_{\mu\nu}F^{\mu\nu}$$
             </div>
-        </div>
-        
-        <!-- 自定义宏测试 -->
-        <div class="test-section">
-            <h2>🔧 自定义宏测试</h2>
-            <div class="test-grid">
-                <div class="test-item">
-                    <h3>数集宏</h3>
-                    <div class="math-display">
-                        $$\RR \subset \CC, \quad \NN \subset \ZZ \subset \QQ \subset \RR$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>物理宏</h3>
-                    <div class="math-display">
-                        $$\braket{\psi}{\phi} = \int \psi^*(x) \phi(x) dx$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>概率宏</h3>
-                    <div class="math-display">
-                        $$\Prob{X > x} = \Expect{I_{X > x}} = \int_x^\infty f(t) dt$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>微积分宏</h3>
-                    <div class="math-display">
-                        $$\grad f = \pp f / \pp x \vec{i} + \pp f / \pp y \vec{j} + \pp f / \pp z \vec{k}$$
-                    </div>
-                </div>
+          </div>
+
+          <div class="test-item">
+            <h3>广义相对论</h3>
+            <div class="math-display">
+              $$G_{\mu\nu} = R_{\mu\nu} - \frac{1}{2}Rg_{\mu\nu} = \frac{8\pi G}{c^4}T_{\mu\nu}$$
             </div>
-        </div>
-        
-        <!-- 边界情况测试 -->
-        <div class="test-section">
-            <h2>⚠️ 边界情况测试</h2>
-            <div class="test-grid">
-                <div class="test-item">
-                    <h3>嵌套分数</h3>
-                    <div class="math-display">
-                        $$\frac{1}{1+\frac{1}{1+\frac{1}{1+\frac{1}{1+\frac{1}{1+\cdots}}}}}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>巨大矩阵</h3>
-                    <div class="math-display">
-                        $$\begin{pmatrix}
-                        a_{11} & a_{12} & a_{13} & a_{14} & a_{15} \\
-                        a_{21} & a_{22} & a_{23} & a_{24} & a_{25} \\
-                        a_{31} & a_{32} & a_{33} & a_{34} & a_{35} \\
-                        a_{41} & a_{42} & a_{43} & a_{44} & a_{45} \\
-                        a_{51} & a_{52} & a_{53} & a_{54} & a_{55}
-                        \end{pmatrix}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>超长求和</h3>
-                    <div class="math-display">
-                        $$\sum_{n_1=1}^{\infty}\sum_{n_2=1}^{\infty}\sum_{n_3=1}^{\infty}\sum_{n_4=1}^{\infty} \frac{1}{n_1^2 n_2^2 n_3^2 n_4^2}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>复杂积分</h3>
-                    <div class="math-display">
-                        $$\int_0^{2\pi} \int_0^{\pi} \int_0^R \int_0^{2\pi} r^2 \sin\theta \, dr \, d\phi \, d\theta \, d\psi$$
-                    </div>
-                </div>
+          </div>
+
+          <div class="test-item">
+            <h3>复分析</h3>
+            <div class="math-display">$$\oint_C f(z)dz = 2\pi i \sum_{k} \text{Res}(f, z_k)$$</div>
+          </div>
+
+          <div class="test-item">
+            <h3>拓扑学</h3>
+            <div class="math-display">
+              $$\pi_n(S^m) = \begin{cases} \ZZ & \text{if } n = m \\ 0 & \text{if } n < m \\
+              \text{complicated} & \text{if } n > m \end{cases}$$
             </div>
+          </div>
         </div>
-        
-        <!-- 扩展功能测试 -->
-        <div class="test-section">
-            <h2>🧩 扩展功能测试</h2>
-            <div class="test-grid">
-                <div class="test-item">
-                    <h3>化学方程式 (mhchem)</h3>
-                    <div class="math-display">
-                        $$\ce{Cr2O7^2- + 14H+ + 6e- -> 2Cr^3+ + 7H2O}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>颜色和样式</h3>
-                    <div class="math-display">
-                        $$\color{red}{x^2} + \color{blue}{y^2} = \color{green}{r^2}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>删除线 (cancel)</h3>
-                    <div class="math-display">
-                        $$\frac{\cancel{x^2} + 2x + 1}{\cancel{x^2} - 1} = \frac{2x + 1}{x - 1}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>边界框 (bbox)</h3>
-                    <div class="math-display">
-                        $$\bbox[yellow,5px]{E = mc^2}$$
-                    </div>
-                </div>
+      </div>
+
+      <!-- 自定义宏测试 -->
+      <div class="test-section">
+        <h2>🔧 自定义宏测试</h2>
+        <div class="test-grid">
+          <div class="test-item">
+            <h3>数集宏</h3>
+            <div class="math-display">
+              $$\RR \subset \CC, \quad \NN \subset \ZZ \subset \QQ \subset \RR$$
             </div>
-        </div>
-        
-        <!-- 错误处理测试 -->
-        <div class="test-section">
-            <h2>🐛 错误处理测试</h2>
-            <div class="test-grid">
-                <div class="test-item">
-                    <h3>语法错误</h3>
-                    <div class="math-display">
-                        $$\frac{1}{2 + \sqrt{$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>未定义命令</h3>
-                    <div class="math-display">
-                        $$\unknowncommand{x}$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>括号不匹配</h3>
-                    <div class="math-display">
-                        $$\left( \frac{1}{2} \right]$$
-                    </div>
-                </div>
-                
-                <div class="test-item">
-                    <h3>无效参数</h3>
-                    <div class="math-display">
-                        $$\frac{}{}$$
-                    </div>
-                </div>
+          </div>
+
+          <div class="test-item">
+            <h3>物理宏</h3>
+            <div class="math-display">$$\braket{\psi}{\phi} = \int \psi^*(x) \phi(x) dx$$</div>
+          </div>
+
+          <div class="test-item">
+            <h3>概率宏</h3>
+            <div class="math-display">
+              $$\Prob{X > x} = \Expect{I_{X > x}} = \int_x^\infty f(t) dt$$
             </div>
-        </div>
-        
-        <!-- 性能测试区域 -->
-        <div class="test-section">
-            <h2>⚡ 性能测试区域</h2>
-            <div id="performance-test-area" class="test-grid">
-                <!-- 动态生成的性能测试内容 -->
+          </div>
+
+          <div class="test-item">
+            <h3>微积分宏</h3>
+            <div class="math-display">
+              $$\grad f = \pp f / \pp x \vec{i} + \pp f / \pp y \vec{j} + \pp f / \pp z \vec{k}$$
             </div>
+          </div>
         </div>
-        
-        <!-- 测试日志 -->
-        <div class="log-panel" id="test-log">
-            <h3>📋 测试日志</h3>
-            <div id="log-content">
-                高级配置测试日志将在这里显示...
+      </div>
+
+      <!-- 边界情况测试 -->
+      <div class="test-section">
+        <h2>⚠️ 边界情况测试</h2>
+        <div class="test-grid">
+          <div class="test-item">
+            <h3>嵌套分数</h3>
+            <div class="math-display">
+              $$\frac{1}{1+\frac{1}{1+\frac{1}{1+\frac{1}{1+\frac{1}{1+\cdots}}}}}$$
             </div>
+          </div>
+
+          <div class="test-item">
+            <h3>巨大矩阵</h3>
+            <div class="math-display">
+              $$\begin{pmatrix} a_{11} & a_{12} & a_{13} & a_{14} & a_{15} \\ a_{21} & a_{22} &
+              a_{23} & a_{24} & a_{25} \\ a_{31} & a_{32} & a_{33} & a_{34} & a_{35} \\ a_{41} &
+              a_{42} & a_{43} & a_{44} & a_{45} \\ a_{51} & a_{52} & a_{53} & a_{54} & a_{55}
+              \end{pmatrix}$$
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h3>超长求和</h3>
+            <div class="math-display">
+              $$\sum_{n_1=1}^{\infty}\sum_{n_2=1}^{\infty}\sum_{n_3=1}^{\infty}\sum_{n_4=1}^{\infty}
+              \frac{1}{n_1^2 n_2^2 n_3^2 n_4^2}$$
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h3>复杂积分</h3>
+            <div class="math-display">
+              $$\int_0^{2\pi} \int_0^{\pi} \int_0^R \int_0^{2\pi} r^2 \sin\theta \, dr \, d\phi \,
+              d\theta \, d\psi$$
+            </div>
+          </div>
         </div>
+      </div>
+
+      <!-- 扩展功能测试 -->
+      <div class="test-section">
+        <h2>🧩 扩展功能测试</h2>
+        <div class="test-grid">
+          <div class="test-item">
+            <h3>化学方程式 (mhchem)</h3>
+            <div class="math-display">$$\ce{Cr2O7^2- + 14H+ + 6e- -> 2Cr^3+ + 7H2O}$$</div>
+          </div>
+
+          <div class="test-item">
+            <h3>颜色和样式</h3>
+            <div class="math-display">
+              $$\color{red}{x^2} + \color{blue}{y^2} = \color{green}{r^2}$$
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h3>删除线 (cancel)</h3>
+            <div class="math-display">
+              $$\frac{\cancel{x^2} + 2x + 1}{\cancel{x^2} - 1} = \frac{2x + 1}{x - 1}$$
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h3>边界框 (bbox)</h3>
+            <div class="math-display">$$\bbox[yellow,5px]{E = mc^2}$$</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 错误处理测试 -->
+      <div class="test-section">
+        <h2>🐛 错误处理测试</h2>
+        <div class="test-grid">
+          <div class="test-item">
+            <h3>语法错误</h3>
+            <div class="math-display">$$\frac{1}{2 + \sqrt{$$</div>
+          </div>
+
+          <div class="test-item">
+            <h3>未定义命令</h3>
+            <div class="math-display">$$\unknowncommand{x}$$</div>
+          </div>
+
+          <div class="test-item">
+            <h3>括号不匹配</h3>
+            <div class="math-display">$$\left( \frac{1}{2} \right]$$</div>
+          </div>
+
+          <div class="test-item">
+            <h3>无效参数</h3>
+            <div class="math-display">$$\frac{}{}$$</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 性能测试区域 -->
+      <div class="test-section">
+        <h2>⚡ 性能测试区域</h2>
+        <div id="performance-test-area" class="test-grid">
+          <!-- 动态生成的性能测试内容 -->
+        </div>
+      </div>
+
+      <!-- 测试日志 -->
+      <div class="log-panel" id="test-log">
+        <h3>📋 测试日志</h3>
+        <div id="log-content">高级配置测试日志将在这里显示...</div>
+      </div>
     </div>
 
     <script>
-        // 全局测试状态
-        let testStats = {
-            passed: 0,
-            failed: 0,
-            totalRenderTime: 0,
-            memoryUsage: 0
-        };
-        
-        // 日志函数
-        function log(message, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString();
-            const logContent = document.getElementById('log-content');
-            
-            const colorClass = {
-                'info': '',
-                'success': 'success-highlight',
-                'error': 'error-highlight',
-                'warning': 'warning-highlight'
-            }[type] || '';
-            
-            const logEntry = document.createElement('div');
-            logEntry.innerHTML = `<span class="${colorClass}">[${timestamp}] ${message}</span>`;
-            logContent.appendChild(logEntry);
-            logContent.scrollTop = logContent.scrollHeight;
-            
-            console.log(`[Advanced Test] ${message}`);
+      // 全局测试状态
+      let testStats = {
+        passed: 0,
+        failed: 0,
+        totalRenderTime: 0,
+        memoryUsage: 0
+      }
+
+      // 日志函数
+      function log(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString()
+        const logContent = document.getElementById('log-content')
+
+        const colorClass =
+          {
+            info: '',
+            success: 'success-highlight',
+            error: 'error-highlight',
+            warning: 'warning-highlight'
+          }[type] || ''
+
+        const logEntry = document.createElement('div')
+        logEntry.innerHTML = `<span class="${colorClass}">[${timestamp}] ${message}</span>`
+        logContent.appendChild(logEntry)
+        logContent.scrollTop = logContent.scrollHeight
+
+        console.log(`[Advanced Test] ${message}`)
+      }
+
+      // 更新状态显示
+      function updateStats() {
+        document.getElementById('tests-passed').textContent = testStats.passed
+        document.getElementById('tests-failed').textContent = testStats.failed
+        document.getElementById('render-time').textContent =
+          testStats.totalRenderTime.toFixed(2) + 'ms'
+
+        if (performance.memory) {
+          testStats.memoryUsage = performance.memory.usedJSHeapSize / 1024 / 1024
+          document.getElementById('memory-usage').textContent =
+            testStats.memoryUsage.toFixed(2) + 'MB'
         }
-        
-        // 更新状态显示
-        function updateStats() {
-            document.getElementById('tests-passed').textContent = testStats.passed;
-            document.getElementById('tests-failed').textContent = testStats.failed;
-            document.getElementById('render-time').textContent = testStats.totalRenderTime.toFixed(2) + 'ms';
-            
-            if (performance.memory) {
-                testStats.memoryUsage = performance.memory.usedJSHeapSize / 1024 / 1024;
-                document.getElementById('memory-usage').textContent = testStats.memoryUsage.toFixed(2) + 'MB';
-            }
+      }
+
+      // 测试单个数学公式
+      async function testFormula(element, description) {
+        const startTime = performance.now()
+
+        try {
+          await MathJax.typesetPromise([element])
+          const endTime = performance.now()
+          const renderTime = endTime - startTime
+
+          testStats.passed++
+          testStats.totalRenderTime += renderTime
+
+          log(`✅ ${description}: ${renderTime.toFixed(2)}ms`, 'success')
+          return true
+        } catch (error) {
+          testStats.failed++
+          log(`❌ ${description}: ${error.message}`, 'error')
+          return false
         }
-        
-        // 测试单个数学公式
-        async function testFormula(element, description) {
-            const startTime = performance.now();
-            
-            try {
-                await MathJax.typesetPromise([element]);
-                const endTime = performance.now();
-                const renderTime = endTime - startTime;
-                
-                testStats.passed++;
-                testStats.totalRenderTime += renderTime;
-                
-                log(`✅ ${description}: ${renderTime.toFixed(2)}ms`, 'success');
-                return true;
-                
-            } catch (error) {
-                testStats.failed++;
-                log(`❌ ${description}: ${error.message}`, 'error');
-                return false;
-            }
+      }
+
+      // 运行高级测试
+      async function runAdvancedTests() {
+        log('🚀 开始运行高级测试套件', 'info')
+
+        // 重置统计
+        testStats = { passed: 0, failed: 0, totalRenderTime: 0, memoryUsage: 0 }
+
+        // 获取所有数学显示元素
+        const mathElements = document.querySelectorAll('.math-display')
+
+        for (let i = 0; i < mathElements.length; i++) {
+          const element = mathElements[i]
+          const description = `公式 ${i + 1}`
+
+          await testFormula(element, description)
+          updateStats()
+
+          // 短暂延迟避免阻塞
+          await new Promise(resolve => setTimeout(resolve, 50))
         }
-        
-        // 运行高级测试
-        async function runAdvancedTests() {
-            log('🚀 开始运行高级测试套件', 'info');
-            
-            // 重置统计
-            testStats = { passed: 0, failed: 0, totalRenderTime: 0, memoryUsage: 0 };
-            
-            // 获取所有数学显示元素
-            const mathElements = document.querySelectorAll('.math-display');
-            
-            for (let i = 0; i < mathElements.length; i++) {
-                const element = mathElements[i];
-                const description = `公式 ${i + 1}`;
-                
-                await testFormula(element, description);
-                updateStats();
-                
-                // 短暂延迟避免阻塞
-                await new Promise(resolve => setTimeout(resolve, 50));
-            }
-            
-            log(`🎉 高级测试完成: ${testStats.passed} 通过, ${testStats.failed} 失败`, 
-                testStats.failed === 0 ? 'success' : 'warning');
+
+        log(
+          `🎉 高级测试完成: ${testStats.passed} 通过, ${testStats.failed} 失败`,
+          testStats.failed === 0 ? 'success' : 'warning'
+        )
+      }
+
+      // 运行边界测试
+      async function runBoundaryTests() {
+        log('⚠️ 开始边界情况测试', 'warning')
+
+        const boundaryTests = [
+          {
+            formula:
+              '$$\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\cdots}}}}}}}}}}$$',
+            description: '深度嵌套分数'
+          },
+          {
+            formula:
+              '$$\\prod_{p \\text{ prime}}^{\\infty} \\left(1 - p^{-s}\\right)^{-1} = \\sum_{n=1}^{\\infty} n^{-s} = \\zeta(s)$$',
+            description: '欧拉乘积公式'
+          },
+          {
+            formula:
+              '$$\\int_{-\\infty}^{\\infty} \\int_{-\\infty}^{\\infty} \\int_{-\\infty}^{\\infty} e^{-\\frac{x^2+y^2+z^2}{2\\sigma^2}} \\frac{1}{(2\\pi\\sigma^2)^{3/2}} dx dy dz = 1$$',
+            description: '三维高斯积分'
+          }
+        ]
+
+        for (const test of boundaryTests) {
+          const testDiv = document.createElement('div')
+          testDiv.innerHTML = test.formula
+          document.body.appendChild(testDiv)
+
+          await testFormula(testDiv, test.description)
+          document.body.removeChild(testDiv)
+
+          updateStats()
         }
-        
-        // 运行边界测试
-        async function runBoundaryTests() {
-            log('⚠️ 开始边界情况测试', 'warning');
-            
-            const boundaryTests = [
-                {
-                    formula: '$$\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\frac{1}{1+\\cdots}}}}}}}}}}$$',
-                    description: '深度嵌套分数'
-                },
-                {
-                    formula: '$$\\prod_{p \\text{ prime}}^{\\infty} \\left(1 - p^{-s}\\right)^{-1} = \\sum_{n=1}^{\\infty} n^{-s} = \\zeta(s)$$',
-                    description: '欧拉乘积公式'
-                },
-                {
-                    formula: '$$\\int_{-\\infty}^{\\infty} \\int_{-\\infty}^{\\infty} \\int_{-\\infty}^{\\infty} e^{-\\frac{x^2+y^2+z^2}{2\\sigma^2}} \\frac{1}{(2\\pi\\sigma^2)^{3/2}} dx dy dz = 1$$',
-                    description: '三维高斯积分'
-                }
-            ];
-            
-            for (const test of boundaryTests) {
-                const testDiv = document.createElement('div');
-                testDiv.innerHTML = test.formula;
-                document.body.appendChild(testDiv);
-                
-                await testFormula(testDiv, test.description);
-                document.body.removeChild(testDiv);
-                
-                updateStats();
-            }
-            
-            log('⚠️ 边界测试完成', 'warning');
-        }
-        
-        // 运行压力测试
-        async function runStressTests() {
-            log('💥 开始压力测试', 'error');
-            
-            const performanceArea = document.getElementById('performance-test-area');
-            performanceArea.innerHTML = '';
-            
-            // 生成大量复杂公式
-            const complexFormulas = [];
-            for (let i = 0; i < 50; i++) {
-                complexFormulas.push(`
+
+        log('⚠️ 边界测试完成', 'warning')
+      }
+
+      // 运行压力测试
+      async function runStressTests() {
+        log('💥 开始压力测试', 'error')
+
+        const performanceArea = document.getElementById('performance-test-area')
+        performanceArea.innerHTML = ''
+
+        // 生成大量复杂公式
+        const complexFormulas = []
+        for (let i = 0; i < 50; i++) {
+          complexFormulas.push(`
                     <div class="test-item">
                         <h4>压力测试 ${i + 1}</h4>
                         <div class="math-display">
-                            $$\\sum_{n=1}^{${i + 10}} \\frac{(-1)^n}{n^${i % 5 + 1}} = \\eta(${i % 5 + 1})$$
+                            $$\\sum_{n=1}^{${i + 10}} \\frac{(-1)^n}{n^${(i % 5) + 1}} = \\eta(${(i % 5) + 1})$$
                         </div>
                     </div>
-                `);
-            }
-            
-            performanceArea.innerHTML = complexFormulas.join('');
-            
-            const startTime = performance.now();
-            await MathJax.typesetPromise([performanceArea]);
-            const endTime = performance.now();
-            
-            const totalTime = endTime - startTime;
-            testStats.totalRenderTime += totalTime;
-            
-            log(`💥 压力测试完成: 50个复杂公式用时 ${totalTime.toFixed(2)}ms`, 'error');
-            updateStats();
+                `)
         }
-        
-        // 测试配置
-        function runConfigTests() {
-            log('⚙️ 开始配置测试', 'info');
-            
-            // 检查 MathJax 配置
-            const config = window.MathJax;
-            
-            if (config.tex && config.tex.macros) {
-                log(`✅ 自定义宏数量: ${Object.keys(config.tex.macros).length}`, 'success');
-                testStats.passed++;
-            } else {
-                log('❌ 自定义宏配置失败', 'error');
-                testStats.failed++;
-            }
-            
-            if (config.tex && config.tex.packages) {
-                const packages = config.tex.packages['[+]'] || [];
-                log(`✅ 加载的扩展包: ${packages.length}`, 'success');
-                testStats.passed++;
-            } else {
-                log('❌ 扩展包配置失败', 'error');
-                testStats.failed++;
-            }
-            
-            // 测试渲染器
-            if (config.chtml) {
-                log('✅ CHTML 渲染器配置正常', 'success');
-                testStats.passed++;
-            } else {
-                log('❌ CHTML 渲染器配置失败', 'error');
-                testStats.failed++;
-            }
-            
-            updateStats();
-            log('⚙️ 配置测试完成', 'info');
+
+        performanceArea.innerHTML = complexFormulas.join('')
+
+        const startTime = performance.now()
+        await MathJax.typesetPromise([performanceArea])
+        const endTime = performance.now()
+
+        const totalTime = endTime - startTime
+        testStats.totalRenderTime += totalTime
+
+        log(`💥 压力测试完成: 50个复杂公式用时 ${totalTime.toFixed(2)}ms`, 'error')
+        updateStats()
+      }
+
+      // 测试配置
+      function runConfigTests() {
+        log('⚙️ 开始配置测试', 'info')
+
+        // 检查 MathJax 配置
+        const config = window.MathJax
+
+        if (config.tex && config.tex.macros) {
+          log(`✅ 自定义宏数量: ${Object.keys(config.tex.macros).length}`, 'success')
+          testStats.passed++
+        } else {
+          log('❌ 自定义宏配置失败', 'error')
+          testStats.failed++
         }
-        
-        // 测试自定义宏
-        async function testCustomMacros() {
-            log('🔧 开始自定义宏测试', 'info');
-            
-            const macroTests = [
-                { formula: '$$\\RR \\subset \\CC$$', name: '数集宏' },
-                { formula: '$$\\vec{v} = \\begin{pmatrix} x \\\\ y \\end{pmatrix}$$', name: '向量宏' },
-                { formula: '$$\\braket{\\psi}{\\phi}$$', name: '量子力学宏' },
-                { formula: '$$\\Prob{X > 0} = \\Expect{I_{X > 0}}$$', name: '概率宏' },
-                { formula: '$$\\grad f = \\nabla f$$', name: '微积分宏' }
-            ];
-            
-            for (const test of macroTests) {
-                const testDiv = document.createElement('div');
-                testDiv.innerHTML = test.formula;
-                document.body.appendChild(testDiv);
-                
-                await testFormula(testDiv, test.name);
-                document.body.removeChild(testDiv);
-            }
-            
-            updateStats();
-            log('🔧 自定义宏测试完成', 'info');
+
+        if (config.tex && config.tex.packages) {
+          const packages = config.tex.packages['[+]'] || []
+          log(`✅ 加载的扩展包: ${packages.length}`, 'success')
+          testStats.passed++
+        } else {
+          log('❌ 扩展包配置失败', 'error')
+          testStats.failed++
         }
-        
-        // 测试扩展功能
-        async function testExtensions() {
-            log('🧩 开始扩展功能测试', 'info');
-            
-            const extensionTests = [
-                { formula: '$$\\ce{H2SO4 + 2NaOH -> Na2SO4 + 2H2O}$$', name: 'mhchem 化学' },
-                { formula: '$$\\color{red}{x} + \\color{blue}{y} = \\color{green}{z}$$', name: 'color 颜色' },
-                { formula: '$$\\cancel{x^2} + 2x + 1$$', name: 'cancel 删除线' },
-                { formula: '$$\\bbox[yellow,5px]{E = mc^2}$$', name: 'bbox 边界框' },
-                { formula: '$$\\ket{\\psi} \\in \\mathcal{H}$$', name: 'braket 量子符号' }
-            ];
-            
-            for (const test of extensionTests) {
-                const testDiv = document.createElement('div');
-                testDiv.innerHTML = test.formula;
-                document.body.appendChild(testDiv);
-                
-                await testFormula(testDiv, test.name);
-                document.body.removeChild(testDiv);
-            }
-            
-            updateStats();
-            log('🧩 扩展功能测试完成', 'info');
+
+        // 测试渲染器
+        if (config.chtml) {
+          log('✅ CHTML 渲染器配置正常', 'success')
+          testStats.passed++
+        } else {
+          log('❌ CHTML 渲染器配置失败', 'error')
+          testStats.failed++
         }
-        
-        // 测试错误处理
-        async function testErrorHandling() {
-            log('🐛 开始错误处理测试', 'warning');
-            
-            const errorTests = [
-                { formula: '$$\\frac{1}{2 + \\sqrt{$$', name: '语法错误' },
-                { formula: '$$\\unknowncommand{x}$$', name: '未知命令' },
-                { formula: '$$\\left( \\frac{1}{2} \\right]$$', name: '括号不匹配' },
-                { formula: '$$\\frac{}{}$$', name: '空参数' }
-            ];
-            
-            for (const test of errorTests) {
-                const testDiv = document.createElement('div');
-                testDiv.innerHTML = test.formula;
-                document.body.appendChild(testDiv);
-                
-                try {
-                    await MathJax.typesetPromise([testDiv]);
-                    log(`⚠️ ${test.name}: 应该失败但成功了`, 'warning');
-                } catch (error) {
-                    log(`✅ ${test.name}: 正确捕获错误 - ${error.message}`, 'success');
-                    testStats.passed++;
-                }
-                
-                document.body.removeChild(testDiv);
-            }
-            
-            updateStats();
-            log('🐛 错误处理测试完成', 'warning');
+
+        updateStats()
+        log('⚙️ 配置测试完成', 'info')
+      }
+
+      // 测试自定义宏
+      async function testCustomMacros() {
+        log('🔧 开始自定义宏测试', 'info')
+
+        const macroTests = [
+          { formula: '$$\\RR \\subset \\CC$$', name: '数集宏' },
+          { formula: '$$\\vec{v} = \\begin{pmatrix} x \\\\ y \\end{pmatrix}$$', name: '向量宏' },
+          { formula: '$$\\braket{\\psi}{\\phi}$$', name: '量子力学宏' },
+          { formula: '$$\\Prob{X > 0} = \\Expect{I_{X > 0}}$$', name: '概率宏' },
+          { formula: '$$\\grad f = \\nabla f$$', name: '微积分宏' }
+        ]
+
+        for (const test of macroTests) {
+          const testDiv = document.createElement('div')
+          testDiv.innerHTML = test.formula
+          document.body.appendChild(testDiv)
+
+          await testFormula(testDiv, test.name)
+          document.body.removeChild(testDiv)
         }
-        
-        // 测试可访问性
-        async function testAccessibility() {
-            log('♿ 开始可访问性测试', 'info');
-            
-            const testDiv = document.createElement('div');
-            testDiv.innerHTML = '$$\\frac{a}{b} + \\sqrt{c}$$';
-            document.body.appendChild(testDiv);
-            
-            await MathJax.typesetPromise([testDiv]);
-            
-            // 检查可访问性属性
-            const mathElements = testDiv.querySelectorAll('[role="math"]');
-            if (mathElements.length > 0) {
-                log('✅ 数学元素具有正确的 role 属性', 'success');
-                testStats.passed++;
-            } else {
-                log('❌ 缺少可访问性属性', 'error');
-                testStats.failed++;
-            }
-            
-            // 检查 aria-label
-            const ariaElements = testDiv.querySelectorAll('[aria-label]');
-            if (ariaElements.length > 0) {
-                log('✅ 找到 aria-label 属性', 'success');
-                testStats.passed++;
-            } else {
-                log('⚠️ 未找到 aria-label 属性', 'warning');
-            }
-            
-            document.body.removeChild(testDiv);
-            updateStats();
-            log('♿ 可访问性测试完成', 'info');
+
+        updateStats()
+        log('🔧 自定义宏测试完成', 'info')
+      }
+
+      // 测试扩展功能
+      async function testExtensions() {
+        log('🧩 开始扩展功能测试', 'info')
+
+        const extensionTests = [
+          { formula: '$$\\ce{H2SO4 + 2NaOH -> Na2SO4 + 2H2O}$$', name: 'mhchem 化学' },
+          {
+            formula: '$$\\color{red}{x} + \\color{blue}{y} = \\color{green}{z}$$',
+            name: 'color 颜色'
+          },
+          { formula: '$$\\cancel{x^2} + 2x + 1$$', name: 'cancel 删除线' },
+          { formula: '$$\\bbox[yellow,5px]{E = mc^2}$$', name: 'bbox 边界框' },
+          { formula: '$$\\ket{\\psi} \\in \\mathcal{H}$$', name: 'braket 量子符号' }
+        ]
+
+        for (const test of extensionTests) {
+          const testDiv = document.createElement('div')
+          testDiv.innerHTML = test.formula
+          document.body.appendChild(testDiv)
+
+          await testFormula(testDiv, test.name)
+          document.body.removeChild(testDiv)
         }
-        
-        // 清除所有测试
-        function clearAllTests() {
-            document.getElementById('log-content').innerHTML = '高级配置测试日志将在这里显示...';
-            document.getElementById('performance-test-area').innerHTML = '';
-            
-            testStats = { passed: 0, failed: 0, totalRenderTime: 0, memoryUsage: 0 };
-            updateStats();
-            
-            log('🧹 所有测试已清除', 'info');
+
+        updateStats()
+        log('🧩 扩展功能测试完成', 'info')
+      }
+
+      // 测试错误处理
+      async function testErrorHandling() {
+        log('🐛 开始错误处理测试', 'warning')
+
+        const errorTests = [
+          { formula: '$$\\frac{1}{2 + \\sqrt{$$', name: '语法错误' },
+          { formula: '$$\\unknowncommand{x}$$', name: '未知命令' },
+          { formula: '$$\\left( \\frac{1}{2} \\right]$$', name: '括号不匹配' },
+          { formula: '$$\\frac{}{}$$', name: '空参数' }
+        ]
+
+        for (const test of errorTests) {
+          const testDiv = document.createElement('div')
+          testDiv.innerHTML = test.formula
+          document.body.appendChild(testDiv)
+
+          try {
+            await MathJax.typesetPromise([testDiv])
+            log(`⚠️ ${test.name}: 应该失败但成功了`, 'warning')
+          } catch (error) {
+            log(`✅ ${test.name}: 正确捕获错误 - ${error.message}`, 'success')
+            testStats.passed++
+          }
+
+          document.body.removeChild(testDiv)
         }
-        
-        // 页面加载完成后的初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            log('📄 MathJax 高级配置测试页面加载完成', 'info');
-            updateStats();
-        });
-        
-        // 窗口大小改变时重新渲染
-        window.addEventListener('resize', function() {
-            setTimeout(() => {
-                MathJax.typesetPromise().catch(error => {
-                    log(`窗口调整后重新渲染失败: ${error.message}`, 'error');
-                });
-            }, 100);
-        });
+
+        updateStats()
+        log('🐛 错误处理测试完成', 'warning')
+      }
+
+      // 测试可访问性
+      async function testAccessibility() {
+        log('♿ 开始可访问性测试', 'info')
+
+        const testDiv = document.createElement('div')
+        testDiv.innerHTML = '$$\\frac{a}{b} + \\sqrt{c}$$'
+        document.body.appendChild(testDiv)
+
+        await MathJax.typesetPromise([testDiv])
+
+        // 检查可访问性属性
+        const mathElements = testDiv.querySelectorAll('[role="math"]')
+        if (mathElements.length > 0) {
+          log('✅ 数学元素具有正确的 role 属性', 'success')
+          testStats.passed++
+        } else {
+          log('❌ 缺少可访问性属性', 'error')
+          testStats.failed++
+        }
+
+        // 检查 aria-label
+        const ariaElements = testDiv.querySelectorAll('[aria-label]')
+        if (ariaElements.length > 0) {
+          log('✅ 找到 aria-label 属性', 'success')
+          testStats.passed++
+        } else {
+          log('⚠️ 未找到 aria-label 属性', 'warning')
+        }
+
+        document.body.removeChild(testDiv)
+        updateStats()
+        log('♿ 可访问性测试完成', 'info')
+      }
+
+      // 清除所有测试
+      function clearAllTests() {
+        document.getElementById('log-content').innerHTML = '高级配置测试日志将在这里显示...'
+        document.getElementById('performance-test-area').innerHTML = ''
+
+        testStats = { passed: 0, failed: 0, totalRenderTime: 0, memoryUsage: 0 }
+        updateStats()
+
+        log('🧹 所有测试已清除', 'info')
+      }
+
+      // 页面加载完成后的初始化
+      document.addEventListener('DOMContentLoaded', function () {
+        log('📄 MathJax 高级配置测试页面加载完成', 'info')
+        updateStats()
+      })
+
+      // 窗口大小改变时重新渲染
+      window.addEventListener('resize', function () {
+        setTimeout(() => {
+          MathJax.typesetPromise().catch(error => {
+            log(`窗口调整后重新渲染失败: ${error.message}`, 'error')
+          })
+        }, 100)
+      })
     </script>
-</body>
+  </body>
 </html>
