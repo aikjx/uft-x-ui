@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四面八方螺旋发散运动 - Radial Spiral Explosion</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #000;
+            color: white;
+            overflow: hidden;
+            cursor: grab;
+        }
+        
+        body.grabbing { cursor: grabbing; }
+        
+        #container { position: fixed; width: 100%; height: 100%; }
+        
+        #main-title {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        #main-title h1 {
+            font-size: 65px;
+            font-weight: 900;
+            background: linear-gradient(90deg, #ff0080, #ff4000, #ffff00, #00ff80, #0080ff, #8000ff);
+            background-size: 400% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rainbowFlow 4s linear infinite;
+            letter-spacing: 8px;
+            filter: drop-shadow(0 0 20px rgba(255, 0, 128, 0.8));
+        }
+        
+        #main-title .subtitle {
+            font-size: 20px;
+            color: #ff4080;
+            margin-top: 8px;
+            text-shadow: 0 0 15px rgba(255, 64, 128, 0.8);
+        }
+        
+        @keyframes rainbowFlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 400% 50%; }
+        }
+        
+        .panel {
+            position: fixed;
+            background: rgba(5, 0, 15, 0.92);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 64, 128, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 30px rgba(255, 64, 128, 0.3);
+            transition: all 0.4s ease;
+            z-index: 50;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .panel.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.9);
+        }
+        
+        #controls-panel {
+            top: 110px;
+            left: 20px;
+            width: 360px;
+        }
+        
+        #info-panel {
+            top: 110px;
+            right: 20px;
+            width: 340px;
+        }
+        
+        #toolbar {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: auto;
+            display: flex;
+            gap: 10px;
+            padding: 15px 20px;
+        }
+        
+        .panel h2 {
+            color: #ff4080;
+            font-size: 22px;
+            margin-bottom: 12px;
+            text-shadow: 0 0 10px rgba(255, 64, 128, 0.8);
+            border-bottom: 2px solid rgba(255, 64, 128, 0.3);
+            padding-bottom: 8px;
+        }
+        
+        .slider-group {
+            margin: 12px 0;
+        }
+        
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            color: #ff80c0;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, #ff0080, #ff4080);
+            border-radius: 10px;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #ff4080;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 64, 128, 0.8);
+        }
+        
+        .check-group {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(255, 64, 128, 0.1);
+            border-radius: 6px;
+        }
+        
+        .check-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            cursor: pointer;
+            accent-color: #ff4080;
+        }
+        
+        .check-group label {
+            color: #ff80c0;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #ff0080, #ff4080);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 0, 128, 0.4);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 64, 128, 0.6);
+        }
+        
+        .toggle-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 5px 12px;
+            font-size: 11px;
+            background: linear-gradient(135deg, #ff4000, #ff0080);
+        }
+        
+        .view-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        
+        .view-buttons button {
+            padding: 8px;
+            font-size: 12px;
+        }
+        
+        #hint {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid rgba(255, 64, 128, 0.3);
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 12px;
+            color: #ff80c0;
+            z-index: 100;
+        }
+        
+        #hint div { margin: 3px 0; }
+        
+        #loading {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 0.5s;
+        }
+        
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 64, 128, 0.2);
+            border-top: 5px solid #ff4080;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        #loading-text {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #ff4080;
+        }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(50, 0, 50, 0.5); }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ff0080, #ff4080); border-radius: 10px; }
+        
+        @media (max-width: 1024px) {
+            .panel { width: 90% !important; position: relative !important; margin: 10px auto !important; }
+            #main-title h1 { font-size: 40px; }
+            #hint { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="spinner"></div>
+        <div id="loading-text">加载中...</div>
+    </div>
+    
+    <div id="container"></div>
+    
+    <div id="main-title">
+        <h1>螺旋发散</h1>
+        <div class="subtitle">四面八方螺旋运动可视化</div>
+    </div>
+    
+    <div id="controls-panel" class="panel">
+        <button class="toggle-btn" onclick="togglePanel('controls-panel')">隐藏</button>
+        <h2>⚙️ 控制参数</h2>
+        
+        <div class="slider-group">
+            <label><span>发散半径</span><span id="r-val">20.0</span></label>
+            <input type="range" id="radius" min="5" max="40" value="20" step="0.5">
+        </div>
+        
+        <div class="slider-group">
+            <label><span>螺旋角度</span><span id="s-val">45.0°</span></label>
+            <input type="range" id="angle" min="15" max="90" value="45" step="1">
+        </div>
+        
+        <div class="slider-group">
+            <label><span>发散速度</span><span id="v-val">2.0</span></label>
+            <input type="range" id="speed" min="0.5" max="5" value="2" step="0.1">
+        </div>
+        
+        <div class="slider-group">
+            <label><span>螺旋数量</span><span id="c-val">12</span></label>
+            <input type="range" id="count" min="6" max="24" value="12" step="1">
+        </div>
+        
+        <div class="slider-group">
+            <label><span>发散层级</span><span id="l-val">3</span></label>
+            <input type="range" id="layers" min="1" max="6" value="3" step="1">
+        </div>
+        
+        <h2>👁️ 显示选项</h2>
+        <div class="check-group">
+            <input type="checkbox" id="c1" checked><label for="c1">中心核心</label>
+        </div>
+        <div class="check-group">
+            <input type="checkbox" id="c2" checked><label for="c2">螺旋轨迹</label>
+        </div>
+        <div class="check-group">
+            <input type="checkbox" id="c3" checked><label for="c3">发散粒子</label>
+        </div>
+        <div class="check-group">
+            <input type="checkbox" id="c4" checked><label for="c4">光环效果</label>
+        </div>
+        <div class="check-group">
+            <input type="checkbox" id="c5" checked><label for="c5">自动旋转</label>
+        </div>
+        
+        <h2>🎥 视角预设</h2>
+        <div class="view-buttons">
+            <button onclick="setView(0)">正视</button>
+            <button onclick="setView(1)">俯视</button>
+            <button onclick="setView(2)">侧视</button>
+            <button onclick="setView(3)">斜视</button>
+        </div>
+    </div>
+    
+    <div id="info-panel" class="panel">
+        <button class="toggle-btn" onclick="togglePanel('info-panel')">隐藏</button>
+        <h2>📖 关于螺旋发散</h2>
+        <p style="line-height:1.6;color:#e0e0e0;font-size:14px;">
+            <strong>四面八方螺旋发散</strong><br><br>
+            从中心点向各个方向螺旋发散，形成爆炸式的三维螺旋运动模式。
+        </p>
+        <h2 style="margin-top:15px;">⚡ 核心概念</h2>
+        <p style="line-height:1.6;color:#e0e0e0;font-size:14px;">
+            <strong>R = r₀ × e^(k·θ)</strong><br><br>
+            发散半径随角度指数增长，创造出爆炸式的螺旋发散效果。
+        </p>
+    </div>
+    
+    <div id="toolbar" class="panel">
+        <button onclick="reset()">🔄 重置</button>
+        <button onclick="randomize()">🎲 随机</button>
+        <button onclick="togglePause()"><span id="pt">⏸️ 暂停</span></button>
+        <button onclick="toggleAll()"><span id="at">👁️ 隐藏面板</span></button>
+        <button onclick="toggleFullscreen()">🖥️ 全屏</button>
+    </div>
+    
+    <div id="hint">
+        <div>🖱️ 拖动：旋转</div>
+        <div>🖱️ 滚轮：缩放</div>
+        <div>⌨️ 空格：暂停</div>
+    </div>
+    
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000);
+        document.getElementById('container').appendChild(renderer.domElement);
+        
+        camera.position.set(50, 30, 50);
+        camera.lookAt(0, 0, 0);
+        
+        let params = {
+            radius: 20,
+            spiralAngle: 45,
+            speed: 2,
+            count: 12,
+            layers: 3,
+            core: true,
+            spirals: true,
+            particles: true,
+            rings: true,
+            autoRotate: true
+        };
+        
+        let paused = false;
+        let time = 0;
+        let isDragging = false;
+        let lastMouse = { x: 0, y: 0 };
+        let cameraAngle = { theta: Math.PI/4, phi: Math.PI/6 };
+        let cameraDist = 70;
+        
+        const spiralLines = [];
+        const spiralParticles = [];
+        const particleSystems = [];
+        let core, rings = [];
+        
+        // 光源
+        scene.add(new THREE.AmbientLight(0x404040, 0.6));
+        const light1 = new THREE.PointLight(0xff4080, 3, 200);
+        light1.position.set(0, 0, 0);
+        scene.add(light1);
+        
+        // 星空背景
+        function makeStars() {
+            const g = new THREE.BufferGeometry();
+            const p = [], c = [];
+            for (let i = 0; i < 5000; i++) {
+                p.push((Math.random() - 0.5) * 1000, (Math.random() - 0.5) * 1000, (Math.random() - 0.5) * 1000);
+                const col = new THREE.Color().setHSL(Math.random() * 0.2 + 0.8, 0.8, 0.6);
+                c.push(col.r, col.g, col.b);
+            }
+            g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
+            g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
+            return new THREE.Points(g, new THREE.PointsMaterial({ size: 1.5, vertexColors: true, transparent: true, opacity: 0.8 }));
+        }
+        const stars = makeStars();
+        scene.add(stars);
+        
+        // 创建中心核心
+        function makeCore() {
+            if (core) scene.remove(core);
+            
+            const g = new THREE.SphereGeometry(2, 32, 32);
+            core = new THREE.Mesh(g, new THREE.MeshPhongMaterial({
+                color: 0xff4080,
+                emissive: 0xff2060,
+                emissiveIntensity: 0.8,
+                transparent: true,
+                opacity: 0.9
+            }));
+            scene.add(core);
+        }
+        
+        // 创建光环效果
+        function makeRings() {
+            rings.forEach(r => scene.remove(r));
+            rings.length = 0;
+            
+            for (let i = 0; i < 8; i++) {
+                const ring = new THREE.Mesh(
+                    new THREE.RingGeometry(3 + i * 2, 3.2 + i * 2, 64),
+                    new THREE.MeshBasicMaterial({
+                        color: new THREE.Color().setHSL(0.85 + i * 0.02, 1, 0.6),
+                        transparent: true,
+                        opacity: 0.6 - i * 0.05,
+                        side: THREE.DoubleSide,
+                        blending: THREE.AdditiveBlending
+                    })
+                );
+                ring.rotation.x = Math.PI / 2 + Math.sin(i) * 0.3;
+                ring.userData = { idx: i, baseRotation: i * 0.3 };
+                rings.push(ring);
+                scene.add(ring);
+            }
+        }
+        
+        // 创建螺旋轨迹
+        function makeSpirals() {
+            spiralLines.forEach(s => scene.remove(s));
+            spiralLines.length = 0;
+            
+            const spiralAngleRad = (params.spiralAngle * Math.PI) / 180;
+            const layers = params.layers;
+            
+            for (let layer = 0; layer < layers; layer++) {
+                const layerOffset = layer * Math.PI * 2 / layers;
+                const layerRadius = params.radius * (0.3 + layer * 0.35);
+                
+                for (let i = 0; i < params.count; i++) {
+                    const pts = [];
+                    const angle0 = (i / params.count) * Math.PI * 2 + layerOffset;
+                    
+                    for (let j = 0; j <= 200; j++) {
+                        const t = j / 200;
+                        const distance = layerRadius * t;
+                        const spiralOffset = distance * Math.tan(spiralAngleRad) * Math.sin(t * 10);
+                        const angle = angle0 + t * Math.PI * 4 + spiralOffset * 0.01;
+                        
+                        const x = distance * Math.cos(angle);
+                        const y = distance * Math.sin(angle);
+                        const z = spiralOffset * Math.cos(t * 8);
+                        
+                        pts.push(new THREE.Vector3(x, y, z));
+                    }
+                    
+                    const line = new THREE.Line(
+                        new THREE.BufferGeometry().setFromPoints(pts),
+                        new THREE.LineBasicMaterial({
+                            color: new THREE.Color().setHSL(0.8 + i / params.count * 0.2, 1, 0.6),
+                            transparent: true,
+                            opacity: 0.8,
+                            linewidth: 2
+                        })
+                    );
+                    line.userData = { layer: layer, idx: i };
+                    spiralLines.push(line);
+                    scene.add(line);
+                }
+            }
+        }
+        
+        // 创建粒子系统
+        function makeParticles() {
+            spiralParticles.forEach(p => scene.remove(p));
+            spiralParticles.length = 0;
+            
+            const spiralAngleRad = (params.spiralAngle * Math.PI) / 180;
+            const layers = params.layers;
+            
+            for (let layer = 0; layer < layers; layer++) {
+                const layerOffset = layer * Math.PI * 2 / layers;
+                const layerRadius = params.radius * (0.3 + layer * 0.35);
+                
+                const particleCount = params.count * 30;
+                const g = new THREE.BufferGeometry();
+                const pos = [], col = [], sizes = [];
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const t = Math.random();
+                    const angle0 = (Math.floor(i / 30) / params.count) * Math.PI * 2 + layerOffset;
+                    const particleOffset = i % 30 / 30;
+                    
+                    const distance = layerRadius * t;
+                    const spiralOffset = distance * Math.tan(spiralAngleRad) * Math.sin(t * 10 + particleOffset);
+                    const angle = angle0 + t * Math.PI * 4 + spiralOffset * 0.01 + time * params.speed * 0.1;
+                    
+                    const x = distance * Math.cos(angle) + (Math.random() - 0.5) * 2;
+                    const y = distance * Math.sin(angle) + (Math.random() - 0.5) * 2;
+                    const z = spiralOffset * Math.cos(t * 8 + particleOffset) + (Math.random() - 0.5) * 2;
+                    
+                    pos.push(x, y, z);
+                    
+                    const c = new THREE.Color().setHSL(0.8 + Math.random() * 0.2, 1, 0.6);
+                    col.push(c.r, c.g, c.b);
+                    
+                    sizes.push(Math.random() * 3 + 1);
+                }
+                
+                g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+                g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+                g.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 2,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.8,
+                    blending: THREE.AdditiveBlending,
+                    sizeAttenuation: true
+                });
+                
+                const particles = new THREE.Points(g, material);
+                particles.userData = { layer: layer };
+                spiralParticles.push(particles);
+                scene.add(particles);
+            }
+        }
+        
+        // 更新场景
+        function updateScene() {
+            if (params.core && core) {
+                core.rotation.x += 0.02;
+                core.rotation.y += 0.03;
+                core.scale.setScalar(1 + Math.sin(time * 2) * 0.1);
+            }
+            
+            if (params.rings) {
+                rings.forEach((ring, i) => {
+                    ring.rotation.z += 0.01 * (i % 2 === 0 ? 1 : -1);
+                    ring.scale.setScalar(1 + Math.sin(time * 1.5 + i) * 0.05);
+                });
+            }
+            
+            spiralLines.forEach((line, i) => {
+                const layer = line.userData.layer;
+                const baseRotation = layer * 0.1;
+                line.rotation.z = baseRotation + time * 0.5 * params.speed;
+            });
+            
+            spiralParticles.forEach((particles, i) => {
+                const layer = particles.userData.layer;
+                const baseRotation = layer * 0.1;
+                particles.rotation.z = baseRotation + time * 0.3 * params.speed;
+            });
+        }
+        
+        // 设置视角
+        function setView(index) {
+            const views = [
+                { pos: [0, 0, params.radius * 2.5], look: [0, 0, 0] },
+                { pos: [0, params.radius * 2.5, 0], look: [0, 0, 0] },
+                { pos: [params.radius * 2.5, 0, 0], look: [0, 0, 0] },
+                { pos: [params.radius * 1.5, params.radius * 1.5, params.radius * 1.5], look: [0, 0, 0] }
+            ];
+            
+            const view = views[index];
+            camera.position.set(...view.pos);
+            camera.lookAt(...view.look);
+        }
+        
+        // 控制面板切换
+        function togglePanel(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+        
+        // 重置
+        function reset() {
+            params = {
+                radius: 20, spiralAngle: 45, speed: 2, count: 12, layers: 3,
+                core: true, spirals: true, particles: true, rings: true, autoRotate: true
+            };
+            updateUI();
+            rebuildScene();
+        }
+        
+        // 随机化
+        function randomize() {
+            params.radius = Math.random() * 35 + 5;
+            params.spiralAngle = Math.random() * 75 + 15;
+            params.speed = Math.random() * 4 + 1;
+            params.count = Math.floor(Math.random() * 18) + 6;
+            params.layers = Math.floor(Math.random() * 5) + 1;
+            updateUI();
+            rebuildScene();
+        }
+        
+        // 更新UI
+        function updateUI() {
+            document.getElementById('r-val').textContent = params.radius.toFixed(1);
+            document.getElementById('s-val').textContent = params.spiralAngle.toFixed(1) + '°';
+            document.getElementById('v-val').textContent = params.speed.toFixed(1);
+            document.getElementById('c-val').textContent = params.count;
+            document.getElementById('l-val').textContent = params.layers;
+        }
+        
+        // 重建场景
+        function rebuildScene() {
+            makeCore();
+            makeRings();
+            makeSpirals();
+            makeParticles();
+        }
+        
+        // 暂停/播放
+        function togglePause() {
+            paused = !paused;
+            document.getElementById('pt').textContent = paused ? '▶️ 播放' : '⏸️ 暂停';
+        }
+        
+        // 切换所有面板
+        function toggleAll() {
+            const panels = ['controls-panel', 'info-panel', 'toolbar'];
+            const hidden = document.getElementById('controls-panel').classList.contains('hidden');
+            panels.forEach(id => {
+                if (hidden) document.getElementById(id).classList.remove('hidden');
+                else document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById('at').textContent = hidden ? '👁️ 隐藏面板' : '👁️ 显示面板';
+        }
+        
+        // 全屏
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // 事件监听
+        document.getElementById('radius').addEventListener('input', (e) => {
+            params.radius = parseFloat(e.target.value);
+            updateUI();
+            rebuildScene();
+        });
+        
+        document.getElementById('angle').addEventListener('input', (e) => {
+            params.spiralAngle = parseFloat(e.target.value);
+            updateUI();
+            rebuildScene();
+        });
+        
+        document.getElementById('speed').addEventListener('input', (e) => {
+            params.speed = parseFloat(e.target.value);
+            updateUI();
+        });
+        
+        document.getElementById('count').addEventListener('input', (e) => {
+            params.count = parseInt(e.target.value);
+            updateUI();
+            rebuildScene();
+        });
+        
+        document.getElementById('layers').addEventListener('input', (e) => {
+            params.layers = parseInt(e.target.value);
+            updateUI();
+            rebuildScene();
+        });
+        
+        ['c1', 'c2', 'c3', 'c4', 'c5'].forEach((id, i) => {
+            const checkboxes = ['core', 'spirals', 'particles', 'rings', 'autoRotate'];
+            document.getElementById(id).addEventListener('change', (e) => {
+                params[checkboxes[i]] = e.target.checked;
+                rebuildScene();
+            });
+        });
+        
+        // 鼠标控制
+        document.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouse = { x: e.clientX, y: e.clientY };
+            document.body.classList.add('grabbing');
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            const deltaX = e.clientX - lastMouse.x;
+            const deltaY = e.clientY - lastMouse.y;
+            
+            cameraAngle.theta -= deltaX * 0.01;
+            cameraAngle.phi += deltaY * 0.01;
+            cameraAngle.phi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraAngle.phi));
+            
+            const x = cameraDist * Math.sin(cameraAngle.phi) * Math.cos(cameraAngle.theta);
+            const y = cameraDist * Math.cos(cameraAngle.phi);
+            const z = cameraDist * Math.sin(cameraAngle.phi) * Math.sin(cameraAngle.theta);
+            
+            camera.position.set(x, y, z);
+            camera.lookAt(0, 0, 0);
+            
+            lastMouse = { x: e.clientX, y: e.clientY };
+        });
+        
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            document.body.classList.remove('grabbing');
+        });
+        
+        document.addEventListener('wheel', (e) => {
+            cameraDist += e.deltaY * 0.1;
+            cameraDist = Math.max(10, Math.min(200, cameraDist));
+            
+            const x = cameraDist * Math.sin(cameraAngle.phi) * Math.cos(cameraAngle.theta);
+            const y = cameraDist * Math.cos(cameraAngle.phi);
+            const z = cameraDist * Math.sin(cameraAngle.phi) * Math.sin(cameraAngle.theta);
+            
+            camera.position.set(x, y, z);
+            camera.lookAt(0, 0, 0);
+        });
+        
+        // 键盘控制
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                togglePause();
+            }
+        });
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (!paused) {
+                time += 0.016 * params.speed;
+                updateScene();
+            }
+            
+            if (params.autoRotate && !isDragging) {
+                cameraAngle.theta += 0.005;
+                const x = cameraDist * Math.sin(cameraAngle.phi) * Math.cos(cameraAngle.theta);
+                const y = cameraDist * Math.cos(cameraAngle.phi);
+                const z = cameraDist * Math.sin(cameraAngle.phi) * Math.sin(cameraAngle.theta);
+                camera.position.set(x, y, z);
+                camera.lookAt(0, 0, 0);
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // 初始化
+        updateUI();
+        rebuildScene();
+        setTimeout(() => {
+            document.getElementById('loading').classList.add('hidden');
+            animate();
+        }, 1000);
+    </script>
+</body>
+</html>

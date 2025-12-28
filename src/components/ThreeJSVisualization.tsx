@@ -16,6 +16,8 @@ import ThreeJSContainer from './ThreeJSContainer'
 import PerformanceMonitor from './PerformanceMonitor'
 import ControlPanel from './ControlPanel'
 import LoadingIndicator from './LoadingIndicator'
+import HelixControlPanel from './HelixControlPanel'
+import AdvancedVisualizationControlPanel from './AdvancedVisualizationControlPanel'
 
 // 配置选项接口
 export interface ThreeJSVisualizationProps {
@@ -92,6 +94,20 @@ export interface ThreeJSVisualizationProps {
     usePerformanceMonitoring?: boolean
     maxObjects?: number
   }
+
+  // 高级可视化选项
+  advancedVisualization?: {
+    enableRayTracing?: boolean
+    enableGlobalIllumination?: boolean
+    enableVolumetricLight?: boolean
+    enableNebulaEffect?: boolean
+    enableAdvancedParticles?: boolean
+    enableDepthOfField?: boolean
+    enableBloomEffect?: boolean
+    enableAfterimageEffect?: boolean
+    enableHighQualityAA?: boolean
+    enableOutline?: boolean
+  }
 }
 
 const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(
@@ -115,6 +131,20 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(
     const [error, setError] = useState<Error | null>(null)
     const [webglSupported, setWebglSupported] = useState(true)
     const [renderEngine, setRenderEngine] = useState<RenderEngine | null>(null)
+    
+    // 高级可视化状态
+    const [advancedFeaturesEnabled, setAdvancedFeaturesEnabled] = useState({
+      rayTracing: false,
+      globalIllumination: false,
+      volumetricLight: false,
+      nebulaEffect: false,
+      advancedParticles: false,
+      depthOfField: false,
+      bloomEffect: false,
+      afterimageEffect: false,
+      highQualityAA: false,
+      outline: false
+    })
 
     // 性能监控状态 - 使用更完整的性能指标
     const [performanceMetrics, setPerformanceMetrics] = useState({
@@ -288,6 +318,76 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(
       })
     }, [])
 
+    // 处理高级可视化功能切换
+    const handleToggleAdvancedFeature = useCallback((feature: keyof typeof advancedFeaturesEnabled, enabled: boolean) => {
+      if (!renderEngine) return
+      
+      // 更新状态
+      setAdvancedFeaturesEnabled(prev => ({ ...prev, [feature]: enabled }))
+      
+      // 应用到渲染引擎
+      try {
+        switch (feature) {
+          case 'rayTracing':
+            renderEngine.enableRayTracing(enabled)
+            break
+          case 'globalIllumination':
+            renderEngine.enableGlobalIllumination(enabled)
+            break
+          case 'volumetricLight':
+            // 如果启用，创建体积光材质
+            if (enabled && !renderEngine.volumetricLightMaterial) {
+              renderEngine.volumetricLightMaterial = renderEngine.createVolumetricLightMaterial()
+              renderEngine.volumetricLightMaterial.updateTime(0)
+            }
+            break
+          case 'nebulaEffect':
+            // 如果启用，创建星云材质
+            if (enabled && !renderEngine.nebulaMaterial) {
+              renderEngine.nebulaMaterial = renderEngine.createNebulaMaterial()
+              renderEngine.nebulaMaterial.updateTime(0)
+            }
+            break
+          case 'advancedParticles':
+            // 如果启用，初始化高级粒子系统
+            if (enabled && !renderEngine.particleSystemManager) {
+              renderEngine.initParticleSystemManager(10000)
+            }
+            break
+          case 'depthOfField':
+            // 如果启用，启用景深效果
+            if (renderEngine.bokehPass) {
+              renderEngine.bokehPass.enabled = enabled
+            }
+            break
+          case 'bloomEffect':
+            // 如果启用，启用泛光效果
+            if (renderEngine.bloomPass) {
+              renderEngine.bloomPass.enabled = enabled
+            }
+            break
+          case 'afterimageEffect':
+            // 如果启用，启用残影效果
+            if (renderEngine.afterimagePass) {
+              renderEngine.afterimagePass.enabled = enabled
+            }
+            break
+          case 'highQualityAA':
+            // 如果启用，启用高质量抗锯齿
+            // 这个设置通常在初始化时确定，这里只记录状态
+            break
+          case 'outline':
+            // 如果启用，启用边缘轮廓效果
+            if (renderEngine.outlinePass) {
+              renderEngine.outlinePass.enabled = enabled
+            }
+            break
+        }
+      } catch (error) {
+        console.error(`Failed to toggle advanced feature ${feature}:`, error)
+      }
+    }, [renderEngine])
+
     // 暂停/恢复控制
     useEffect(() => {
       setRenderState(prev => ({
@@ -435,6 +535,15 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(
 
         {/* UI控制面板 */}
         <ControlPanel uiState={uiState} onUpdateUIState={handleUpdateUIState} />
+        
+        {/* 螺旋运动控制面板 */}
+        <HelixControlPanel />
+        
+        {/* 高级可视化控制面板 */}
+        <AdvancedVisualizationControlPanel
+          features={advancedFeaturesEnabled}
+          onToggleFeature={handleToggleAdvancedFeature}
+        />
       </motion.div>
     )
   }

@@ -63,6 +63,15 @@ export interface VisualizationState {
   cameraNear: number
   cameraFar: number
 
+  // 螺旋运动设置
+  helixRadius: number
+  helixPitch: number
+  helixSpeed: number
+  helixCount: number
+  showHelixCylinder: boolean
+  showHelixParticles: boolean
+  showHelixCore: boolean
+
   // 性能监控
   showPerformancePanel: boolean
   currentFPS: number
@@ -121,6 +130,13 @@ type VisualizationAction =
   | { type: 'SET_CAMERA_NEAR'; payload: number }
   | { type: 'SET_CAMERA_FAR'; payload: number }
   | { type: 'SET_SHOW_PERFORMANCE_PANEL'; payload: boolean }
+  | { type: 'SET_HELIX_RADIUS'; payload: number }
+  | { type: 'SET_HELIX_PITCH'; payload: number }
+  | { type: 'SET_HELIX_SPEED'; payload: number }
+  | { type: 'SET_HELIX_COUNT'; payload: number }
+  | { type: 'SET_SHOW_HELIX_CYLINDER'; payload: boolean }
+  | { type: 'SET_SHOW_HELIX_PARTICLES'; payload: boolean }
+  | { type: 'SET_SHOW_HELIX_CORE'; payload: boolean }
   | {
       type: 'UPDATE_PERFORMANCE_STATS'
       payload: { fps: number; memory: number; drawCalls: number; triangles: number }
@@ -184,6 +200,15 @@ export const initialVisualizationState: VisualizationState = {
   cameraFov: 75,
   cameraNear: 0.1,
   cameraFar: 1000,
+
+  // 螺旋运动设置
+  helixRadius: 5.0,
+  helixPitch: 2.0,
+  helixSpeed: 1.0,
+  helixCount: 8,
+  showHelixCylinder: true,
+  showHelixParticles: true,
+  showHelixCore: true,
 
   // 性能监控
   showPerformancePanel: false,
@@ -300,6 +325,22 @@ const visualizationReducer = (
       return { ...state, cameraNear: action.payload }
     case 'SET_CAMERA_FAR':
       return { ...state, cameraFar: action.payload }
+
+    // 螺旋运动设置
+    case 'SET_HELIX_RADIUS':
+      return { ...state, helixRadius: action.payload }
+    case 'SET_HELIX_PITCH':
+      return { ...state, helixPitch: action.payload }
+    case 'SET_HELIX_SPEED':
+      return { ...state, helixSpeed: action.payload }
+    case 'SET_HELIX_COUNT':
+      return { ...state, helixCount: action.payload }
+    case 'SET_SHOW_HELIX_CYLINDER':
+      return { ...state, showHelixCylinder: action.payload }
+    case 'SET_SHOW_HELIX_PARTICLES':
+      return { ...state, showHelixParticles: action.payload }
+    case 'SET_SHOW_HELIX_CORE':
+      return { ...state, showHelixCore: action.payload }
 
     // 性能监控
     case 'SET_SHOW_PERFORMANCE_PANEL':
@@ -477,6 +518,29 @@ export const useVisualizationActions = () => {
     },
     setShowAxes: (show: boolean) => {
       dispatch({ type: 'SET_SHOW_AXES', payload: show })
+    },
+
+    // 螺旋运动设置
+    setHelixRadius: (radius: number) => {
+      dispatch({ type: 'SET_HELIX_RADIUS', payload: radius })
+    },
+    setHelixPitch: (pitch: number) => {
+      dispatch({ type: 'SET_HELIX_PITCH', payload: pitch })
+    },
+    setHelixSpeed: (speed: number) => {
+      dispatch({ type: 'SET_HELIX_SPEED', payload: speed })
+    },
+    setHelixCount: (count: number) => {
+      dispatch({ type: 'SET_HELIX_COUNT', payload: count })
+    },
+    setShowHelixCylinder: (show: boolean) => {
+      dispatch({ type: 'SET_SHOW_HELIX_CYLINDER', payload: show })
+    },
+    setShowHelixParticles: (show: boolean) => {
+      dispatch({ type: 'SET_SHOW_HELIX_PARTICLES', payload: show })
+    },
+    setShowHelixCore: (show: boolean) => {
+      dispatch({ type: 'SET_SHOW_HELIX_CORE', payload: show })
     },
 
     // 性能监控

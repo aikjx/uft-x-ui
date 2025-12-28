@@ -1054,6 +1054,49 @@ export class VisualizationManager {
       this.composer.addPass(filmPass)
     }
 
+    // 添加色调映射通道 - 提升画面对比度和色彩饱和度
+    const toneMappingPass = new ShaderPass({
+      uniforms: {
+        tDiffuse: { value: null },
+        exposure: { value: 1.0 },
+        gamma: { value: 2.2 },
+        contrast: { value: 1.2 },
+        saturation: { value: 1.1 }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D tDiffuse;
+        uniform float exposure;
+        uniform float gamma;
+        uniform float contrast;
+        uniform float saturation;
+        varying vec2 vUv;
+        
+        void main() {
+          vec4 color = texture2D(tDiffuse, vUv);
+          
+          // 色调映射和伽马校正
+          color.rgb = pow(color.rgb * exposure, vec3(1.0 / gamma));
+          
+          // 增强对比度
+          color.rgb = (color.rgb - 0.5) * contrast + 0.5;
+          
+          // 增强饱和度
+          float gray = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+          color.rgb = mix(vec3(gray), color.rgb, saturation);
+          
+          gl_FragColor = color;
+        }
+      `
+    })
+    this.composer.addPass(toneMappingPass)
+
     // 添加伽马校正通道
     if (this.config.postProcessing.gammaCorrection) {
       const gammaCorrectionPass = new ShaderPass(GammaCorrectionShader)
