@@ -153,7 +153,7 @@ const ThreeJSVisualization: React.FC<ThreeJSVisualizationProps> = React.memo(
       showPerformancePanel: true, // 是否显示性能监控面板
       showStats: true, // 是否显示统计信息
       autoModeEnabled: true, // 是否启用自动优化模式
-      showControlPanel: true // 是否显示控制面板
+      showControlPanel: false // 是否显示控制面板（默认隐藏，通过按钮切换）
     })
 
     // 检查WebGL支持 - 使用useMemo缓存结果

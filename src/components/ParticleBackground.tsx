@@ -262,97 +262,134 @@ const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
       window.addEventListener('mousemove', handleMouseMove)
     }
 
-    // 动画循环 - 根据设备性能调整更新频率
-    const targetFPS = performanceLevel > 3 ? 60 : 30
-    const frameTime = 1000 / targetFPS
-    const particleUpdateInterval = performanceLevel > 2 ? 1 : 2 // 根据性能等级调整粒子更新频率
-    let frameCounter = 0
-
-    // 使用对象池优化粒子更新
-    const particleUpdatePool = new Set<number>()
-    let nextParticleToUpdate = 0
-
-    const animate = () => {
-      const currentTime = Date.now()
-      const deltaTime = currentTime - lastUpdateRef.current
-
-      // 控制更新频率
-      if (deltaTime >= frameTime) {
-        lastUpdateRef.current = currentTime
-        frameCounter++
-
-        // 更新FPS统计 - 只在必要时更新
-        if (frameCounter % 60 === 0) {
-          updateFPS(deltaTime)
-        }
-
-        // 只在必要时更新控制器
-        if (controlsRef.current && controlsRef.current.enableDamping) {
-          controlsRef.current.update()
-        }
-
-        // 自动旋转
-        if (enableAutoRotation && particlesRef.current) {
-          particlesRef.current.rotation.y += autoRotationSpeed
-        }
-
-        // 鼠标交互效果
-        if (enableMouseInteraction && particlesRef.current) {
-          particlesRef.current.rotation.x += mouseRef.current.y * 0.0005
-          particlesRef.current.rotation.y += mouseRef.current.x * 0.0005
-        }
-
-        // 更新粒子位置 - 根据性能等级调整更新频率
-        if (
-          particlesRef.current &&
-          particlePositionsRef.current &&
-          frameCounter % particleUpdateInterval === 0
-        ) {
-          const positions = particlePositionsRef.current
-          const particlesCount = particlesCountRef.current
-
-          // 智能更新：根据性能等级调整更新比例
-          const updateRatio = performanceLevel > 3 ? 0.6 : performanceLevel > 1 ? 0.3 : 0.1
-          const particlesToUpdate = Math.floor(particlesCount * updateRatio)
-
-          // 使用对象池思想：顺序更新粒子，避免随机数生成
-          for (let i = 0; i < particlesToUpdate; i++) {
-            // 顺序选择粒子进行更新
-            const index = (nextParticleToUpdate * 3) % (particlesCount * 3)
-            nextParticleToUpdate = (nextParticleToUpdate + 1) % particlesCount
-
-            // 使用预计算的速度更新位置，减少随机数生成
-            positions[index] += velocities[index]
-            positions[index + 1] += velocities[index + 1]
-            positions[index + 2] += velocities[index + 2]
-
-            // 边界检查和反弹 - 简化计算
-            const spread = spreadRef.current * 0.5
-            if (Math.abs(positions[index]) > spread) {
-              positions[index] *= -0.99
-              velocities[index] *= -0.5
-            }
-            if (Math.abs(positions[index + 1]) > spread) {
-              positions[index + 1] *= -0.99
-              velocities[index + 1] *= -0.5
-            }
-            if (Math.abs(positions[index + 2]) > spread) {
-              positions[index + 2] *= -0.99
-              velocities[index + 2] *= -0.5
-            }
+    // 动画循环 - 使用更高效的时间控制
+    let lastRenderTime = 0
+    let lastParticleUpdateTime = 0
+    let lastStatsUpdateTime = 0
+    
+    // 根据性能等级调整更新频率
+    const PARTICLE_UPDATE_RATE = performanceLevel > 3 ? 16 : performanceLevel > 2 ? 32 : 64 // 毫秒
+    const STATS_UPDATE_RATE = 1000 // 每秒更新一次统计
+    
+    // 视锥体剔除优化：预计算相机视锥体边界
+    const frustum = new THREE.Frustum()
+    const cameraMatrix = new THREE.Matrix4()
+    
+    // 优化：使用相机视锥体剔除不可见粒子
+    const isParticleInView = (particleIndex: number, positions: Float32Array): boolean => {
+      if (!cameraRef.current) return true
+      
+      // 简单的视锥体剔除：检查粒子是否在相机视野范围内
+      const x = positions[particleIndex * 3]
+      const y = positions[particleIndex * 3 + 1]
+      const z = positions[particleIndex * 3 + 2]
+      
+      // 快速检查：粒子距离相机的距离
+      const distanceSquared = x * x + y * y + z * z
+      if (distanceSquared > 2000000) return false // 距离太远，不可见
+      
+      // 更新视锥体
+      cameraMatrix.multiplyMatrices(cameraRef.current.projectionMatrix, cameraRef.current.matrixWorldInverse)
+      frustum.setFromProjectionMatrix(cameraMatrix)
+      
+      // 创建粒子位置向量（复用，避免垃圾回收）
+      const particlePos = new THREE.Vector3(x, y, z)
+      return frustum.containsPoint(particlePos)
+    }
+    
+    // 优化：批量更新粒子位置
+    const updateParticles = (positions: Float32Array, velocities: Float32Array, deltaTime: number) => {
+      const particlesCount = particlesCountRef.current
+      const spread = spreadRef.current * 0.5
+      
+      // 根据性能等级调整更新比例
+      const updateRatio = performanceLevel > 3 ? 1.0 : performanceLevel > 2 ? 0.6 : 0.3
+      const particlesToUpdate = Math.floor(particlesCount * updateRatio)
+      
+      // 优化：只更新视锥体内的粒子
+      let updatedParticles = 0
+      let particleIndex = 0
+      
+      while (updatedParticles < particlesToUpdate && particleIndex < particlesCount) {
+        // 检查粒子是否在视野内
+        if (isParticleInView(particleIndex, positions)) {
+          const i = particleIndex * 3
+          
+          // 更新位置
+          positions[i] += velocities[i] * deltaTime * 60
+          positions[i + 1] += velocities[i + 1] * deltaTime * 60
+          positions[i + 2] += velocities[i + 2] * deltaTime * 60
+          
+          // 边界检查和反弹
+          if (Math.abs(positions[i]) > spread) {
+            positions[i] *= -0.99
+            velocities[i] *= -0.5
           }
+          if (Math.abs(positions[i + 1]) > spread) {
+            positions[i + 1] *= -0.99
+            velocities[i + 1] *= -0.5
+          }
+          if (Math.abs(positions[i + 2]) > spread) {
+            positions[i + 2] *= -0.99
+            velocities[i + 2] *= -0.5
+          }
+          
+          updatedParticles++
+        }
+        
+        particleIndex++
+      }
+    }
 
-          // 只在必要时标记位置需要更新
+    const animate = (timestamp: number) => {
+      // 计算时间增量（秒）
+      const deltaTime = (timestamp - lastRenderTime) / 1000
+      lastRenderTime = timestamp
+      
+      // 只在必要时更新控制器
+      if (controlsRef.current && controlsRef.current.enableDamping) {
+        controlsRef.current.update()
+      }
+
+      // 自动旋转
+      if (enableAutoRotation && particlesRef.current) {
+        particlesRef.current.rotation.y += autoRotationSpeed * deltaTime * 60
+      }
+
+      // 鼠标交互效果
+      if (enableMouseInteraction && particlesRef.current) {
+        particlesRef.current.rotation.x += mouseRef.current.y * 0.0005 * deltaTime * 60
+        particlesRef.current.rotation.y += mouseRef.current.x * 0.0005 * deltaTime * 60
+      }
+
+      // 更新粒子位置 - 基于时间间隔而非帧数
+      if (timestamp - lastParticleUpdateTime >= PARTICLE_UPDATE_RATE) {
+        if (particlesRef.current && particlePositionsRef.current) {
+          const positions = particlePositionsRef.current
+          
+          // 批量更新粒子
+          updateParticles(positions, velocities, deltaTime)
+          
+          // 标记位置需要更新
           particlesRef.current.geometry.attributes.position.needsUpdate = true
         }
+        
+        lastParticleUpdateTime = timestamp
+      }
 
-        // 渲染场景 - 只在有变化时渲染
-        if (rendererRef.current && cameraRef.current) {
-          try {
-            rendererRef.current.render(scene, cameraRef.current)
-          } catch (error) {
-            console.error('ParticleBackground render error:', error)
-          }
+      // 更新FPS统计 - 每秒更新一次
+      if (timestamp - lastStatsUpdateTime >= STATS_UPDATE_RATE) {
+        updateFPS(deltaTime * 1000)
+        lastStatsUpdateTime = timestamp
+      }
+
+      // 渲染场景
+      if (rendererRef.current && cameraRef.current) {
+        try {
+          rendererRef.current.clear()
+          rendererRef.current.render(scene, cameraRef.current)
+        } catch (error) {
+          console.error('ParticleBackground render error:', error)
         }
       }
 

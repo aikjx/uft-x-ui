@@ -85,8 +85,8 @@ export class SpacetimeStateCalculator {
     time: number,
     cache: Map<string, number>
   ): SpacetimeState {
-    // 生成缓存键
-    const cacheKey = `${position.x},${position.y},${position.z},${time}`
+    // 生成缓存键 - 使用更高效的字符串生成方式
+    const cacheKey = `${position.x.toFixed(3)},${position.y.toFixed(3)},${position.z.toFixed(3)},${time.toFixed(2)}`
 
     // 检查缓存
     if (this.parameters.useOptimizedCalculations && cache.has(cacheKey)) {
@@ -106,24 +106,31 @@ export class SpacetimeStateCalculator {
       }
     }
 
-    // 计算时空曲率
-    const distance = position.length()
-    const curvature = this.parameters.spacetimeCurvature / (1 + distance * distance)
+    // 计算时空曲率 - 优化计算，避免重复计算length()
+    const x = position.x,
+      y = position.y,
+      z = position.z
+    const distanceSquared = x * x + y * y + z * z
+    const curvature = this.parameters.spacetimeCurvature / (1 + distanceSquared)
 
     // 计算能量密度
     const energyDensity = curvature * curvature * this.parameters.spacetimeSpeed
 
     // 计算动量 - 使用对象池
     const momentum = getVector3()
-    momentum.set(position.x * curvature, position.y * curvature, position.z * curvature)
+    momentum.set(x * curvature, y * curvature, z * curvature)
 
     // 缓存结果
     if (this.parameters.useOptimizedCalculations) {
       cache.set(cacheKey, curvature)
 
-      // 限制缓存大小
-      if (cache.size > 1000) {
-        cache.clear()
+      // 限制缓存大小 - 使用LRU策略，而不是清空整个缓存
+      if (cache.size > 2000) {
+        // 删除最早的100个条目
+        const keys = Array.from(cache.keys())
+        for (let i = 0; i < 100; i++) {
+          cache.delete(keys[i])
+        }
       }
     }
 
@@ -145,17 +152,28 @@ export class GravitationalFieldCalculator {
     // 使用对象池
     const result = getVector3()
 
-    const distance = position.length()
-    if (distance < this.parameters.precision) {
+    // 优化计算：直接计算距离平方，避免开方
+    const x = position.x,
+      y = position.y,
+      z = position.z
+    const distanceSquared = x * x + y * y + z * z
+
+    if (distanceSquared < this.parameters.precision * this.parameters.precision) {
       return result
     }
 
-    // 优化计算：使用平方距离，避免开方
-    const distanceSquared = distance * distance
+    // 计算力的大小
     const forceMagnitude = (this.parameters.gravitationalConstant * mass) / distanceSquared
 
-    // 优化方向计算
-    result.copy(position).normalize().multiplyScalar(-forceMagnitude)
+    // 计算归一化因子
+    const invDistance = 1 / Math.sqrt(distanceSquared)
+
+    // 优化方向计算：直接使用分量计算，避免normalize()调用
+    result.set(
+      -x * invDistance * forceMagnitude,
+      -y * invDistance * forceMagnitude,
+      -z * invDistance * forceMagnitude
+    )
 
     return result
   }
@@ -166,8 +184,13 @@ export class ElectromagneticFieldCalculator {
   constructor(private parameters: PhysicsParameters) {}
 
   calculateField(position: Vector3, charge: number, velocity: Vector3): ElectromagneticField {
-    const distance = position.length()
-    if (distance < this.parameters.precision) {
+    // 优化计算：直接计算距离平方，避免开方
+    const x = position.x,
+      y = position.y,
+      z = position.z
+    const distanceSquared = x * x + y * y + z * z
+
+    if (distanceSquared < this.parameters.precision * this.parameters.precision) {
       // 使用对象池
       const electric = getVector3()
       const magnetic = getVector3()
@@ -178,41 +201,52 @@ export class ElectromagneticFieldCalculator {
       }
     }
 
-    // 优化计算：使用平方距离，避免开方
-    const distanceSquared = distance * distance
+    // 计算归一化因子
+    const invDistance = 1 / Math.sqrt(distanceSquared)
+    const invDistanceCubed = invDistance * invDistance * invDistance
 
     // 计算电场（库仑定律）
+    const electric = getVector3()
     const electricMagnitude =
-      charge / (4 * Math.PI * this.parameters.electricConstant * distanceSquared)
-    const electricDirection = getVector3()
-    electricDirection
-      .copy(position)
-      .normalize()
-      .multiplyScalar(charge > 0 ? 1 : -1)
-    electricDirection.multiplyScalar(electricMagnitude)
+      (charge * invDistanceCubed) / (4 * Math.PI * this.parameters.electricConstant)
+    const chargeSign = charge > 0 ? 1 : -1
+
+    // 直接计算电场分量
+    electric.set(
+      x * chargeSign * electricMagnitude,
+      y * chargeSign * electricMagnitude,
+      z * chargeSign * electricMagnitude
+    )
 
     // 计算磁场（毕奥-萨伐尔定律）
     const magnetic = getVector3()
-    const velocityLengthSq = velocity.length() * velocity.length()
-    if (velocityLengthSq > 0) {
-      const magneticMagnitude =
-        (this.parameters.magneticConstant * charge * velocity.length()) /
-        (4 * Math.PI * distanceSquared)
-      const magneticDirection = getVector3()
+    const velocityLengthSq =
+      velocity.x * velocity.x + velocity.y * velocity.y + velocity.z * velocity.z
 
-      // 使用cross()方法而不是crossVectors()，兼容不同的Vector3实现
-      magneticDirection
-        .copy(velocity)
-        .cross(position)
-        .normalize()
-        .multiplyScalar(charge > 0 ? 1 : -1)
-      magneticDirection.multiplyScalar(magneticMagnitude)
-      magnetic.copy(magneticDirection)
-      releaseVector3(magneticDirection)
+    if (velocityLengthSq > 0) {
+      const velocityLength = Math.sqrt(velocityLengthSq)
+      const magneticMagnitude =
+        (this.parameters.magneticConstant * charge * velocityLength * invDistanceCubed) /
+        (4 * Math.PI)
+
+      // 计算叉积：v × r
+      const vx = velocity.x,
+        vy = velocity.y,
+        vz = velocity.z
+      const crossX = vy * z - vz * y
+      const crossY = vz * x - vx * z
+      const crossZ = vx * y - vy * x
+
+      // 直接设置磁场分量
+      magnetic.set(
+        crossX * chargeSign * magneticMagnitude,
+        crossY * chargeSign * magneticMagnitude,
+        crossZ * chargeSign * magneticMagnitude
+      )
     }
 
     return {
-      electric: electricDirection,
+      electric,
       magnetic
     }
   }
@@ -220,15 +254,52 @@ export class ElectromagneticFieldCalculator {
 
 // 统一场计算器
 export class UnifiedFieldCalculator {
+  // 修复：正确的静态变量声明
+  private static zeroVelocity: Vector3 = new Vector3(0, 0, 0)
+
+  // 优化：添加统一场缓存，避免重复计算
+  private unifiedFieldCache: Map<string, UnifiedField> = new Map()
+
+  // 缓存清理计时器
+  private cacheCleanupTimer: NodeJS.Timeout | null = null
+
   constructor(
     private parameters: PhysicsParameters,
     private spacetimeCalculator: SpacetimeStateCalculator,
     private gravitationalCalculator: GravitationalFieldCalculator,
     private electromagneticCalculator: ElectromagneticFieldCalculator,
     private curvatureCache: Map<string, number>
-  ) {}
+  ) {
+    // 启动定期缓存清理
+    this.startCacheCleanup()
+  }
+
+  // 优化：定期清理过期缓存
+  private startCacheCleanup(): void {
+    this.cacheCleanupTimer = setInterval(() => {
+      if (this.unifiedFieldCache.size > 5000) {
+        // 保留最近的2000个缓存项
+        const keys = Array.from(this.unifiedFieldCache.keys())
+        for (let i = 0; i < keys.length - 2000; i++) {
+          this.unifiedFieldCache.delete(keys[i])
+        }
+      }
+    }, 10000) // 每10秒清理一次
+  }
+
+  // 优化：生成高效的缓存键
+  private generateCacheKey(position: Vector3, time: number, mass: number, charge: number): string {
+    // 使用更高效的字符串生成方式，避免模板字符串的性能开销
+    return `${position.x.toFixed(3)},${position.y.toFixed(3)},${position.z.toFixed(3)},${time.toFixed(2)},${mass.toFixed(4)},${charge.toFixed(4)}`
+  }
 
   calculateField(position: Vector3, time: number, mass: number, charge: number): UnifiedField {
+    // 优化：检查缓存
+    const cacheKey = this.generateCacheKey(position, time, mass, charge)
+    if (this.parameters.useOptimizedCalculations && this.unifiedFieldCache.has(cacheKey)) {
+      return this.unifiedFieldCache.get(cacheKey)!
+    }
+
     // 计算时空状态
     const spacetime = this.spacetimeCalculator.calculateSpacetimeState(
       position,
@@ -240,13 +311,11 @@ export class UnifiedFieldCalculator {
     const gravitational = this.gravitationalCalculator.calculateField(position, mass)
 
     // 计算电磁场
-    const zeroVelocity = getVector3() // 使用对象池
     const electromagnetic = this.electromagneticCalculator.calculateField(
       position,
       charge,
-      zeroVelocity
+      UnifiedFieldCalculator.zeroVelocity
     )
-    releaseVector3(zeroVelocity) // 释放对象
 
     // 计算强核力（简化模型）
     const strongForce = getVector3()
@@ -254,13 +323,43 @@ export class UnifiedFieldCalculator {
     // 计算弱核力（简化模型）
     const weakForce = getVector3()
 
-    return {
+    // 构建统一场
+    const unifiedField: UnifiedField = {
       spacetime,
       gravitational,
       electromagnetic,
       strongForce,
       weakForce
     }
+
+    // 缓存结果
+    if (this.parameters.useOptimizedCalculations) {
+      this.unifiedFieldCache.set(cacheKey, unifiedField)
+    }
+
+    return unifiedField
+  }
+
+  // 优化：批量计算多个点的物理场
+  calculateFields(
+    points: Array<{ position: Vector3; time: number; mass: number; charge: number }>
+  ): UnifiedField[] {
+    const results: UnifiedField[] = []
+
+    for (const point of points) {
+      results.push(this.calculateField(point.position, point.time, point.mass, point.charge))
+    }
+
+    return results
+  }
+
+  // 清理资源
+  dispose(): void {
+    if (this.cacheCleanupTimer) {
+      clearInterval(this.cacheCleanupTimer)
+      this.cacheCleanupTimer = null
+    }
+    this.unifiedFieldCache.clear()
   }
 }
 
@@ -426,9 +525,23 @@ export class PhysicsEngine implements IPhysicsEngine {
    * @param params 部分物理参数
    */
   setParameters(params: Partial<PhysicsParameters>): void {
+    // 优化：只在参数实际变化时更新
+    const hasChanges = Object.keys(params).some(key => {
+      return (
+        this.parameters[key as keyof PhysicsParameters] !== params[key as keyof PhysicsParameters]
+      )
+    })
+
+    if (!hasChanges) return
+
     this.parameters = { ...this.parameters, ...params }
 
-    // 更新所有计算器的参数引用
+    // 优化：清理旧计算器实例的资源
+    if (this.unifiedFieldCalculator && typeof this.unifiedFieldCalculator.dispose === 'function') {
+      this.unifiedFieldCalculator.dispose()
+    }
+
+    // 更新所有计算器的参数引用 - 优化：使用更高效的方式创建新实例
     this.spacetimeCalculator = new SpacetimeStateCalculator(this.parameters)
     this.gravitationalCalculator = new GravitationalFieldCalculator(this.parameters)
     this.electromagneticCalculator = new ElectromagneticFieldCalculator(this.parameters)
@@ -446,6 +559,9 @@ export class PhysicsEngine implements IPhysicsEngine {
    * @param mode 性能模式
    */
   setPerformanceMode(mode: 'high' | 'medium' | 'low'): void {
+    // 优化：只在模式实际变化时更新
+    if (this.parameters.performanceMode === mode) return
+    
     this.parameters.performanceMode = mode
 
     // 根据性能模式调整参数
@@ -466,7 +582,16 @@ export class PhysicsEngine implements IPhysicsEngine {
         this.parameters.useOptimizedCalculations = false
         // 清理缓存以节省内存
         this.curvatureCache.clear()
+        // 清理统一场缓存
+        if (this.unifiedFieldCalculator && typeof this.unifiedFieldCalculator.dispose === 'function') {
+          this.unifiedFieldCalculator.dispose()
+        }
         break
+    }
+
+    // 优化：清理旧计算器实例的资源
+    if (this.unifiedFieldCalculator && typeof this.unifiedFieldCalculator.dispose === 'function') {
+      this.unifiedFieldCalculator.dispose()
     }
 
     // 更新所有计算器的参数引用
@@ -518,5 +643,43 @@ export class PhysicsEngine implements IPhysicsEngine {
   }
 }
 
-// 创建单例实例
+// 导出默认实现
+export { PhysicsEngine }
+
+// 创建默认实例，保持向后兼容
 export const physicsEngine = new PhysicsEngine()
+
+// 从依赖注入容器注册和解析
+export const registerPhysicsEngine = (container: any) => {
+  container.register(container.DEPENDENCY_KEYS.CurvatureCache, () => new Map<string, number>(), {
+    singleton: true
+  })
+
+  container.register(container.DEPENDENCY_KEYS.SpacetimeStateCalculator, SpacetimeStateCalculator, {
+    singleton: true
+  })
+
+  container.register(
+    container.DEPENDENCY_KEYS.GravitationalFieldCalculator,
+    GravitationalFieldCalculator,
+    { singleton: true }
+  )
+
+  container.register(
+    container.DEPENDENCY_KEYS.ElectromagneticFieldCalculator,
+    ElectromagneticFieldCalculator,
+    { singleton: true }
+  )
+
+  container.register(container.DEPENDENCY_KEYS.UnifiedFieldCalculator, UnifiedFieldCalculator, {
+    singleton: true,
+    dependencies: [
+      container.DEPENDENCY_KEYS.SpacetimeStateCalculator,
+      container.DEPENDENCY_KEYS.GravitationalFieldCalculator,
+      container.DEPENDENCY_KEYS.ElectromagneticFieldCalculator,
+      container.DEPENDENCY_KEYS.CurvatureCache
+    ]
+  })
+
+  container.register(container.DEPENDENCY_KEYS.PhysicsEngine, PhysicsEngine, { singleton: true })
+}

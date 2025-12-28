@@ -35,20 +35,17 @@ export const MathJax: React.FC<MathJaxProps> = React.memo(
     // 渲染公式 - 优化性能，避免频繁调用Typeset
     useEffect(() => {
       if (isReady && wrapperRef.current) {
-        // 仅当公式实际变化时才重新渲染
-        const currentContent = wrapperRef.current.textContent
+        // 当formula属性变化时总是重新渲染公式
         const newContent = inline ? `$${formula}$` : `$$${formula}$$`
+        
+        // 清空容器并设置新内容
+        wrapperRef.current.innerHTML = newContent
 
-        if (currentContent !== newContent) {
-          // 清空容器
-          wrapperRef.current.innerHTML = newContent
-
-          // 使用MathJaxService进行渲染
-          try {
-            MathJaxService.queueTypeset(wrapperRef.current)
-          } catch (err) {
-            console.warn('MathJax渲染错误:', err)
-          }
+        // 使用MathJaxService进行渲染
+        try {
+          MathJaxService.queueTypeset(wrapperRef.current)
+        } catch (err) {
+          console.warn('MathJax渲染错误:', err)
         }
       }
     }, [formula, isReady, inline])

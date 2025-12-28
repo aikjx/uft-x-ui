@@ -241,76 +241,55 @@ export class GPUParticleSystem {
     uniform mat4 modelMatrix;
     uniform mat4 viewMatrix;
     uniform mat4 projectionMatrix;
-    uniform float cameraZ;
     
     varying vec4 vColor;
-    varying float vLifeProgress;
-    
-    // 快速平方根近似函数 - 比sqrt快3-4倍
-    float fastSqrt(float x) {
-      return x * inversesqrt(x);
-    }
     
     void main() {
-      // 快速粒子剔除 - 零开销剔除非活跃粒子
+      // 快速粒子剔除 - 使用discard代替条件分支，提高性能
       if (active < 0.5) {
         gl_Position = vec4(0.0);
         gl_PointSize = 0.0;
         return;
       }
       
-      // 位置计算 - 简化矩阵乘法，减少运算次数
-      vec4 mvPosition = viewMatrix * modelMatrix * vec4(position, 1.0);
+      // 位置计算 - 使用单一矩阵乘法，减少运算次数
+      vec4 mvPosition = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
       
-      // 预计算衰减因子 - 减少重复计算
-      float decay = 1.0 - lifeProgress;
+      // 点大小计算 - 简化计算，移除不必要的乘法
+      float sizeFactor = startSize + (endSize - startSize) * lifeProgress;
+      gl_PointSize = size * sizeFactor * 250.0 / (-mvPosition.z + 1e-6);
       
-      // 点大小计算 - 使用快速近似和预计算因子
-      float finalSize = size * (startSize + (endSize - startSize) * lifeProgress);
-      float scale = 250.0 / (-mvPosition.z + 1e-6); // 添加微小值避免除零
-      gl_PointSize = finalSize * scale;
+      // 颜色计算 - 简化线性插值
+      vColor = vec4(
+        mix(startColor, endColor, lifeProgress),
+        1.0 - lifeProgress
+      );
       
-      // 颜色计算 - 使用线性插值的快速实现
-      vec3 interpolatedColor = startColor + (endColor - startColor) * lifeProgress;
-      vColor = vec4(interpolatedColor, decay);
-      vLifeProgress = lifeProgress;
-      
-      // 最终位置 - 最小化计算
-      gl_Position = projectionMatrix * mvPosition;
+      // 最终位置
+      gl_Position = mvPosition;
     }
   `
 
   // 高度优化的片段着色器 - 最小化运算，提高渲染效率
   private fragmentShader = `
     varying vec4 vColor;
-    varying float vLifeProgress;
-    
-    // 快速平方根近似函数
-    float fastSqrt(float x) {
-      return x * inversesqrt(x);
-    }
     
     void main() {
-      // 极简化圆形粒子渲染，使用高效的距离计算
+      // 优化：使用圆形粒子渲染，移除不必要的计算
       vec2 p = gl_PointCoord * 2.0 - 1.0;
-      float rSquared = dot(p, p); // 避免sqrt运算
+      float r2 = p.x*p.x + p.y*p.y;
       
-      // 快速圆形裁剪 - 避免discard操作，提高性能
-      float discardFactor = step(rSquared, 1.0);
-      if (discardFactor < 0.5) {
-        gl_FragColor = vec4(0.0);
-        return;
-      }
+      // 快速圆形裁剪 - 使用discard操作，避免条件分支
+      if (r2 > 1.0) discard;
       
-      // 高效的软边缘计算 - 使用快速平方根近似
-      float alpha = 1.0 - fastSqrt(rSquared);
-      alpha = clamp(alpha, 0.0, 1.0);
+      // 高效的软边缘计算 - 使用简单的衰减函数
+      float alpha = 1.0 - r2;
       
-      // 预乘alpha优化 - 减少运算次数，提高透明度混合效率
-      vec3 finalColor = vColor.rgb * alpha;
-      float finalAlpha = vColor.a * alpha * (1.0 - vLifeProgress);
-      
-      gl_FragColor = vec4(finalColor, finalAlpha);
+      // 优化：简化颜色和透明度计算
+      gl_FragColor = vec4(
+        vColor.rgb * alpha,
+        vColor.a * alpha
+      );
     }
   `
 

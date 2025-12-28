@@ -291,30 +291,56 @@ export class RenderEngine {
       scene.add(axesHelper)
     }
 
-    // 添加星空背景
-    this.addStarfield(scene)
+    // 添加增强型星空背景
+    this.addEnhancedStarfield(scene)
   }
 
   /**
-   * 添加星空背景 - 优化性能，减少星星数量，使用实例化渲染
+   * 添加增强型星空背景 - 包含动态效果和多种粒子类型
    */
-  private addStarfield(scene: THREE.Scene): void {
-    // 优化：减少星星数量，根据设备性能动态调整
+  private addEnhancedStarfield(scene: THREE.Scene): void {
+    // 优化：根据设备性能动态调整星星数量
     const starsCount = VISUALIZATION_CONFIG.performance?.starCount || 2000
+    const hasHighPerformance = this.config.dynamicPixelRatio && starsCount > 3000
 
-    let starsGeometry = new THREE.BufferGeometry()
+    // 创建多层次星空背景
+    this.createStarLayer(scene, starsCount * 0.6, 0.1, 0xffffff, 0.8, 0.001) // 主星星层
+    this.createStarLayer(scene, starsCount * 0.3, 0.05, 0x60a5fa, 0.6, 0.002) // 蓝色星星层
+    this.createStarLayer(scene, starsCount * 0.1, 0.15, 0xc084fc, 0.9, 0.0005) // 紫色亮星星层
+
+    // 添加动态星云背景
+    this.addNebulaBackground(scene)
+
+    // 添加粒子流背景效果
+    if (hasHighPerformance) {
+      this.addParticleStreamBackground(scene)
+    }
+  }
+
+  /**
+   * 创建单个星星层
+   */
+  private createStarLayer(
+    scene: THREE.Scene,
+    count: number,
+    size: number,
+    color: number,
+    opacity: number,
+    rotationSpeed: number
+  ): void {
+    const starsGeometry = new THREE.BufferGeometry()
     const starsMaterial = new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 0.1,
+      color: color,
+      size: size,
       transparent: true,
-      opacity: 0.8,
-      blending: THREE.AdditiveBlending, // 优化：使用加法混合，提高视觉效果同时降低性能消耗
-      depthWrite: false, // 优化：禁用深度写入，提高性能
-      sizeAttenuation: true // 优化：启用大小衰减，提高视觉效果
+      opacity: opacity,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      sizeAttenuation: true
     })
 
     const starsVertices = []
-    for (let i = 0; i < starsCount; i++) {
+    for (let i = 0; i < count; i++) {
       const x = (Math.random() - 0.5) * 2000
       const y = (Math.random() - 0.5) * 2000
       const z = (Math.random() - 0.5) * 2000
@@ -323,15 +349,138 @@ export class RenderEngine {
 
     starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3))
 
-    // 优化：使用BufferGeometryUtils优化几何体
-    try {
-      starsGeometry = BufferGeometryUtils.mergeVertices(starsGeometry, 0.1)
-    } catch (error) {
-      console.warn('BufferGeometryUtils.mergeVertices failed:', error)
-    }
-
     const stars = new THREE.Points(starsGeometry, starsMaterial)
     scene.add(stars)
+
+    // 为星星层添加动画
+    this.sceneManager.addUpdateFunction((deltaTime) => {
+      stars.rotation.y += deltaTime * rotationSpeed
+      stars.rotation.x += deltaTime * rotationSpeed * 0.5
+    })
+  }
+
+  /**
+   * 添加星云背景效果
+   */
+  private addNebulaBackground(scene: THREE.Scene): void {
+    // 创建背景平面
+    const geometry = new THREE.PlaneGeometry(2000, 2000, 100, 100)
+    
+    // 创建动态材质
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        time: { value: 0.0 },
+        color1: { value: new THREE.Color(0x1a1a2e) },
+        color2: { value: new THREE.Color(0x16213e) },
+        color3: { value: new THREE.Color(0x0f3460) }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float time;
+        uniform vec3 color1;
+        uniform vec3 color2;
+        uniform vec3 color3;
+        varying vec2 vUv;
+        
+        float noise(vec2 p) {
+          return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+        }
+        
+        void main() {
+          vec2 uv = vUv;
+          float n = noise(uv * 10.0 + time * 0.1);
+          vec3 color = mix(color1, color2, uv.y);
+          color = mix(color, color3, n * 0.5);
+          gl_FragColor = vec4(color, 0.3);
+        }
+      `,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    })
+
+    const nebula = new THREE.Mesh(geometry, material)
+    nebula.position.z = -500
+    nebula.rotation.x = Math.PI * 0.5
+    scene.add(nebula)
+
+    // 添加动画
+    this.sceneManager.addUpdateFunction((deltaTime) => {
+      (material.uniforms.time as THREE.IUniform<number>).value += deltaTime
+      nebula.rotation.y += deltaTime * 0.01
+    })
+  }
+
+  /**
+   * 添加粒子流背景效果
+   */
+  private addParticleStreamBackground(scene: THREE.Scene): void {
+    const particleCount = 500
+    
+    const particleGeometry = new THREE.BufferGeometry()
+    const positions = new Float32Array(particleCount * 3)
+    const velocities = new Float32Array(particleCount * 3)
+    
+    // 初始化粒子位置和速度
+    for (let i = 0; i < particleCount; i++) {
+      const i3 = i * 3
+      
+      // 随机位置
+      positions[i3] = (Math.random() - 0.5) * 2000
+      positions[i3 + 1] = (Math.random() - 0.5) * 2000
+      positions[i3 + 2] = (Math.random() - 0.5) * 2000
+      
+      // 随机速度
+      velocities[i3] = (Math.random() - 0.5) * 0.5
+      velocities[i3 + 1] = (Math.random() - 0.5) * 0.5
+      velocities[i3 + 2] = (Math.random() - 0.5) * 0.5
+    }
+    
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    particleGeometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3))
+    
+    const particleMaterial = new THREE.PointsMaterial({
+      color: 0x3b82f6,
+      size: 0.3,
+      transparent: true,
+      opacity: 0.7,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      sizeAttenuation: true
+    })
+    
+    const particles = new THREE.Points(particleGeometry, particleMaterial)
+    scene.add(particles)
+    
+    // 添加粒子动画
+    this.sceneManager.addUpdateFunction((deltaTime) => {
+      const positions = particleGeometry.attributes.position.array as Float32Array
+      const velocities = particleGeometry.attributes.velocity.array as Float32Array
+      
+      for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3
+        
+        // 更新位置
+        positions[i3] += velocities[i3] * deltaTime * 50
+        positions[i3 + 1] += velocities[i3 + 1] * deltaTime * 50
+        positions[i3 + 2] += velocities[i3 + 2] * deltaTime * 50
+        
+        // 重置超出边界的粒子
+        if (Math.abs(positions[i3]) > 1000 || Math.abs(positions[i3 + 1]) > 1000 || Math.abs(positions[i3 + 2]) > 1000) {
+          positions[i3] = (Math.random() - 0.5) * 2000
+          positions[i3 + 1] = (Math.random() - 0.5) * 2000
+          positions[i3 + 2] = (Math.random() - 0.5) * 2000
+        }
+      }
+      
+      particleGeometry.attributes.position.needsUpdate = true
+    })
   }
 
   /**
@@ -422,14 +571,24 @@ export class RenderEngine {
       this.controls.update()
     }
 
-    // 更新场景
-    this.sceneManager.update(deltaTime)
+    // 优化：根据性能动态调整更新频率
+    const shouldUpdateScene = this.performanceData.frameCount % 2 === 0 || deltaTime > 0.016
+    if (shouldUpdateScene) {
+      // 更新场景
+      this.sceneManager.update(deltaTime)
+    }
 
     // 记录渲染开始时间
     const renderStartTime = performance.now()
 
-    // 使用效果合成器渲染场景
+    // 优化：动态调整渲染分辨率
+    const renderScale = this.calculateDynamicRenderScale()
+    this.renderer.setPixelRatio(renderScale)
+
+    // 使用效果合成器渲染场景 - 优化：根据性能动态启用/禁用后期处理
     if (this.composer) {
+      // 优化：根据性能动态调整后期处理通道
+      this.updatePostProcessingPerformance()
       this.composer.render()
     } else {
       // 备选方案：直接渲染
@@ -443,17 +602,70 @@ export class RenderEngine {
 
     // 更新性能数据
     this.performanceData.frameCount++
+    
+    // 优化：限制性能历史记录长度，减少内存占用
     this.performanceData.renderTimeHistory.push(renderTime)
+    if (this.performanceData.renderTimeHistory.length > 50) {
+      this.performanceData.renderTimeHistory.shift()
+    }
+    
     this.performanceData.frameTimeHistory.push(frameTime)
+    if (this.performanceData.frameTimeHistory.length > 50) {
+      this.performanceData.frameTimeHistory.shift()
+    }
 
-    // 定期收集和发送性能指标（每500ms）
-    if (now - this.performanceData.lastMetricsUpdate > 500) {
+    // 定期收集和发送性能指标（每1000ms，减少频率）
+    if (now - this.performanceData.lastMetricsUpdate > 1000) {
       this.collectPerformanceMetrics()
       this.performanceData.lastMetricsUpdate = now
     }
 
     // 继续动画循环
     this.animationId = requestAnimationFrame(this.animate)
+  }
+
+  /**
+   * 计算动态渲染缩放因子
+   */
+  private calculateDynamicRenderScale(): number {
+    const fps = this.getPerformanceData().fps
+    const basePixelRatio = window.devicePixelRatio
+    
+    if (fps < 20) {
+      return Math.min(basePixelRatio, 0.5)
+    } else if (fps < 30) {
+      return Math.min(basePixelRatio, 0.75)
+    } else if (fps < 45) {
+      return Math.min(basePixelRatio, 1.0)
+    } else if (fps < 55) {
+      return Math.min(basePixelRatio, 1.5)
+    } else {
+      return Math.min(basePixelRatio, 2.0)
+    }
+  }
+
+  /**
+   * 根据性能动态调整后期处理通道
+   */
+  private updatePostProcessingPerformance(): void {
+    const fps = this.getPerformanceData().fps
+    
+    // 根据FPS动态启用/禁用后期处理通道
+    if (this.bloomPass) {
+      this.bloomPass.enabled = fps > 30
+    }
+    
+    if (this.outlinePass) {
+      this.outlinePass.enabled = fps > 40
+    }
+    
+    if (this.filmPass) {
+      this.filmPass.enabled = fps > 50
+    }
+    
+    if (this.glitchPass) {
+      this.glitchPass.enabled = false // 始终禁用，性能消耗大
+    }
   }
 
   /**

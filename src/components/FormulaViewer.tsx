@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -20,13 +20,16 @@ interface FormulaViewerProps {
   isFullscreen: boolean;
 }
 
-const FormulaViewer: React.FC<FormulaViewerProps> = ({ 
+// 移除自定义比较函数，让React.memo使用默认的比较逻辑
+// 这样当formula变化时，组件会重新渲染
+
+const FormulaViewer = ({ 
   formula, 
   onToggleTheme,
   isMenuOpen,
   toggleFullscreen,
   isFullscreen
-}) => {
+}: FormulaViewerProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -37,6 +40,14 @@ const FormulaViewer: React.FC<FormulaViewerProps> = ({
   // 加载状态
   const [isLoading, setIsLoading] = useState(true);
   
+  // 性能监控状态
+  const [performanceStats, setPerformanceStats] = useState({
+    fps: 0,
+    renderTime: 0,
+    frameCount: 0,
+    lastFpsUpdate: 0
+  });
+
   // 初始化Three.js场景
   useEffect(() => {
     if (!containerRef.current) return;
@@ -48,16 +59,25 @@ const FormulaViewer: React.FC<FormulaViewerProps> = ({
     // 创建相机
     const camera = new THREE.PerspectiveCamera(
       75, 
-      window.innerWidth / window.innerHeight, 
+      containerRef.current.clientWidth / containerRef.current.clientHeight, 
       0.1, 
       1000
     );
     camera.position.z = 5;
     
-    // 创建渲染器
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    // 创建渲染器，优化性能设置
+    const renderer = new THREE.WebGLRenderer({
+      antialias: window.devicePixelRatio < 2, // 仅在低分辨率设备上启用抗锯齿
+      powerPreference: 'high-performance', // 优先使用高性能GPU
+      alpha: false // 禁用alpha通道，提高性能
+    });
+    renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 限制像素比，减少渲染负担
+    renderer.setClearColor(0x0f1117, 1);
+    
+    // 优化渲染器性能
+    renderer.autoClear = true;
+    renderer.sortObjects = false; // 禁用对象排序，提高渲染速度
     
     // 清空容器并添加渲染器
     containerRef.current.innerHTML = '';
@@ -67,6 +87,9 @@ const FormulaViewer: React.FC<FormulaViewerProps> = ({
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
+    controls.enablePan = false; // 禁用平移，减少计算负担
+    controls.minDistance = 1;
+    controls.maxDistance = 20;
     
     // 保存引用
     sceneRef.current = scene;
@@ -82,23 +105,66 @@ const FormulaViewer: React.FC<FormulaViewerProps> = ({
     directionalLight.position.set(5, 5, 5);
     scene.add(directionalLight);
     
-    // 动画循环
-    const animate = () => {
+    // 性能监控变量
+    let fps = 0;
+    let frameCount = 0;
+    let lastFpsUpdate = 0;
+    let lastRenderTime = 0;
+    
+    // 动画循环 - 添加渲染节流和性能监控
+    const animate = (timestamp: number) => {
       animationFrameRef.current = requestAnimationFrame(animate);
+      
+      // 限制渲染频率为60fps
+      if (timestamp - lastRenderTime < 16) return;
+      
+      // 记录渲染开始时间
+      const renderStartTime = performance.now();
       
       controls.update();
       renderer.render(scene, camera);
+      
+      // 记录渲染结束时间并计算渲染时间
+      const renderEndTime = performance.now();
+      const renderTime = renderEndTime - renderStartTime;
+      
+      // 更新帧率统计
+      frameCount++;
+      if (timestamp - lastFpsUpdate >= 1000) { // 每秒更新一次FPS
+        fps = frameCount;
+        frameCount = 0;
+        lastFpsUpdate = timestamp;
+        
+        // 更新性能统计
+        setPerformanceStats({
+          fps,
+          renderTime,
+          frameCount,
+          lastFpsUpdate
+        });
+        
+        // 控制台输出性能统计（仅开发环境）
+        if (import.meta.env.DEV) {
+          console.log(`🎮 性能统计: FPS = ${fps}, 渲染时间 = ${renderTime.toFixed(2)}ms`);
+        }
+      }
+      
+      lastRenderTime = timestamp;
     };
     
-    animate();
+    animate(0);
     
-    // 窗口大小调整处理
+    // 窗口大小调整处理 - 添加节流
+    let resizeTimeout: number;
     const handleResize = () => {
       if (!camera || !renderer) return;
       
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(() => {
+        camera.aspect = containerRef.current!.clientWidth / containerRef.current!.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(containerRef.current!.clientWidth, containerRef.current!.clientHeight);
+      }, 100); // 100ms节流
     };
     
     window.addEventListener('resize', handleResize);
@@ -106,6 +172,7 @@ const FormulaViewer: React.FC<FormulaViewerProps> = ({
     // 清理函数
     return () => {
       window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -124,43 +191,54 @@ const FormulaViewer: React.FC<FormulaViewerProps> = ({
     
     setIsLoading(true);
     
-     // 清空场景中的现有对象
+    // 清空场景中的现有对象，优化资源释放
     const scene = sceneRef.current;
-    while (scene.children.length > 2) { // 保留光源
-      const object = scene.children[scene.children.length - 1];
-      if (object instanceof THREE.Mesh) {
-        if (object.geometry) object.geometry.dispose();
-        if (object.material) {
-          if (Array.isArray(object.material)) {
-            object.material.forEach(material => material.dispose());
-          } else {
-            object.material.dispose();
-          }
-        }
-      } else if (object instanceof THREE.Points) {
-        if (object.geometry) object.geometry.dispose();
-        if (object.material) {
-          if (Array.isArray(object.material)) {
-            object.material.forEach(material => material.dispose());
-          } else {
-            object.material.dispose();
-          }
-        }
-      } else if (object instanceof THREE.Line) {
-        if (object.geometry) object.geometry.dispose();
-        if (object.material) {
-          if (Array.isArray(object.material)) {
-            object.material.forEach(material => material.dispose());
-          } else {
-            object.material.dispose();
-          }
-        }
+    
+    // 保留光源和网格
+    const objectsToKeep = [];
+    for (const child of scene.children) {
+      if (child instanceof THREE.AmbientLight || 
+          child instanceof THREE.DirectionalLight ||
+          child instanceof THREE.GridHelper) {
+        objectsToKeep.push(child);
       }
-      scene.remove(object);
     }
     
-    // 添加背景网格效果
-    createBackgroundGrid(scene);
+    // 移除所有其他对象
+    for (const child of scene.children) {
+      if (!objectsToKeep.includes(child)) {
+        // 释放资源
+        if (child instanceof THREE.Object3D) {
+          // 递归释放子对象资源
+          child.traverse((obj) => {
+            if (obj instanceof THREE.Mesh || obj instanceof THREE.Points || obj instanceof THREE.Line) {
+              if (obj.geometry) obj.geometry.dispose();
+              if (obj.material) {
+                if (Array.isArray(obj.material)) {
+                  obj.material.forEach(material => material.dispose());
+                } else {
+                  obj.material.dispose();
+                }
+              }
+            }
+          });
+        }
+        scene.remove(child);
+      }
+    }
+    
+    // 如果没有背景网格，添加背景网格效果
+    let hasGrid = false;
+    for (const child of scene.children) {
+      if (child instanceof THREE.GridHelper) {
+        hasGrid = true;
+        break;
+      }
+    }
+    
+    if (!hasGrid) {
+      createBackgroundGrid(scene);
+    }
     
     // 根据公式类型创建不同的可视化效果
     createFormulaVisualization(formula.id, scene);
@@ -246,23 +324,32 @@ const FormulaViewer: React.FC<FormulaViewerProps> = ({
     scene.add(arrow);
   };
   
-  // 添加粒子
+  // 添加粒子 - 优化性能
   const addParticles = (scene: THREE.Scene, count: number, color: number) => {
+    // 根据设备性能调整粒子数量
+    const isMobile = window.innerWidth < 768;
+    const adjustedCount = isMobile ? Math.floor(count * 0.3) : count;
+    
     const particleGeometry = new THREE.BufferGeometry();
-    const particleCount = count;
+    const particleCount = adjustedCount;
     const posArray = new Float32Array(particleCount * 3);
     
+    // 使用更高效的随机数生成
     for (let i = 0; i < particleCount * 3; i++) {
       posArray[i] = (Math.random() - 0.5) * 10;
     }
     
     particleGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
     
+    // 优化粒子材质
     const particleMaterial = new THREE.PointsMaterial({ 
-      size: 0.05, 
+      size: isMobile ? 0.03 : 0.05, // 移动设备上使用更小的粒子
       color: color,
       transparent: true,
-      opacity: 0.8
+      opacity: 0.6,
+      blending: THREE.AdditiveBlending, // 使用加法混合，提高视觉效果
+      depthWrite: false, // 禁用深度写入，提高性能
+      sizeAttenuation: true // 启用大小衰减，提高视觉效果
     });
     
     const particlesMesh = new THREE.Points(particleGeometry, particleMaterial);
@@ -406,17 +493,21 @@ const FormulaViewer: React.FC<FormulaViewerProps> = ({
     return expression;
   };
 
-  // 当公式表达式更新时，使用KaTeX渲染公式
+  // 当公式更新时，使用KaTeX渲染公式
   useEffect(() => {
     if (!formula) return;
     
-    // 检查KaTeX是否已加载
-    if (window.katex && window.renderMathInElement) {
-      // 延迟渲染，确保DOM已更新
-      setTimeout(() => {
-        const formulaElements = document.querySelectorAll('.formula-renderer');
-        formulaElements.forEach(el => {
-          if (el instanceof HTMLElement) {
+    // 直接更新DOM内容，确保公式内容已更新
+    const formulaElements = document.querySelectorAll('.formula-renderer');
+    formulaElements.forEach(el => {
+      if (el instanceof HTMLElement) {
+        // 直接设置innerHTML，确保内容已更新
+        el.innerHTML = `$$ ${formula.expression} $$`;
+        
+        // 检查KaTeX是否已加载
+        if (window.katex && window.renderMathInElement) {
+          // 延迟渲染，确保DOM已更新
+          const timeoutId = setTimeout(() => {
             window.renderMathInElement(el, {
               delimiters: [
                 {left: "$$", right: "$$", display: true},
@@ -424,15 +515,18 @@ const FormulaViewer: React.FC<FormulaViewerProps> = ({
               ],
               throwOnError: false
             });
-          }
-        });
-      }, 100);
-    }
+          }, 50);
+          
+          // 清理函数，避免内存泄漏
+          return () => clearTimeout(timeoutId);
+        }
+      }
+    });
   }, [formula]);
   
   if (!formula) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-900 text-gray-400">
+      <div className="flex flex-1 justify-center items-center text-gray-400 bg-gray-900">
         <p>请选择一个公式进行查看</p>
       </div>
     );
@@ -440,34 +534,34 @@ const FormulaViewer: React.FC<FormulaViewerProps> = ({
   
   return (
     <div className={cn(
-      "flex-1 flex flex-col h-screen overflow-hidden transition-all duration-300",
+      "flex overflow-hidden flex-col flex-1 h-screen transition-all duration-300",
       isMenuOpen ? "lg:ml-0" : "ml-0"
     )}>
       {/* 顶部控制栏 */}
-      <div className="p-4 bg-gray-800/80 backdrop-blur-md border-b border-indigo-900/50 flex justify-between items-center z-20 shadow-lg">
+      <div className="flex z-20 justify-between items-center p-4 border-b shadow-lg backdrop-blur-md bg-gray-800/80 border-indigo-900/50">
         <div className="flex items-center space-x-2">
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center"
+            className="flex justify-center items-center w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"
           >
-            <i className="fa fa-atom text-white"></i>
+            <i className="text-white fa fa-atom"></i>
           </motion.div>
-          <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+          <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
             公式可视化展示
           </h1>
         </div>
         <div className="flex items-center space-x-3">
           <button 
             onClick={onToggleTheme}
-            className="p-2 rounded-full bg-gray-700/50 hover:bg-gray-600/50 transition-all duration-300 transform hover:scale-110"
+            className="p-2 rounded-full transition-all duration-300 transform bg-gray-700/50 hover:bg-gray-600/50 hover:scale-110"
             aria-label="切换主题"
           >
             <i className="fa fa-moon"></i>
           </button>
           <button 
             onClick={toggleFullscreen}
-            className="p-2 rounded-full bg-indigo-600/70 hover:bg-indigo-500/80 transition-all duration-300 transform hover:scale-110"
+            className="p-2 rounded-full transition-all duration-300 transform bg-indigo-600/70 hover:bg-indigo-500/80 hover:scale-110"
             aria-label={isFullscreen ? "退出全屏" : "进入全屏"}
           >
             <i className={`fa ${isFullscreen ? 'fa-compress' : 'fa-expand'} transition-all duration-300`}></i>
@@ -476,25 +570,25 @@ const FormulaViewer: React.FC<FormulaViewerProps> = ({
       </div>
       
       {/* 主内容区域 */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <div className="flex overflow-hidden flex-col flex-1 lg:flex-row">
         {/* 3D可视化区域 */}
-        <div className="flex-1 relative bg-gray-900">
+        <div className="relative flex-1 bg-gray-900 lg:min-h-0">
           <div ref={containerRef} className="absolute inset-0"></div>
           
           {/* 加载指示器 */}
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80 backdrop-blur-md">
+            <div className="flex absolute inset-0 justify-center items-center backdrop-blur-md bg-gray-900/80">
               <div className="flex flex-col items-center">
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                  className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full"
+                  className="w-16 h-16 rounded-full border-4 border-indigo-500 border-t-transparent"
                 />
                 <motion.span 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="mt-4 text-gray-300 font-medium"
+                  className="mt-4 font-medium text-gray-300"
                 >
                   正在构建{formula.name}的3D可视化...
                 </motion.span>
@@ -505,80 +599,179 @@ const FormulaViewer: React.FC<FormulaViewerProps> = ({
         
         {/* 公式和说明区域 */}
         <motion.div 
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full lg:w-96 xl:w-[480px] bg-gray-800/90 backdrop-blur-md border-l border-indigo-900/50 overflow-y-auto p-6 transition-all duration-300 shadow-xl"
+          className="w-full lg:w-96 xl:w-[480px] bg-gradient-to-b from-gray-800/95 to-gray-900/95 backdrop-blur-md border-t lg:border-t-0 lg:border-l border-indigo-900/50 overflow-y-auto p-4 md:p-6 transition-all duration-300 shadow-xl"
         >
           <div className="space-y-6">
             {/* 公式标题和编号 */}
             <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ 
+                delay: 0.2, 
+                type: "spring", 
+                stiffness: 300, 
+                damping: 20 
+              }}
               className="flex items-center"
             >
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-indigo-500/30 to-purple-500/30 text-indigo-400 font-bold text-lg mr-4 border border-indigo-500/20">
+              <motion.div 
+                className="flex justify-center items-center mr-4 w-12 h-12 text-lg font-bold text-indigo-400 bg-gradient-to-br rounded-full border from-indigo-500/30 to-purple-500/30 border-indigo-500/20 shadow-lg shadow-indigo-500/10"
+                whileHover={{ 
+                  scale: 1.15, 
+                  boxShadow: "0 0 20px rgba(99, 102, 241, 0.6)",
+                  rotate: 5,
+                  transition: { duration: 0.3, ease: "easeOut" }
+                }}
+                whileTap={{ scale: 0.95 }}
+              >
                 {formula.id}
+              </motion.div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">{formula.name}</h2>
+                <p className="text-xs text-indigo-400/80 mt-1">公式 #{formula.id}</p>
               </div>
-              <h2 className="text-2xl font-bold text-white">{formula.name}</h2>
             </motion.div>
             
             {/* 公式显示 */}
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-              className="p-6 bg-gray-900/70 border border-indigo-500/30 rounded-xl shadow-lg overflow-hidden relative"
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ 
+                delay: 0.3, 
+                type: "spring", 
+                stiffness: 250, 
+                damping: 20 
+              }}
+              whileHover={{ 
+                scale: 1.03, 
+                boxShadow: "0 15px 40px rgba(99, 102, 241, 0.4)",
+                rotate: [0, -0.5, 0.5, -0.5, 0],
+                transition: { duration: 0.5, ease: "easeInOut" }
+              }}
+              whileTap={{ scale: 0.98 }}
+              className="overflow-hidden relative p-6 rounded-xl border shadow-lg bg-gray-900/70 border-indigo-500/30"
             >
               {/* 装饰背景 */}
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/10 to-purple-900/10 pointer-events-none"></div>
+              <div className="absolute inset-0 bg-gradient-to-br pointer-events-none from-indigo-900/10 to-purple-900/10"></div>
+              
+              {/* 动态网格背景 */}
+              <div className="absolute inset-0 opacity-10 pointer-events-none">
+                <div className="h-full w-full bg-[linear-gradient(to_right,#6366f110_1px,transparent_1px),linear-gradient(to_bottom,#6366f110_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+              </div>
               
               {/* 公式内容 */}
-              <div className="formula-renderer text-center text-blue-300 text-2xl py-4 overflow-x-auto relative z-10">
+              <div className="overflow-x-auto relative z-10 py-4 text-2xl text-center text-blue-300 formula-renderer">
                 $$ {renderFormula(formula.expression)} $$
               </div>
               
-              {/* 发光效果 */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-xl blur-xl opacity-70 pointer-events-none"></div>
+              {/* 增强的发光效果 */}
+              <motion.div 
+                className="absolute -inset-1 bg-gradient-to-r rounded-xl opacity-70 blur-xl pointer-events-none from-indigo-500/20 to-purple-500/20"
+                animate={{ 
+                  opacity: [0.3, 0.8, 0.3],
+                  scale: [0.98, 1.05, 0.98],
+                  rotate: [0, 1, -1, 0]
+                }}
+                transition={{ 
+                  duration: 4, 
+                  repeat: Infinity, 
+                  ease: "easeInOut" 
+                }}
+              ></motion.div>
             </motion.div>
             
             {/* 公式说明 */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="space-y-4"
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ 
+                delay: 0.4, 
+                type: "spring", 
+                stiffness: 250, 
+                damping: 20 
+              }}
+              className="space-y-5"
             >
-              <h3 className="text-lg font-semibold text-purple-400 flex items-center">
-                <i className="fa fa-info-circle mr-2"></i> 公式说明
-              </h3>
-              <p className="text-gray-300 leading-relaxed bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+              <motion.div
+                whileHover={{ x: 5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <h3 className="flex items-center text-lg font-semibold text-purple-400">
+                  <motion.i 
+                    className="mr-2 fa fa-info-circle"
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  ></motion.i> 公式说明
+                </h3>
+              </motion.div>
+              
+              <motion.p 
+                className="p-5 leading-relaxed text-gray-300 rounded-lg border bg-gray-800/50 border-gray-700/50 shadow-inner"
+                whileHover={{ 
+                  backgroundColor: 'rgba(30, 41, 59, 0.6)',
+                  borderColor: 'rgba(99, 102, 241, 0.4)'
+                }}
+                transition={{ duration: 0.3 }}
+              >
                 {formula.description}
-              </p>
+              </motion.p>
               
               {/* 公式应用示例 */}
-              <div className="mt-6 pt-4 border-t border-indigo-500/20">
-                <h3 className="text-lg font-semibold text-purple-400 flex items-center mb-3">
-                  <i className="fa fa-lightbulb mr-2"></i> 应用场景
-                </h3>
-                <div className="bg-gray-700/30 p-5 rounded-lg border border-indigo-500/10 shadow-inner">
+              <div className="pt-4 mt-6 border-t border-indigo-500/20">
+                <motion.div
+                  whileHover={{ x: 5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <h3 className="flex items-center mb-4 text-lg font-semibold text-purple-400">
+                    <motion.i 
+                      className="mr-2 fa fa-lightbulb"
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    ></motion.i> 应用场景
+                  </h3>
+                </motion.div>
+                
+                <motion.div 
+                  className="p-5 rounded-lg border shadow-inner bg-gray-700/30 border-indigo-500/10"
+                  whileHover={{ 
+                    boxShadow: "0 0 20px rgba(99, 102, 241, 0.2)",
+                    borderColor: 'rgba(99, 102, 241, 0.3)'
+                  }}
+                  transition={{ duration: 0.3 }}
+                >
                   <p className="text-gray-300">
                     此公式在统一场论中用于描述{formula.name.toLowerCase()}，
                     帮助我们理解宇宙的基本规律和物理现象。通过可视化，
                     我们可以更直观地把握{formula.name.toLowerCase()}的本质内涵。
                   </p>
-                </div>
+                </motion.div>
               </div>
               
               {/* 互动提示 */}
               <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                className="mt-4 flex items-center justify-center text-xs text-gray-400"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1, duration: 0.5 }}
+                className="flex justify-center items-center mt-6 text-xs text-gray-400 p-3 rounded-full bg-gray-800/50 border border-gray-700/50"
+                whileHover={{ 
+                  backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                  borderColor: 'rgba(99, 102, 241, 0.3)',
+                  color: '#a5b4fc',
+                  scale: 1.05
+                }}
+                transition={{ duration: 0.3 }}
               >
-                <i className="fa fa-hand-pointer mr-1"></i>
+                <motion.i 
+                  className="mr-2 fa fa-hand-pointer"
+                  animate={{ x: [0, 3, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                ></motion.i>
                 <span>在3D区域拖动鼠标可旋转视角</span>
               </motion.div>
             </motion.div>
@@ -587,6 +780,6 @@ const FormulaViewer: React.FC<FormulaViewerProps> = ({
       </div>
     </div>
   );
-};
+}
 
-export default FormulaViewer;
+export default React.memo(FormulaViewer);

@@ -132,12 +132,12 @@ export class FieldVisualizer {
   }
 
   /**
-   * 生成单条场线
+   * 生成单条场线 - 增强版
    */
   private generateFieldLine(startPosition: THREE.Vector3): THREE.Line | null {
     const points: THREE.Vector3[] = []
-    const maxPoints = 20
-    const stepSize = 0.1
+    const maxPoints = 30 // 增加点数，使场线更平滑
+    const stepSize = 0.08 // 减小步长，使场线更精确
 
     let currentPosition = startPosition.clone()
 
@@ -147,10 +147,15 @@ export class FieldVisualizer {
       // 计算当前位置的场强
       const fieldValue = this.calculateFieldValue(currentPosition)
 
+      // 添加动画效果，使场线随时间变化
+      const animatedFieldValue = fieldValue.clone().multiplyScalar(
+        1 + Math.sin(this.animationTime * 2 + i * 0.5) * 0.1
+      )
+
       // 更新位置
       const nextPosition = currentPosition
         .clone()
-        .add(fieldValue.clone().normalize().multiplyScalar(stepSize))
+        .add(animatedFieldValue.clone().normalize().multiplyScalar(stepSize))
 
       // 检查是否超出边界
       if (nextPosition.length() > this.config.gridSize * 2) {
@@ -164,10 +169,14 @@ export class FieldVisualizer {
 
     // 创建几何体和材质
     const geometry = new THREE.BufferGeometry().setFromPoints(points)
+    
+    // 增强材质效果
     const material = new THREE.LineBasicMaterial({
       color: this.getFieldColor(points[0]),
       transparent: true,
-      opacity: 0.6
+      opacity: 0.8,
+      linewidth: 1.5,
+      blending: THREE.AdditiveBlending // 加法混合，增强发光效果
     })
 
     return new THREE.Line(geometry, material)

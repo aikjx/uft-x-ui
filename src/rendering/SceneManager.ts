@@ -429,13 +429,89 @@ export class SceneManager {
         deltaTime = 0
       }
 
+      // 优化：根据性能动态调整更新频率
+      const shouldUpdate = this.shouldUpdateScene(deltaTime)
+      if (!shouldUpdate) return
+
       // 执行用户定义的更新函数
       if (this.scene.userData && typeof this.scene.userData.update === 'function') {
         this.scene.userData.update(deltaTime)
       }
+
+      // 优化：只更新可见对象
+      this.updateVisibleObjects(deltaTime)
     } catch (error) {
       console.error('SceneManager: Failed to update scene:', error)
     }
+  }
+
+  /**
+   * 根据性能动态决定是否更新场景
+   */
+  private shouldUpdateScene(deltaTime: number): boolean {
+    // 优化：基于时间间隔和场景复杂度动态调整更新频率
+    const complexity = this.getSceneComplexity()
+    
+    if (complexity > 1000) {
+      // 高复杂度场景，降低更新频率
+      return Math.random() < 0.7
+    } else if (complexity > 500) {
+      // 中等复杂度场景，正常更新频率
+      return Math.random() < 0.9
+    } else {
+      // 低复杂度场景，始终更新
+      return true
+    }
+  }
+
+  /**
+   * 获取场景复杂度
+   */
+  private getSceneComplexity(): number {
+    let complexity = 0
+    
+    // 简单计算场景复杂度：基于对象数量和类型
+    this.scene.traverse((object) => {
+      if (object instanceof THREE.Mesh) {
+        // 网格对象复杂度较高
+        complexity += 10
+        if (object.geometry && object.geometry.attributes.position) {
+          complexity += object.geometry.attributes.position.count / 1000
+        }
+      } else if (object instanceof THREE.Points) {
+        // 粒子系统复杂度较高
+        complexity += 5
+        if (object.geometry && object.geometry.attributes.position) {
+          complexity += object.geometry.attributes.position.count / 100
+        }
+      } else if (object instanceof THREE.Line) {
+        // 线对象复杂度中等
+        complexity += 2
+        if (object.geometry && object.geometry.attributes.position) {
+          complexity += object.geometry.attributes.position.count / 1000
+        }
+      } else {
+        // 其他对象复杂度较低
+        complexity += 1
+      }
+    })
+    
+    return complexity
+  }
+
+  /**
+   * 只更新可见对象
+   */
+  private updateVisibleObjects(deltaTime: number): void {
+    // 优化：只更新可见对象，跳过不可见对象的更新
+    this.scene.traverse((object) => {
+      if (object.visible) {
+        // 如果对象有update方法，调用它
+        if (object.userData && typeof object.userData.update === 'function') {
+          object.userData.update(deltaTime)
+        }
+      }
+    })
   }
 
   /**

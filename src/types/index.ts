@@ -1,4 +1,12 @@
 // 通用类型定义
+export interface VisualizationAnimation {
+  id: string
+  name: string
+  type: string
+  description: string
+  config: Record<string, any>
+}
+
 export interface Formula {
   id: number
   name: string
@@ -6,8 +14,9 @@ export interface Formula {
   description: string
   category: string
   parameters?: string[] // 添加parameters属性
-  visualizationType?: string // 添加可视化类型属性
   complexity?: number // 添加复杂度属性
+  animations: VisualizationAnimation[] // 多个可视化动画
+  relatedFormulas?: number[] // 相关公式ID列表
 }
 
 export interface SimulationParameters {

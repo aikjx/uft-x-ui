@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import FormulaMenu from '@/components/FormulaMenu';
 import FormulaViewer from '@/components/FormulaViewer';
 import { useTheme } from '@/hooks/useTheme';
@@ -142,31 +142,30 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // 切换公式选择
-  const handleFormulaSelect = (formula: Formula) => {
+  // 切换公式选择 - 使用useCallback确保引用稳定
+  const handleFormulaSelect = useCallback((formula: Formula) => {
     setSelectedFormula(formula);
     // 在移动设备上选择公式后自动关闭菜单
     if (window.innerWidth < 1024) {
       setIsMenuOpen(false);
     }
-  };
+  }, []);
 
-  // 切换菜单显示
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  // 切换菜单显示 - 使用useCallback确保引用稳定
+  const toggleMenu = useCallback(() => {
+    setIsMenuOpen(prev => !prev);
+  }, []);
 
-  // 切换全屏模式
-  const toggleFullscreen = () => {
-    if (!isFullscreen) {
+  // 切换全屏模式 - 使用useCallback确保引用稳定
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(err => {
         console.error('Error attempting to enable full-screen mode:', err);
       });
     } else {
       document.exitFullscreen();
     }
-    setIsFullscreen(!isFullscreen);
-  };
+  }, []);
 
   // 监听全屏状态变化
   useEffect(() => {
@@ -182,32 +181,35 @@ export default function Home() {
 
 
   return (
-    <div className={`flex h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-indigo-950 to-gray-900 text-white transition-colors duration-500 ${theme === 'dark' ? 'dark' : 'light'}`}>
+    <div className={`flex flex-col h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-indigo-950 to-gray-900 text-white transition-colors duration-500 ${theme === 'dark' ? 'dark' : 'light'}`}>
       {/* 移动设备菜单切换按钮 */}
       <button 
         onClick={toggleMenu} 
-        className="fixed top-4 left-4 z-50 lg:hidden bg-indigo-600/90 hover:bg-indigo-500/90 p-2 rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 transform hover:scale-110"
+        className="fixed top-4 left-4 z-50 p-2 rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 transform lg:hidden bg-indigo-600/90 hover:bg-indigo-500/90 hover:scale-110"
         aria-label={isMenuOpen ? "关闭菜单" : "打开菜单"}
       >
         <i className={`fa ${isMenuOpen ? 'fa-times' : 'fa-bars'} transition-transform duration-300`}></i>
       </button>
 
-      {/* 左侧公式菜单 */}
-      <FormulaMenu 
-        formulas={formulasData} 
-        selectedFormula={selectedFormula} 
-        onSelectFormula={handleFormulaSelect} 
-        isOpen={isMenuOpen}
-      />
+      {/* 主内容区域 */}
+      <div className="flex overflow-hidden flex-1">
+        {/* 左侧公式菜单 */}
+        <FormulaMenu 
+          formulas={formulasData} 
+          selectedFormula={selectedFormula} 
+          onSelectFormula={handleFormulaSelect} 
+          isOpen={isMenuOpen}
+        />
 
-      {/* 右侧公式展示区域 */}
-      <FormulaViewer 
-        formula={selectedFormula} 
-        onToggleTheme={toggleTheme}
-        isMenuOpen={isMenuOpen}
-        toggleFullscreen={toggleFullscreen}
-        isFullscreen={isFullscreen}
-      />
+        {/* 右侧公式展示区域 */}
+        <FormulaViewer 
+          formula={selectedFormula} 
+          onToggleTheme={toggleTheme}
+          isMenuOpen={isMenuOpen}
+          toggleFullscreen={toggleFullscreen}
+          isFullscreen={isFullscreen}
+        />
+      </div>
     </div>
   );
 }

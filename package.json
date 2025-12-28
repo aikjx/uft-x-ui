@@ -7,7 +7,7 @@
     "dev:client": "vite --host --port 3000",
     "dev": "pnpm dev:client",
     "build:client": "vite build --outDir dist/static",
-    "build": "rm -rf dist && pnpm build:client && cp package.json dist && touch dist/build.flag"
+    "build": "rd /s /q dist 2>nul || md dist && pnpm build:client && copy package.json dist 2>nul && type nul > dist/build.flag"
   },
   "dependencies": {
     "clsx": "^2.1.1",

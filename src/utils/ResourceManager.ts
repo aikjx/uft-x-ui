@@ -844,23 +844,46 @@ export class ResourceManager {
   }
 
   /**
-   * 触发垃圾回收
+   * 触发垃圾回收 - 优化版
    */
   public triggerGarbageCollection(): void {
-    // 释放不活跃的资源
     const now = Date.now()
-    this.resources.forEach((resourceEntry, id) => {
-      // 不释放固定的资源
-      if (resourceEntry.metadata.isPinned) return
-
-      // 不释放正在使用的资源
-      if (resourceEntry.metadata.isActive) return
-
-      // 释放超过TTL的资源
-      if (now - resourceEntry.metadata.lastUsedAt > (this.config.defaultTTL || 300000)) {
-        this.releaseResource(id)
-      }
-    })
+    const ttl = this.config.defaultTTL || 300000
+    
+    // 智能垃圾回收策略
+    // 1. 收集所有可释放的资源
+    const releaseCandidates = Array.from(this.resources.entries())
+      .filter(([_, entry]) => {
+        return !entry.metadata.isPinned && !entry.metadata.isActive && 
+               now - entry.metadata.lastUsedAt > ttl
+      })
+      .map(([id, entry]) => ({
+        id,
+        entry,
+        priority: this.calculateReleasePriority(entry.metadata),
+        size: entry.metadata.size
+      }))
+      .sort((a, b) => a.priority - b.priority) // 优先级低的先释放
+    
+    // 2. 只释放一定比例的资源，避免一次性释放过多导致性能问题
+    const maxReleaseCount = Math.min(10, releaseCandidates.length)
+    
+    for (let i = 0; i < maxReleaseCount; i++) {
+      this.releaseResource(releaseCandidates[i].id)
+    }
+    
+    // 3. 检查并释放特别大的资源，即使它们没有超过TTL
+    const largeResources = Array.from(this.resources.entries())
+      .filter(([_, entry]) => {
+        return !entry.metadata.isPinned && !entry.metadata.isActive && 
+               entry.metadata.size > this.config.maxCacheSize * 0.1 // 超过缓存大小的10%
+      })
+      .sort((a, b) => b[1].metadata.size - a[1].metadata.size)
+      .slice(0, 3) // 最多释放3个大资源
+    
+    for (const [id, _] of largeResources) {
+      this.releaseResource(id)
+    }
   }
 
   /**
@@ -891,33 +914,55 @@ export class ResourceManager {
   }
 
   /**
-   * 检查缓存大小限制
+   * 检查缓存大小限制 - 优化版
    */
   private checkCacheSizeLimit(): void {
     if (!this.config.maxCacheSize) return
 
-    while (this.totalCachedSize > this.config.maxCacheSize && this.resources.size > 0) {
-      // 找到最久未使用的资源
-      let leastUsedResource: { id: string; lastUsedAt: number } | null = null
+    // 计算需要释放的大小
+    const excessSize = this.totalCachedSize - this.config.maxCacheSize
+    if (excessSize <= 0) return
 
-      this.resources.forEach((resourceEntry, id) => {
-        if (!resourceEntry.metadata.isPinned && !resourceEntry.metadata.isActive) {
-          if (
-            !leastUsedResource ||
-            resourceEntry.metadata.lastUsedAt < leastUsedResource.lastUsedAt
-          ) {
-            leastUsedResource = { id, lastUsedAt: resourceEntry.metadata.lastUsedAt }
-          }
-        }
-      })
+    // 收集可释放的资源并按优先级排序
+    const releaseCandidates = Array.from(this.resources.entries())
+      .filter(([_, entry]) => !entry.metadata.isPinned && !entry.metadata.isActive)
+      .map(([id, entry]) => ({
+        id,
+        entry,
+        priority: this.calculateReleasePriority(entry.metadata),
+        size: entry.metadata.size
+      }))
+      .sort((a, b) => a.priority - b.priority) // 优先级低的先释放
 
-      if (leastUsedResource) {
-        this.releaseResource(leastUsedResource.id)
-      } else {
-        // 没有可释放的资源
+    // 释放资源直到达到大小限制
+    let totalReleased = 0
+    for (const candidate of releaseCandidates) {
+      this.releaseResource(candidate.id)
+      totalReleased += candidate.size
+      
+      if (totalReleased >= excessSize) {
         break
       }
     }
+  }
+
+  /**
+   * 计算资源释放优先级
+   */
+  private calculateReleasePriority(metadata: ResourceMetadata): number {
+    const now = Date.now()
+    
+    // 基础优先级：基于最后使用时间
+    const timeScore = now - metadata.lastUsedAt
+    
+    // 使用频率得分：使用次数越多，优先级越高（越晚释放）
+    const usageScore = metadata.usageCount * 1000
+    
+    // 大小得分：越大的资源越先释放
+    const sizeScore = metadata.size / 1000
+    
+    // 综合优先级：时间得分 + 大小得分 - 使用频率得分
+    return timeScore + sizeScore - usageScore
   }
 
   /**

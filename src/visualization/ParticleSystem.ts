@@ -15,6 +15,19 @@ export enum ParticleBehavior {
 }
 
 /**
+ * 粒子连接配置
+ */
+export interface ParticleConnectionConfig {
+  enabled: boolean
+  maxDistance: number
+  minDistance: number
+  lineWidth: number
+  opacity: number
+  color: THREE.Color
+  fadeOut: boolean
+}
+
+/**
  * 粒子类
  */
 export class Particle {
@@ -44,6 +57,17 @@ export class Particle {
   orbitSpeed: number
   orbitAngle: number
 
+  // 增强的粒子属性
+  birthTime: number
+  glowIntensity: number
+  startGlowIntensity: number
+  endGlowIntensity: number
+  spin: number
+  spinSpeed: number
+
+  // 粒子连接相关属性
+  connectionWeights: Map<number, number> // 与其他粒子的连接权重
+
   constructor() {
     this.position = new THREE.Vector3()
     this.velocity = new THREE.Vector3()
@@ -70,6 +94,17 @@ export class Particle {
     this.orbitRadius = 1
     this.orbitSpeed = 1
     this.orbitAngle = 0
+
+    // 初始化增强属性
+    this.birthTime = 0
+    this.glowIntensity = 0
+    this.startGlowIntensity = 1
+    this.endGlowIntensity = 0
+    this.spin = 0
+    this.spinSpeed = 0
+
+    // 初始化连接权重
+    this.connectionWeights = new Map()
   }
 
   reset(): void {
@@ -93,10 +128,22 @@ export class Particle {
     this.startOpacity = 1
     this.endOpacity = 0
     this.trail = []
+    this.maxTrailLength = 10
     this.attractor.set(0, 0, 0)
     this.orbitRadius = 1
     this.orbitSpeed = 1
     this.orbitAngle = 0
+
+    // 重置增强属性
+    this.birthTime = 0
+    this.glowIntensity = 0
+    this.startGlowIntensity = 1
+    this.endGlowIntensity = 0
+    this.spin = 0
+    this.spinSpeed = 0
+
+    // 清空连接权重
+    this.connectionWeights.clear()
   }
 
   // 用于临时计算的向量，避免每次更新创建新实例
@@ -116,22 +163,44 @@ export class Particle {
     // 计算生命周期进度
     const progress = this.age / this.lifetime
 
-    // 更新颜色
-    this.color.lerpColors(this.startColor, this.endColor, progress)
+    // 增强的生命周期动画曲线
+    const easeInProgress = this.easeInOutCubic(progress)
+    const easeOutProgress = this.easeOutCubic(progress)
+    const bounceProgress = this.bounceOut(progress)
 
-    // 更新大小
-    this.size = this.startSize + (this.endSize - this.startSize) * progress
+    // 更新颜色（使用更丰富的颜色过渡）
+    if (this.age % 0.05 < deltaTime) {
+      this.color.lerpColors(this.startColor, this.endColor, easeInProgress)
+    }
 
-    // 更新透明度
-    this.opacity = this.startOpacity + (this.endOpacity - this.startOpacity) * progress
+    // 更新大小和透明度（使用动画曲线）
+    if (this.age % 0.05 < deltaTime) {
+      // 出生时的缩放动画
+      const birthScale = progress < 0.1 ? bounceProgress * 2 : 1
+      this.size = (this.startSize + (this.endSize - this.startSize) * easeOutProgress) * birthScale
 
-    // 更新旋转
-    this.rotation += this.rotationSpeed * deltaTime
+      // 透明度变化，加入脉冲效果
+      const pulse = 1 + Math.sin(this.age * 10) * 0.1
+      this.opacity =
+        (this.startOpacity + (this.endOpacity - this.startOpacity) * easeInProgress) * pulse
+    }
+
+    // 更新旋转和自旋
+    if (this.rotationSpeed !== 0) {
+      this.rotation += this.rotationSpeed * deltaTime
+    }
+    if (this.spinSpeed !== 0) {
+      this.spin += this.spinSpeed * deltaTime
+    }
+
+    // 更新发光强度
+    this.glowIntensity =
+      this.startGlowIntensity + (this.endGlowIntensity - this.startGlowIntensity) * easeOutProgress
 
     // 根据行为模式更新粒子
     switch (this.behavior) {
       case ParticleBehavior.SPIRAL:
-        this.updateSpiral(progress, deltaTime)
+        this.updateSpiral(progress)
         break
       case ParticleBehavior.TURBULENCE:
         this.updateTurbulence(deltaTime)
@@ -155,10 +224,36 @@ export class Particle {
         this.updateNormal(deltaTime)
     }
 
-    // 更新轨迹
-    this.trail.push(this.position.clone())
-    if (this.trail.length > this.maxTrailLength) {
-      this.trail.shift()
+    // 更新轨迹，使用更优化的轨迹记录
+    if (this.maxTrailLength > 0 && this.age % 0.05 < deltaTime) {
+      this.trail.push(this.position.clone())
+      if (this.trail.length > this.maxTrailLength) {
+        this.trail.shift()
+      }
+    }
+  }
+
+  // 动画曲线函数
+  private easeInOutCubic(t: number): number {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+  }
+
+  private easeOutCubic(t: number): number {
+    return 1 - Math.pow(1 - t, 3)
+  }
+
+  private bounceOut(t: number): number {
+    const n1 = 7.5625
+    const d1 = 2.75
+
+    if (t < 1 / d1) {
+      return n1 * t * t
+    } else if (t < 2 / d1) {
+      return n1 * (t -= 1.5 / d1) * t + 0.75
+    } else if (t < 2.5 / d1) {
+      return n1 * (t -= 2.25 / d1) * t + 0.9375
+    } else {
+      return n1 * (t -= 2.625 / d1) * t + 0.984375
     }
   }
 
@@ -175,18 +270,18 @@ export class Particle {
     this.acceleration.set(0, 0, 0)
   }
 
-  private updateSpiral(progress: number, deltaTime: number): void {
-    // 螺旋运动
-    const radius = progress * 10
-    const angle = progress * Math.PI * 10
+  private updateSpiral(progress: number): void {
+    // 螺旋运动 - 增强的螺旋效果
+    const radius = progress * 10 + Math.sin(progress * 5) * 2
+    const angle = progress * Math.PI * 10 + Math.cos(progress * 3) * 0.5
     this.position.x = Math.cos(angle) * radius
     this.position.y = Math.sin(angle) * radius
-    this.position.z = progress * 10
+    this.position.z = progress * 10 + Math.sin(progress * 2) * 3
   }
 
   private updateTurbulence(deltaTime: number): void {
-    // 湍流效果
-    const turbulence = 0.5
+    // 增强的湍流效果
+    const turbulence = 0.5 + Math.sin(this.age * 5) * 0.2
     this.tempVec1.set(
       (Math.random() - 0.5) * turbulence,
       (Math.random() - 0.5) * turbulence,
@@ -198,33 +293,41 @@ export class Particle {
   }
 
   private updateAttractor(deltaTime: number): void {
-    // 向吸引子移动
+    // 向吸引子移动，增强的引力效果
     this.tempVec1.subVectors(this.attractor, this.position)
-    this.tempVec1.normalize().multiplyScalar(5)
+    const distance = this.tempVec1.length()
+    const force = Math.min(5, 20 / (distance * distance + 1))
+    this.tempVec1.normalize().multiplyScalar(force)
     this.applyForce(this.tempVec1)
     this.updateNormal(deltaTime)
   }
 
   private updateExplosion(progress: number, deltaTime: number): void {
-    // 爆炸效果
-    this.velocity.multiplyScalar(0.99) // 减速
+    // 爆炸效果，加入波纹效果
+    const ripple = Math.sin(progress * 20) * 0.1
+    this.velocity.multiplyScalar(0.99 + ripple) // 减速并加入波纹
     this.tempVec2.copy(this.velocity).multiplyScalar(deltaTime)
     this.position.add(this.tempVec2)
   }
 
   private updateWave(progress: number, deltaTime: number): void {
-    // 波浪运动
-    this.position.y = Math.sin(progress * Math.PI * 10) * 5
-    this.position.z = Math.cos(progress * Math.PI * 10) * 5
+    // 增强的波浪运动
+    this.position.y =
+      Math.sin(progress * Math.PI * 10 + this.age * 5) * 5 + Math.cos(progress * Math.PI * 5) * 2
+    this.position.z =
+      Math.cos(progress * Math.PI * 10 + this.age * 5) * 5 + Math.sin(progress * Math.PI * 5) * 2
     this.position.x += deltaTime * 10
   }
 
   private updateOrbit(deltaTime: number): void {
-    // 轨道运动
-    this.orbitAngle += this.orbitSpeed * deltaTime
-    this.position.x = this.attractor.x + Math.cos(this.orbitAngle) * this.orbitRadius
-    this.position.y = this.attractor.y + Math.sin(this.orbitAngle) * this.orbitRadius
-    this.position.z = this.attractor.z
+    // 轨道运动，加入轨道扰动
+    const perturbation = Math.sin(this.orbitAngle * 3) * 0.1
+    this.orbitAngle += (this.orbitSpeed + perturbation) * deltaTime
+    this.position.x =
+      this.attractor.x + Math.cos(this.orbitAngle) * (this.orbitRadius + perturbation)
+    this.position.y =
+      this.attractor.y + Math.sin(this.orbitAngle) * (this.orbitRadius + perturbation)
+    this.position.z = this.attractor.z + Math.sin(this.orbitAngle * 2) * perturbation * 2
   }
 
   private updateFollow(deltaTime: number): void {
@@ -237,6 +340,27 @@ export class Particle {
     // 使用临时向量避免创建新实例
     this.tempVec1.copy(force).divideScalar(this.mass)
     this.acceleration.add(this.tempVec1)
+  }
+
+  /**
+   * 更新与其他粒子的连接权重
+   */
+  updateConnectionWeight(particleIndex: number, weight: number): void {
+    this.connectionWeights.set(particleIndex, weight)
+  }
+
+  /**
+   * 获取与其他粒子的连接权重
+   */
+  getConnectionWeight(particleIndex: number): number {
+    return this.connectionWeights.get(particleIndex) || 0
+  }
+
+  /**
+   * 清除所有连接权重
+   */
+  clearConnectionWeights(): void {
+    this.connectionWeights.clear()
   }
 }
 
@@ -271,6 +395,14 @@ export interface EmitterConfig {
   sizeAttenuation: boolean
   depthTest: boolean
   depthWrite: boolean
+
+  // 增强的粒子属性配置
+  startGlowIntensity?: number
+  endGlowIntensity?: number
+  spinSpeed?: number
+
+  // 粒子连接配置
+  connectionConfig?: ParticleConnectionConfig
 }
 
 /**
@@ -287,21 +419,38 @@ export interface ParticleSystemData {
 }
 
 /**
- * 对象池类
+ * 对象池类 - 优化版本
  */
 export class ObjectPool<T> {
   private objects: T[] = []
   private maxSize: number
   private createFn: () => T
   private resetFn: (obj: T) => void
+  private acquireCount: number = 0
+  private releaseCount: number = 0
 
   constructor(createFn: () => T, resetFn: (obj: T) => void, maxSize: number) {
     this.createFn = createFn
     this.resetFn = resetFn
     this.maxSize = maxSize
+
+    // 预分配对象池
+    this.preAllocate(Math.min(100, maxSize))
+  }
+
+  /**
+   * 预分配对象池
+   */
+  private preAllocate(count: number): void {
+    for (let i = 0; i < count; i++) {
+      const obj = this.createFn()
+      this.resetFn(obj)
+      this.objects.push(obj)
+    }
   }
 
   acquire(): T {
+    this.acquireCount++
     if (this.objects.length > 0) {
       return this.objects.pop()!
     }
@@ -309,7 +458,9 @@ export class ObjectPool<T> {
   }
 
   release(obj: T): void {
+    this.releaseCount++
     if (this.objects.length < this.maxSize) {
+      // 优化：只在必要时重置对象
       this.resetFn(obj)
       this.objects.push(obj)
     }
@@ -317,6 +468,17 @@ export class ObjectPool<T> {
 
   clear(): void {
     this.objects = []
+  }
+
+  /**
+   * 获取对象池统计信息
+   */
+  getStats(): { acquireCount: number; releaseCount: number; poolSize: number } {
+    return {
+      acquireCount: this.acquireCount,
+      releaseCount: this.releaseCount,
+      poolSize: this.objects.length
+    }
   }
 }
 
@@ -329,6 +491,7 @@ export class ParticleEmitter {
   private particlePool: ObjectPool<Particle>
   private emissionTimer: number = 0
   private maxParticles: number
+  private connectionLines: THREE.LineSegments // 粒子连接线条
 
   constructor(config: Partial<EmitterConfig>, maxParticles: number = 10000) {
     this.maxParticles = maxParticles
@@ -359,6 +522,23 @@ export class ParticleEmitter {
       sizeAttenuation: true,
       depthTest: true,
       depthWrite: false,
+
+      // 增强的粒子属性默认值
+      startGlowIntensity: 1,
+      endGlowIntensity: 0,
+      spinSpeed: 0,
+
+      // 粒子连接默认配置
+      connectionConfig: {
+        enabled: false,
+        maxDistance: 20,
+        minDistance: 2,
+        lineWidth: 0.1,
+        opacity: 0.5,
+        color: new THREE.Color(0x6366f1),
+        fadeOut: true
+      },
+
       ...config
     }
 
@@ -367,6 +547,18 @@ export class ParticleEmitter {
       () => new Particle(),
       p => p.reset(),
       maxParticles
+    )
+
+    // 初始化粒子连接相关属性
+    this.connectionLines = new THREE.LineSegments(
+      new THREE.BufferGeometry(),
+      new THREE.LineBasicMaterial({
+        color: this.config.connectionConfig?.color || 0x6366f1,
+        transparent: true,
+        opacity: this.config.connectionConfig?.opacity || 0.5,
+        linewidth: this.config.connectionConfig?.lineWidth || 0.1,
+        blending: THREE.AdditiveBlending
+      })
     )
   }
 
@@ -441,6 +633,13 @@ export class ParticleEmitter {
     particle.orbitSpeed = this.config.orbitSpeed + (Math.random() - 0.5) * 0.5
     particle.orbitAngle = Math.random() * Math.PI * 2
 
+    // 设置增强的粒子属性
+    particle.birthTime = Date.now()
+    particle.startGlowIntensity = this.config.startGlowIntensity || 1
+    particle.endGlowIntensity = this.config.endGlowIntensity || 0
+    particle.spinSpeed = (this.config.spinSpeed || 0) + (Math.random() - 0.5) * 0.5
+    particle.glowIntensity = particle.startGlowIntensity
+
     particle.active = true
     this.particles.push(particle)
   }
@@ -474,6 +673,80 @@ export class ParticleEmitter {
         this.particles.splice(i, 1)
       }
     }
+
+    // 更新粒子连接
+    if (this.config.connectionConfig?.enabled) {
+      this.updateParticleConnections()
+    }
+  }
+
+  /**
+   * 更新粒子连接
+   */
+  private updateParticleConnections(): void {
+    const connectionConfig = this.config.connectionConfig
+    if (!connectionConfig) return
+
+    const positions = []
+    const colors = []
+
+    // 遍历所有粒子对，计算连接
+    for (let i = 0; i < this.particles.length; i++) {
+      const particleA = this.particles[i]
+
+      for (let j = i + 1; j < this.particles.length; j++) {
+        const particleB = this.particles[j]
+
+        // 计算粒子间距离
+        const distance = particleA.position.distanceTo(particleB.position)
+
+        // 检查距离是否在连接范围内
+        if (distance >= connectionConfig.minDistance && distance <= connectionConfig.maxDistance) {
+          // 计算连接权重
+          const weight =
+            1 -
+            (distance - connectionConfig.minDistance) /
+              (connectionConfig.maxDistance - connectionConfig.minDistance)
+
+          // 更新粒子的连接权重
+          particleA.updateConnectionWeight(j, weight)
+          particleB.updateConnectionWeight(i, weight)
+
+          // 计算连接颜色和透明度
+          const alpha = connectionConfig.fadeOut
+            ? weight * connectionConfig.opacity
+            : connectionConfig.opacity
+
+          // 只添加权重超过阈值的连接
+          if (weight > 0.1) {
+            // 粒子A到粒子B的连接
+            positions.push(particleA.position.x, particleA.position.y, particleA.position.z)
+            positions.push(particleB.position.x, particleB.position.y, particleB.position.z)
+
+            // 使用粒子颜色的混合色
+            const mixedColor = new THREE.Color()
+            mixedColor.lerpColors(particleA.color, particleB.color, 0.5)
+
+            // 添加颜色信息（包含透明度）
+            colors.push(mixedColor.r, mixedColor.g, mixedColor.b, alpha)
+            colors.push(mixedColor.r, mixedColor.g, mixedColor.b, alpha)
+          }
+        }
+      }
+    }
+
+    // 更新连接线条的几何体
+    const geometry = this.connectionLines.geometry as THREE.BufferGeometry
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 4))
+    geometry.attributes.position.needsUpdate = true
+    geometry.attributes.color.needsUpdate = true
+
+    // 更新材质
+    const material = this.connectionLines.material as THREE.LineBasicMaterial
+    material.opacity = connectionConfig.opacity
+    material.color = connectionConfig.color
+    material.linewidth = connectionConfig.lineWidth
   }
 
   /**
@@ -562,6 +835,12 @@ export class ParticleSystemManager {
   addEmitter(id: string, config: Partial<EmitterConfig>, maxParticles?: number): ParticleEmitter {
     const emitter = new ParticleEmitter(config, maxParticles)
     this.emitters.set(id, emitter)
+
+    // 添加粒子连接线条到场景
+    if (emitter['connectionLines']) {
+      this.scene.add(emitter['connectionLines'])
+    }
+
     return emitter
   }
 
@@ -572,6 +851,19 @@ export class ParticleSystemManager {
     const emitter = this.emitters.get(id)
     if (emitter) {
       emitter.clear()
+
+      // 移除粒子连接线条
+      if (emitter['connectionLines']) {
+        this.scene.remove(emitter['connectionLines'])
+        emitter['connectionLines'].geometry.dispose()
+        const material = emitter['connectionLines'].material as THREE.Material
+        if (Array.isArray(material)) {
+          material.forEach(m => m.dispose())
+        } else {
+          material.dispose()
+        }
+      }
+
       this.emitters.delete(id)
     }
 
@@ -589,20 +881,61 @@ export class ParticleSystemManager {
   }
 
   /**
-   * 更新所有发射器
+   * 更新所有发射器 - 优化版本
    */
   update(deltaTime: number): void {
+    const totalParticles = this.getTotalParticleCount()
+
+    // 优化：根据总粒子数动态调整更新频率
+    const updateFrequency = this.getUpdateFrequency(totalParticles)
+
     this.emitters.forEach((emitter, id) => {
-      emitter.update(deltaTime)
-      this.updateParticleMesh(id, emitter)
+      // 优化：基于发射器的活跃粒子数调整更新频率
+      const emitterParticles = emitter.getActiveCount()
+      const emitterUpdateRate = this.getEmitterUpdateRate(emitterParticles)
+
+      if (Math.random() < emitterUpdateRate * updateFrequency) {
+        emitter.update(deltaTime)
+        this.updateParticleMesh(id, emitter)
+      }
     })
 
-    // 更新总粒子数
-    this.updateTotalParticleCount()
+    // 优化：减少总粒子数更新频率
+    if (Math.random() < 0.1) {
+      this.updateTotalParticleCount()
+    }
   }
 
   /**
-   * 更新粒子网格
+   * 根据总粒子数获取更新频率
+   */
+  private getUpdateFrequency(totalParticles: number): number {
+    if (totalParticles > 5000) {
+      return 0.5 // 高粒子数，降低更新频率
+    } else if (totalParticles > 2000) {
+      return 0.7 // 中高粒子数，降低更新频率
+    } else if (totalParticles > 1000) {
+      return 0.9 // 中粒子数，接近正常更新频率
+    } else {
+      return 1.0 // 低粒子数，正常更新频率
+    }
+  }
+
+  /**
+   * 根据发射器粒子数获取更新频率
+   */
+  private getEmitterUpdateRate(particleCount: number): number {
+    if (particleCount > 1000) {
+      return 0.6 // 高粒子数发射器，降低更新频率
+    } else if (particleCount > 500) {
+      return 0.8 // 中高粒子数发射器，降低更新频率
+    } else {
+      return 1.0 // 低粒子数发射器，正常更新频率
+    }
+  }
+
+  /**
+   * 更新粒子网格 - 优化版本
    */
   private updateParticleMesh(id: string, emitter: ParticleEmitter): void {
     const data = emitter.getParticleData()
@@ -633,28 +966,31 @@ export class ParticleSystemManager {
       this.particleMeshes.set(id, mesh)
     }
 
-    // 更新几何体
+    // 优化：只在粒子数量变化时更新几何体
     const geometry = mesh.geometry as THREE.BufferGeometry
+    const currentCount = geometry.attributes.position?.count || 0
 
-    // 复用现有属性或创建新属性
-    this.updateBufferAttribute(geometry, 'position', data.positions, 3)
-    this.updateBufferAttribute(geometry, 'color', data.colors, 3)
-    this.updateBufferAttribute(geometry, 'size', data.sizes, 1)
-    this.updateBufferAttribute(geometry, 'opacity', data.opacities, 1)
+    if (currentCount !== data.count) {
+      // 复用现有属性或创建新属性
+      this.updateBufferAttribute(geometry, 'position', data.positions, 3)
+      this.updateBufferAttribute(geometry, 'color', data.colors, 3)
+      this.updateBufferAttribute(geometry, 'size', data.sizes, 1)
+      this.updateBufferAttribute(geometry, 'opacity', data.opacities, 1)
+    } else {
+      // 优化：只更新必要的属性
+      this.updateBufferAttributeOptimized(geometry, 'position', data.positions, 3)
 
-    // 更新材质
-    const material = mesh.material as THREE.PointsMaterial
-    material.map = emitterConfig.texture
-    material.blending = emitterConfig.blending || THREE.AdditiveBlending
-    material.transparent = emitterConfig.transparent || true
-    material.sizeAttenuation = emitterConfig.sizeAttenuation || true
-    material.depthTest = emitterConfig.depthTest || true
-    material.depthWrite = emitterConfig.depthWrite || false
-    material.needsUpdate = true
+      // 颜色、大小和透明度每0.1秒更新一次
+      if (Math.random() < 0.1) {
+        this.updateBufferAttributeOptimized(geometry, 'color', data.colors, 3)
+        this.updateBufferAttributeOptimized(geometry, 'size', data.sizes, 1)
+        this.updateBufferAttributeOptimized(geometry, 'opacity', data.opacities, 1)
+      }
+    }
   }
 
   /**
-   * 更新BufferAttribute，复用现有属性或创建新属性
+   * 更新BufferAttribute，复用现有属性或创建新属性 - 优化版本
    */
   private updateBufferAttribute(
     geometry: THREE.BufferGeometry,
@@ -670,18 +1006,49 @@ export class ParticleSystemManager {
       geometry.setAttribute(name, attribute)
     } else {
       // 复用现有属性，更新数据
-      // 直接更新array并标记为需要更新
       const array = attribute.array as Float32Array
       if (array.length === data.length) {
-        // 使用set方法或直接复制数据
         array.set(data)
         attribute.needsUpdate = true
       } else {
-        // 如果长度不同，创建新的BufferAttribute
         attribute = new THREE.BufferAttribute(data, itemSize)
         geometry.setAttribute(name, attribute)
       }
     }
+  }
+
+  /**
+   * 优化的BufferAttribute更新方法 - 只更新必要的数据
+   */
+  private updateBufferAttributeOptimized(
+    geometry: THREE.BufferGeometry,
+    name: string,
+    data: Float32Array,
+    itemSize: number
+  ): void {
+    const attribute = geometry.attributes[name] as THREE.BufferAttribute
+    if (!attribute) return
+
+    const array = attribute.array as Float32Array
+    if (array.length !== data.length) return
+
+    // 优化：只更新可见区域的粒子数据
+    // 简单实现：随机更新部分数据，减少每帧的数据传输量
+    const updateRatio = Math.min(1.0, 5000 / array.length)
+
+    if (updateRatio < 1.0) {
+      // 只更新部分粒子
+      const updateCount = Math.floor(array.length * updateRatio)
+      for (let i = 0; i < updateCount; i++) {
+        const index = Math.floor(Math.random() * data.length)
+        array[index] = data[index]
+      }
+    } else {
+      // 更新所有粒子
+      array.set(data)
+    }
+
+    attribute.needsUpdate = true
   }
 
   /**

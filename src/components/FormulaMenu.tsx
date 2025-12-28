@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -17,27 +17,68 @@ interface FormulaMenuProps {
   isOpen: boolean;
 }
 
-const FormulaMenu: React.FC<FormulaMenuProps> = ({ 
+const FormulaMenu = React.memo(({ 
   formulas, 
   selectedFormula, 
   onSelectFormula,
   isOpen
-}) => {
+}: FormulaMenuProps) => {
   // 搜索功能
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredFormulas, setFilteredFormulas] = useState<Formula[]>(formulas);
 
-  // 根据搜索词过滤公式
+  // 根据搜索词过滤公式 - 带防抖和优先级排序
   useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredFormulas(formulas);
-    } else {
-      const filtered = formulas.filter(formula => 
-        formula.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        formula.id.toString().includes(searchTerm)
-      );
-      setFilteredFormulas(filtered);
-    }
+    // 搜索防抖，延迟300ms执行搜索
+    const searchTimer = setTimeout(() => {
+      const term = searchTerm.trim().toLowerCase();
+      
+      if (term === '') {
+        setFilteredFormulas(formulas);
+        return;
+      }
+      
+      // 高级搜索逻辑，带优先级排序
+      const searchResults = formulas.map(formula => {
+        let score = 0;
+        
+        // 精确匹配公式ID，优先级最高
+        if (formula.id.toString() === term) {
+          score += 100;
+        }
+        // 部分匹配公式ID
+        else if (formula.id.toString().includes(term)) {
+          score += 50;
+        }
+        
+        // 精确匹配公式名称
+        if (formula.name.toLowerCase() === term) {
+          score += 90;
+        }
+        // 公式名称开头匹配
+        else if (formula.name.toLowerCase().startsWith(term)) {
+          score += 70;
+        }
+        // 公式名称包含匹配
+        else if (formula.name.toLowerCase().includes(term)) {
+          score += 40;
+        }
+        
+        // 公式描述匹配
+        if (formula.description.toLowerCase().includes(term)) {
+          score += 20;
+        }
+        
+        return { formula, score };
+      })
+      .filter(item => item.score > 0) // 只保留匹配结果
+      .sort((a, b) => b.score - a.score) // 按匹配度降序排序
+      .map(item => item.formula); // 提取公式对象
+      
+      setFilteredFormulas(searchResults);
+    }, 300);
+    
+    return () => clearTimeout(searchTimer);
   }, [searchTerm, formulas]);
 
   return (
@@ -86,34 +127,56 @@ const FormulaMenu: React.FC<FormulaMenuProps> = ({
           <div className="p-3 space-y-2">
             {filteredFormulas.map((formula, index) => (
               <motion.div
-                key={formula.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.05 * index }}
-                whileHover={{ x: 5, backgroundColor: 'rgba(99, 102, 241, 0.1)' }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => onSelectFormula(formula)}
-                className={cn(
-                  "menu-item flex items-center p-3 rounded-xl cursor-pointer transition-all duration-300",
-                  selectedFormula?.id === formula.id
-                    ? "bg-gradient-to-r from-indigo-600/50 to-purple-600/50 border border-indigo-500/50 shadow-lg"
-                    : "hover:bg-gray-700/50 border border-transparent"
-                )}
+              key={formula.id}
+              initial={{ opacity: 0, x: -20, y: 10 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ 
+                delay: 0.03 * index, 
+                type: "spring", 
+                stiffness: 300, 
+                damping: 20 
+              }}
+              whileHover={{ 
+                x: 8, 
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                scale: 1.02,
+                transition: { duration: 0.2 }
+              }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => onSelectFormula(formula)}
+              className={cn(
+                "menu-item flex items-center p-3 rounded-xl cursor-pointer transition-all duration-300",
+                selectedFormula?.id === formula.id
+                  ? "bg-gradient-to-r from-indigo-600/50 to-purple-600/50 border border-indigo-500/50 shadow-lg"
+                  : "hover:bg-gray-700/50 border border-transparent"
+              )}
+            >
+              <motion.div 
+                className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400 font-medium mr-3"
+                whileHover={{ 
+                  scale: 1.2, 
+                  backgroundColor: 'rgba(99, 102, 241, 0.3)',
+                  transition: { duration: 0.2 }
+                }}
               >
-                <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-indigo-500/20 text-indigo-400 font-medium mr-3">
-                  {formula.id}
-                </div>
-                <div className="flex-grow">
-                  <h3 className="font-medium text-sm truncate">{formula.name}</h3>
-                </div>
-                {selectedFormula?.id === formula.id && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-400"
-                  />
-                )}
+                {formula.id}
               </motion.div>
+              <div className="flex-grow">
+                <h3 className="font-medium text-sm truncate">{formula.name}</h3>
+              </div>
+              {selectedFormula?.id === formula.id && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 400, 
+                    damping: 10 
+                  }}
+                  className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400"
+                />
+              )}
+            </motion.div>
             ))}
           </div>
 
@@ -130,6 +193,6 @@ const FormulaMenu: React.FC<FormulaMenuProps> = ({
       )}
     </AnimatePresence>
   );
-};
+});
 
 export default FormulaMenu;

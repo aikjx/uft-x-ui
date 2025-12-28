@@ -8,7 +8,33 @@ export const FORMULAS: Formula[] = [
     name: '时空同一化方程',
     expression: '\\vec{r}(t) = \\vec{C}t = x\\vec{i} + y\\vec{j} + z\\vec{k}',
     description: '揭示时间和空间的本质联系，时间是空间本身的运动',
-    category: '时空方程'
+    category: '时空方程',
+    relatedFormulas: [2, 5, 6, 7],
+    animations: [
+      {
+        id: 'animation-1-1',
+        name: '时空流场可视化',
+        type: 'streamline',
+        description: '展示时空流场的流动效果',
+        config: {
+          fieldType: 'spacetime',
+          particleCount: 1000,
+          color: 0x00ffff,
+          velocity: 0.01
+        }
+      },
+      {
+        id: 'animation-1-2',
+        name: '三维坐标系动态',
+        type: 'coordinate',
+        description: '动态展示三维坐标系的变化',
+        config: {
+          axisColor: 0xffffff,
+          gridColor: 0x333333,
+          animationSpeed: 0.5
+        }
+      }
+    ]
   },
   {
     id: 2,
@@ -16,14 +42,64 @@ export const FORMULAS: Formula[] = [
     expression:
       '\\vec{r}(t) = r\\cos\\omega t \\cdot \\vec{i} + r\\sin\\omega t \\cdot \\vec{j} + ht \\cdot \\vec{k}',
     description: '描述物质点在三维空间中的螺旋运动轨迹',
-    category: '时空方程'
+    category: '时空方程',
+    relatedFormulas: [1, 7, 8],
+    animations: [
+      {
+        id: 'animation-2-1',
+        name: '螺旋轨迹动态',
+        type: 'trajectory',
+        description: '展示三维螺旋运动轨迹',
+        config: {
+          color: 0xff0000,
+          lineWidth: 2,
+          animationSpeed: 1
+        }
+      },
+      {
+        id: 'animation-2-2',
+        name: '螺旋场可视化',
+        type: 'field',
+        description: '可视化螺旋场的分布',
+        config: {
+          fieldType: 'helical',
+          resolution: 20,
+          arrowSize: 0.5
+        }
+      }
+    ]
   },
   {
     id: 3,
     name: '质量定义方程',
     expression: 'm = k \\cdot \\frac{dn}{d\\Omega}',
     description: '质量本质是物体周围空间运动的运动量',
-    category: '动力学方程'
+    category: '动力学方程',
+    relatedFormulas: [4, 5, 6, 7, 16],
+    animations: [
+      {
+        id: 'animation-3-1',
+        name: '质量场分布',
+        type: 'field',
+        description: '展示质量场的空间分布',
+        config: {
+          fieldType: 'mass',
+          resolution: 15,
+          color: 0x00ff00
+        }
+      },
+      {
+        id: 'animation-3-2',
+        name: '质量粒子模拟',
+        type: 'particle',
+        description: '粒子系统模拟质量效应',
+        config: {
+          particleCount: 500,
+          color: 0xffff00,
+          size: 0.02
+        }
+      }
+    ]
   },
   {
     id: 4,
@@ -31,21 +107,92 @@ export const FORMULAS: Formula[] = [
     expression:
       '\\overrightarrow{A} = -Gk\\frac{\\Delta n}{\\Delta s}\\frac{\\overrightarrow{r}}{r}',
     description: '引力场是空间的加速运动效应',
-    category: '场方程'
+    category: '场方程',
+    relatedFormulas: [3, 7, 12, 14, 18, 19],
+    animations: [
+      {
+        id: 'animation-4-1',
+        name: '引力场线',
+        type: 'field-lines',
+        description: '展示引力场的场线分布',
+        config: {
+          color: 0x0000ff,
+          lineCount: 20,
+          animationSpeed: 0.5
+        }
+      },
+      {
+        id: 'animation-4-2',
+        name: '引力矢量场',
+        type: 'vector-field',
+        description: '矢量场形式展示引力场',
+        config: {
+          resolution: 15,
+          arrowSize: 0.3
+        }
+      }
+    ]
   },
   {
     id: 5,
     name: '静止动量方程',
     expression: '\\overrightarrow{p}_{0} = m_{0}\\overrightarrow{C}_{0}',
     description: '静止物体的动量与静止质量和光速有关',
-    category: '动力学方程'
+    category: '动力学方程',
+    relatedFormulas: [1, 3, 6, 7, 16],
+    animations: [
+      {
+        id: 'animation-5-1',
+        name: '静止动量可视化',
+        type: 'vector',
+        description: '可视化静止动量矢量',
+        config: {
+          vectorColor: 0xff00ff,
+          animationSpeed: 0.5
+        }
+      },
+      {
+        id: 'animation-5-2',
+        name: '质量-动量关系',
+        type: 'relation',
+        description: '展示质量与动量的关系',
+        config: {
+          color1: 0xff0000,
+          color2: 0x0000ff,
+          animationSpeed: 0.8
+        }
+      }
+    ]
   },
   {
     id: 6,
     name: '运动动量方程',
     expression: '\\overrightarrow{P} = m(\\overrightarrow{C} - \\overrightarrow{V})',
     description: '运动物体的动量表达式，包含了相对论效应',
-    category: '动力学方程'
+    category: '动力学方程',
+    relatedFormulas: [1, 5, 7, 16, 17],
+    animations: [
+      {
+        id: 'animation-6-1',
+        name: '运动动量动态',
+        type: 'dynamic-vector',
+        description: '动态展示运动动量矢量',
+        config: {
+          color: 0x00ffff,
+          animationSpeed: 1
+        }
+      },
+      {
+        id: 'animation-6-2',
+        name: '相对论效应模拟',
+        type: 'relativistic',
+        description: '模拟相对论效应下的动量变化',
+        config: {
+          maxSpeed: 0.99,
+          color: 0xffff00
+        }
+      }
+    ]
   },
   {
     id: 7,
@@ -53,7 +200,32 @@ export const FORMULAS: Formula[] = [
     expression:
       'F = \\frac{d\\vec{P}}{dt} = \\vec{C}\\frac{dm}{dt} - \\vec{V}\\frac{dm}{dt} + m\\frac{d\\vec{C}}{dt} - m\\frac{d\\vec{V}}{dt}',
     description: '统一四种基本力的核心方程，揭示力的本质',
-    category: '统一方程'
+    category: '统一方程',
+    relatedFormulas: [1, 2, 3, 4, 5, 6, 12, 14, 15, 16, 17, 19, 20],
+    animations: [
+      {
+        id: 'animation-7-1',
+        name: '力的分解与合成',
+        type: 'force-decomposition',
+        description: '展示力的分解与合成过程',
+        config: {
+          color1: 0xff0000,
+          color2: 0x00ff00,
+          color3: 0x0000ff,
+          animationSpeed: 0.8
+        }
+      },
+      {
+        id: 'animation-7-2',
+        name: '统一场动态',
+        type: 'unified-field',
+        description: '动态展示统一场的变化',
+        config: {
+          resolution: 20,
+          animationSpeed: 0.5
+        }
+      }
+    ]
   },
   {
     id: 8,
@@ -61,14 +233,64 @@ export const FORMULAS: Formula[] = [
     expression:
       '\\frac{\\partial^2 L}{\\partial x^2} + \\frac{\\partial^2 L}{\\partial y^2} + \\frac{\\partial^2 L}{\\partial z^2} = \\frac{1}{c^2} \\frac{\\partial^2 L}{\\partial t^2}',
     description: '描述空间波动的传播规律',
-    category: '场方程'
+    category: '场方程',
+    relatedFormulas: [2, 4, 10, 11, 13],
+    animations: [
+      {
+        id: 'animation-8-1',
+        name: '空间波传播',
+        type: 'wave',
+        description: '展示空间波的传播过程',
+        config: {
+          color: 0x00ffff,
+          waveSpeed: 1,
+          amplitude: 0.5
+        }
+      },
+      {
+        id: 'animation-8-2',
+        name: '波场干涉',
+        type: 'interference',
+        description: '展示波场的干涉现象',
+        config: {
+          waveCount: 2,
+          color1: 0xff0000,
+          color2: 0x0000ff,
+          animationSpeed: 0.5
+        }
+      }
+    ]
   },
   {
     id: 9,
     name: '电荷定义方程',
     expression: 'q = k^{\\prime}k\\frac{1}{\\Omega^{2}}\\frac{d\\Omega}{dt}',
     description: '电荷本质是空间角动量的变化率',
-    category: '场方程'
+    category: '场方程',
+    relatedFormulas: [10, 11, 13, 20],
+    animations: [
+      {
+        id: 'animation-9-1',
+        name: '电荷场分布',
+        type: 'charge-field',
+        description: '展示电荷场的空间分布',
+        config: {
+          chargeType: 'positive',
+          resolution: 15,
+          color: 0xff0000
+        }
+      },
+      {
+        id: 'animation-9-2',
+        name: '角动量动态',
+        type: 'angular-momentum',
+        description: '动态展示角动量的变化',
+        config: {
+          color: 0x00ffff,
+          animationSpeed: 1
+        }
+      }
+    ]
   },
   {
     id: 10,
@@ -76,7 +298,31 @@ export const FORMULAS: Formula[] = [
     expression:
       '\\vec{E} = -\\frac{kk^{\\prime}}{4\\pi\\epsilon_0\\Omega^2}\\frac{d\\Omega}{dt}\\frac{\\vec{r}}{r^3}',
     description: '电场是空间角动量变化产生的效应',
-    category: '场方程'
+    category: '场方程',
+    relatedFormulas: [9, 11, 13, 14, 15, 20],
+    animations: [
+      {
+        id: 'animation-10-1',
+        name: '电场线分布',
+        type: 'electric-field-lines',
+        description: '展示电场线的分布',
+        config: {
+          chargeType: 'positive',
+          lineCount: 20,
+          color: 0xff0000
+        }
+      },
+      {
+        id: 'animation-10-2',
+        name: '电场矢量场',
+        type: 'electric-vector-field',
+        description: '矢量场形式展示电场',
+        config: {
+          resolution: 15,
+          arrowSize: 0.3
+        }
+      }
+    ]
   },
   {
     id: 11,
@@ -84,7 +330,31 @@ export const FORMULAS: Formula[] = [
     expression:
       '\\vec{B} = \\frac{\\mu_{0} \\gamma k k^{\\prime}}{4 \\pi \\Omega^{2}} \\frac{d \\Omega}{d t} \\frac{[(x-v t) \\vec{i}+y \\vec{j}+z \\vec{k}]}{[\\gamma^{2}(x-v t)^{2}+y^{2}+z^{2}]^{\\frac{3}{2}}}',
     description: '磁场是运动电荷产生的相对论效应',
-    category: '场方程'
+    category: '场方程',
+    relatedFormulas: [9, 10, 13, 15, 20],
+    animations: [
+      {
+        id: 'animation-11-1',
+        name: '磁场线分布',
+        type: 'magnetic-field-lines',
+        description: '展示磁场线的分布',
+        config: {
+          currentDirection: 'positive',
+          lineCount: 20,
+          color: 0x00ff00
+        }
+      },
+      {
+        id: 'animation-11-2',
+        name: '电磁场耦合',
+        type: 'electromagnetic-coupling',
+        description: '展示电磁场的耦合效应',
+        config: {
+          resolution: 15,
+          animationSpeed: 0.5
+        }
+      }
+    ]
   },
   {
     id: 12,
@@ -92,21 +362,92 @@ export const FORMULAS: Formula[] = [
     expression:
       '\\frac{\\partial^{2}\\overline{A}}{\\partial t^{2}} = \\frac{\\overline{V}}{f}(\\overline{\\nabla}\\cdot\\overline{E}) - \\frac{C^{2}}{f}(\\overline{\\nabla}\\times\\overline{B})',
     description: '引力场与电磁场的相互转化关系',
-    category: '统一方程'
+    category: '统一方程',
+    relatedFormulas: [4, 7, 10, 11, 14, 15],
+    animations: [
+      {
+        id: 'animation-12-1',
+        name: '引力-电磁场转化',
+        type: 'field-transformation',
+        description: '展示引力场到电磁场的转化过程',
+        config: {
+          color1: 0x0000ff,
+          color2: 0xff0000,
+          animationSpeed: 0.8
+        }
+      },
+      {
+        id: 'animation-12-2',
+        name: '场耦合动态',
+        type: 'field-coupling',
+        description: '动态展示场之间的耦合效应',
+        config: {
+          resolution: 20,
+          animationSpeed: 0.5
+        }
+      }
+    ]
   },
   {
     id: 13,
     name: '磁矢势方程',
     expression: '\\vec{\\nabla} \\times \\vec{A} = \\frac{\\vec{B}}{f}',
     description: '磁矢势与磁场的关系',
-    category: '场方程'
+    category: '场方程',
+    relatedFormulas: [8, 10, 11, 12, 15],
+    animations: [
+      {
+        id: 'animation-13-1',
+        name: '磁矢势分布',
+        type: 'vector-potential',
+        description: '展示磁矢势的空间分布',
+        config: {
+          resolution: 15,
+          color: 0x00ffff
+        }
+      },
+      {
+        id: 'animation-13-2',
+        name: '磁矢势与磁场关系',
+        type: 'potential-field-relation',
+        description: '展示磁矢势与磁场的关系',
+        config: {
+          color1: 0x00ffff,
+          color2: 0x00ff00,
+          animationSpeed: 0.8
+        }
+      }
+    ]
   },
   {
     id: 14,
     name: '变化的引力场产生电场',
     expression: '\\vec{E} = -f\\frac{d\\vec{A}}{dt}',
     description: '引力场变化如何产生电场',
-    category: '统一方程'
+    category: '统一方程',
+    relatedFormulas: [4, 7, 10, 12, 15],
+    animations: [
+      {
+        id: 'animation-14-1',
+        name: '引力场变化',
+        type: 'gravity-change',
+        description: '展示引力场的变化过程',
+        config: {
+          color: 0x0000ff,
+          animationSpeed: 0.5
+        }
+      },
+      {
+        id: 'animation-14-2',
+        name: '感应电场生成',
+        type: 'induced-electric-field',
+        description: '展示感应电场的生成过程',
+        config: {
+          color: 0xff0000,
+          animationSpeed: 0.8
+        }
+      }
+    ]
   },
   {
     id: 15,
@@ -114,21 +455,91 @@ export const FORMULAS: Formula[] = [
     expression:
       '\\frac{d\\overrightarrow{B}}{dt} = \\frac{-\\overrightarrow{A}\\times\\overrightarrow{E}}{c^2} - \\frac{\\overrightarrow{V}}{c^{2}}\\times\\frac{d\\overrightarrow{E}}{dt}',
     description: '磁场变化如何影响引力场和电场',
-    category: '统一方程'
+    category: '统一方程',
+    relatedFormulas: [4, 7, 10, 11, 12, 14],
+    animations: [
+      {
+        id: 'animation-15-1',
+        name: '磁场变化',
+        type: 'magnetic-change',
+        description: '展示磁场的变化过程',
+        config: {
+          color: 0x00ff00,
+          animationSpeed: 0.5
+        }
+      },
+      {
+        id: 'animation-15-2',
+        name: '多场相互作用',
+        type: 'multi-field-interaction',
+        description: '展示多种场之间的相互作用',
+        config: {
+          resolution: 20,
+          animationSpeed: 0.5
+        }
+      }
+    ]
   },
   {
     id: 16,
     name: '统一场论能量方程',
     expression: 'e = m_0 c^2 = mc^2\\sqrt{1 - \\frac{v^2}{c^2}}',
     description: '能量与质量的等价关系，扩展了爱因斯坦质能方程',
-    category: '统一方程'
+    category: '统一方程',
+    relatedFormulas: [3, 5, 6, 7, 17, 19, 20],
+    animations: [
+      {
+        id: 'animation-16-1',
+        name: '质能转化动态',
+        type: 'mass-energy-conversion',
+        description: '展示质量与能量的转化过程',
+        config: {
+          color1: 0xff0000,
+          color2: 0x0000ff,
+          animationSpeed: 0.8
+        }
+      },
+      {
+        id: 'animation-16-2',
+        name: '相对论能量曲线',
+        type: 'relativistic-energy',
+        description: '展示相对论能量随速度变化的曲线',
+        config: {
+          color: 0x00ffff,
+          animationSpeed: 0.5
+        }
+      }
+    ]
   },
   {
     id: 17,
     name: '光速飞行器动力学方程',
     expression: '\\vec{F} = (\\vec{C} - \\vec{V})\\frac{dm}{dt}',
     description: '基于统一场论的光速飞行器原理',
-    category: '应用方程'
+    category: '应用方程',
+    relatedFormulas: [6, 7, 16, 19],
+    animations: [
+      {
+        id: 'animation-17-1',
+        name: '飞行器轨迹模拟',
+        type: 'vehicle-trajectory',
+        description: '模拟光速飞行器的轨迹',
+        config: {
+          color: 0x00ffff,
+          animationSpeed: 1
+        }
+      },
+      {
+        id: 'animation-17-2',
+        name: '推力动态',
+        type: 'thrust-dynamic',
+        description: '动态展示推力的变化',
+        config: {
+          color: 0xff0000,
+          animationSpeed: 0.8
+        }
+      }
+    ]
   },
   {
     id: 18,
@@ -136,14 +547,95 @@ export const FORMULAS: Formula[] = [
     expression:
       '\\mathbf{D} = - G m \\frac{ \\mathbf{C} - 3 \\frac{\\mathbf{R}}{r} \\dot{r} }{r^3}',
     description: '核力场的数学表达式',
-    category: '场方程'
+    category: '场方程',
+    relatedFormulas: [4, 7, 19],
+    animations: [
+      {
+        id: 'animation-18-1',
+        name: '核力场分布',
+        type: 'nuclear-field',
+        description: '展示核力场的空间分布',
+        config: {
+          resolution: 15,
+          color: 0xff00ff,
+          animationSpeed: 0.5
+        }
+      },
+      {
+        id: 'animation-18-2',
+        name: '核力作用模拟',
+        type: 'nuclear-interaction',
+        description: '模拟核力的相互作用',
+        config: {
+          particleCount: 2,
+          color1: 0x00ff00,
+          color2: 0x00ffff,
+          animationSpeed: 0.8
+        }
+      }
+    ]
   },
   {
     id: 19,
     name: '引力光速统一方程',
     expression: 'Z = Gc/2',
     description: '揭示引力常数与光速的内在联系',
-    category: '统一方程'
+    category: '统一方程',
+    relatedFormulas: [4, 7, 16, 17, 18, 20],
+    animations: [
+      {
+        id: 'animation-19-1',
+        name: '引力-光速关系',
+        type: 'constant-relation',
+        description: '展示引力常数与光速的关系',
+        config: {
+          color1: 0x0000ff,
+          color2: 0x00ffff,
+          animationSpeed: 0.5
+        }
+      },
+      {
+        id: 'animation-19-2',
+        name: '统一常数可视化',
+        type: 'constant-visualization',
+        description: '可视化展示统一常数',
+        config: {
+          color: 0xffffff,
+          animationSpeed: 0.8
+        }
+      }
+    ]
+  },
+  {
+    id: 20,
+    name: '电磁耦合常数',
+    expression: 'Z = \\frac{c}{8\\pi\\epsilon_0}',
+    description: '电磁相互作用的耦合常数，揭示电磁力的强度',
+    category: '统一方程',
+    relatedFormulas: [7, 10, 11, 16, 19],
+    animations: [
+      {
+        id: 'animation-20-1',
+        name: '电磁耦合可视化',
+        type: 'electromagnetic-coupling',
+        description: '展示电磁耦合常数的物理意义',
+        config: {
+          color: 0xffff00,
+          animationSpeed: 0.5
+        }
+      },
+      {
+        id: 'animation-20-2',
+        name: '常数关系动态',
+        type: 'constant-dynamic',
+        description: '动态展示电磁耦合常数与其他物理常数的关系',
+        config: {
+          color1: 0xff0000,
+          color2: 0x0000ff,
+          animationSpeed: 0.8
+        }
+      }
+    ]
   }
 ]
 
@@ -152,7 +644,7 @@ export const FEATURES: FeatureItem[] = [
   {
     icon: '📐',
     title: '核心公式3D可视化',
-    description: '将19个核心公式转化为直观的3D交互模型，让抽象的物理概念变得清晰可见',
+    description: '将20个核心公式转化为直观的3D交互模型，让抽象的物理概念变得清晰可见',
     link: '/formulas',
     color: 'from-blue-500 to-cyan-500',
     gradientFrom: 'rgb(59, 130, 246)',

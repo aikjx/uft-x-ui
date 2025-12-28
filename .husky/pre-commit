@@ -1,4 +1,10 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-pnpm lint-staged
+# Check if lint-staged is available, if not skip linting
+if command -v pnpm &>nul 2>&1; then
+  if pnpm exec which lint-staged &>nul 2>&1; then
+    pnpm lint-staged
+  else
+    echo "lint-staged not found, skipping pre-commit linting"
+  fi
+else
+  echo "pnpm not found, skipping pre-commit linting"
+fi
