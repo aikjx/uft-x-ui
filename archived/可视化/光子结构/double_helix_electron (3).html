@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>光波反推电子双螺旋结构 - 统一场论</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        overflow: hidden;
+        background: radial-gradient(ellipse at center, #0a0520 0%, #000000 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #fff;
+      }
+      #container {
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .panel {
+        position: absolute;
+        background: rgba(5, 5, 20, 0.92);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(138, 43, 226, 0.4);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 8px 32px rgba(138, 43, 226, 0.3);
+      }
+
+      #theory {
+        top: 20px;
+        left: 20px;
+        max-width: 480px;
+      }
+
+      .title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #ff00ff;
+        margin-bottom: 15px;
+        text-shadow: 0 0 10px rgba(255, 0, 255, 0.6);
+      }
+
+      .section {
+        margin: 15px 0;
+        padding: 12px;
+        background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(75, 0, 130, 0.1));
+        border-radius: 8px;
+        border-left: 3px solid #ff00ff;
+      }
+
+      .section-title {
+        font-weight: 600;
+        color: #00ffff;
+        margin-bottom: 8px;
+        font-size: 13px;
+      }
+
+      .formula {
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        line-height: 1.8;
+        color: #ffaaff;
+      }
+
+      .highlight {
+        color: #00ff88;
+        font-weight: bold;
+        text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+      }
+
+      .em-wave {
+        color: #ff66ff;
+        font-weight: bold;
+      }
+
+      .text-small {
+        font-size: 11px;
+        line-height: 1.6;
+        color: #ccccff;
+      }
+
+      #controls {
+        top: 20px;
+        right: 20px;
+        min-width: 280px;
+      }
+
+      .control-group {
+        margin: 12px 0;
+      }
+
+      .label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 12px;
+        color: #ff00ff;
+      }
+
+      .slider {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.1);
+        outline: none;
+        -webkit-appearance: none;
+      }
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ff00ff, #00ffff);
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(255, 0, 255, 0.8);
+      }
+
+      .btn {
+        width: 100%;
+        background: linear-gradient(135deg, #8a2be2, #4b0082);
+        border: none;
+        padding: 12px;
+        border-radius: 10px;
+        color: #fff;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        margin: 8px 0;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(138, 43, 226, 0.6);
+      }
+      .btn.active {
+        background: linear-gradient(135deg, #ff1493, #ff69b4);
+      }
+
+      #legend {
+        bottom: 20px;
+        left: 20px;
+        min-width: 300px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 10px 0;
+        font-size: 12px;
+      }
+      .color-box {
+        width: 30px;
+        height: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px currentColor;
+      }
+
+      #wave-info {
+        bottom: 20px;
+        right: 20px;
+        min-width: 280px;
+      }
+
+      .wave-param {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 12px;
+      }
+      .wave-param:last-child {
+        border-bottom: none;
+      }
+      .param-name {
+        color: #00ffff;
+      }
+      .param-value {
+        color: #ff00ff;
+        font-weight: 600;
+      }
+
+      @media (max-width: 1200px) {
+        .panel {
+          font-size: 11px;
+          padding: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container"></div>
+
+    <!-- 理论面板 -->
+    <div id="theory" class="panel">
+      <div class="title">💡 光波反推电子双螺旋结构</div>
+
+      <div class="section">
+        <div class="section-title">1️⃣ 电磁波的双螺旋性质</div>
+        <div class="text-small">
+          光波 = 电场E + 磁场B<br />
+          • <span class="em-wave">E⊥B</span> (电场垂直磁场)<br />
+          • E、B同时垂直于传播方向<br />
+          • 形成<span class="highlight">右旋螺旋结构</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">2️⃣ 偏振光的启示</div>
+        <div class="text-small">
+          • 线偏振：E在单一平面振动<br />
+          • 圆偏振：E矢量旋转形成螺旋<br />
+          • <span class="highlight">椭圆偏振：两个正交螺旋叠加</span><br />
+          → 暗示光源具有双螺旋结构！
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">3️⃣ 波粒二象性推论</div>
+        <div class="formula">
+          光子 ↔ 电子跃迁<br />
+          E = hν = ℏω<br />
+          <span class="highlight">电子螺旋运动 → 发射螺旋光波</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">4️⃣ 统一场论结论</div>
+        <div class="text-small">
+          电子具有<span class="highlight">双层螺旋结构</span>：<br />
+          • 第一层螺旋：产生电场分量<br />
+          • 第二层螺旋：产生磁场分量<br />
+          • 双层耦合：<span class="highlight">4π + 4π = 8π</span><br />
+          • 发射的光波继承此结构
+        </div>
+      </div>
+    </div>
+
+    <!-- 控制面板 -->
+    <div id="controls" class="panel">
+      <div class="title">⚙️ 参数控制</div>
+
+      <div class="control-group">
+        <div class="label">
+          <span>光波频率</span>
+          <span id="freq-val">5.0 × 10¹⁴ Hz</span>
+        </div>
+        <input type="range" class="slider" id="frequency" min="1" max="10" step="0.5" value="5" />
+      </div>
+
+      <div class="control-group">
+        <div class="label">
+          <span>电子螺旋速度</span>
+          <span id="helix-speed-val">1.0x</span>
+        </div>
+        <input
+          type="range"
+          class="slider"
+          id="helix-speed"
+          min="0.2"
+          max="3"
+          step="0.2"
+          value="1"
+        />
+      </div>
+
+      <div class="control-group">
+        <div class="label">
+          <span>螺旋密度（圈数）</span>
+          <span id="density-val">16</span>
+        </div>
+        <input type="range" class="slider" id="density" min="8" max="32" step="2" value="16" />
+      </div>
+
+      <button class="btn active" onclick="toggleAnimation()">⏸ 动画</button>
+      <button class="btn active" onclick="toggleWaves()">🌊 光波</button>
+      <button class="btn active" onclick="toggleHelix()">🧬 双螺旋</button>
+      <button class="btn" onclick="resetAll()">🔄 重置</button>
+    </div>
+
+    <!-- 图例 -->
+    <div id="legend" class="panel">
+      <div class="title">📊 结构图例</div>
+      <div class="legend-item">
+        <div class="color-box" style="background: linear-gradient(90deg, #ff0000, #ff6666)"></div>
+        <span>电场螺旋（第一层，4π）</span>
+      </div>
+      <div class="legend-item">
+        <div class="color-box" style="background: linear-gradient(90deg, #0000ff, #6666ff)"></div>
+        <span>磁场螺旋（第二层，4π）</span>
+      </div>
+      <div class="legend-item">
+        <div class="color-box" style="background: linear-gradient(90deg, #ff00ff, #00ffff)"></div>
+        <span>辐射光波（E⊥B螺旋）</span>
+      </div>
+      <div class="legend-item">
+        <div class="color-box" style="background: #ffffff"></div>
+        <span>中心点电荷Q</span>
+      </div>
+    </div>
+
+    <!-- 波动参数 -->
+    <div id="wave-info" class="panel">
+      <div class="title">📈 波动参数</div>
+      <div class="wave-param">
+        <span class="param-name">波长 λ</span>
+        <span class="param-value" id="wavelength">600 nm</span>
+      </div>
+      <div class="wave-param">
+        <span class="param-name">角频率 ω</span>
+        <span class="param-value" id="omega">3.14 × 10¹⁵ rad/s</span>
+      </div>
+      <div class="wave-param">
+        <span class="param-name">光速 c</span>
+        <span class="param-value">3.0 × 10⁸ m/s</span>
+      </div>
+      <div class="wave-param">
+        <span class="param-name">总立体角</span>
+        <span class="param-value" id="solid-angle">8π sr</span>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+      let scene, camera, renderer
+      let electronGroup, waveGroup, core
+
+      const state = {
+        animating: true,
+        showWaves: true,
+        showHelix: true,
+        frequency: 5.0, // 10^14 Hz
+        helixSpeed: 1.0,
+        helixTurns: 16,
+        torusRadius: 10,
+        helixRadius: 2.5,
+        segments: 600
+      }
+
+      const c = 3e8 // 光速
+
+      function init() {
+        // 场景设置
+        scene = new THREE.Scene()
+        scene.fog = new THREE.Fog(0x000000, 30, 100)
+
+        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000)
+        camera.position.set(0, 15, 35)
+        camera.lookAt(0, 0, 0)
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        renderer.setClearColor(0x000000)
+        document.getElementById('container').appendChild(renderer.domElement)
+
+        // 光源
+        const ambient = new THREE.AmbientLight(0x202030, 1.5)
+        scene.add(ambient)
+
+        const lights = [
+          { color: 0xff0066, pos: [25, 20, 20] },
+          { color: 0x0066ff, pos: [-25, -20, -20] },
+          { color: 0xff00ff, pos: [0, 25, 0] }
+        ]
+        lights.forEach(({ color, pos }) => {
+          const light = new THREE.PointLight(color, 2, 120)
+          light.position.set(...pos)
+          scene.add(light)
+        })
+
+        createCore()
+        createElectronHelix()
+        createRadiatedWaves()
+        createStarField()
+        setupControls()
+        setupInteraction()
+
+        updateWaveParams()
+        animate()
+      }
+
+      // 中心点电荷
+      function createCore() {
+        core = new THREE.Group()
+
+        const point = new THREE.Mesh(
+          new THREE.SphereGeometry(0.25, 20, 20),
+          new THREE.MeshBasicMaterial({ color: 0xffffff })
+        )
+        core.add(point)
+
+        // 多层辉光
+        ;[0.5, 0.8, 1.2].forEach((r, i) => {
+          const glow = new THREE.Mesh(
+            new THREE.SphereGeometry(r, 16, 16),
+            new THREE.MeshBasicMaterial({
+              color: i === 2 ? 0xff00ff : 0xffffff,
+              transparent: true,
+              opacity: 0.4 - i * 0.1
+            })
+          )
+          core.add(glow)
+        })
+
+        const light = new THREE.PointLight(0xffffff, 4, 70)
+        core.add(light)
+
+        scene.add(core)
+      }
+
+      // 电子双螺旋（环形）
+      function createElectronHelix() {
+        electronGroup = new THREE.Group()
+
+        const pointsE = [] // 电场螺旋
+        const pointsB = [] // 磁场螺旋
+
+        for (let i = 0; i <= state.segments; i++) {
+          const t = i / state.segments
+          const theta = t * Math.PI * 2
+          const phiE = t * state.helixTurns * Math.PI * 2
+          const phiB = phiE + Math.PI
+
+          const R = state.torusRadius
+          const r = state.helixRadius
+
+          const centerX = R * Math.cos(theta)
+          const centerZ = R * Math.sin(theta)
+          const centerY = 0
+
+          const tangentX = -Math.sin(theta)
+          const tangentZ = Math.cos(theta)
+
+          // 电场螺旋（红色）
+          const offsetEX = r * Math.cos(phiE) * tangentZ
+          const offsetEY = r * Math.sin(phiE)
+          const offsetEZ = r * Math.cos(phiE) * -tangentX
+          pointsE.push(
+            new THREE.Vector3(centerX + offsetEX, centerY + offsetEY, centerZ + offsetEZ)
+          )
+
+          // 磁场螺旋（蓝色）
+          const offsetBX = r * Math.cos(phiB) * tangentZ
+          const offsetBY = r * Math.sin(phiB)
+          const offsetBZ = r * Math.cos(phiB) * -tangentX
+          pointsB.push(
+            new THREE.Vector3(centerX + offsetBX, centerY + offsetBY, centerZ + offsetBZ)
+          )
+        }
+
+        // 创建管道
+        createTube(pointsE, 0xff3366, 0.22, electronGroup)
+        createTube(pointsB, 0x3366ff, 0.22, electronGroup)
+
+        // 节点
+        createNodes(pointsE, 0xff3366, 70, electronGroup)
+        createNodes(pointsB, 0x3366ff, 70, electronGroup)
+
+        // 连接（耦合）
+        const step = Math.floor(pointsE.length / 50)
+        for (let i = 0; i < pointsE.length; i += step) {
+          const lineGeo = new THREE.BufferGeometry().setFromPoints([pointsE[i], pointsB[i]])
+          const line = new THREE.Line(
+            lineGeo,
+            new THREE.LineBasicMaterial({
+              color: 0xffff00,
+              transparent: true,
+              opacity: 0.4
+            })
+          )
+          electronGroup.add(line)
+        }
+
+        scene.add(electronGroup)
+      }
+
+      // 辐射光波（螺旋波）
+      function createRadiatedWaves() {
+        waveGroup = new THREE.Group()
+
+        const waveCount = 12
+        const waveRadius = 20
+
+        for (let w = 0; w < waveCount; w++) {
+          const angle = (w / waveCount) * Math.PI * 2
+          const wavePoints = []
+
+          // 螺旋光波
+          for (let i = 0; i < 100; i++) {
+            const t = i / 100
+            const r = waveRadius + t * 20
+            const spiralAngle = angle + t * Math.PI * 4
+            const amplitude = 1.5 * Math.sin(t * Math.PI * 8)
+
+            const x = r * Math.cos(angle) + amplitude * Math.cos(spiralAngle)
+            const y = amplitude * Math.sin(spiralAngle)
+            const z = r * Math.sin(angle)
+
+            wavePoints.push(new THREE.Vector3(x, y, z))
+          }
+
+          const waveGeometry = new THREE.BufferGeometry().setFromPoints(wavePoints)
+          const waveMaterial = new THREE.LineBasicMaterial({
+            color: new THREE.Color().setHSL(w / waveCount, 1, 0.6),
+            transparent: true,
+            opacity: 0.6
+          })
+          const wave = new THREE.Line(waveGeometry, waveMaterial)
+          wave.userData.phase = w
+          waveGroup.add(wave)
+        }
+
+        scene.add(waveGroup)
+      }
+
+      function createTube(points, color, radius, parent) {
+        const curve = new THREE.CatmullRomCurve3(points, true)
+        const geometry = new THREE.TubeGeometry(curve, state.segments, radius, 12, true)
+        const material = new THREE.MeshPhongMaterial({
+          color: color,
+          emissive: color,
+          emissiveIntensity: 0.5,
+          shininess: 100
+        })
+        const tube = new THREE.Mesh(geometry, material)
+        parent.add(tube)
+      }
+
+      function createNodes(points, color, count, parent) {
+        const step = Math.floor(points.length / count)
+        for (let i = 0; i < points.length; i += step) {
+          const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(0.16, 12, 12),
+            new THREE.MeshPhongMaterial({
+              color: color,
+              emissive: color,
+              emissiveIntensity: 0.8
+            })
+          )
+          sphere.position.copy(points[i])
+          parent.add(sphere)
+        }
+      }
+
+      function createStarField() {
+        const geometry = new THREE.BufferGeometry()
+        const count = 3000
+        const positions = new Float32Array(count * 3)
+
+        for (let i = 0; i < count * 3; i++) {
+          positions[i] = (Math.random() - 0.5) * 150
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+        const stars = new THREE.Points(
+          geometry,
+          new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.15,
+            transparent: true,
+            opacity: 0.6
+          })
+        )
+        scene.add(stars)
+      }
+
+      // 动画
+      function animate() {
+        requestAnimationFrame(animate)
+        const time = Date.now() * 0.001
+
+        if (state.animating) {
+          // 电子螺旋旋转
+          if (electronGroup && state.showHelix) {
+            electronGroup.rotation.y = time * 0.3 * state.helixSpeed
+            electronGroup.rotation.x = Math.sin(time * 0.2) * 0.1
+          }
+
+          // 核心脉动
+          if (core) {
+            core.rotation.x = time * 1.2
+            core.rotation.y = time * 1.5
+
+            for (let i = 1; i < core.children.length - 1; i++) {
+              const scale = 1 + Math.sin(time * 3 + i) * 0.3
+              core.children[i].scale.set(scale, scale, scale)
+            }
+          }
+
+          // 光波传播动画
+          if (waveGroup && state.showWaves) {
+            waveGroup.rotation.y = time * 0.2
+
+            waveGroup.children.forEach((wave, idx) => {
+              const phase = time * 2 + wave.userData.phase
+              wave.material.opacity = 0.4 + Math.sin(phase) * 0.2
+            })
+          }
+        }
+
+        renderer.render(scene, camera)
+      }
+
+      // 更新波动参数显示
+      function updateWaveParams() {
+        const freq = state.frequency * 1e14
+        const wavelength = ((c / freq) * 1e9).toFixed(0)
+        const omega = (2 * Math.PI * freq).toFixed(2)
+
+        document.getElementById('wavelength').textContent = wavelength + ' nm'
+        document.getElementById('omega').textContent = (omega / 1e15).toFixed(2) + ' × 10¹⁵ rad/s'
+        document.getElementById('solid-angle').textContent = '8π sr'
+      }
+
+      // 控制
+      function setupControls() {
+        document.getElementById('frequency').oninput = e => {
+          state.frequency = parseFloat(e.target.value)
+          document.getElementById('freq-val').textContent = e.target.value + ' × 10¹⁴ Hz'
+          updateWaveParams()
+        }
+
+        document.getElementById('helix-speed').oninput = e => {
+          state.helixSpeed = parseFloat(e.target.value)
+          document.getElementById('helix-speed-val').textContent = e.target.value + 'x'
+        }
+
+        document.getElementById('density').oninput = e => {
+          state.helixTurns = parseInt(e.target.value)
+          document.getElementById('density-val').textContent = e.target.value
+          rebuildHelix()
+        }
+      }
+
+      function rebuildHelix() {
+        scene.remove(electronGroup)
+        electronGroup = null
+        createElectronHelix()
+      }
+
+      function toggleAnimation() {
+        state.animating = !state.animating
+        event.target.classList.toggle('active')
+      }
+
+      function toggleWaves() {
+        state.showWaves = !state.showWaves
+        waveGroup.visible = state.showWaves
+        event.target.classList.toggle('active')
+      }
+
+      function toggleHelix() {
+        state.showHelix = !state.showHelix
+        electronGroup.visible = state.showHelix
+        event.target.classList.toggle('active')
+      }
+
+      function resetAll() {
+        camera.position.set(0, 15, 35)
+        camera.lookAt(0, 0, 0)
+        state.frequency = 5.0
+        state.helixSpeed = 1.0
+        state.helixTurns = 16
+        document.getElementById('frequency').value = 5
+        document.getElementById('helix-speed').value = 1
+        document.getElementById('density').value = 16
+        updateWaveParams()
+        rebuildHelix()
+      }
+
+      // 交互
+      function setupInteraction() {
+        const container = document.getElementById('container')
+        let isDragging = false
+        let prev = { x: 0, y: 0 }
+
+        container.onmousedown = e => {
+          isDragging = true
+          prev = { x: e.clientX, y: e.clientY }
+        }
+
+        container.onmousemove = e => {
+          if (isDragging) {
+            const dx = e.clientX - prev.x
+            const dy = e.clientY - prev.y
+
+            if (electronGroup) {
+              electronGroup.rotation.y += dx * 0.01
+              electronGroup.rotation.x += dy * 0.01
+            }
+
+            prev = { x: e.clientX, y: e.clientY }
+          }
+        }
+
+        container.onmouseup = () => (isDragging = false)
+        container.onmouseleave = () => (isDragging = false)
+
+        container.onwheel = e => {
+          e.preventDefault()
+          camera.position.z = Math.max(20, Math.min(60, camera.position.z + e.deltaY * 0.05))
+        }
+
+        window.onresize = () => {
+          camera.aspect = window.innerWidth / window.innerHeight
+          camera.updateProjectionMatrix()
+          renderer.setSize(window.innerWidth, window.innerHeight)
+        }
+      }
+
+      init()
+    </script>
+  </body>
+</html>

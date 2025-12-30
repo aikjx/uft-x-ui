@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>算法联盟：电子双螺旋结构与光波发射</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background-color: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            max-width: 400px;
+            z-index: 100;
+        }
+        #controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            background-color: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 100;
+        }
+    </style>
+    <script src=" https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js "></script>
+    <script src=" https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js "></script>
+    <script src=" https://cdn.jsdelivr.net/npm/dat.gui@0.7.7/build/dat.gui.min.js "></script>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="info">
+        <h3>🔬 可视化：电子双螺旋结构与光波</h3>
+        <p><strong>理论核心（基于文档）:</strong></p>
+        <ul>
+            <li><strong>电子结构</strong>：根据统一场论，电子具有“双层螺旋”内在几何结构（右旋与左旋层叠加）。</li>
+            <li><strong>光波本质</strong>：电磁波（光）是电子加速运动时，其周围空间螺旋运动模式被激发并以光速传播的波动。</li>
+            <li><strong>关键联系</strong>：光的横波性（E⊥B⊥传播方向）及圆偏振光的螺旋性，源于电子本源的双螺旋结构。</li>
+        </ul>
+        <p><strong>图中元素:</strong></p>
+        <ul>
+            <li><span style="color:#FF3333">● 中心红点</span>：电子（点电荷）位置。</li>
+            <li><span style="color:#FF6666">红色螺旋线</span>：电子内在结构的“右旋”层。</li>
+            <li><span style="color:#6666FF">蓝色螺旋线</span>：电子内在结构的“左旋”层。</li>
+            <li><span style="color:#FFFF00">黄色传播路径</span>：光波（电磁波）传播的中心轴线。</li>
+            <li><span style="color:#00FF00">绿色箭头(E)</span>：光波的电场矢量，垂直于传播方向。</li>
+            <li><span style="color:#00CCFF">青色箭头(B)</span>：光波的磁场矢量，垂直于E和传播方向。</li>
+        </ul>
+        <p>E与B相互垂直，并沿传播路径旋转，形成<strong>双螺旋波前</strong>。</p>
+    </div>
+    <div id="controls">
+        <p><strong>交互控制</strong></p>
+        <p>鼠标：拖拽旋转，滚轮缩放</p>
+        <button onclick="toggleAnimation()">暂停/继续动画</button>
+        <button onclick="resetView()">重置视图</button>
+    </div>
+
+    <script>
+        // ========== 初始化场景 ==========
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a1a);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(25, 15, 25);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('container').appendChild(renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; // 开启阻尼，旋转更顺滑
+        controls.dampingFactor = 0.05;
+
+        // ========== 添加坐标轴 ==========
+        const axesHelper = new THREE.AxesHelper(10);
+        scene.add(axesHelper);
+
+        // ========== 参数配置 ==========
+        const params = {
+            electronRadius: 0.5,
+            helixRadius: 2.0,
+            helixPitch: 3.0,
+            waveAmplitude: 1.5,
+            waveLength: 8.0,
+            showElectronHelix: true,
+            showWave: true,
+            animationSpeed: 1.0,
+            // 新增：螺旋线宽度、场矢量长度
+            helixLineWidth: 2,
+            fieldArrowLength: 2.0
+        };
+        let animationId = null;
+        let time = 0;
+        // 全局元素引用，方便动态更新
+        let electron = null;
+        let rightHelix = null;
+        let leftHelix = null;
+        let wavePathLine = null;
+        const eFieldArrows = [];
+        const bFieldArrows = [];
+        const helixSegments = 200;
+        const helixLength = 4 * Math.PI;
+        const waveSegments = 150;
+        const pathLength = 30;
+
+        // ========== 初始化dat.GUI ==========
+        const gui = new dat.GUI({ autoPlace: false });
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.top = '80px';
+        gui.domElement.style.right = '10px';
+        document.body.appendChild(gui.domElement);
+
+        // 创建GUI面板分组
+        const electronFolder = gui.addFolder('电子参数');
+        electronFolder.add(params, 'electronRadius', 0.1, 2.0).name('电子半径').onChange(updateElectron);
+        electronFolder.add(params, 'showElectronHelix').name('显示电子双螺旋').onChange(updateHelixVisibility);
+
+        const helixFolder = gui.addFolder('双螺旋参数');
+        helixFolder.add(params, 'helixRadius', 0.5, 5.0).name('螺旋半径').onChange(updateHelix);
+        helixFolder.add(params, 'helixPitch', 1.0, 10.0).name('螺旋螺距').onChange(updateHelix);
+        helixFolder.add(params, 'helixLineWidth', 1, 5).name('螺旋线宽度').onChange(updateHelix);
+
+        const waveFolder = gui.addFolder('光波参数');
+        waveFolder.add(params, 'showWave').name('显示光波').onChange(updateWaveVisibility);
+        waveFolder.add(params, 'waveAmplitude', 0.5, 5.0).name('波振幅');
+        waveFolder.add(params, 'waveLength', 2.0, 20.0).name('波长');
+        waveFolder.add(params, 'fieldArrowLength', 1.0, 4.0).name('场矢量长度').onChange(updateFieldArrows);
+
+        const animationFolder = gui.addFolder('动画参数');
+        animationFolder.add(params, 'animationSpeed', 0.1, 2.0).name('动画速度');
+
+        // ========== 元素创建函数（封装，支持动态更新） ==========
+        // 1. 创建/更新电子
+        function updateElectron() {
+            if (electron) {
+                scene.remove(electron);
+            }
+            const electronGeometry = new THREE.SphereGeometry(params.electronRadius, 16, 16);
+            const electronMaterial = new THREE.MeshBasicMaterial({ color: 0xFF3333 });
+            electron = new THREE.Mesh(electronGeometry, electronMaterial);
+            scene.add(electron);
+        }
+
+        // 2. 创建/更新双螺旋结构
+        function updateHelix() {
+            // 移除旧螺旋线
+            if (rightHelix) scene.remove(rightHelix);
+            if (leftHelix) scene.remove(leftHelix);
+
+            const helixPointsRight = [];
+            const helixPointsLeft = [];
+
+            for (let i = 0; i <= helixSegments; i++) {
+                const t = (i / helixSegments) * helixLength - helixLength / 2;
+                // 右旋螺旋（红色）
+                const xR = params.helixRadius * Math.cos(t);
+                const yR = params.helixRadius * Math.sin(t);
+                const zR = t * params.helixPitch / (2 * Math.PI);
+                helixPointsRight.push(new THREE.Vector3(xR, yR, zR));
+                // 左旋螺旋（蓝色）- 相位差π
+                const xL = params.helixRadius * Math.cos(t + Math.PI);
+                const yL = params.helixRadius * Math.sin(t + Math.PI);
+                const zL = t * params.helixPitch / (2 * Math.PI);
+                helixPointsLeft.push(new THREE.Vector3(xL, yL, zL));
+            }
+
+            const rightHelixGeometry = new THREE.BufferGeometry().setFromPoints(helixPointsRight);
+            const leftHelixGeometry = new THREE.BufferGeometry().setFromPoints(helixPointsLeft);
+            const helixMaterialRight = new THREE.LineBasicMaterial({ 
+                color: 0xFF6666, 
+                linewidth: params.helixLineWidth 
+            });
+            const helixMaterialLeft = new THREE.LineBasicMaterial({ 
+                color: 0x6666FF, 
+                linewidth: params.helixLineWidth 
+            });
+            rightHelix = new THREE.Line(rightHelixGeometry, helixMaterialRight);
+            leftHelix = new THREE.Line(leftHelixGeometry, helixMaterialLeft);
+            // 同步显示状态
+            rightHelix.visible = params.showElectronHelix;
+            leftHelix.visible = params.showElectronHelix;
+            scene.add(rightHelix);
+            scene.add(leftHelix);
+        }
+
+        // 3. 创建/更新光波传播路径
+        function updateWavePath() {
+            if (wavePathLine) {
+                scene.remove(wavePathLine);
+            }
+            const wavePathPoints = [];
+            const wavePath = new THREE.Curve();
+            wavePath.getPoint = function(t) {
+                const x = 0;
+                const y = 0;
+                const z = t * pathLength - pathLength / 2;
+                return new THREE.Vector3(x, y, z);
+            };
+            for (let i = 0; i <= waveSegments; i++) {
+                wavePathPoints.push(wavePath.getPoint(i / waveSegments));
+            }
+            const wavePathGeometry = new THREE.BufferGeometry().setFromPoints(wavePathPoints);
+            const wavePathMaterial = new THREE.LineBasicMaterial({ color: 0xFFFF00 });
+            wavePathLine = new THREE.Line(wavePathGeometry, wavePathMaterial);
+            wavePathLine.visible = params.showWave;
+            scene.add(wavePathLine);
+        }
+
+        // 4. 创建/更新场矢量（E/B）
+        function updateFieldArrows() {
+            // 移除旧箭头
+            eFieldArrows.forEach(arrow => scene.remove(arrow));
+            bFieldArrows.forEach(arrow => scene.remove(arrow));
+            eFieldArrows.length = 0;
+            bFieldArrows.length = 0;
+
+            const wavePath = new THREE.Curve();
+            wavePath.getPoint = function(t) {
+                const x = 0;
+                const y = 0;
+                const z = t * pathLength - pathLength / 2;
+                return new THREE.Vector3(x, y, z);
+            };
+            const arrowHeadLength = 0.5;
+            const arrowHeadWidth = 0.3;
+            const eColor = 0x00FF00;
+            const bColor = 0x00CCFF;
+
+            for (let i = 0; i <= waveSegments; i += 5) {
+                const t = i / waveSegments;
+                const point = wavePath.getPoint(t);
+                const tangent = new THREE.Vector3(0, 0, 1); // 传播方向沿Z轴
+
+                // 电场E方向
+                const eAngle = t * 4 * Math.PI;
+                const eDir = new THREE.Vector3(Math.cos(eAngle), Math.sin(eAngle), 0).normalize();
+                const eArrowHelper = new THREE.ArrowHelper(
+                    eDir, 
+                    point, 
+                    params.fieldArrowLength, 
+                    eColor, 
+                    arrowHeadLength, 
+                    arrowHeadWidth
+                );
+                eFieldArrows.push(eArrowHelper);
+                scene.add(eArrowHelper);
+
+                // 磁场B方向（右手定则：B = k × E）
+                const bDir = new THREE.Vector3().crossVectors(tangent, eDir).normalize();
+                const bArrowHelper = new THREE.ArrowHelper(
+                    bDir, 
+                    point, 
+                    params.fieldArrowLength, 
+                    bColor, 
+                    arrowHeadLength, 
+                    arrowHeadWidth
+                );
+                bFieldArrows.push(bArrowHelper);
+                scene.add(bArrowHelper);
+
+                // 同步显示状态
+                eArrowHelper.visible = params.showWave;
+                bArrowHelper.visible = params.showWave;
+            }
+        }
+
+        // ========== 可见性更新函数 ==========
+        function updateHelixVisibility() {
+            if (rightHelix) rightHelix.visible = params.showElectronHelix;
+            if (leftHelix) leftHelix.visible = params.showElectronHelix;
+        }
+
+        function updateWaveVisibility() {
+            if (wavePathLine) wavePathLine.visible = params.showWave;
+            eFieldArrows.forEach(arrow => arrow.visible = params.showWave);
+            bFieldArrows.forEach(arrow => arrow.visible = params.showWave);
+        }
+
+        // ========== 初始化所有元素 ==========
+        function initAllElements() {
+            updateElectron();
+            updateHelix();
+            updateWavePath();
+            updateFieldArrows();
+        }
+        initAllElements();
+
+        // ========== 动画循环 ==========
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            time += 0.02 * params.animationSpeed;
+            controls.update(); // 更新阻尼控制
+
+            // 1. 电子双层螺旋缓慢旋转
+            if (params.showElectronHelix && rightHelix && leftHelix) {
+                rightHelix.rotation.y = time * 0.3;
+                leftHelix.rotation.y = time * 0.3;
+            }
+
+            // 2. 光波场矢量沿传播路径旋转
+            if (params.showWave && eFieldArrows.length > 0 && bFieldArrows.length > 0) {
+                const wavePath = new THREE.Curve();
+                wavePath.getPoint = function(t) {
+                    const x = 0;
+                    const y = 0;
+                    const z = t * pathLength - pathLength / 2;
+                    return new THREE.Vector3(x, y, z);
+                };
+
+                for (let i = 0; i < eFieldArrows.length; i++) {
+                    const t = (i * 5 / waveSegments) + time * 0.5;
+                    const point = wavePath.getPoint(i * 5 / waveSegments);
+                    // 更新位置
+                    eFieldArrows[i].position.copy(point);
+                    bFieldArrows[i].position.copy(point);
+
+                    // 更新E方向：XY平面旋转
+                    const eAngle = t * 4 * Math.PI;
+                    const eDir = new THREE.Vector3(Math.cos(eAngle), Math.sin(eAngle), 0).normalize();
+                    eFieldArrows[i].setDirection(eDir);
+                    // 更新E箭头长度
+                    eFieldArrows[i].setLength(params.fieldArrowLength, 0.5, 0.3);
+
+                    // 更新B方向：垂直于E和Z轴
+                    const tangent = new THREE.Vector3(0, 0, 1);
+                    const bDir = new THREE.Vector3().crossVectors(tangent, eDir).normalize();
+                    bFieldArrows[i].setDirection(bDir);
+                    // 更新B箭头长度
+                    bFieldArrows[i].setLength(params.fieldArrowLength, 0.5, 0.3);
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // 启动动画
+        animate();
+
+        // ========== 交互控制函数（优化） ==========
+        function toggleAnimation() {
+            if (animationId) {
+                // 暂停动画
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            } else {
+                // 重启动画
+                animate();
+            }
+        }
+
+        function resetView() {
+            // 重置相机和控制
+            camera.position.set(25, 15, 25);
+            camera.lookAt(0, 0, 0);
+            controls.reset();
+            // 重置时间和动画状态
+            time = 0;
+            if (!animationId) {
+                animate();
+            }
+        }
+
+        // ========== 响应窗口大小变化 ==========
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

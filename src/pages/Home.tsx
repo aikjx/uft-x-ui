@@ -158,13 +158,7 @@ export default function Home() {
 
   // 切换全屏模式 - 使用useCallback确保引用稳定
   const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(err => {
-        console.error('Error attempting to enable full-screen mode:', err);
-      });
-    } else {
-      document.exitFullscreen();
-    }
+    // 这里不再处理全屏逻辑，由FormulaViewer组件自己处理
   }, []);
 
   // 监听全屏状态变化

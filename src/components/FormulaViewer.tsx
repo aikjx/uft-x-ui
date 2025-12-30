@@ -1,8 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { cn } from '@/lib/utils';
+import { useThreeSceneOptimized } from '@/hooks/useThreeSceneOptimized';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { 
+  createBackgroundGrid, 
+  createSpaceTimeVisualization, 
+  createHelixVisualization, 
+  createFieldLinesVisualization, 
+  createMathSymbolVisualization,
+  addParticles
+} from '@/lib/visualizationUtils';
+import VisualizationControlPanel from './VisualizationControlPanel';
 
 // 公式数据类型
 interface Formula {
@@ -31,11 +42,7 @@ const FormulaViewer = ({
   isFullscreen
 }: FormulaViewerProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const controlsRef = useRef<OrbitControls | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
+  const visualizationContainerRef = useRef<HTMLDivElement>(null);
   
   // 加载状态
   const [isLoading, setIsLoading] = useState(true);
@@ -47,152 +54,91 @@ const FormulaViewer = ({
     frameCount: 0,
     lastFpsUpdate: 0
   });
-
-  // 初始化Three.js场景
+  
+  // 信息框显示状态
+  const [isInfoPanelVisible, setIsInfoPanelVisible] = useState(true);
+  
+  // 可视化舞台全屏状态
+  const [isVisualizationFullscreen, setIsVisualizationFullscreen] = useState(false);
+  
+  // 切换可视化舞台全屏模式
+  const toggleVisualizationFullscreen = useCallback(() => {
+    if (!visualizationContainerRef.current) return;
+    
+    if (!document.fullscreenElement) {
+      visualizationContainerRef.current.requestFullscreen().catch(err => {
+        console.error('Error attempting to enable full-screen mode:', err);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }, []);
+  
+  // 监听全屏状态变化
   useEffect(() => {
-    if (!containerRef.current) return;
-    
-    // 创建场景
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0f1117);
-    
-    // 创建相机
-    const camera = new THREE.PerspectiveCamera(
-      75, 
-      containerRef.current.clientWidth / containerRef.current.clientHeight, 
-      0.1, 
-      1000
-    );
-    camera.position.z = 5;
-    
-    // 创建渲染器，优化性能设置
-    const renderer = new THREE.WebGLRenderer({
-      antialias: window.devicePixelRatio < 2, // 仅在低分辨率设备上启用抗锯齿
-      powerPreference: 'high-performance', // 优先使用高性能GPU
-      alpha: false // 禁用alpha通道，提高性能
-    });
-    renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 限制像素比，减少渲染负担
-    renderer.setClearColor(0x0f1117, 1);
-    
-    // 优化渲染器性能
-    renderer.autoClear = true;
-    renderer.sortObjects = false; // 禁用对象排序，提高渲染速度
-    
-    // 清空容器并添加渲染器
-    containerRef.current.innerHTML = '';
-    containerRef.current.appendChild(renderer.domElement);
-    
-    // 创建轨道控制器
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.enablePan = false; // 禁用平移，减少计算负担
-    controls.minDistance = 1;
-    controls.maxDistance = 20;
-    
-    // 保存引用
-    sceneRef.current = scene;
-    cameraRef.current = camera;
-    rendererRef.current = renderer;
-    controlsRef.current = controls;
-    
-    // 添加光源
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-    
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 5, 5);
-    scene.add(directionalLight);
-    
-    // 性能监控变量
-    let fps = 0;
-    let frameCount = 0;
-    let lastFpsUpdate = 0;
-    let lastRenderTime = 0;
-    
-    // 动画循环 - 添加渲染节流和性能监控
-    const animate = (timestamp: number) => {
-      animationFrameRef.current = requestAnimationFrame(animate);
-      
-      // 限制渲染频率为60fps
-      if (timestamp - lastRenderTime < 16) return;
-      
-      // 记录渲染开始时间
-      const renderStartTime = performance.now();
-      
-      controls.update();
-      renderer.render(scene, camera);
-      
-      // 记录渲染结束时间并计算渲染时间
-      const renderEndTime = performance.now();
-      const renderTime = renderEndTime - renderStartTime;
-      
-      // 更新帧率统计
-      frameCount++;
-      if (timestamp - lastFpsUpdate >= 1000) { // 每秒更新一次FPS
-        fps = frameCount;
-        frameCount = 0;
-        lastFpsUpdate = timestamp;
-        
-        // 更新性能统计
-        setPerformanceStats({
-          fps,
-          renderTime,
-          frameCount,
-          lastFpsUpdate
-        });
-        
-        // 控制台输出性能统计（仅开发环境）
-        if (import.meta.env.DEV) {
-          console.log(`🎮 性能统计: FPS = ${fps}, 渲染时间 = ${renderTime.toFixed(2)}ms`);
-        }
-      }
-      
-      lastRenderTime = timestamp;
+    const handleFullscreenChange = () => {
+      setIsVisualizationFullscreen(!!document.fullscreenElement);
     };
     
-    animate(0);
-    
-    // 窗口大小调整处理 - 添加节流
-    let resizeTimeout: number;
-    const handleResize = () => {
-      if (!camera || !renderer) return;
-      
-      clearTimeout(resizeTimeout);
-      resizeTimeout = window.setTimeout(() => {
-        camera.aspect = containerRef.current!.clientWidth / containerRef.current!.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(containerRef.current!.clientWidth, containerRef.current!.clientHeight);
-      }, 100); // 100ms节流
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // 清理函数
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(resizeTimeout);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (rendererRef.current) {
-        rendererRef.current.dispose();
-      }
-      if (controlsRef.current) {
-        controlsRef.current.dispose();
-      }
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, []);
   
+  // 可视化控制参数
+  const [particleCount, setParticleCount] = useState(1000);
+  const [particleColor, setParticleColor] = useState('#0070f3');
+  const [particleOpacity, setParticleOpacity] = useState(0.8);
+  const [isAutoRotate, setIsAutoRotate] = useState(false);
+  const [speed, setSpeed] = useState(1.0);
+  const [size, setSize] = useState(1.0);
+
+  // 使用优化后的Three.js场景hook
+  const { scene, camera, renderer, controls, isLoading: isSceneLoading } = useThreeSceneOptimized({
+    containerRef,
+    onPerformanceUpdate: (stats) => {
+      setPerformanceStats(stats);
+    },
+    particleCount,
+    particleColor,
+    particleOpacity,
+    autoRotate: isAutoRotate,
+    speed,
+    size
+  });
+  
+  // 重置相机位置
+  const resetCamera = useCallback(() => {
+    if (camera && controls) {
+      camera.position.set(0, 0, 5);
+      camera.zoom = 1;
+      camera.updateProjectionMatrix();
+      controls.reset();
+    }
+  }, [camera, controls]);
+  
+  // 使用键盘快捷键hook
+  useKeyboardShortcuts({
+    camera,
+    controls,
+    onToggleInfoPanel: () => setIsInfoPanelVisible(prev => !prev),
+    onToggleFullscreen: toggleVisualizationFullscreen,
+    onResetCamera: resetCamera
+  });
+  
+  // 合并加载状态
+  useEffect(() => {
+    setIsLoading(isSceneLoading);
+  }, [isSceneLoading]);
+  
   // 根据公式更新3D可视化
   useEffect(() => {
-    if (!formula || !sceneRef.current) return;
+    if (!formula) return;
     
     setIsLoading(true);
     
     // 清空场景中的现有对象，优化资源释放
-    const scene = sceneRef.current;
     
     // 保留光源和网格
     const objectsToKeep = [];
@@ -244,7 +190,7 @@ const FormulaViewer = ({
     createFormulaVisualization(formula.id, scene);
     
     setIsLoading(false);
-  }, [formula]);
+  }, [formula, scene]);
   
   // 创建公式的3D可视化
   const createFormulaVisualization = (formulaId: number, scene: THREE.Scene) => {
@@ -252,240 +198,25 @@ const FormulaViewer = ({
     switch (formulaId) {
       case 1: // 时空同一化方程 - 创建空间坐标系
         createSpaceTimeVisualization(scene);
+        // 添加额外粒子
+        addParticles(scene, 300, 0x00ffff);
         break;
       case 2: // 三维螺旋时空方程 - 创建螺旋线
         createHelixVisualization(scene);
+        // 添加额外粒子
+        addParticles(scene, 500, 0xffffff);
         break;
       case 7: // 宇宙大统一方程 - 创建场线可视化
         createFieldLinesVisualization(scene);
+        // 添加额外粒子
+        addParticles(scene, 300, 0xffffff);
         break;
       default: // 默认创建数学符号和粒子云
         createMathSymbolVisualization(scene);
     }
   };
   
-  // 背景网格效果
-  const createBackgroundGrid = (scene: THREE.Scene) => {
-    // 创建主网格
-    const gridHelper = new THREE.GridHelper(10, 10, 0x222233, 0x111122);
-    scene.add(gridHelper);
-    
-    // 创建辅助网格
-    const gridHelperX = new THREE.GridHelper(10, 10, 0x222233, 0x111122);
-    gridHelperX.rotation.x = Math.PI / 2;
-    scene.add(gridHelperX);
-    
-    const gridHelperY = new THREE.GridHelper(10, 10, 0x222233, 0x111122);
-    gridHelperY.rotation.y = Math.PI / 2;
-    scene.add(gridHelperY);
-  };
-  
-  // 时空同一化方程可视化
-  const createSpaceTimeVisualization = (scene: THREE.Scene) => {
-    // 创建坐标轴
-    const axesHelper = new THREE.AxesHelper(5);
-    scene.add(axesHelper);
-    
-    // 创建光锥
-    createLightCone(scene);
-    
-    // 创建时间箭头
-    createTimeArrow(scene);
-    
-    // 添加粒子点
-    addParticles(scene, 300, 0x00ffff);
-  };
-  
-  // 创建光锥
-  const createLightCone = (scene: THREE.Scene) => {
-    const geometry = new THREE.ConeGeometry(2, 4, 32);
-    const material = new THREE.MeshBasicMaterial({ 
-      color: 0x00ffff, 
-      transparent: true, 
-      opacity: 0.3,
-      wireframe: true
-    });
-    const cone = new THREE.Mesh(geometry, material);
-    cone.position.z = 2;
-    scene.add(cone);
-    
-    const invertedCone = new THREE.Mesh(geometry, material);
-    invertedCone.position.z = -2;
-    invertedCone.rotation.z = Math.PI;
-    scene.add(invertedCone);
-  };
-  
-  // 创建时间箭头
-  const createTimeArrow = (scene: THREE.Scene) => {
-    const arrowGeometry = new THREE.CylinderGeometry(0.1, 0.3, 2, 8);
-    const arrowMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff });
-    const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
-    arrow.position.z = 2;
-    scene.add(arrow);
-  };
-  
-  // 添加粒子 - 优化性能
-  const addParticles = (scene: THREE.Scene, count: number, color: number) => {
-    // 根据设备性能调整粒子数量
-    const isMobile = window.innerWidth < 768;
-    const adjustedCount = isMobile ? Math.floor(count * 0.3) : count;
-    
-    const particleGeometry = new THREE.BufferGeometry();
-    const particleCount = adjustedCount;
-    const posArray = new Float32Array(particleCount * 3);
-    
-    // 使用更高效的随机数生成
-    for (let i = 0; i < particleCount * 3; i++) {
-      posArray[i] = (Math.random() - 0.5) * 10;
-    }
-    
-    particleGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-    
-    // 优化粒子材质
-    const particleMaterial = new THREE.PointsMaterial({ 
-      size: isMobile ? 0.03 : 0.05, // 移动设备上使用更小的粒子
-      color: color,
-      transparent: true,
-      opacity: 0.6,
-      blending: THREE.AdditiveBlending, // 使用加法混合，提高视觉效果
-      depthWrite: false, // 禁用深度写入，提高性能
-      sizeAttenuation: true // 启用大小衰减，提高视觉效果
-    });
-    
-    const particlesMesh = new THREE.Points(particleGeometry, particleMaterial);
-    scene.add(particlesMesh);
-  };
-  
-  // 三维螺旋时空方程可视化
-  const createHelixVisualization = (scene: THREE.Scene) => {
-    // 创建螺旋线
-    const curve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(1, 1, 1),
-      new THREE.Vector3(0, 2, 2),
-      new THREE.Vector3(-1, 1, 3),
-      new THREE.Vector3(0, 0, 4),
-      new THREE.Vector3(1, -1, 5),
-      new THREE.Vector3(0, -2, 6),
-      new THREE.Vector3(-1, -1, 7),
-      new THREE.Vector3(0, 0, 8),
-    ]);
-    
-    const points = curve.getPoints(100);
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    
-    const material = new THREE.LineBasicMaterial({ 
-      color: 0x00ffff,
-      linewidth: 2
-    });
-    
-    const curveObject = new THREE.Line(geometry, material);
-    scene.add(curveObject);
-    
-    // 添加粒子
-    addParticles(scene, 500, 0xffffff);
-  };
-  
-  // 场线可视化
-  const createFieldLinesVisualization = (scene: THREE.Scene) => {
-    const fieldLinesCount = 20;
-    
-    for (let i = 0; i < fieldLinesCount; i++) {
-      // 随机角度和半径
-      const angle = (i / fieldLinesCount) * Math.PI * 2;
-      const radius = 1 + Math.random() * 2;
-      
-      // 创建圆形场线
-      const curve = new THREE.EllipseCurve(
-        0, 0,             // 中心
-        radius, radius,   // x, y半径
-        0, Math.PI * 2,   // 起始角度，终止角度
-        false,            // 顺时针方向
-        angle             // 旋转角度
-      );
-      
-      const points = curve.getPoints(50);
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      
-      // 随机颜色
-      const color = new THREE.Color(`hsl(${angle / (Math.PI * 2) * 360}, 70%, 60%)`);
-      
-      const material = new THREE.LineBasicMaterial({ 
-        color: color,
-        linewidth: 1
-      });
-      
-      const line = new THREE.Line(geometry, material);
-      line.position.z = (Math.random() - 0.5) * 3;
-      scene.add(line);
-    }
-    
-    // 添加中心球体
-    const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const sphereMaterial = new THREE.MeshBasicMaterial({ 
-      color: 0xff00ff,
-      wireframe: true
-    });
-    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    scene.add(sphere);
-    
-    // 添加粒子
-    addParticles(scene, 300, 0xffffff);
-  };
-  
-  // 默认数学符号可视化
-  const createMathSymbolVisualization = (scene: THREE.Scene) => {
-    // 创建粒子云
-    const particleGeometry = new THREE.BufferGeometry();
-    const particleCount = 1000;
-    const posArray = new Float32Array(particleCount * 3);
-    
-    for (let i = 0; i < particleCount * 3; i++) {
-      posArray[i] = (Math.random() - 0.5) * 10;
-    }
-    
-    particleGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-    
-    const particleMaterial = new THREE.PointsMaterial({ 
-      size: 0.05, 
-      color: 0x00ffff,
-      transparent: true,
-      opacity: 0.8
-    });
-    
-    const particlesMesh = new THREE.Points(particleGeometry, particleMaterial);
-    scene.add(particlesMesh);
-    
-    // 添加数学符号表示（使用简单的几何体组合表示）
-    const symbolGroup = new THREE.Group();
-    
-    // 创建一个简单的"∇"符号表示
-    const line1Geometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-1, 1, 0),
-      new THREE.Vector3(1, -1, 0)
-    ]);
-    const line2Geometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(1, 1, 0),
-      new THREE.Vector3(-1, -1, 0)
-    ]);
-    const line3Geometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 1.5, 0),
-      new THREE.Vector3(0, -1.5, 0)
-    ]);
-    
-    const lineMaterial = new THREE.LineBasicMaterial({ 
-      color: 0xff00ff,
-      linewidth: 3
-    });
-    
-    const line1 = new THREE.Line(line1Geometry, lineMaterial);
-    const line2 = new THREE.Line(line2Geometry, lineMaterial);
-    const line3 = new THREE.Line(line3Geometry, lineMaterial);
-    
-    symbolGroup.add(line1, line2, line3);
-    symbolGroup.position.set(0, 0, 0);
-    scene.add(symbolGroup);
-  };
+
   
   // 使用KaTeX渲染LaTeX公式
   const renderFormula = (expression: string) => {
@@ -560,11 +291,18 @@ const FormulaViewer = ({
             <i className="fa fa-moon"></i>
           </button>
           <button 
-            onClick={toggleFullscreen}
+            onClick={() => setIsInfoPanelVisible(prev => !prev)}
             className="p-2 rounded-full transition-all duration-300 transform bg-indigo-600/70 hover:bg-indigo-500/80 hover:scale-110"
-            aria-label={isFullscreen ? "退出全屏" : "进入全屏"}
+            aria-label={isInfoPanelVisible ? "隐藏信息框" : "显示信息框"}
           >
-            <i className={`fa ${isFullscreen ? 'fa-compress' : 'fa-expand'} transition-all duration-300`}></i>
+            <i className={`fa ${isInfoPanelVisible ? 'fa-info-circle' : 'fa-info-circle-o'} transition-all duration-300`}></i>
+          </button>
+          <button 
+            onClick={toggleVisualizationFullscreen}
+            className="p-2 rounded-full transition-all duration-300 transform bg-indigo-600/70 hover:bg-indigo-500/80 hover:scale-110"
+            aria-label={isVisualizationFullscreen ? "退出全屏" : "进入全屏"}
+          >
+            <i className={`fa ${isVisualizationFullscreen ? 'fa-compress' : 'fa-expand'} transition-all duration-300`}></i>
           </button>
         </div>
       </div>
@@ -572,7 +310,10 @@ const FormulaViewer = ({
       {/* 主内容区域 */}
       <div className="flex overflow-hidden flex-col flex-1 lg:flex-row">
         {/* 3D可视化区域 */}
-        <div className="relative flex-1 bg-gray-900 lg:min-h-0">
+        <div 
+          ref={visualizationContainerRef}
+          className={`relative flex-1 bg-gray-900 lg:min-h-0 transition-all duration-300 ${!isInfoPanelVisible ? 'lg:w-full' : ''}`}
+        >
           <div ref={containerRef} className="absolute inset-0"></div>
           
           {/* 加载指示器 */}
@@ -595,188 +336,242 @@ const FormulaViewer = ({
               </div>
             </div>
           )}
+          
+          {/* 交互提示 */}
+          {!isLoading && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 0.8, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="absolute bottom-4 left-4 p-3 text-xs text-gray-300 rounded-lg border backdrop-blur-md bg-gray-800/80 border-indigo-500/30"
+            >
+              <div className="space-y-1">
+                <p><i className="mr-1 fa fa-mouse-pointer"></i> 拖动旋转视角</p>
+                <p><i className="mr-1 fa fa-search-plus"></i> 滚轮缩放</p>
+                <p><i className="mr-1 fa fa-expand"></i> 点击全屏按钮进入全屏模式</p>
+              </div>
+            </motion.div>
+          )}
+          
+          {/* 可视化控制面板 */}
+          <VisualizationControlPanel
+            onParticleCountChange={setParticleCount}
+            onParticleColorChange={setParticleColor}
+            onParticleOpacityChange={setParticleOpacity}
+            onAutoRotateChange={setIsAutoRotate}
+            onSpeedChange={setSpeed}
+            onSizeChange={setSize}
+            particleCount={particleCount}
+            particleColor={particleColor}
+            particleOpacity={particleOpacity}
+            isAutoRotate={isAutoRotate}
+            speed={speed}
+            size={size}
+          />
         </div>
         
         {/* 公式和说明区域 */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full lg:w-96 xl:w-[480px] bg-gradient-to-b from-gray-800/95 to-gray-900/95 backdrop-blur-md border-t lg:border-t-0 lg:border-l border-indigo-900/50 overflow-y-auto p-4 md:p-6 transition-all duration-300 shadow-xl"
-        >
-          <div className="space-y-6">
-            {/* 公式标题和编号 */}
+        <AnimatePresence>
+          {isInfoPanelVisible && (
             <motion.div 
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ 
-                delay: 0.2, 
-                type: "spring", 
-                stiffness: 300, 
-                damping: 20 
-              }}
-              className="flex items-center"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="w-full lg:w-96 xl:w-[480px] bg-gradient-to-b from-gray-800/95 to-gray-900/95 backdrop-blur-md border-t lg:border-t-0 lg:border-l border-indigo-900/50 overflow-y-auto p-4 md:p-6 transition-all duration-300 shadow-xl"
             >
-              <motion.div 
-                className="flex justify-center items-center mr-4 w-12 h-12 text-lg font-bold text-indigo-400 bg-gradient-to-br rounded-full border from-indigo-500/30 to-purple-500/30 border-indigo-500/20 shadow-lg shadow-indigo-500/10"
-                whileHover={{ 
-                  scale: 1.15, 
-                  boxShadow: "0 0 20px rgba(99, 102, 241, 0.6)",
-                  rotate: 5,
-                  transition: { duration: 0.3, ease: "easeOut" }
-                }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {formula.id}
-              </motion.div>
-              <div>
-                <h2 className="text-2xl font-bold text-white">{formula.name}</h2>
-                <p className="text-xs text-indigo-400/80 mt-1">公式 #{formula.id}</p>
-              </div>
-            </motion.div>
-            
-            {/* 公式显示 */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              transition={{ 
-                delay: 0.3, 
-                type: "spring", 
-                stiffness: 250, 
-                damping: 20 
-              }}
-              whileHover={{ 
-                scale: 1.03, 
-                boxShadow: "0 15px 40px rgba(99, 102, 241, 0.4)",
-                rotate: [0, -0.5, 0.5, -0.5, 0],
-                transition: { duration: 0.5, ease: "easeInOut" }
-              }}
-              whileTap={{ scale: 0.98 }}
-              className="overflow-hidden relative p-6 rounded-xl border shadow-lg bg-gray-900/70 border-indigo-500/30"
-            >
-              {/* 装饰背景 */}
-              <div className="absolute inset-0 bg-gradient-to-br pointer-events-none from-indigo-900/10 to-purple-900/10"></div>
-              
-              {/* 动态网格背景 */}
-              <div className="absolute inset-0 opacity-10 pointer-events-none">
-                <div className="h-full w-full bg-[linear-gradient(to_right,#6366f110_1px,transparent_1px),linear-gradient(to_bottom,#6366f110_1px,transparent_1px)] bg-[size:20px_20px]"></div>
-              </div>
-              
-              {/* 公式内容 */}
-              <div className="overflow-x-auto relative z-10 py-4 text-2xl text-center text-blue-300 formula-renderer">
-                $$ {renderFormula(formula.expression)} $$
-              </div>
-              
-              {/* 增强的发光效果 */}
-              <motion.div 
-                className="absolute -inset-1 bg-gradient-to-r rounded-xl opacity-70 blur-xl pointer-events-none from-indigo-500/20 to-purple-500/20"
-                animate={{ 
-                  opacity: [0.3, 0.8, 0.3],
-                  scale: [0.98, 1.05, 0.98],
-                  rotate: [0, 1, -1, 0]
-                }}
-                transition={{ 
-                  duration: 4, 
-                  repeat: Infinity, 
-                  ease: "easeInOut" 
-                }}
-              ></motion.div>
-            </motion.div>
-            
-            {/* 公式说明 */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ 
-                delay: 0.4, 
-                type: "spring", 
-                stiffness: 250, 
-                damping: 20 
-              }}
-              className="space-y-5"
-            >
-              <motion.div
-                whileHover={{ x: 5 }}
-                transition={{ duration: 0.2 }}
-              >
-                <h3 className="flex items-center text-lg font-semibold text-purple-400">
-                  <motion.i 
-                    className="mr-2 fa fa-info-circle"
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  ></motion.i> 公式说明
-                </h3>
-              </motion.div>
-              
-              <motion.p 
-                className="p-5 leading-relaxed text-gray-300 rounded-lg border bg-gray-800/50 border-gray-700/50 shadow-inner"
-                whileHover={{ 
-                  backgroundColor: 'rgba(30, 41, 59, 0.6)',
-                  borderColor: 'rgba(99, 102, 241, 0.4)'
-                }}
-                transition={{ duration: 0.3 }}
-              >
-                {formula.description}
-              </motion.p>
-              
-              {/* 公式应用示例 */}
-              <div className="pt-4 mt-6 border-t border-indigo-500/20">
-                <motion.div
-                  whileHover={{ x: 5 }}
-                  transition={{ duration: 0.2 }}
+              <div className="space-y-6">
+                {/* 公式标题和编号 */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ 
+                    delay: 0.2, 
+                    type: "spring", 
+                    stiffness: 300, 
+                    damping: 20 
+                  }}
+                  className="flex items-center"
                 >
-                  <h3 className="flex items-center mb-4 text-lg font-semibold text-purple-400">
-                    <motion.i 
-                      className="mr-2 fa fa-lightbulb"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    ></motion.i> 应用场景
-                  </h3>
+                  <motion.div 
+                    className="flex justify-center items-center mr-4 w-12 h-12 text-lg font-bold text-indigo-400 bg-gradient-to-br rounded-full border shadow-lg from-indigo-500/30 to-purple-500/30 border-indigo-500/20 shadow-indigo-500/10"
+                    whileHover={{ 
+                      scale: 1.15, 
+                      boxShadow: "0 0 20px rgba(99, 102, 241, 0.6)",
+                      rotate: 5,
+                      transition: { duration: 0.3, ease: "easeOut" }
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {formula.id}
+                  </motion.div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">{formula.name}</h2>
+                    <p className="mt-1 text-xs text-indigo-400/80">公式 #{formula.id}</p>
+                  </div>
                 </motion.div>
                 
+                {/* 公式显示 */}
                 <motion.div 
-                  className="p-5 rounded-lg border shadow-inner bg-gray-700/30 border-indigo-500/10"
-                  whileHover={{ 
-                    boxShadow: "0 0 20px rgba(99, 102, 241, 0.2)",
-                    borderColor: 'rgba(99, 102, 241, 0.3)'
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                  transition={{ 
+                    delay: 0.3, 
+                    type: "spring", 
+                    stiffness: 250, 
+                    damping: 20 
                   }}
-                  transition={{ duration: 0.3 }}
+                  whileHover={{ 
+                    scale: 1.03, 
+                    boxShadow: "0 15px 40px rgba(99, 102, 241, 0.4)",
+                    rotate: [0, -0.5, 0.5, -0.5, 0],
+                    transition: { duration: 0.5, ease: "easeInOut" }
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className="overflow-hidden relative p-6 rounded-xl border shadow-lg bg-gray-900/70 border-indigo-500/30"
                 >
-                  <p className="text-gray-300">
-                    此公式在统一场论中用于描述{formula.name.toLowerCase()}，
-                    帮助我们理解宇宙的基本规律和物理现象。通过可视化，
-                    我们可以更直观地把握{formula.name.toLowerCase()}的本质内涵。
-                  </p>
+                  {/* 装饰背景 */}
+                  <div className="absolute inset-0 bg-gradient-to-br pointer-events-none from-indigo-900/10 to-purple-900/10"></div>
+                  
+                  {/* 动态网格背景 */}
+                  <div className="absolute inset-0 opacity-10 pointer-events-none">
+                    <div className="h-full w-full bg-[linear-gradient(to_right,#6366f110_1px,transparent_1px),linear-gradient(to_bottom,#6366f110_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+                  </div>
+                  
+                  {/* 公式内容 */}
+                <div className="overflow-x-auto relative z-10 py-4 text-2xl text-center text-blue-300 formula-renderer">
+                  <div className="relative">
+                    <span>{renderFormula(formula.expression)}</span>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(formula.expression).then(() => {
+                          // 可以添加复制成功的提示
+                          console.log('公式已复制到剪贴板');
+                        }).catch(err => {
+                          console.error('复制失败:', err);
+                        });
+                      }}
+                      className="absolute top-2 right-2 p-1 text-xs text-gray-300 rounded-full transition-all duration-200 bg-gray-800/50 hover:bg-gray-700/70"
+                      aria-label="复制公式"
+                    >
+                      <i className="fa fa-copy"></i>
+                    </button>
+                  </div>
+                  $$ {renderFormula(formula.expression)} $$
+                </div>
+                  
+                  {/* 增强的发光效果 */}
+                  <motion.div 
+                    className="absolute -inset-1 bg-gradient-to-r rounded-xl opacity-70 blur-xl pointer-events-none from-indigo-500/20 to-purple-500/20"
+                    animate={{ 
+                      opacity: [0.3, 0.8, 0.3],
+                      scale: [0.98, 1.05, 0.98],
+                      rotate: [0, 1, -1, 0]
+                    }}
+                    transition={{ 
+                      duration: 4, 
+                      repeat: Infinity, 
+                      ease: "easeInOut" 
+                    }}
+                  ></motion.div>
+                </motion.div>
+                
+                {/* 公式说明 */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ 
+                    delay: 0.4, 
+                    type: "spring", 
+                    stiffness: 250, 
+                    damping: 20 
+                  }}
+                  className="space-y-5"
+                >
+                  <motion.div
+                    whileHover={{ x: 5 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <h3 className="flex items-center text-lg font-semibold text-purple-400">
+                      <motion.i 
+                        className="mr-2 fa fa-info-circle"
+                        animate={{ rotate: [0, 10, -10, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      ></motion.i> 公式说明
+                    </h3>
+                  </motion.div>
+                  
+                  <motion.p 
+                    className="p-5 leading-relaxed text-gray-300 rounded-lg border shadow-inner bg-gray-800/50 border-gray-700/50"
+                    whileHover={{ 
+                      backgroundColor: 'rgba(30, 41, 59, 0.6)',
+                      borderColor: 'rgba(99, 102, 241, 0.4)'
+                    }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {formula.description}
+                  </motion.p>
+                  
+                  {/* 公式应用示例 */}
+                  <div className="pt-4 mt-6 border-t border-indigo-500/20">
+                    <motion.div
+                      whileHover={{ x: 5 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <h3 className="flex items-center mb-4 text-lg font-semibold text-purple-400">
+                        <motion.i 
+                          className="mr-2 fa fa-lightbulb"
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        ></motion.i> 应用场景
+                      </h3>
+                    </motion.div>
+                    
+                    <motion.div 
+                      className="p-5 rounded-lg border shadow-inner bg-gray-700/30 border-indigo-500/10"
+                      whileHover={{ 
+                        boxShadow: "0 0 20px rgba(99, 102, 241, 0.2)",
+                        borderColor: 'rgba(99, 102, 241, 0.3)'
+                      }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <p className="text-gray-300">
+                        此公式在统一场论中用于描述{formula.name.toLowerCase()}，
+                        帮助我们理解宇宙的基本规律和物理现象。通过可视化，
+                        我们可以更直观地把握{formula.name.toLowerCase()}的本质内涵。
+                      </p>
+                    </motion.div>
+                  </div>
+                  
+                  {/* 互动提示 */}
+                  <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1, duration: 0.5 }}
+                  className="flex justify-center items-center p-3 mt-6 text-xs text-gray-400 rounded-full border bg-gray-800/50 border-gray-700/50"
+                  whileHover={{ 
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    borderColor: 'rgba(99, 102, 241, 0.3)',
+                    color: '#a5b4fc',
+                    scale: 1.05,
+                    transition: { duration: 0.3 }
+                  }}>
+
+                  <motion.i 
+                    className="mr-2 fa fa-hand-pointer"
+                    animate={{ x: [0, 3, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                  ></motion.i>
+                    <span>在3D区域拖动鼠标可旋转视角</span>
+                  </motion.div>
                 </motion.div>
               </div>
-              
-              {/* 互动提示 */}
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1, duration: 0.5 }}
-                className="flex justify-center items-center mt-6 text-xs text-gray-400 p-3 rounded-full bg-gray-800/50 border border-gray-700/50"
-                whileHover={{ 
-                  backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                  borderColor: 'rgba(99, 102, 241, 0.3)',
-                  color: '#a5b4fc',
-                  scale: 1.05
-                }}
-                transition={{ duration: 0.3 }}
-              >
-                <motion.i 
-                  className="mr-2 fa fa-hand-pointer"
-                  animate={{ x: [0, 3, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                ></motion.i>
-                <span>在3D区域拖动鼠标可旋转视角</span>
-              </motion.div>
             </motion.div>
-          </div>
-        </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>双层螺旋时空模型与磁场闭环特性可视化对比</title>
+    <script src=" https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js "></script>
+    <script src=" https://cdn.jsdelivr.net/npm/matter-js@0.18.0/build/matter.min.js "></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .visualization-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        
+        .visualization-box {
+            flex: 1;
+            min-width: 500px;
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid #475569;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .visualization-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid;
+            text-align: center;
+        }
+        
+        .left-title {
+            color: #60a5fa;
+            border-color: #60a5fa;
+        }
+        
+        .right-title {
+            color: #f87171;
+            border-color: #f87171;
+        }
+        
+        .canvas-container {
+            flex-grow: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #0f172a;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .description {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+            margin-top: 10px;
+        }
+        
+        .key-points {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid;
+        }
+        
+        .left-points {
+            border-left-color: #60a5fa;
+        }
+        
+        .right-points {
+            border-left-color: #f87171;
+        }
+        
+        .key-points h3 {
+            margin-bottom: 10px;
+            color: #e2e8f0;
+        }
+        
+        .key-points ul {
+            padding-left: 20px;
+        }
+        
+        .key-points li {
+            margin-bottom: 8px;
+        }
+        
+        .comparison-section {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .comparison-section h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #38bdf8;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .comparison-table th, .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #475569;
+        }
+        
+        .comparison-table th {
+            background-color: rgba(15, 23, 42, 0.8);
+            color: #38bdf8;
+            font-weight: 600;
+        }
+        
+        .comparison-table tr:hover {
+            background-color: rgba(56, 189, 248, 0.05);
+        }
+        
+        .evidence-section {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .evidence-section h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #34d399;
+        }
+        
+        .evidence-content {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .evidence-text {
+            flex: 2;
+            line-height: 1.7;
+        }
+        
+        .evidence-text p {
+            margin-bottom: 15px;
+        }
+        
+        .citation {
+            font-style: italic;
+            color: #94a3b8;
+            margin-top: 15px;
+            padding-left: 15px;
+            border-left: 3px solid #34d399;
+        }
+        
+        .dna-visual {
+            flex: 1;
+            min-width: 200px;
+            height: 200px;
+            background: #0f172a;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dna-strand {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #475569;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        button:hover {
+            background: #60a5fa;
+            transform: translateY(-2px);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #334155;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 1100px) {
+            .visualization-container {
+                flex-direction: column;
+            }
+            
+            .visualization-box {
+                min-width: 100%;
+            }
+            
+            .evidence-content {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>双层螺旋时空模型与磁场闭环特性可视化对比</h1>
+        <p class="subtitle">通过并排可视化，直观展示时空几何本源（左侧）与宏观磁场现象（右侧）的本质区别与逻辑关系</p>
+    </div>
+    
+    <div class="visualization-container">
+        <!-- 左侧：双层螺旋时空模型 -->
+        <div class="visualization-box">
+            <h2 class="visualization-title left-title">双层螺旋时空模型</h2>
+            <div class="canvas-container">
+                <canvas id="spiralCanvas"></canvas>
+            </div>
+            <div class="description">
+                <p>此可视化展示作为第一性原理的时空几何结构——双层螺旋。两条相互缠绕的螺旋线（右旋与左旋）代表时空的基本几何构型，是产生所有相互作用的背景框架。</p>
+            </div>
+            <div class="key-points left-points">
+                <h3>核心特征</h3>
+                <ul>
+                    <li><strong>时空背景几何</strong>：代表物理世界的底层结构</li>
+                    <li><strong>第一性原理</strong>：相互作用的本源，而非现象本身</li>
+                    <li><strong>全域特性</strong>：无限延伸，构成所有物理现象的舞台</li>
+                    <li><strong>手性对称</strong>：右旋与左旋分量共同构成完整时空</li>
+                </ul>
+            </div>
+            <div class="controls">
+                <button id="rotateSpiral">旋转/暂停螺旋</button>
+                <button id="changePerspective">切换视角</button>
+            </div>
+        </div>
+        
+        <!-- 右侧：经典磁场闭环特性 -->
+        <div class="visualization-box">
+            <h2 class="visualization-title right-title">经典磁场闭环特性</h2>
+            <div class="canvas-container">
+                <canvas id="magneticCanvas"></canvas>
+            </div>
+            <div class="description">
+                <p>此可视化展示经典电磁学中的磁场"闭环"特性。磁感线从N极出发，穿过空间进入S极，形成闭合回路。这是宏观尺度上可观测的磁场现象。</p>
+            </div>
+            <div class="key-points right-points">
+                <h3>核心特征</h3>
+                <ul>
+                    <li><strong>宏观涌现现象</strong>：从微观电荷运动涌现的宏观效应</li>
+                    <li><strong>磁感线（描述工具）</strong>：人为定义的几何描述工具</li>
+                    <li><strong>N极与S极</strong>：磁场方向性的宏观表现</li>
+                    <li><strong>闭合回路</strong>：磁场高斯定理的直观体现 (∇·B = 0)</li>
+                </ul>
+            </div>
+            <div class="controls">
+                <button id="toggleFieldLines">显示/隐藏磁感线</button>
+                <button id="resetParticles">重置粒子</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="comparison-section">
+        <h2>概念对比分析</h2>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>对比维度</th>
+                    <th>双层螺旋时空模型（左侧）</th>
+                    <th>经典磁场闭环特性（右侧）</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>本质属性</strong></td>
+                    <td>产生力的时空背景（第一性原理）</td>
+                    <td>被描述的力场现象（宏观涌现）</td>
+                </tr>
+                <tr>
+                    <td><strong>理论层次</strong></td>
+                    <td>时空几何公设，相互作用的本源</td>
+                    <td>经典电磁学现象，麦克斯韦方程组的解</td>
+                </tr>
+                <tr>
+                    <td><strong>几何特征</strong></td>
+                    <td>两条独立、完整、无限延伸且相互缠绕的螺旋线</td>
+                    <td>从磁体两极发出并在空间形成闭合环路的线条</td>
+                </tr>
+                <tr>
+                    <td><strong>物理意义</strong></td>
+                    <td>假设的客观存在的本源结构</td>
+                    <td>人为定义的描述工具（磁感线本身并非物理实体）</td>
+                </tr>
+                <tr>
+                    <td><strong>逻辑关系</strong></td>
+                    <td colspan="2" style="text-align: center; color: #38bdf8; font-weight: bold;">
+                        右侧观察到的所有磁场特性都可能源于左侧的底层几何规则
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="evidence-section">
+        <h2>科学佐证：三维双螺旋结构与磁场拓扑</h2>
+        <div class="evidence-content">
+            <div class="evidence-text">
+                <p>剑桥大学卡文迪什实验室领导的国际团队使用先进3D打印技术制造了磁性双螺旋，就像DNA的双螺旋一样[2](@ref)。他们发现这些磁性双螺旋在磁场中产生纳米级的拓扑纹理，这是此前从未见过的。</p>
+                <p>这项研究证实：<strong>双螺旋几何结构确实能产生新颖的磁场构型</strong>。这种三维结构能导致磁畴之间形成类似DNA碱基对的强耦合和"锁定"[2](@ref)。</p>
+                <p>这为"双层螺旋"模型提供了一个惊人的现实参照：在纳米尺度，物质的<strong>双螺旋几何排列可以直接导致特殊的磁场拓扑结构</strong>。这说明了从"几何螺旋"到"磁场特征"的关联是真实存在且可被观测的物理过程。</p>
+                <div class="citation">
+                    引用：剑桥大学卡文迪什实验室克莱尔·唐纳利表示："我们不仅发现3D结构在磁化中导致有趣的拓扑纳米纹理，而且在杂散磁场中也发现了新纳米级场配置。"[2](@ref)
+                </div>
+            </div>
+            <div class="dna-visual">
+                <div class="dna-strand" id="dnaStrand"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>可视化对比演示 | 双层螺旋时空模型与磁场闭环特性 | 基于WebGL(Three.js)与Canvas 2D实现</p>
+        <p>© 2025 物理可视化研究 | 数据来源：[2](@ref)[5](@ref)[9](@ref)</p>
+    </div>
+
+    <script>
+        // ========== 左侧：双层螺旋时空模型（Three.js实现） ==========
+        let spiralScene, spiralCamera, spiralRenderer, spiralObjects = [];
+        let spiralRotationEnabled = true;
+        let perspectiveIndex = 0;
+        
+        function initSpiralVisualization() {
+            const canvas = document.getElementById('spiralCanvas');
+            const width = canvas.parentElement.clientWidth;
+            const height = canvas.parentElement.clientHeight;
+            
+            // 创建场景
+            spiralScene = new THREE.Scene();
+            spiralScene.background = new THREE.Color(0x0f172a);
+            
+            // 创建相机
+            spiralCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            spiralCamera.position.set(0, 8, 20);
+            
+            // 创建渲染器
+            spiralRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            spiralRenderer.setSize(width, height);
+            spiralRenderer.setPixelRatio(window.devicePixelRatio);
+            
+            // 添加光源
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            spiralScene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 20, 15);
+            spiralScene.add(directionalLight);
+            
+            // 创建双层螺旋结构
+            createDoubleHelix();
+            
+            // 添加坐标轴辅助
+            const axesHelper = new THREE.AxesHelper(10);
+            spiralScene.add(axesHelper);
+            
+            // 渲染循环
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                if (spiralRotationEnabled) {
+                    // 缓慢旋转整个场景
+                    spiralScene.rotation.y += 0.005;
+                }
+                
+                spiralRenderer.render(spiralScene, spiralCamera);
+            }
+            animate();
+            
+            // 窗口大小调整
+            window.addEventListener('resize', function() {
+                const newWidth = canvas.parentElement.clientWidth;
+                const newHeight = canvas.parentElement.clientHeight;
+                
+                spiralCamera.aspect = newWidth / newHeight;
+                spiralCamera.updateProjectionMatrix();
+                spiralRenderer.setSize(newWidth, newHeight);
+            });
+        }
+        
+        function createDoubleHelix() {
+            // 清除之前的对象
+            spiralObjects.forEach(obj => spiralScene.remove(obj));
+            spiralObjects = [];
+            
+            // 螺旋参数
+            const radius = 2;
+            const height = 10;
+            const turns = 3;
+            const points = 500;
+            
+            // 创建右旋螺旋（蓝色）
+            const rightHandedGeometry = new THREE.BufferGeometry();
+            const rightHandedMaterial = new THREE.LineBasicMaterial({ color: 0x60a5fa, linewidth: 2 });
+            
+            const rightHandedVertices = [];
+            for (let i = 0; i <= points; i++) {
+                const t = (i / points) * turns * Math.PI * 2;
+                const x = radius * Math.cos(t);
+                const y = (i / points) * height - height/2;
+                const z = radius * Math.sin(t);
+                rightHandedVertices.push(x, y, z);
+            }
+            
+            rightHandedGeometry.setAttribute('position', new THREE.Float32BufferAttribute(rightHandedVertices, 3));
+            const rightHandedLine = new THREE.Line(rightHandedGeometry, rightHandedMaterial);
+            spiralScene.add(rightHandedLine);
+            spiralObjects.push(rightHandedLine);
+            
+            // 创建左旋螺旋（红色）
+            const leftHandedGeometry = new THREE.BufferGeometry();
+            const leftHandedMaterial = new THREE.LineBasicMaterial({ color: 0xf87171, linewidth: 2 });
+            
+            const leftHandedVertices = [];
+            for (let i = 0; i <= points; i++) {
+                const t = (i / points) * turns * Math.PI * 2;
+                const x = radius * Math.cos(t + Math.PI); // 相位偏移π
+                const y = (i / points) * height - height/2;
+                const z = radius * Math.sin(t + Math.PI);
+                leftHandedVertices.push(x, y, z);
+            }
+            
+            leftHandedGeometry.setAttribute('position', new THREE.Float32BufferAttribute(leftHandedVertices, 3));
+            const leftHandedLine = new THREE.Line(leftHandedGeometry, leftHandedMaterial);
+            spiralScene.add(leftHandedLine);
+            spiralObjects.push(leftHandedLine);
+            
+            // 添加连接线（类似DNA碱基对）
+            for (let i = 0; i <= 20; i++) {
+                const t = (i / 20) * turns * Math.PI * 2;
+                const x1 = radius * Math.cos(t);
+                const y1 = (i / 20) * height - height/2;
+                const z1 = radius * Math.sin(t);
+                
+                const x2 = radius * Math.cos(t + Math.PI);
+                const y2 = (i / 20) * height - height/2;
+                const z2 = radius * Math.sin(t + Math.PI);
+                
+                const connectorGeometry = new THREE.BufferGeometry();
+                const connectorMaterial = new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 1, transparent: true, opacity: 0.5 });
+                
+                const connectorVertices = [x1, y1, z1, x2, y2, z2];
+                connectorGeometry.setAttribute('position', new THREE.Float32BufferAttribute(connectorVertices, 3));
+                const connectorLine = new THREE.Line(connectorGeometry, connectorMaterial);
+                spiralScene.add(connectorLine);
+                spiralObjects.push(connectorLine);
+            }
+            
+            // 添加中心轴
+            const axisGeometry = new THREE.CylinderGeometry(0.05, 0.05, height, 8);
+            const axisMaterial = new THREE.MeshBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.3 });
+            const axis = new THREE.Mesh(axisGeometry, axisMaterial);
+            spiralScene.add(axis);
+            spiralObjects.push(axis);
+        }
+        
+        // ========== 右侧：经典磁场闭环特性（Canvas 2D实现） ==========
+        let magneticCanvas, magneticCtx;
+        let particles = [];
+        let fieldLines = [];
+        let showFieldLines = true;
+        let animationId;
+        
+        function initMagneticVisualization() {
+            magneticCanvas = document.getElementById('magneticCanvas');
+            magneticCtx = magneticCanvas.getContext('2d');
+            
+            // 设置画布尺寸
+            resizeMagneticCanvas();
+            
+            // 创建磁极
+            createMagnetPoles();
+            
+            // 创建粒子
+            createParticles();
+            
+            // 创建磁感线
+            createFieldLines();
+            
+            // 开始动画
+            animateMagneticField();
+            
+            // 窗口大小调整
+            window.addEventListener('resize', function() {
+                resizeMagneticCanvas();
+                createMagnetPoles();
+                createFieldLines();
+            });
+        }
+        
+        function resizeMagneticCanvas() {
+            const container = magneticCanvas.parentElement;
+            magneticCanvas.width = container.clientWidth;
+            magneticCanvas.height = container.clientHeight;
+        }
+        
+        function createMagnetPoles() {
+            // 在画布上绘制条形磁铁
+            const width = magneticCanvas.width;
+            const height = magneticCanvas.height;
+            
+            // 磁铁尺寸和位置
+            const magnetWidth = width * 0.2;
+            const magnetHeight = height * 0.1;
+            const magnetX = width / 2 - magnetWidth / 2;
+            const magnetY = height / 2 - magnetHeight / 2;
+            
+            // 绘制磁铁主体
+            magneticCtx.fillStyle = '#475569';
+            magneticCtx.fillRect(magnetX, magnetY, magnetWidth, magnetHeight);
+            
+            // 绘制N极（红色）
+            magneticCtx.fillStyle = '#f87171';
+            magneticCtx.fillRect(magnetX, magnetY, magnetWidth * 0.5, magnetHeight);
+            
+            // 绘制S极（蓝色）
+            magneticCtx.fillStyle = '#60a5fa';
+            magneticCtx.fillRect(magnetX + magnetWidth * 0.5, magnetY, magnetWidth * 0.5, magnetHeight);
+            
+            // 标注N和S
+            magneticCtx.font = 'bold 16px Arial';
+            magneticCtx.fillStyle = '#ffffff';
+            magneticCtx.textAlign = 'center';
+            magneticCtx.textBaseline = 'middle';
+            
+            magneticCtx.fillText('N', magnetX + magnetWidth * 0.25, magnetY + magnetHeight / 2);
+            magneticCtx.fillText('S', magnetX + magnetWidth * 0.75, magnetY + magnetHeight / 2);
+            
+            // 存储磁极位置用于计算磁场
+            window.magnetPoles = {
+                north: { x: magnetX + magnetWidth * 0.25, y: magnetY + magnetHeight / 2, strength: 1 },
+                south: { x: magnetX + magnetWidth * 0.75, y: magnetY + magnetHeight / 2, strength: -1 },
+                width: magnetWidth,
+                height: magnetHeight
+            };
+        }
+        
+        function createParticles() {
+            particles = [];
+            const width = magneticCanvas.width;
+            const height = magneticCanvas.height;
+            const magnet = window.magnetPoles;
+            
+            // 在N极附近创建粒子
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: magnet.north.x + (Math.random() - 0.5) * 30,
+                    y: magnet.north.y - magnet.height / 2 - Math.random() * 30,
+                    vx: 0,
+                    vy: 0,
+                    trail: [],
+                    trailMaxLength: 100,
+                    color: `rgba(248, 113, 113, ${0.7 + Math.random() * 0.3})`
+                });
+            }
+        }
+        
+        function createFieldLines() {
+            fieldLines = [];
+            const width = magneticCanvas.width;
+            const height = magneticCanvas.height;
+            const magnet = window.magnetPoles;
+            
+            // 创建从N极出发的磁感线
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2;
+                const startX = magnet.north.x + Math.cos(angle) * 10;
+                const startY = magnet.north.y + Math.sin(angle) * 10;
+                
+                const line = calculateFieldLine(startX, startY);
+                fieldLines.push(line);
+            }
+        }
+        
+        function calculateFieldLine(startX, startY) {
+            const magnet = window.magnetPoles;
+            const points = [];
+            let x = startX;
+            let y = startY;
+            let vx = 0;
+            let vy = 0;
+            const stepSize = 1;
+            const maxSteps = 500;
+            
+            // 使用简单的磁场模型计算磁感线路径
+            for (let i = 0; i < maxSteps; i++) {
+                points.push({x, y});
+                
+                // 计算磁场方向（从N到S）
+                const dxNorth = magnet.north.x - x;
+                const dyNorth = magnet.north.y - y;
+                const distNorth = Math.sqrt(dxNorth * dxNorth + dyNorth * dyNorth);
+                
+                const dxSouth = magnet.south.x - x;
+                const dySouth = magnet.south.y - y;
+                const distSouth = Math.sqrt(dxSouth * dxSouth + dySouth * dySouth);
+                
+                // 简单磁场模型：N极排斥，S极吸引
+                const forceNorth = magnet.north.strength / (distNorth * distNorth);
+                const forceSouth = magnet.south.strength / (distSouth * distSouth);
+                
+                vx += (dxNorth / distNorth) * forceNorth + (dxSouth / distSouth) * forceSouth;
+                vy += (dyNorth / distNorth) * forceNorth + (dySouth / distSouth) * forceSouth;
+                
+                // 归一化速度
+                const speed = Math.sqrt(vx * vx + vy * vy);
+                if (speed > 0) {
+                    vx = vx / speed * stepSize;
+                    vy = vy / speed * stepSize;
+                }
+                
+                x += vx;
+                y += vy;
+                
+                // 如果接近S极或离开画布，停止计算
+                if (distSouth < 20 || x < 0 || x > magneticCanvas.width || y < 0 || y > magneticCanvas.height) {
+                    break;
+                }
+            }
+            
+            return points;
+        }
+        
+        function animateMagneticField() {
+            // 清除画布
+            magneticCtx.clearRect(0, 0, magneticCanvas.width, magneticCanvas.height);
+            
+            // 重新绘制磁铁
+            createMagnetPoles();
+            
+            // 绘制磁感线
+            if (showFieldLines) {
+                magneticCtx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+                magneticCtx.lineWidth = 1.5;
+                
+                fieldLines.forEach(line => {
+                    magneticCtx.beginPath();
+                    magneticCtx.moveTo(line[0].x, line[0].y);
+                    
+                    for (let i = 1; i < line.length; i++) {
+                        magneticCtx.lineTo(line[i].x, line[i].y);
+                    }
+                    
+                    magneticCtx.stroke();
+                });
+            }
+            
+            // 更新和绘制粒子
+            particles.forEach(particle => {
+                // 计算磁场力
+                const magnet = window.magnetPoles;
+                const dxNorth = magnet.north.x - particle.x;
+                const dyNorth = magnet.north.y - particle.y;
+                const distNorth = Math.sqrt(dxNorth * dxNorth + dyNorth * dyNorth);
+                
+                const dxSouth = magnet.south.x - particle.x;
+                const dySouth = magnet.south.y - particle.y;
+                const distSouth = Math.sqrt(dxSouth * dxSouth + dySouth * dySouth);
+                
+                // 简单磁场模型
+                const forceNorth = magnet.north.strength / (distNorth * distNorth);
+                const forceSouth = magnet.south.strength / (distSouth * distSouth);
+                
+                particle.vx += (dxNorth / distNorth) * forceNorth + (dxSouth / distSouth) * forceSouth;
+                particle.vy += (dyNorth / distNorth) * forceNorth + (dySouth / distSouth) * forceSouth;
+                
+                // 添加一些随机性
+                particle.vx += (Math.random() - 0.5) * 0.1;
+                particle.vy += (Math.random() - 0.5) * 0.1;
+                
+                // 限制最大速度
+                const speed = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
+                if (speed > 2) {
+                    particle.vx = particle.vx / speed * 2;
+                    particle.vy = particle.vy / speed * 2;
+                }
+                
+                // 更新位置
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                
+                // 记录轨迹
+                particle.trail.push({x: particle.x, y: particle.y});
+                if (particle.trail.length > particle.trailMaxLength) {
+                    particle.trail.shift();
+                }
+                
+                // 绘制轨迹
+                if (particle.trail.length > 1) {
+                    magneticCtx.strokeStyle = particle.color;
+                    magneticCtx.lineWidth = 1.5;
+                    magneticCtx.beginPath();
+                    magneticCtx.moveTo(particle.trail[0].x, particle.trail[0].y);
+                    
+                    for (let i = 1; i < particle.trail.length; i++) {
+                        magneticCtx.lineTo(particle.trail[i].x, particle.trail[i].y);
+                    }
+                    
+                    magneticCtx.stroke();
+                }
+                
+                // 绘制粒子
+                magneticCtx.fillStyle = particle.color;
+                magneticCtx.beginPath();
+                magneticCtx.arc(particle.x, particle.y, 3, 0, Math.PI * 2);
+                magneticCtx.fill();
+                
+                // 如果粒子离开画布或接近S极，重置到N极
+                if (particle.x < 0 || particle.x > magneticCanvas.width || 
+                    particle.y < 0 || particle.y > magneticCanvas.height ||
+                    distSouth < 15) {
+                    particle.x = magnet.north.x + (Math.random() - 0.5) * 30;
+                    particle.y = magnet.north.y - magnet.height / 2 - Math.random() * 30;
+                    particle.vx = 0;
+                    particle.vy = 0;
+                    particle.trail = [];
+                }
+            });
+            
+            animationId = requestAnimationFrame(animateMagneticField);
+        }
+        
+        // ========== DNA双螺旋简单可视化 ==========
+        function initDNAVisualization() {
+            const canvas = document.createElement('canvas');
+            const container = document.getElementById('dnaStrand');
+            container.appendChild(canvas);
+            
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            canvas.width = width;
+            canvas.height = height;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // 绘制简单的DNA双螺旋示意图
+            function drawDNA() {
+                ctx.clearRect(0, 0, width, height);
+                
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const amplitude = width * 0.2;
+                const frequency = 0.05;
+                const pointRadius = 2;
+                
+                // 绘制两条螺旋线
+                for (let i = 0; i < height; i += 2) {
+                    const x1 = centerX + amplitude * Math.sin(i * frequency);
+                    const x2 = centerX - amplitude * Math.sin(i * frequency);
+                    
+                    // 第一条螺旋线（蓝色）
+                    ctx.beginPath();
+                    ctx.arc(x1, i, pointRadius, 0, Math.PI * 2);
+                    ctx.fillStyle = '#60a5fa';
+                    ctx.fill();
+                    
+                    // 第二条螺旋线（红色）
+                    ctx.beginPath();
+                    ctx.arc(x2, i, pointRadius, 0, Math.PI * 2);
+                    ctx.fillStyle = '#f87171';
+                    ctx.fill();
+                    
+                    // 连接线（绿色）
+                    if (i % 20 === 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(x1, i);
+                        ctx.lineTo(x2, i);
+                        ctx.strokeStyle = '#34d399';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            drawDNA();
+            
+            // 简单动画
+            let rotation = 0;
+            function animateDNA() {
+                rotation += 0.01;
+                
+                ctx.save();
+                ctx.clearRect(0, 0, width, height);
+                ctx.translate(width/2, height/2);
+                ctx.rotate(rotation);
+                ctx.translate(-width/2, -height/2);
+                drawDNA();
+                ctx.restore();
+                
+                requestAnimationFrame(animateDNA);
+            }
+            
+            animateDNA();
+        }
+        
+        // ========== 事件监听器 ==========
+        document.getElementById('rotateSpiral').addEventListener('click', function() {
+            spiralRotationEnabled = !spiralRotationEnabled;
+            this.textContent = spiralRotationEnabled ? '暂停旋转' : '旋转螺旋';
+        });
+        
+        document.getElementById('changePerspective').addEventListener('click', function() {
+            perspectiveIndex = (perspectiveIndex + 1) % 3;
+            
+            switch(perspectiveIndex) {
+                case 0:
+                    spiralCamera.position.set(0, 8, 20);
+                    break;
+                case 1:
+                    spiralCamera.position.set(20, 5, 0);
+                    break;
+                case 2:
+                    spiralCamera.position.set(0, 20, 5);
+                    break;
+            }
+            
+            spiralCamera.lookAt(0, 0, 0);
+        });
+        
+        document.getElementById('toggleFieldLines').addEventListener('click', function() {
+            showFieldLines = !showFieldLines;
+            this.textContent = showFieldLines ? '隐藏磁感线' : '显示磁感线';
+        });
+        
+        document.getElementById('resetParticles').addEventListener('click', function() {
+            createParticles();
+        });
+        
+        // ========== 初始化所有可视化 ==========
+        window.addEventListener('load', function() {
+            initSpiralVisualization();
+            initMagneticVisualization();
+            initDNAVisualization();
+        });
+        
+        // 处理窗口大小调整
+        window.addEventListener('resize', function() {
+            if (spiralRenderer) {
+                const container = document.getElementById('spiralCanvas').parentElement;
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                
+                spiralCamera.aspect = width / height;
+                spiralCamera.updateProjectionMatrix();
+                spiralRenderer.setSize(width, height);
+            }
+        });
+    </script>
+</body>
+</html>

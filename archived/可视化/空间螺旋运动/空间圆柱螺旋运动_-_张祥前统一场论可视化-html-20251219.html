@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>空间圆柱螺旋运动 - 张祥前统一场论可视化</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background-color: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 400px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        #info h3 { margin-top: 0; color: #4FC3F7; }
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+    </style>
+    <script src=" https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js "></script>
+    <script src=" https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js "></script>
+    <script src=" https://cdn.jsdelivr.net/npm/dat.gui@0.7.7/build/dat.gui.min.js "></script>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="info">
+        <h3>🔬 空间圆柱螺旋运动可视化</h3>
+        <p><strong>理论核心公设[1](@ref)[6](@ref)：</strong>静止物体周围的空间以<strong>矢量光速c</strong>进行<strong>圆柱状螺旋式</strong>发散运动。</p>
+        <p><strong>数学描述[2](@ref)[6](@ref)：</strong></p>
+        <p>\[ \vec{r}(t) = R \cos(\omega t) \hat{i} + R \sin(\omega t) \hat{j} + h t \hat{k} \]</p>
+        <p><strong>光速约束[6](@ref)：</strong>合成速度模恒定：\( v_{\text{旋}}^2 + v_{\text{直}}^2 = c^2 \)。</p>
+        <p><strong>可视化说明：</strong></p>
+        <ul>
+            <li><strong style="color:#FF6666">红色螺旋线</strong>：代表从中心物体发出的<strong>单一右手螺旋</strong>运动轨迹。</li>
+            <li><strong>黄色箭头</strong>：代表空间点的<strong>瞬时速度矢量</strong>，可分解为旋转（绿色）和直线（蓝色）分量。</li>
+            <li><strong>灰色网格球体</strong>：表示空间范围，螺旋线从中穿过。</li>
+        </ul>
+        <p><strong>交互操作：</strong></p>
+        <ul>
+            <li><strong>鼠标拖拽</strong>：旋转视角。</li>
+            <li><strong>鼠标滚轮</strong>：缩放场景。</li>
+            <li><strong>右侧面板</strong>：调节螺旋参数，观察速度分量与光速约束。</li>
+        </ul>
+    </div>
+    <div id="controls"></div>
+
+    <script>
+        // 1. 初始化场景
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a1a);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(12, 8, 12);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('container').appendChild(renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // 光源
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 20, 15);
+        scene.add(directionalLight);
+
+        // 2. 创建中心物体
+        const centerGeometry = new THREE.SphereGeometry(0.4, 32, 16);
+        const centerMaterial = new THREE.MeshPhongMaterial({ color: 0xFFD700, emissive: 0x222200 });
+        const centerObject = new THREE.Mesh(centerGeometry, centerMaterial);
+        scene.add(centerObject);
+
+        // 3. 创建参考球体网格
+        const sphereGeometry = new THREE.SphereGeometry(7, 16, 12);
+        const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x888888, wireframe: true, transparent: true, opacity: 0.3 });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(sphere);
+
+        // 4. 创建坐标系
+        const axesHelper = new THREE.AxesHelper(10);
+        scene.add(axesHelper);
+
+        // 5. 螺旋线参数与生成
+        let spiralLine, velocityArrows = [];
+        const params = {
+            螺旋半径R: 5.0,
+            旋转角速度ω: 1.0,
+            直线速度h: 2.0,
+            显示速度矢量: true,
+            显示速度分解: true,
+            '光速c (计算值)': 0 // 只读显示
+        };
+        // 计算合速度模
+        function calculateSpeed() {
+            return Math.sqrt(Math.pow(params.螺旋半径R * params.旋转角速度ω, 2) + Math.pow(params.直线速度h, 2));
+        }
+        params['光速c (计算值)'] = calculateSpeed().toFixed(2);
+
+        function updateSpiral() {
+            // 移除旧的螺旋线和箭头
+            if (spiralLine) scene.remove(spiralLine);
+            velocityArrows.forEach(arrow => scene.remove(arrow));
+            velocityArrows = [];
+
+            // 生成新的螺旋线点
+            const points = [];
+            const arrowPoints = [];
+            const totalTime = 4 * Math.PI; // 总时间跨度
+            const segments = 300;
+            for (let i = 0; i <= segments; i++) {
+                const t = (i / segments) * totalTime;
+                const x = params.螺旋半径R * Math.cos(params.旋转角速度ω * t);
+                const y = params.螺旋半径R * Math.sin(params.旋转角速度ω * t);
+                const z = params.直线速度h * t;
+                points.push(new THREE.Vector3(x, y, z));
+                // 每隔一段距离放置一个速度箭头
+                if (i % 30 === 0) {
+                    arrowPoints.push({ pos: new THREE.Vector3(x, y, z), t: t });
+                }
+            }
+
+            // 创建螺旋线
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ color: 0xFF6666, linewidth: 2 });
+            spiralLine = new THREE.Line(geometry, material);
+            scene.add(spiralLine);
+
+            // 创建速度矢量箭头
+            if (params.显示速度矢量) {
+                const arrowLength = 2.0;
+                arrowPoints.forEach(point => {
+                    // 计算速度矢量导数: dx/dt = -Rω sin(ωt), dy/dt = Rω cos(ωt), dz/dt = h
+                    const vx = -params.螺旋半径R * params.旋转角速度ω * Math.sin(params.旋转角速度ω * point.t);
+                    const vy = params.螺旋半径R * params.旋转角速度ω * Math.cos(params.旋转角速度ω * point.t);
+                    const vz = params.直线速度h;
+                    const velocity = new THREE.Vector3(vx, vy, vz).normalize();
+
+                    // 总速度箭头 (黄色)
+                    const dir = velocity.clone().multiplyScalar(arrowLength);
+                    const arrowHelper = new THREE.ArrowHelper(dir, point.pos, arrowLength, 0xFFD700, 0.3, 0.1);
+                    scene.add(arrowHelper);
+                    velocityArrows.push(arrowHelper);
+
+                    // 速度分解箭头 (绿色：旋转分量，蓝色：直线分量)
+                    if (params.显示速度分解) {
+                        // 旋转分量位于x-y平面，垂直于位置矢量在x-y平面的投影
+                        const posInXY = new THREE.Vector3(point.pos.x, point.pos.y, 0);
+                        const rotDir = new THREE.Vector3(-point.pos.y, point.pos.x, 0).normalize();
+                        const rotArrowHelper = new THREE.ArrowHelper(rotDir, point.pos, arrowLength * Math.abs(params.螺旋半径R * params.旋转角速度ω) / calculateSpeed(), 0x00FF00, 0.2, 0.08);
+                        scene.add(rotArrowHelper);
+                        velocityArrows.push(rotArrowHelper);
+
+                        // 直线分量沿z轴
+                        const linearDir = new THREE.Vector3(0, 0, vz > 0 ? 1 : -1);
+                        const linearArrowHelper = new THREE.ArrowHelper(linearDir, point.pos, arrowLength * Math.abs(params.直线速度h) / calculateSpeed(), 0x0066FF, 0.2, 0.08);
+                        scene.add(linearArrowHelper);
+                        velocityArrows.push(linearArrowHelper);
+                    }
+                });
+            }
+            // 更新显示的光速计算值
+            params['光速c (计算值)'] = calculateSpeed().toFixed(2);
+            gui.updateDisplay();
+        }
+
+        // 6. 初始化并更新
+        updateSpiral();
+
+        // 7. 添加控制面板
+        const gui = new dat.GUI({ autoPlace: false });
+        const guiContainer = document.getElementById('controls');
+        guiContainer.appendChild(gui.domElement);
+
+        gui.add(params, '螺旋半径R', 1, 10, 0.1).onChange(updateSpiral);
+        gui.add(params, '旋转角速度ω', 0.1, 3, 0.1).onChange(updateSpiral);
+        gui.add(params, '直线速度h', 0.1, 5, 0.1).onChange(updateSpiral);
+        gui.add(params, '显示速度矢量').onChange(updateSpiral);
+        gui.add(params, '显示速度分解').onChange(updateSpiral);
+        gui.add(params, '光速c (计算值)').listen(); // 只读
+
+        // 8. 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圆柱状螺旋运动三面投影动画</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            color: #90caf9;
+        }
+        
+        .canvas-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 15px;
+            height: 700px;
+            margin-bottom: 30px;
+        }
+        
+        .canvas-wrapper {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .main-canvas {
+            grid-row: 1 / 3;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 5px;
+        }
+        
+        .canvas-label {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #90caf9;
+        }
+        
+        .controls {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+            color: #90caf9;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #90caf9;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .value-display {
+            min-width: 60px;
+            text-align: right;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .info-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .info-item {
+            background: rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .info-label {
+            font-size: 0.85em;
+            color: #90caf9;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.2em;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌀 圆柱状螺旋运动三面投影动画</h1>
+        <p class="subtitle">张祥前统一场论 - 空间运动可视化</p>
+        
+        <div class="canvas-container">
+            <div class="canvas-wrapper main-canvas">
+                <canvas id="main3d"></canvas>
+                <div class="canvas-label">3D 螺旋运动</div>
+            </div>
+            <div class="canvas-wrapper">
+                <canvas id="xy-plane"></canvas>
+                <div class="canvas-label">XY平面投影（俯视图）</div>
+            </div>
+            <div class="canvas-wrapper">
+                <canvas id="xz-plane"></canvas>
+                <div class="canvas-label">XZ平面投影（正视图）</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <h3 style="margin-bottom: 20px;">⚙️ 参数控制</h3>
+            
+            <div class="control-group">
+                <label>螺旋半径 r (米)</label>
+                <div class="slider-container">
+                    <input type="range" id="radius" min="0.5" max="3" step="0.1" value="1.0">
+                    <span class="value-display" id="radius-val">1.0</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>角速度 ω (rad/s)</label>
+                <div class="slider-container">
+                    <input type="range" id="omega" min="0.5" max="3" step="0.1" value="1.0">
+                    <span class="value-display" id="omega-val">1.0</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>轴向速度 p (m/s)</label>
+                <div class="slider-container">
+                    <input type="range" id="axial" min="0.5" max="3" step="0.1" value="1.0">
+                    <span class="value-display" id="axial-val">1.0</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>动画速度</label>
+                <div class="slider-container">
+                    <input type="range" id="speed" min="0.5" max="3" step="0.1" value="1.0">
+                    <span class="value-display" id="speed-val">1.0×</span>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button id="play-pause">⏸️ 暂停</button>
+                <button id="reset">🔄 重置</button>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h3>📊 实时运动参数</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">时间 t (秒)</div>
+                    <div class="info-value" id="time-val">0.00</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">速度模 |V| (m/s)</div>
+                    <div class="info-value" id="velocity-val">0.00</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">加速度模 |a| (m/s²)</div>
+                    <div class="info-value" id="accel-val">0.00</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">位置 x (米)</div>
+                    <div class="info-value" id="x-val">0.00</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">位置 y (米)</div>
+                    <div class="info-value" id="y-val">0.00</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">位置 z (米)</div>
+                    <div class="info-value" id="z-val">0.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取所有canvas
+        const main3d = document.getElementById('main3d');
+        const xyPlane = document.getElementById('xy-plane');
+        const xzPlane = document.getElementById('xz-plane');
+        
+        const ctx3d = main3d.getContext('2d');
+        const ctxXY = xyPlane.getContext('2d');
+        const ctxXZ = xzPlane.getContext('2d');
+        
+        // 设置canvas尺寸
+        function resizeCanvases() {
+            main3d.width = main3d.offsetWidth;
+            main3d.height = main3d.offsetHeight;
+            xyPlane.width = xyPlane.offsetWidth;
+            xyPlane.height = xyPlane.offsetHeight;
+            xzPlane.width = xzPlane.offsetWidth;
+            xzPlane.height = xzPlane.offsetHeight;
+        }
+        resizeCanvases();
+        window.addEventListener('resize', resizeCanvases);
+        
+        // 参数
+        let params = {
+            r: 1.0,
+            omega: 1.0,
+            p: 1.0,
+            animSpeed: 1.0
+        };
+        
+        let time = 0;
+        let isPlaying = true;
+        let rotation3D = { x: 0.5, y: 0.8 };
+        let trajectory = [];
+        const maxTrajectoryPoints = 300;
+        
+        // 3D投影函数
+        function project3D(x, y, z, width, height) {
+            const scale = Math.min(width, height) / 8;
+            const cx = width / 2;
+            const cy = height / 2;
+            
+            // 旋转
+            const cosX = Math.cos(rotation3D.x);
+            const sinX = Math.sin(rotation3D.x);
+            const cosY = Math.cos(rotation3D.y);
+            const sinY = Math.sin(rotation3D.y);
+            
+            let y1 = y * cosX - z * sinX;
+            let z1 = y * sinX + z * cosX;
+            let x1 = x * cosY + z1 * sinY;
+            let z2 = -x * sinY + z1 * cosY;
+            
+            return {
+                x: cx + x1 * scale,
+                y: cy - y1 * scale,
+                z: z2
+            };
+        }
+        
+        // 绘制3D场景
+        function draw3D() {
+            const w = main3d.width;
+            const h = main3d.height;
+            
+            ctx3d.fillStyle = '#0a0a1a';
+            ctx3d.fillRect(0, 0, w, h);
+            
+            // 绘制坐标轴
+            drawAxes3D(w, h);
+            
+            // 绘制轨迹
+            ctx3d.strokeStyle = 'rgba(144, 202, 249, 0.3)';
+            ctx3d.lineWidth = 2;
+            ctx3d.beginPath();
+            for (let i = 0; i < trajectory.length; i++) {
+                const p = project3D(trajectory[i].x, trajectory[i].y, trajectory[i].z, w, h);
+                if (i === 0) ctx3d.moveTo(p.x, p.y);
+                else ctx3d.lineTo(p.x, p.y);
+            }
+            ctx3d.stroke();
+            
+            // 绘制当前点
+            if (trajectory.length > 0) {
+                const curr = trajectory[trajectory.length - 1];
+                const p = project3D(curr.x, curr.y, curr.z, w, h);
+                
+                // 发光效果
+                const gradient = ctx3d.createRadialGradient(p.x, p.y, 0, p.x, p.y, 20);
+                gradient.addColorStop(0, 'rgba(255, 64, 129, 1)');
+                gradient.addColorStop(1, 'rgba(255, 64, 129, 0)');
+                ctx3d.fillStyle = gradient;
+                ctx3d.fillRect(p.x - 20, p.y - 20, 40, 40);
+                
+                ctx3d.fillStyle = '#ff4081';
+                ctx3d.beginPath();
+                ctx3d.arc(p.x, p.y, 8, 0, Math.PI * 2);
+                ctx3d.fill();
+                
+                // 绘制速度矢量
+                const vx = -params.r * params.omega * Math.sin(params.omega * time);
+                const vy = params.r * params.omega * Math.cos(params.omega * time);
+                const vz = params.p;
+                const scale = 0.5;
+                const vEnd = project3D(
+                    curr.x + vx * scale,
+                    curr.y + vy * scale,
+                    curr.z + vz * scale,
+                    w, h
+                );
+                
+                ctx3d.strokeStyle = '#4caf50';
+                ctx3d.lineWidth = 3;
+                ctx3d.beginPath();
+                ctx3d.moveTo(p.x, p.y);
+                ctx3d.lineTo(vEnd.x, vEnd.y);
+                ctx3d.stroke();
+                
+                // 箭头
+                const angle = Math.atan2(vEnd.y - p.y, vEnd.x - p.x);
+                ctx3d.fillStyle = '#4caf50';
+                ctx3d.beginPath();
+                ctx3d.moveTo(vEnd.x, vEnd.y);
+                ctx3d.lineTo(vEnd.x - 10 * Math.cos(angle - 0.3), vEnd.y - 10 * Math.sin(angle - 0.3));
+                ctx3d.lineTo(vEnd.x - 10 * Math.cos(angle + 0.3), vEnd.y - 10 * Math.sin(angle + 0.3));
+                ctx3d.closePath();
+                ctx3d.fill();
+            }
+        }
+        
+        // 绘制3D坐标轴
+        function drawAxes3D(w, h) {
+            const axisLen = 2;
+            const origin = project3D(0, 0, 0, w, h);
+            
+            const axes = [
+                { end: project3D(axisLen, 0, 0, w, h), color: '#f44336', label: 'X' },
+                { end: project3D(0, axisLen, 0, w, h), color: '#4caf50', label: 'Y' },
+                { end: project3D(0, 0, axisLen, w, h), color: '#2196f3', label: 'Z' }
+            ];
+            
+            axes.forEach(axis => {
+                ctx3d.strokeStyle = axis.color;
+                ctx3d.lineWidth = 2;
+                ctx3d.beginPath();
+                ctx3d.moveTo(origin.x, origin.y);
+                ctx3d.lineTo(axis.end.x, axis.end.y);
+                ctx3d.stroke();
+                
+                ctx3d.fillStyle = axis.color;
+                ctx3d.font = 'bold 16px Arial';
+                ctx3d.fillText(axis.label, axis.end.x + 5, axis.end.y + 5);
+            });
+        }
+        
+        // 绘制XY平面投影
+        function drawXYPlane() {
+            const w = xyPlane.width;
+            const h = xyPlane.height;
+            const scale = Math.min(w, h) / 6;
+            const cx = w / 2;
+            const cy = h / 2;
+            
+            ctxXY.fillStyle = '#0a0a1a';
+            ctxXY.fillRect(0, 0, w, h);
+            
+            // 绘制圆形参考
+            ctxXY.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctxXY.lineWidth = 1;
+            ctxXY.beginPath();
+            ctxXY.arc(cx, cy, params.r * scale, 0, Math.PI * 2);
+            ctxXY.stroke();
+            
+            // 绘制坐标轴
+            ctxXY.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctxXY.lineWidth = 1;
+            ctxXY.beginPath();
+            ctxXY.moveTo(0, cy);
+            ctxXY.lineTo(w, cy);
+            ctxXY.moveTo(cx, 0);
+            ctxXY.lineTo(cx, h);
+            ctxXY.stroke();
+            
+            // 绘制轨迹
+            ctxXY.strokeStyle = 'rgba(144, 202, 249, 0.5)';
+            ctxXY.lineWidth = 2;
+            ctxXY.beginPath();
+            for (let i = 0; i < trajectory.length; i++) {
+                const x = cx + trajectory[i].x * scale;
+                const y = cy - trajectory[i].y * scale;
+                if (i === 0) ctxXY.moveTo(x, y);
+                else ctxXY.lineTo(x, y);
+            }
+            ctxXY.stroke();
+            
+            // 绘制当前点
+            if (trajectory.length > 0) {
+                const curr = trajectory[trajectory.length - 1];
+                const x = cx + curr.x * scale;
+                const y = cy - curr.y * scale;
+                
+                ctxXY.fillStyle = '#ff4081';
+                ctxXY.beginPath();
+                ctxXY.arc(x, y, 6, 0, Math.PI * 2);
+                ctxXY.fill();
+            }
+            
+            // 标签
+            ctxXY.fillStyle = '#f44336';
+            ctxXY.font = 'bold 14px Arial';
+            ctxXY.fillText('X', w - 20, cy - 10);
+            ctxXY.fillStyle = '#4caf50';
+            ctxXY.fillText('Y', cx + 10, 20);
+        }
+        
+        // 绘制XZ平面投影
+        function drawXZPlane() {
+            const w = xzPlane.width;
+            const h = xzPlane.height;
+            const scale = Math.min(w, h) / 8;
+            const cx = w / 2;
+            const cy = h / 2;
+            
+            ctxXZ.fillStyle = '#0a0a1a';
+            ctxXZ.fillRect(0, 0, w, h);
+            
+            // 绘制坐标轴
+            ctxXZ.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctxXZ.lineWidth = 1;
+            ctxXZ.beginPath();
+            ctxXZ.moveTo(0, cy);
+            ctxXZ.lineTo(w, cy);
+            ctxXZ.moveTo(cx, 0);
+            ctxXZ.lineTo(cx, h);
+            ctxXZ.stroke();
+            
+            // 绘制轨迹
+            ctxXZ.strokeStyle = 'rgba(255, 152, 0, 0.5)';
+            ctxXZ.lineWidth = 2;
+            ctxXZ.beginPath();
+            for (let i = 0; i < trajectory.length; i++) {
+                const x = cx + trajectory[i].x * scale;
+                const z = cy - trajectory[i].z * scale;
+                if (i === 0) ctxXZ.moveTo(x, z);
+                else ctxXZ.lineTo(x, z);
+            }
+            ctxXZ.stroke();
+            
+            // 绘制当前点
+            if (trajectory.length > 0) {
+                const curr = trajectory[trajectory.length - 1];
+                const x = cx + curr.x * scale;
+                const z = cy - curr.z * scale;
+                
+                ctxXZ.fillStyle = '#ff4081';
+                ctxXZ.beginPath();
+                ctxXZ.arc(x, z, 6, 0, Math.PI * 2);
+                ctxXZ.fill();
+            }
+            
+            // 标签
+            ctxXZ.fillStyle = '#f44336';
+            ctxXZ.font = 'bold 14px Arial';
+            ctxXZ.fillText('X', w - 20, cy - 10);
+            ctxXZ.fillStyle = '#2196f3';
+            ctxXZ.fillText('Z', cx + 10, 20);
+        }
+        
+        // 更新物理参数
+        function updatePhysics() {
+            const x = params.r * Math.cos(params.omega * time);
+            const y = params.r * Math.sin(params.omega * time);
+            const z = params.p * time;
+            
+            trajectory.push({ x, y, z });
+            if (trajectory.length > maxTrajectoryPoints) {
+                trajectory.shift();
+            }
+            
+            // 更新显示
+            const v = Math.sqrt(params.r * params.r * params.omega * params.omega + params.p * params.p);
+            const a = params.r * params.omega * params.omega;
+            
+            document.getElementById('time-val').textContent = time.toFixed(2);
+            document.getElementById('velocity-val').textContent = v.toFixed(3);
+            document.getElementById('accel-val').textContent = a.toFixed(3);
+            document.getElementById('x-val').textContent = x.toFixed(3);
+            document.getElementById('y-val').textContent = y.toFixed(3);
+            document.getElementById('z-val').textContent = z.toFixed(3);
+        }
+        
+        // 动画循环
+        function animate() {
+            if (isPlaying) {
+                time += 0.016 * params.animSpeed;
+                updatePhysics();
+                
+                // 自动旋转3D视图
+                rotation3D.y += 0.005;
+            }
+            
+            draw3D();
+            drawXYPlane();
+            drawXZPlane();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // 控制器
+        document.getElementById('radius').addEventListener('input', (e) => {
+            params.r = parseFloat(e.target.value);
+            document.getElementById('radius-val').textContent = params.r.toFixed(1);
+        });
+        
+        document.getElementById('omega').addEventListener('input', (e) => {
+            params.omega = parseFloat(e.target.value);
+            document.getElementById('omega-val').textContent = params.omega.toFixed(1);
+        });
+        
+        document.getElementById('axial').addEventListener('input', (e) => {
+            params.p = parseFloat(e.target.value);
+            document.getElementById('axial-val').textContent = params.p.toFixed(1);
+        });
+        
+        document.getElementById('speed').addEventListener('input', (e) => {
+            params.animSpeed = parseFloat(e.target.value);
+            document.getElementById('speed-val').textContent = params.animSpeed.toFixed(1) + '×';
+        });
+        
+        document.getElementById('play-pause').addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            document.getElementById('play-pause').textContent = isPlaying ? '⏸️ 暂停' : '▶️ 播放';
+        });
+        
+        document.getElementById('reset').addEventListener('click', () => {
+            time = 0;
+            trajectory = [];
+            isPlaying = true;
+            document.getElementById('play-pause').textContent = '⏸️ 暂停';
+        });
+        
+        // 鼠标拖动旋转3D视图
+        let isDragging = false;
+        let lastX, lastY;
+        
+        main3d.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastX = e.clientX;
+            lastY = e.clientY;
+        });
+        
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const dx = e.clientX - lastX;
+                const dy = e.clientY - lastY;
+                rotation3D.y += dx * 0.01;
+                rotation3D.x += dy * 0.01;
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }
+        });
+        
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        // 启动动画
+        animate();
+    </script>
+</body>
+</html>

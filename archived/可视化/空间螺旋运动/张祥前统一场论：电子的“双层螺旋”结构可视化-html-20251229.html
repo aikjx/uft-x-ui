@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>张祥前统一场论：电子的“双层螺旋”结构可视化</title>
+    <script src=" https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js "></script>
+    <script src=" https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js "></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        #container { width: 100vw; height: 100vh; }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+        h3 { color: #2c3e50; margin-top: 0; }
+        ul { padding-left: 20px; }
+        .layer-control { margin-top: 10px; }
+        .control-label { font-weight: bold; color: #34495e; }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="info">
+        <h3>🔬 电子“双层螺旋”结构几何可视化</h3>
+        <p><strong>理论依据：</strong>根据张祥前统一场论，电子的电磁属性由“双层螺旋”结构描述。该结构是电磁公式中 \(8\pi\) 因子的几何根源。</p>
+        <p><strong>图示说明：</strong></p>
+        <ul>
+            <li><strong style="color:#FF3333">红色螺旋</strong>：代表“右旋”（+）层。</li>
+            <li><strong style="color:#3366FF">蓝色螺旋</strong>：代表“左旋”（-）层。</li>
+            <li><strong>中心黄点</strong>：代表电子（点电荷）所在位置。</li>
+            <li><strong>透明球面</strong>：代表一个高斯球面，对球心所张立体角为 \(4\pi\)。</li>
+        </ul>
+        <p><strong>核心结论：</strong></p>
+        <ol>
+            <li>每一层螺旋都<strong>独立且完整</strong>地覆盖整个球面。</li>
+            <li>单层覆盖对应的有效立体角为 \(4\pi\)。</li>
+            <li>“双层”叠加，总有效立体角为 \(4\pi + 4\pi = 8\pi\)。</li>
+            <li>因此，在计算电子场的总通量时，几何因子从经典的 \(4\pi\) 变为 \(8\pi\)，导致电磁耦合常数 \(Z' = \frac{c}{8\pi\varepsilon_0}\) 中分母出现 \(8\pi\)。</li>
+        </ol>
+        <div class="layer-control">
+            <div class="control-label">图层控制：</div>
+            <label><input type="checkbox" id="toggleRight" checked> 显示右旋层（红）</label><br>
+            <label><input type="checkbox" id="toggleLeft" checked> 显示左旋层（蓝）</label><br>
+            <label><input type="checkbox" id="toggleSphere" checked> 显示参考球面</label>
+        </div>
+        <p><em>使用鼠标拖拽旋转视图，滚轮缩放。</em></p>
+    </div>
+
+    <script>
+        // 1. 初始化场景、相机、渲染器
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0xf0f0f0);
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        // 添加轨道控制
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        // 2. 创建中心电子（点）
+        const electronGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+        const electronMaterial = new THREE.MeshBasicMaterial({ color: 0xFFD700 }); // 金黄色
+        const electron = new THREE.Mesh(electronGeometry, electronMaterial);
+        scene.add(electron);
+
+        // 3. 创建透明参考球面（代表4π立体角）
+        const sphereGeometry = new THREE.SphereGeometry(2, 32, 32);
+        const sphereMaterial = new THREE.MeshBasicMaterial({
+            color: 0xaaaaaa,
+            transparent: true,
+            opacity: 0.15,
+            wireframe: true
+        });
+        const referenceSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(referenceSphere);
+
+        // 4. 创建双层螺旋线
+        const helixParams = {
+            radius: 2.0,   // 球面半径
+            turns: 8,      // 螺旋圈数
+            pointsPerTurn: 50 // 每圈点数
+        };
+        const totalPoints = helixParams.turns * helixParams.pointsPerTurn;
+
+        // 右旋层（红色）
+        const rightHelixPoints = [];
+        const leftHelixPoints = [];
+
+        for (let i = 0; i <= totalPoints; i++) {
+            const progress = i / totalPoints; // 0 到 1
+            const theta = progress * Math.PI * 2 * helixParams.turns; // 方位角（绕z轴）
+            const phi = progress * Math.PI; // 极角（从北极到南极）
+
+            // 球坐标转直角坐标
+            const x = helixParams.radius * Math.sin(phi) * Math.cos(theta);
+            const y = helixParams.radius * Math.sin(phi) * Math.sin(theta);
+            const z = helixParams.radius * Math.cos(phi);
+
+            rightHelixPoints.push(new THREE.Vector3(x, y, z));
+            // 左旋层：旋转方向相反（theta取负）
+            leftHelixPoints.push(new THREE.Vector3(x, y, z));
+        }
+
+        // 创建右旋螺旋线（红色）
+        const rightHelixGeometry = new THREE.BufferGeometry().setFromPoints(rightHelixPoints);
+        const rightHelixMaterial = new THREE.LineBasicMaterial({ color: 0xFF3333, linewidth: 2 });
+        const rightHelix = new THREE.Line(rightHelixGeometry, rightHelixMaterial);
+        scene.add(rightHelix);
+
+        // 创建左旋螺旋线（蓝色）
+        const leftHelixGeometry = new THREE.BufferGeometry().setFromPoints(leftHelixPoints);
+        const leftHelixMaterial = new THREE.LineBasicMaterial({ color: 0x3366FF, linewidth: 2 });
+        const leftHelix = new THREE.Line(leftHelixGeometry, leftHelixMaterial);
+        scene.add(leftHelix);
+
+        // 5. 添加坐标轴辅助
+        const axesHelper = new THREE.AxesHelper(3);
+        scene.add(axesHelper);
+
+        // 6. 添加图层控制交互
+        document.getElementById('toggleRight').addEventListener('change', function(e) {
+            rightHelix.visible = e.target.checked;
+        });
+        document.getElementById('toggleLeft').addEventListener('change', function(e) {
+            leftHelix.visible = e.target.checked;
+        });
+        document.getElementById('toggleSphere').addEventListener('change', function(e) {
+            referenceSphere.visible = e.target.checked;
+        });
+
+        // 7. 窗口大小变化响应
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // 8. 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // 仅在使用控件时更新
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

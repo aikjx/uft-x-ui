@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>空间双层圆柱螺旋运动 - 张祥前统一场论可视化</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background-color: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 350px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        #info h3 { margin-top: 0; color: #4FC3F7; }
+        #info ul { padding-left: 20px; }
+        #info li { margin-bottom: 5px; }
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+    </style>
+    <script src=" https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js "></script>
+    <script src=" https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js "></script>
+    <script src=" https://cdn.jsdelivr.net/npm/dat.gui@0.7.7/build/dat.gui.min.js "></script>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="info">
+        <h3>🔬 空间双层圆柱螺旋运动</h3>
+        <p><strong>理论核心：</strong>张祥前统一场论认为，静止物体周围的空间进行着<strong>圆柱状螺旋运动</strong>，且该运动由<strong>右旋</strong>与<strong>左旋</strong>两个独立层叠加构成。</p>
+        <p><strong>可视化说明：</strong></p>
+        <ul>
+            <li><strong style="color:#FF6666">红色螺旋</strong>：代表<strong>右旋（+）层</strong>。</li>
+            <li><strong style="color:#6666FF">蓝色螺旋</strong>：代表<strong>左旋（-）层</strong>。</li>
+            <li><strong>透明球体</strong>：代表以物体（中心黄点）为球心的<strong>4π立体角</strong>球面。</li>
+        </ul>
+        <p><strong>关键结论：</strong>每一层螺旋都<strong>独立且完整地覆盖</strong>整个球面（贡献一个4π立体角）。两层叠加，总立体角为 <strong>8π</strong>。这是理论中电磁与引力耦合常数出现 <strong>8π</strong> 因子的几何根源。</p>
+        <hr>
+        <p><strong>交互操作：</strong></p>
+        <ul>
+            <li><strong>鼠标拖拽</strong>：旋转视角。</li>
+            <li><strong>鼠标滚轮</strong>：缩放场景。</li>
+            <li><strong>右侧面板</strong>：控制图层显示与动画。</li>
+        </ul>
+    </div>
+    <div id="controls"></div>
+
+    <script>
+        // 1. 初始化基础Three.js场景
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a1a);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(8, 5, 8);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('container').appendChild(renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // 添加基础光源
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 20, 15);
+        scene.add(directionalLight);
+
+        // 2. 创建中心质点（物体）
+        const centerGeometry = new THREE.SphereGeometry(0.3, 32, 16);
+        const centerMaterial = new THREE.MeshPhongMaterial({ color: 0xFFD700, emissive: 0x222200 });
+        const centerObject = new THREE.Mesh(centerGeometry, centerMaterial);
+        scene.add(centerObject);
+
+        // 3. 创建代表4π立体角的透明球体
+        const sphereGeometry = new THREE.SphereGeometry(5, 32, 24);
+        const sphereMaterial = new THREE.MeshBasicMaterial({
+            color: 0x0066cc,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.2
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(sphere);
+
+        // 4. 生成双层螺旋线的点数据
+        const layers = {
+            rightHanded: { color: 0xFF6666, points: [], visible: true, name: "右旋层 (4π)" },
+            leftHanded:  { color: 0x6666FF, points: [], visible: true, name: "左旋层 (4π)" }
+        };
+        const radius = 5.0; // 球面半径
+        const turns = 6;    // 螺旋圈数
+        const pointsCount = 300;
+
+        // 参数方程：生成均匀覆盖球面的螺旋线 (球面螺旋线)
+        for (let layerName in layers) {
+            const isRightHanded = (layerName === 'rightHanded');
+            const points = [];
+            for (let i = 0; i <= pointsCount; i++) {
+                // 参数 t 从 0 到 1，映射到球面
+                const t = i / pointsCount;
+                const phi = t * Math.PI * 2 * turns; // 方位角，绕多圈以实现覆盖
+                const theta = Math.acos(1 - 2 * t);   // 天顶角，使用反余弦实现球面上均匀分布
+                // 球坐标转直角坐标
+                const x = radius * Math.sin(theta) * Math.cos(phi * (isRightHanded ? 1 : -1)); // 左旋层反转方位角
+                const y = radius * Math.sin(theta) * Math.sin(phi * (isRightHanded ? 1 : -1));
+                const z = radius * Math.cos(theta);
+                points.push(new THREE.Vector3(x, y, z));
+            }
+            layers[layerName].points = points;
+        }
+
+        // 5. 创建并添加螺旋线对象
+        const lineObjects = {};
+        for (let layerName in layers) {
+            const geometry = new THREE.BufferGeometry().setFromPoints(layers[layerName].points);
+            const material = new THREE.LineBasicMaterial({
+                color: layers[layerName].color,
+                linewidth: 2,
+                transparent: true,
+                opacity: 0.8
+            });
+            lineObjects[layerName] = new THREE.Line(geometry, material);
+            lineObjects[layerName].visible = layers[layerName].visible;
+            scene.add(lineObjects[layerName]);
+        }
+
+        // 6. 添加控制面板 (使用dat.GUI)
+        const gui = new dat.GUI({ autoPlace: false });
+        const guiContainer = document.getElementById('controls');
+        guiContainer.appendChild(gui.domElement);
+
+        const params = {
+            '显示右旋层': layers.rightHanded.visible,
+            '显示左旋层': layers.leftHanded.visible,
+            '动画速度': 1.0,
+            '重置视角': () => {
+                controls.reset();
+                camera.position.set(8, 5, 8);
+            }
+        };
+
+        gui.add(params, '显示右旋层').onChange(function(value) {
+            layers.rightHanded.visible = value;
+            lineObjects.rightHanded.visible = value;
+        });
+        gui.add(params, '显示左旋层').onChange(function(value) {
+            layers.leftHanded.visible = value;
+            lineObjects.leftHanded.visible = value;
+        });
+        gui.add(params, '动画速度', 0, 3, 0.1);
+        gui.add(params, '重置视角');
+
+        // 7. 动画循环
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01 * params['动画速度'];
+            // 使中心质点缓慢旋转
+            centerObject.rotation.y = time * 0.3;
+            // 可选：让螺旋线也产生缓慢的旋转动画，更直观显示“运动”
+            // lineObjects.rightHanded.rotation.y = time * 0.1;
+            // lineObjects.leftHanded.rotation.y = -time * 0.1;
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 窗口大小响应
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

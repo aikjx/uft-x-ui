@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>闭环环形DNA双螺旋结构 - 统一场论</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: radial-gradient(ellipse at center, #1a1a3a 0%, #0a0a1a 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+            cursor: grab;
+        }
+        #container:active {
+            cursor: grabbing;
+        }
+        
+        .panel {
+            position: absolute;
+            background: rgba(10, 10, 26, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        }
+        
+        #info {
+            top: 20px;
+            left: 20px;
+            max-width: 420px;
+        }
+        
+        .title {
+            font-size: 19px;
+            font-weight: 600;
+            color: #00ffff;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .formula {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(0, 255, 136, 0.15));
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 3px solid #00ffff;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .highlight {
+            color: #00ff88;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+        }
+        
+        .info-text {
+            font-size: 12px;
+            line-height: 1.8;
+            margin-top: 12px;
+        }
+        .info-text div {
+            margin: 6px 0;
+            padding-left: 15px;
+            position: relative;
+        }
+        .info-text div::before {
+            content: '◆';
+            position: absolute;
+            left: 0;
+            color: #00ffff;
+            font-size: 10px;
+        }
+        
+        #legend {
+            top: 20px;
+            right: 20px;
+            min-width: 240px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+        .color-box {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px currentColor;
+        }
+        
+        #controls {
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #00ffff, #00cc99);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            color: #000;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.6);
+        }
+        .btn.active {
+            background: linear-gradient(135deg, #ff3366, #ff6699);
+        }
+        
+        #params {
+            bottom: 20px;
+            right: 20px;
+            min-width: 280px;
+        }
+        
+        .param {
+            margin: 15px 0;
+        }
+        .param-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #00ffff;
+        }
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00ffff, #00ff88);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        }
+        
+        @media (max-width: 768px) {
+            .panel {
+                padding: 15px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="info" class="panel">
+        <div class="title">闭环环形DNA双螺旋结构</div>
+        <div class="formula">
+            <strong>统一场论电势：</strong><br>
+            φ = Q / (<span class="highlight">8π</span>ε₀r)
+        </div>
+        <div class="formula">
+            <strong>统一场论电场：</strong><br>
+            E = Q / (<span class="highlight">8π</span>ε₀r²)
+        </div>
+        <div class="info-text">
+            <div>中心点电荷Q（白色发光点）</div>
+            <div>环形DNA双螺旋：两条链缠绕成闭环</div>
+            <div>第一层螺旋链（红色）：4π 立体角</div>
+            <div>第二层螺旋链（蓝色）：4π 立体角</div>
+            <div>双层总立体角：<span class="highlight">8π</span></div>
+            <div>连接桥：模拟DNA碱基对横向连接</div>
+            <div>总通量：Q/ε₀（符合高斯定律）</div>
+        </div>
+    </div>
+    
+    <div id="legend" class="panel">
+        <div class="title">结构说明</div>
+        <div class="legend-item">
+            <div class="color-box" style="background: #ff3366;"></div>
+            <span>第一层DNA链（4π）</span>
+        </div>
+        <div class="legend-item">
+            <div class="color-box" style="background: #3366ff;"></div>
+            <span>第二层DNA链（4π）</span>
+        </div>
+        <div class="legend-item">
+            <div class="color-box" style="background: #ffff00;"></div>
+            <span>连接桥（碱基对）</span>
+        </div>
+        <div class="legend-item">
+            <div class="color-box" style="background: #00ffff;"></div>
+            <span>电场线（8π）</span>
+        </div>
+        <div class="legend-item">
+            <div class="color-box" style="background: #ffffff;"></div>
+            <span>中心点电荷Q</span>
+        </div>
+    </div>
+    
+    <div id="controls" class="panel">
+        <button class="btn active" onclick="toggleRotation()">⏸ 旋转</button>
+        <button class="btn active" onclick="toggleBridges()">🔗 连接桥</button>
+        <button class="btn active" onclick="toggleFields()">⚡ 电场线</button>
+        <button class="btn" onclick="resetView()">🎯 重置</button>
+    </div>
+    
+    <div id="params" class="panel">
+        <div class="title">参数调节</div>
+        <div class="param">
+            <div class="param-label">
+                <span>旋转速度</span>
+                <span id="speed-val">1.0x</span>
+            </div>
+            <input type="range" class="slider" id="speed" min="0" max="3" step="0.1" value="1">
+        </div>
+        <div class="param">
+            <div class="param-label">
+                <span>螺旋密度</span>
+                <span id="turns-val">16</span>
+            </div>
+            <input type="range" class="slider" id="turns" min="8" max="32" step="2" value="16">
+        </div>
+        <div class="param">
+            <div class="param-label">
+                <span>连接桥数量</span>
+                <span id="bridges-val">60</span>
+            </div>
+            <input type="range" class="slider" id="bridges-count" min="30" max="120" step="10" value="60">
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer;
+        let dnaGroup, bridges, fieldLines, core;
+        let params = {
+            rotating: true,
+            showBridges: true,
+            showFields: true,
+            speed: 1.0,
+            torusRadius: 10,    // 环的大圆半径
+            tubeRadius: 2.5,    // DNA双螺旋的半径
+            helixTurns: 16,     // 螺旋圈数
+            segments: 600,
+            bridgeCount: 60
+        };
+
+        function init() {
+            // 场景
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x0a0a1a, 20, 80);
+
+            // 相机
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 12, 28);
+            camera.lookAt(0, 0, 0);
+
+            // 渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setClearColor(0x0a0a1a);
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            // 光源
+            const ambient = new THREE.AmbientLight(0x404040, 2);
+            scene.add(ambient);
+
+            const lights = [
+                { color: 0xff3366, pos: [20, 15, 15] },
+                { color: 0x3366ff, pos: [-20, -15, -15] },
+                { color: 0xffff00, pos: [0, 20, 0] }
+            ];
+            lights.forEach(({color, pos}) => {
+                const light = new THREE.PointLight(color, 2, 100);
+                light.position.set(...pos);
+                scene.add(light);
+            });
+
+            createCore();
+            createDNAHelix();
+            createFieldLines();
+            createParticles();
+            setupControls();
+            setupInteraction();
+
+            animate();
+        }
+
+        // 创建中心点电荷
+        function createCore() {
+            core = new THREE.Group();
+            
+            // 中心白点
+            const point = new THREE.Mesh(
+                new THREE.SphereGeometry(0.2, 16, 16),
+                new THREE.MeshBasicMaterial({ color: 0xffffff })
+            );
+            core.add(point);
+            
+            // 多层发光
+            [0.4, 0.7, 1.0].forEach((r, i) => {
+                const glow = new THREE.Mesh(
+                    new THREE.SphereGeometry(r, 16, 16),
+                    new THREE.MeshBasicMaterial({
+                        color: i === 2 ? 0x00ffff : 0xffff00,
+                        transparent: true,
+                        opacity: 0.4 - i * 0.1
+                    })
+                );
+                core.add(glow);
+            });
+            
+            // 中心光源
+            const light = new THREE.PointLight(0xffffff, 3, 60);
+            core.add(light);
+            
+            scene.add(core);
+        }
+
+        // 创建环形DNA双螺旋
+        function createDNAHelix() {
+            dnaGroup = new THREE.Group();
+            bridges = new THREE.Group();
+
+            const points1 = [];
+            const points2 = [];
+
+            // 生成两条螺旋链的点
+            for (let i = 0; i <= params.segments; i++) {
+                const t = i / params.segments;
+                
+                // theta: 沿大环的角度（0到2π形成闭环）
+                const theta = t * Math.PI * 2;
+                
+                // phi: 螺旋旋转角度
+                const phi1 = t * params.helixTurns * Math.PI * 2;
+                const phi2 = phi1 + Math.PI; // 相位差180度
+                
+                // 大环中心线上的点
+                const R = params.torusRadius;
+                const centerX = R * Math.cos(theta);
+                const centerY = 0;
+                const centerZ = R * Math.sin(theta);
+                
+                // DNA螺旋偏移量
+                const r = params.tubeRadius;
+                
+                // 计算局部坐标系（切线、法线、副法线）
+                const tangentX = -Math.sin(theta);
+                const tangentZ = Math.cos(theta);
+                
+                // 第一条链
+                const offset1X = r * (Math.cos(phi1) * tangentZ);
+                const offset1Y = r * Math.sin(phi1);
+                const offset1Z = r * (Math.cos(phi1) * (-tangentX));
+                
+                points1.push(new THREE.Vector3(
+                    centerX + offset1X,
+                    centerY + offset1Y,
+                    centerZ + offset1Z
+                ));
+                
+                // 第二条链
+                const offset2X = r * (Math.cos(phi2) * tangentZ);
+                const offset2Y = r * Math.sin(phi2);
+                const offset2Z = r * (Math.cos(phi2) * (-tangentX));
+                
+                points2.push(new THREE.Vector3(
+                    centerX + offset2X,
+                    centerY + offset2Y,
+                    centerZ + offset2Z
+                ));
+            }
+
+            // 创建管道
+            createTube(points1, 0xff3366);
+            createTube(points2, 0x3366ff);
+            
+            // 创建节点
+            createNodes(points1, 0xff3366, 80);
+            createNodes(points2, 0x3366ff, 80);
+            
+            // 创建连接桥
+            createBridges(points1, points2);
+            
+            dnaGroup.add(bridges);
+            scene.add(dnaGroup);
+        }
+
+        function createTube(points, color) {
+            const curve = new THREE.CatmullRomCurve3(points, true); // true = 闭合
+            const geometry = new THREE.TubeGeometry(curve, params.segments, 0.2, 12, true);
+            const material = new THREE.MeshPhongMaterial({
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0.4,
+                shininess: 100
+            });
+            const tube = new THREE.Mesh(geometry, material);
+            dnaGroup.add(tube);
+        }
+
+        function createNodes(points, color, count) {
+            const step = Math.floor(points.length / count);
+            for (let i = 0; i < points.length; i += step) {
+                const sphere = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.15, 12, 12),
+                    new THREE.MeshPhongMaterial({
+                        color: color,
+                        emissive: color,
+                        emissiveIntensity: 0.7
+                    })
+                );
+                sphere.position.copy(points[i]);
+                dnaGroup.add(sphere);
+            }
+        }
+
+        function createBridges(points1, points2) {
+            const step = Math.floor(points1.length / params.bridgeCount);
+            
+            for (let i = 0; i < points1.length; i += step) {
+                const p1 = points1[i];
+                const p2 = points2[i];
+                
+                // 连接线
+                const lineGeo = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+                const line = new THREE.Line(
+                    lineGeo,
+                    new THREE.LineBasicMaterial({
+                        color: 0xffff00,
+                        transparent: true,
+                        opacity: 0.6
+                    })
+                );
+                bridges.add(line);
+                
+                // 中点球
+                const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+                const sphere = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.12, 10, 10),
+                    new THREE.MeshPhongMaterial({
+                        color: 0xffff00,
+                        emissive: 0xffff00,
+                        emissiveIntensity: 0.6
+                    })
+                );
+                sphere.position.copy(mid);
+                sphere.userData.index = i;
+                bridges.add(sphere);
+            }
+        }
+
+        // 创建电场线
+        function createFieldLines() {
+            fieldLines = new THREE.Group();
+            const layers = 8;
+            const linesPerLayer = 24;
+
+            for (let layer = 0; layer < layers; layer++) {
+                const radius = 15 + layer * 2;
+                const y = (layer - layers / 2) * 3;
+
+                for (let i = 0; i < linesPerLayer; i++) {
+                    const angle = (i / linesPerLayer) * Math.PI * 2;
+                    const points = [];
+
+                    for (let r = 12; r < radius + 12; r += 1.5) {
+                        points.push(new THREE.Vector3(
+                            Math.cos(angle) * r,
+                            y,
+                            Math.sin(angle) * r
+                        ));
+                    }
+
+                    const line = new THREE.Line(
+                        new THREE.BufferGeometry().setFromPoints(points),
+                        new THREE.LineBasicMaterial({
+                            color: 0x00ffff,
+                            transparent: true,
+                            opacity: 0.2
+                        })
+                    );
+                    fieldLines.add(line);
+                }
+            }
+            scene.add(fieldLines);
+        }
+
+        // 创建粒子
+        function createParticles() {
+            const geometry = new THREE.BufferGeometry();
+            const count = 2000;
+            const positions = new Float32Array(count * 3);
+
+            for (let i = 0; i < count * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 100;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const particles = new THREE.Points(
+                geometry,
+                new THREE.PointsMaterial({
+                    color: 0xffffff,
+                    size: 0.1,
+                    transparent: true,
+                    opacity: 0.4
+                })
+            );
+            scene.add(particles);
+        }
+
+        // 动画
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = Date.now() * 0.001;
+
+            if (params.rotating) {
+                dnaGroup.rotation.y = time * 0.3 * params.speed;
+                dnaGroup.rotation.x = Math.sin(time * 0.2) * 0.15;
+            }
+
+            // 核心动画
+            if (core) {
+                core.rotation.x = time;
+                core.rotation.y = time * 1.3;
+                
+                for (let i = 1; i < core.children.length - 1; i++) {
+                    const scale = 1 + Math.sin(time * 2 + i) * 0.25;
+                    core.children[i].scale.set(scale, scale, scale);
+                }
+            }
+
+            // 连接桥脉动
+            if (bridges && params.showBridges) {
+                bridges.children.forEach((child, idx) => {
+                    if (child.isMesh) {
+                        const scale = 1 + Math.sin(time * 3 + idx * 0.15) * 0.3;
+                        child.scale.set(scale, scale, scale);
+                    }
+                });
+            }
+
+            // 电场线旋转
+            if (fieldLines && params.showFields) {
+                fieldLines.rotation.y = time * 0.05;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // 控制
+        function setupControls() {
+            document.getElementById('speed').oninput = (e) => {
+                params.speed = parseFloat(e.target.value);
+                document.getElementById('speed-val').textContent = e.target.value + 'x';
+            };
+            
+            document.getElementById('turns').oninput = (e) => {
+                params.helixTurns = parseInt(e.target.value);
+                document.getElementById('turns-val').textContent = e.target.value;
+                rebuildDNA();
+            };
+            
+            document.getElementById('bridges-count').oninput = (e) => {
+                params.bridgeCount = parseInt(e.target.value);
+                document.getElementById('bridges-val').textContent = e.target.value;
+                rebuildDNA();
+            };
+        }
+
+        function rebuildDNA() {
+            scene.remove(dnaGroup);
+            dnaGroup = null;
+            bridges = null;
+            createDNAHelix();
+        }
+
+        function toggleRotation() {
+            params.rotating = !params.rotating;
+            event.target.classList.toggle('active');
+        }
+
+        function toggleBridges() {
+            params.showBridges = !params.showBridges;
+            bridges.visible = params.showBridges;
+            event.target.classList.toggle('active');
+        }
+
+        function toggleFields() {
+            params.showFields = !params.showFields;
+            fieldLines.visible = params.showFields;
+            event.target.classList.toggle('active');
+        }
+
+        function resetView() {
+            camera.position.set(0, 12, 28);
+            camera.lookAt(0, 0, 0);
+        }
+
+        // 交互
+        function setupInteraction() {
+            const container = document.getElementById('container');
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+
+            container.onmousedown = (e) => {
+                isDragging = true;
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            };
+
+            container.onmousemove = (e) => {
+                if (isDragging) {
+                    const deltaX = e.clientX - previousMousePosition.x;
+                    const deltaY = e.clientY - previousMousePosition.y;
+                    
+                    dnaGroup.rotation.y += deltaX * 0.01;
+                    dnaGroup.rotation.x += deltaY * 0.01;
+                    
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                } else {
+                    const mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+                    const mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+                    camera.position.x = mouseX * 3;
+                    camera.position.y = 12 + mouseY * 3;
+                    camera.lookAt(0, 0, 0);
+                }
+            };
+
+            container.onmouseup = () => isDragging = false;
+            container.onmouseleave = () => isDragging = false;
+
+            container.onwheel = (e) => {
+                e.preventDefault();
+                camera.position.z = Math.max(15, Math.min(50, camera.position.z + e.deltaY * 0.05));
+            };
+
+            window.onresize = () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            };
+        }
+
+        init();
+    </script>
+</body>
+</html>

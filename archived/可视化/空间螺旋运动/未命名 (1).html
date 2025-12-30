@@ -1,0 +1,318 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>引力与电磁力比值研究</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #FFFFFF;
+        }
+        .card {
+            background-color: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 1.25rem; /* 20px */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            overflow: hidden;
+            position: relative;
+        }
+        .card:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        .highlight-gradient-blue {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0), rgba(59, 130, 246, 0.05));
+        }
+        .highlight-gradient-purple {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0), rgba(168, 85, 247, 0.05));
+        }
+        .highlight-gradient-teal {
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0), rgba(20, 184, 166, 0.05));
+        }
+        .highlight-gradient-amber {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0), rgba(245, 158, 11, 0.05));
+        }
+        .highlight-gradient-rose {
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0), rgba(244, 63, 94, 0.05));
+        }
+        .highlight-gradient-indigo {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0), rgba(99, 102, 241, 0.05));
+        }
+        .highlight-gradient-green {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0), rgba(34, 197, 94, 0.05));
+        }
+        .highlight-gradient-orange {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0), rgba(249, 115, 22, 0.05));
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <div class="max-w-7xl mx-auto p-4 md:p-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+            <!-- 主标题卡片 -->
+            <div class="card md:col-span-4 p-8 flex flex-col justify-center items-center text-center relative">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-blue"></div>
+                <div class="relative z-10">
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-4">
+                        引力与电磁力比值研究
+                    </h1>
+                    <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                        探索质子-电子、质子-质子、电子-电子无量纲比值的物理本质与历史发展
+                    </p>
+                </div>
+            </div>
+
+            <!-- 质子-电子比值卡片 -->
+            <div class="card md:col-span-2 p-8 flex flex-col justify-center relative">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-purple"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fa-solid fa-atom text-purple-500 text-2xl"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">质子-电子比值</h3>
+                    </div>
+                    <p class="text-gray-600 mb-2">电子与质子间电磁力与引力的比值</p>
+                    <p class="text-5xl font-bold text-purple-600">2.27 × 10³⁹</p>
+                </div>
+            </div>
+
+            <!-- 质子-质子比值卡片 -->
+            <div class="card md:col-span-2 p-8 flex flex-col justify-center relative">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-teal"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fa-solid fa-circle-nodes text-teal-500 text-2xl"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">质子-质子比值</h3>
+                    </div>
+                    <p class="text-gray-600 mb-2">两个质子间电磁力与引力的比值</p>
+                    <p class="text-5xl font-bold text-teal-600">1 × 10³⁶</p>
+                </div>
+            </div>
+
+            <!-- 电子-电子比值卡片 -->
+            <div class="card md:col-span-4 p-8 flex flex-col justify-center relative">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-amber"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fa-solid fa-charging-station text-amber-500 text-2xl"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">电子-电子比值</h3>
+                    </div>
+                    <p class="text-gray-600 mb-2">两个电子间电磁力与引力的比值</p>
+                    <p class="text-5xl font-bold text-amber-600">4.2 × 10⁴²</p>
+                </div>
+            </div>
+
+            <!-- 历史时间线卡片 -->
+            <div class="card md:col-span-4 p-8 flex flex-col relative">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-indigo"></div>
+                <div class="relative z-10">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6">历史发展时间线</h3>
+                    <div class="space-y-6">
+                        <div class="flex gap-4">
+                            <div class="flex-shrink-0 w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <span class="text-xl font-bold text-indigo-600">1919</span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-lg font-semibold text-gray-800 mb-1">赫尔曼·外尔</h4>
+                                <p class="text-gray-600">最早注意到宇宙尺度与微观粒子尺度间的巨大比值(R_u/R_e ≈ 10⁴²)</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="flex-shrink-0 w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <span class="text-xl font-bold text-indigo-600">1929</span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-lg font-semibold text-gray-800 mb-1">莱因霍尔德·富尔特</h4>
+                                <p class="text-gray-600">提出质子-电子质量比μ可通过包含精细结构常数α的二次方程推导</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="flex-shrink-0 w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <span class="text-xl font-bold text-indigo-600">1937</span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-lg font-semibold text-gray-800 mb-1">保罗·狄拉克</h4>
+                                <p class="text-gray-600">提出大数假说(LNH)，建立系统性理论框架，指出引力与电磁力比值约为10⁻³⁹</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 物理意义卡片 -->
+            <div class="card md:col-span-2 p-8 flex flex-col justify-center relative">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-rose"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fa-solid fa-book-open text-rose-500 text-2xl"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">物理本质</h3>
+                    </div>
+                    <p class="text-gray-600 leading-relaxed">
+                        这些比值反映了引力相互作用与电磁相互作用的强度对比，揭示了一个基本事实：
+                        <span class="font-semibold text-rose-600">电磁力比引力强得多</span>。
+                    </p>
+                </div>
+            </div>
+
+            <!-- 计算基础卡片 -->
+            <div class="card md:col-span-2 p-8 flex flex-col justify-center relative">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-green"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fa-solid fa-calculator text-green-500 text-2xl"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">计算基础</h3>
+                    </div>
+                    <p class="text-gray-600 mb-2">基于基本物理常数计算：</p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>引力常数：G = 6.67×10⁻¹¹ N·m²/kg²</li>
+                        <li>质子质量：m_p = 1.67×10⁻²⁷ kg</li>
+                        <li>电子质量：m_e = 9.11×10⁻³¹ kg</li>
+                        <li>元电荷：e = 1.60×10⁻¹⁹ C</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 图表卡片 -->
+            <div class="card md:col-span-4 p-8 flex flex-col relative">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-orange"></div>
+                <div class="relative z-10 flex flex-col h-full">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">比值比较</h3>
+                    <div class="flex-grow h-64">
+                        <canvas id="ratioChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 关键人物卡片 -->
+            <div class="card md:col-span-2 p-8 flex flex-col justify-center relative">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-blue"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fa-solid fa-user-tie text-blue-500 text-2xl"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">关键人物</h3>
+                    </div>
+                    <p class="text-gray-600 mb-3">对这些比值研究做出重要贡献的科学家：</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-center gap-2">
+                            <i class="fa-solid fa-check-circle text-blue-500"></i>
+                            <span class="text-gray-700">赫尔曼·外尔：最早观察到巨大比值</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i class="fa-solid fa-check-circle text-blue-500"></i>
+                            <span class="text-gray-700">亚瑟·爱丁顿：系统研究并提出理论</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i class="fa-solid fa-check-circle text-blue-500"></i>
+                            <span class="text-gray-700">保罗·狄拉克：提出大数假说</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 现代认识卡片 -->
+            <div class="card md:col-span-2 p-8 flex flex-col justify-center relative">
+                <div class="absolute top-0 left-0 w-full h-full highlight-gradient-purple"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fa-solid fa-lightbulb text-purple-500 text-2xl"></i>
+                        <h3 class="text-xl font-semibold text-gray-800">现代认识</h3>
+                    </div>
+                    <p class="text-gray-600 mb-3">现代物理学对这些比值的解释：</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-center gap-2">
+                            <i class="fa-solid fa-check-circle text-purple-500"></i>
+                            <span class="text-gray-700">标准模型：作为基本参数需实验测定</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i class="fa-solid fa-check-circle text-purple-500"></i>
+                            <span class="text-gray-700">统一理论：可能反映相互作用强度变化</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i class="fa-solid fa-check-circle text-purple-500"></i>
+                            <span class="text-gray-700">人择原理：与生命存在相关</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    // 初始化图表
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('ratioChart').getContext('2d');
+        
+        // 创建对数尺度图表以展示巨大的数值差异
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['质子-质子比值', '质子-电子比值', '电子-电子比值'],
+                datasets: [{
+                    label: '比值（对数尺度）',
+                    data: [36, 39, 42], // 以10为底的对数
+                    backgroundColor: [
+                        'rgba(20, 184, 166, 0.7)',
+                        'rgba(168, 85, 247, 0.7)',
+                        'rgba(245, 158, 11, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgb(13, 148, 136)',
+                        'rgb(147, 51, 234)',
+                        'rgb(217, 119, 6)'
+                    ],
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'log₁₀(比值)',
+                            font: {
+                                size: 14,
+                                family: 'Inter'
+                            }
+                        },
+                        ticks: {
+                            font: {
+                                family: 'Inter'
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 14,
+                                family: 'Inter'
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const rawValue = context.raw;
+                                const actualValue = '10^' + rawValue;
+                                return '比值: ' + actualValue;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+</html>

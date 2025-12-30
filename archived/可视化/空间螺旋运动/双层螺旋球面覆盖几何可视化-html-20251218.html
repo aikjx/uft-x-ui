@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>双层螺旋球面覆盖几何可视化</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #container { width: 100vw; height: 100vh; }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-family: monospace;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 400px;
+        }
+    </style>
+    <script src=" https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js "></script>
+    <script src=" https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js "></script>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="info">
+        <h3>双层螺旋球面覆盖</h3>
+        <p><strong>核心概念：</strong>时空的螺旋运动由两个独立层（右旋与左旋）构成。</p>
+        <p><strong>单层覆盖：</strong>每一层螺旋都独立地、均匀地覆盖整个球面，贡献一个完整的 <strong>4π</strong> 立体角。</p>
+        <p><strong>双层叠加：</strong>两个层叠加，总立体角为 <strong>4π + 4π = 8π</strong>。</p>
+        <p><strong>理论意义：</strong>这是引力与电磁耦合常数中出现 <strong>8π</strong> 因子的几何根源。</p>
+        <hr>
+        <p>交互控制：</p>
+        <ul>
+            <li>鼠标拖拽：旋转视角</li>
+            <li>鼠标滚轮：缩放</li>
+            <li>勾选框：切换图层显示</li>
+        </ul>
+    </div>
+
+    <script>
+        // 1. 初始化场景
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x111122);
+        document.getElementById('container').appendChild(renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        // 2. 添加光源
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 10, 7);
+        scene.add(directionalLight);
+
+        // 3. 创建中心质点（场源）
+        const centerGeometry = new THREE.SphereGeometry(0.1, 32, 16);
+        const centerMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        const centerSphere = new THREE.Mesh(centerGeometry, centerMaterial);
+        scene.add(centerSphere);
+
+        // 4. 创建球面（代表4π立体角）
+        const sphereGeometry = new THREE.SphereGeometry(2, 64, 64);
+        const sphereMaterial = new THREE.MeshBasicMaterial({
+            color: 0x444488,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(sphere);
+
+        // 5. 创建双层螺旋线（右旋层与左旋层）
+        const layers = {
+            rightHanded: { color: 0xff6666, points: [], visible: true },
+            leftHanded: { color: 0x66aaff, points: [], visible: true }
+        };
+
+        const radius = 2.0; // 球面半径
+        const turns = 8; // 螺旋圈数
+        const pointsCount = 500;
+
+        // 生成螺旋线点（参数化方程，确保覆盖球面）
+        for (let layerName in layers) {
+            const isRightHanded = (layerName === 'rightHanded');
+            const points = [];
+            for (let i = 0; i <= pointsCount; i++) {
+                const t = i / pointsCount * Math.PI * 2 * turns; // 角度参数
+                // 球面螺旋线参数方程：确保线均匀分布在球面上
+                const phi = t; // 方位角，随t线性增加以覆盖整个球面
+                const theta = Math.acos(1 - (2 * i) / pointsCount); // 天顶角，确保均匀分布
+
+                const x = radius * Math.sin(theta) * Math.cos(isRightHanded ? phi : -phi);
+                const y = radius * Math.sin(theta) * Math.sin(isRightHanded ? phi : -phi);
+                const z = radius * Math.cos(theta);
+
+                points.push(new THREE.Vector3(x, y, z));
+            }
+            layers[layerName].points = points;
+        }
+
+        // 用线段创建螺旋线并添加到场景
+        const lineMaterials = {};
+        const lineObjects = {};
+        for (let layerName in layers) {
+            lineMaterials[layerName] = new THREE.LineBasicMaterial({
+                color: layers[layerName].color,
+                linewidth: 2
+            });
+            const geometry = new THREE.BufferGeometry().setFromPoints(layers[layerName].points);
+            lineObjects[layerName] = new THREE.Line(geometry, lineMaterials[layerName]);
+            scene.add(lineObjects[layerName]);
+        }
+
+        // 6. 添加控制面板（切换图层显示）
+        const gui = new dat.GUI({ autoPlace: false });
+        const guiContainer = document.createElement('div');
+        document.body.appendChild(guiContainer);
+        guiContainer.style.position = 'absolute';
+        guiContainer.style.top = '20px';
+        guiContainer.style.right = '20px';
+        gui.domElement.style.position = 'relative';
+        guiContainer.appendChild(gui.domElement);
+
+        const layerController = {
+            '显示右旋层 (4π)': layers.rightHanded.visible,
+            '显示左旋层 (4π)': layers.leftHanded.visible
+        };
+        gui.add(layerController, '显示右旋层 (4π)').onChange(function(value) {
+            layers.rightHanded.visible = value;
+            lineObjects.rightHanded.visible = value;
+        });
+        gui.add(layerController, '显示左旋层 (4π)').onChange(function(value) {
+            layers.leftHanded.visible = value;
+            lineObjects.leftHanded.visible = value;
+        });
+
+        // 7. 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 8. 窗口大小自适应
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+    <!-- 引入 dat.GUI 用于控制面板 -->
+    <script src=" https://cdn.jsdelivr.net/npm/dat.gui@0.7.7/build/dat.gui.min.js "></script>
+</body>
+</html>

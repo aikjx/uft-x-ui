@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>算法联盟·统一场论3D可视化</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Microsoft YaHei', 'Arial', sans-serif;
+        background: #0a0e27;
+        color: #e0e6ff;
+        overflow-x: hidden;
+      }
+
+      .container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 15px;
+      }
+
+      .header {
+        text-align: center;
+        padding: 25px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+      }
+
+      .header h1 {
+        font-size: 1.8em;
+        margin-bottom: 8px;
+      }
+
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        gap: 15px;
+        margin-bottom: 15px;
+      }
+
+      .canvas-wrapper {
+        background: #0f1429;
+        border-radius: 12px;
+        padding: 15px;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+      }
+
+      #canvas3d {
+        width: 100%;
+        height: 550px;
+        border-radius: 8px;
+        background: radial-gradient(circle at center, #1a2340 0%, #0a0e1f 100%);
+        cursor: grab;
+        display: block;
+      }
+
+      #canvas3d:active {
+        cursor: grabbing;
+      }
+
+      .controls {
+        background: #0f1429;
+        border-radius: 12px;
+        padding: 18px;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+      }
+
+      .section {
+        margin-bottom: 18px;
+      }
+
+      .section h3 {
+        color: #667eea;
+        font-size: 0.95em;
+        margin-bottom: 10px;
+        border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+        padding-bottom: 5px;
+      }
+
+      .param {
+        margin-bottom: 10px;
+      }
+
+      .param label {
+        display: block;
+        font-size: 0.8em;
+        color: #a0aec0;
+        margin-bottom: 5px;
+      }
+
+      .param input[type='range'] {
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 3px;
+        outline: none;
+        -webkit-appearance: none;
+      }
+
+      .param input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        background: white;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(102, 126, 234, 0.5);
+      }
+
+      .param input[type='range']::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        background: white;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+      }
+
+      .value {
+        display: inline-block;
+        background: rgba(102, 126, 234, 0.2);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        color: #c3d0ff;
+        margin-left: 6px;
+        font-weight: bold;
+      }
+
+      .toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-size: 0.85em;
+      }
+
+      .switch {
+        position: relative;
+        width: 42px;
+        height: 22px;
+      }
+
+      .switch input {
+        display: none;
+      }
+
+      .switch-slider {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 22px;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+
+      .switch-slider:before {
+        content: '';
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        left: 4px;
+        bottom: 4px;
+        background: white;
+        border-radius: 50%;
+        transition: 0.3s;
+      }
+
+      input:checked + .switch-slider {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+      }
+
+      input:checked + .switch-slider:before {
+        transform: translateX(20px);
+      }
+
+      .buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .btn {
+        padding: 10px;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85em;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: #e0e6ff;
+      }
+
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        margin-bottom: 15px;
+      }
+
+      .stat {
+        background: #0f1429;
+        padding: 12px;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+      }
+
+      .stat h5 {
+        color: #667eea;
+        font-size: 0.8em;
+        margin-bottom: 6px;
+      }
+
+      .stat .num {
+        font-size: 1.3em;
+        font-weight: bold;
+        color: #e0e6ff;
+      }
+
+      .equations {
+        background: #0f1429;
+        border-radius: 12px;
+        padding: 18px;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+      }
+
+      .eq {
+        background: rgba(102, 126, 234, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        border-left: 3px solid #667eea;
+      }
+
+      .eq:last-child {
+        margin-bottom: 0;
+      }
+
+      .eq h4 {
+        color: #667eea;
+        font-size: 0.95em;
+        margin-bottom: 8px;
+      }
+
+      .eq-formula {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 10px;
+        border-radius: 6px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        color: #c3d0ff;
+        margin: 8px 0;
+        overflow-x: auto;
+      }
+
+      .eq-desc {
+        font-size: 0.8em;
+        line-height: 1.5;
+        color: #a0aec0;
+      }
+
+      @media (max-width: 1000px) {
+        .main-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🌌 算法联盟·张祥前统一场论</h1>
+        <p>空间圆柱状螺旋式运动·全维度3D可视化系统</p>
+      </div>
+
+      <div class="main-grid">
+        <div class="canvas-wrapper">
+          <canvas id="canvas3d"></canvas>
+        </div>
+
+        <div class="controls">
+          <div class="section">
+            <h3>⚡ 核心参数</h3>
+            <div class="param">
+              <label>螺旋半径 r: <span class="value" id="rVal">5.0</span></label>
+              <input type="range" id="r" min="2" max="10" step="0.1" value="5" />
+            </div>
+            <div class="param">
+              <label>角速度 ω: <span class="value" id="wVal">0.05</span></label>
+              <input type="range" id="w" min="0.01" max="0.15" step="0.01" value="0.05" />
+            </div>
+            <div class="param">
+              <label>螺距 h: <span class="value" id="hVal">0.30</span></label>
+              <input type="range" id="h" min="0.1" max="0.8" step="0.05" value="0.3" />
+            </div>
+            <div class="param">
+              <label>时间速率: <span class="value" id="sVal">1.0</span></label>
+              <input type="range" id="s" min="0.2" max="2.5" step="0.1" value="1" />
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>🎨 显示选项</h3>
+            <div class="toggle">
+              <label class="switch">
+                <input type="checkbox" id="trail" checked />
+                <span class="switch-slider"></span>
+              </label>
+              <span>运动轨迹</span>
+            </div>
+            <div class="toggle">
+              <label class="switch">
+                <input type="checkbox" id="cylinder" checked />
+                <span class="switch-slider"></span>
+              </label>
+              <span>圆柱边界</span>
+            </div>
+            <div class="toggle">
+              <label class="switch">
+                <input type="checkbox" id="axes" checked />
+                <span class="switch-slider"></span>
+              </label>
+              <span>坐标轴</span>
+            </div>
+            <div class="toggle">
+              <label class="switch">
+                <input type="checkbox" id="vector" checked />
+                <span class="switch-slider"></span>
+              </label>
+              <span>速度矢量</span>
+            </div>
+          </div>
+
+          <div class="buttons">
+            <button class="btn btn-primary" id="play">⏸️ 暂停</button>
+            <button class="btn btn-secondary" id="reset">🔄 重置</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <h5>时间 t</h5>
+          <div class="num" id="time">0.00</div>
+        </div>
+        <div class="stat">
+          <h5>周期数</h5>
+          <div class="num" id="cycles">0</div>
+        </div>
+        <div class="stat">
+          <h5>速率 v</h5>
+          <div class="num" id="vel">0.00</div>
+        </div>
+        <div class="stat">
+          <h5>旋转角度</h5>
+          <div class="num" id="angle">0°</div>
+        </div>
+      </div>
+
+      <div class="equations">
+        <div class="eq">
+          <h4>1️⃣ 时空同一化方程</h4>
+          <div class="eq-formula">r⃗(t) = C⃗t = x·i⃗ + y·j⃗ + z·k⃗</div>
+          <div class="eq-desc">
+            <strong>物理意义：</strong
+            >将时间t视为空间第四维，物体以光速C在四维时空中运动，揭示时空统一性。
+          </div>
+        </div>
+        <div class="eq">
+          <h4>2️⃣ 三维螺旋时空方程</h4>
+          <div class="eq-formula">r⃗(t) = r·cos(ωt)·i⃗ + r·sin(ωt)·j⃗ + h·t·k⃗</div>
+          <div class="eq-desc">
+            <strong>物理意义：</strong
+            >描述物质在圆柱状时空中的螺旋运动，展示空间旋转与时间平移的统一。
+          </div>
+        </div>
+        <div class="eq">
+          <h4>3️⃣ 质量定义方程</h4>
+          <div class="eq-formula">m = k · (dn/dΩ)</div>
+          <div class="eq-desc">
+            <strong>物理意义：</strong>质量定义为空间点密度对立体角的变化率，揭示质量的几何本质。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById('canvas3d')
+      const ctx = canvas.getContext('2d')
+
+      function resize() {
+        canvas.width = canvas.clientWidth
+        canvas.height = canvas.clientHeight
+      }
+      resize()
+      window.addEventListener('resize', resize)
+
+      const state = {
+        r: 5,
+        w: 0.05,
+        h: 0.3,
+        speed: 1,
+        t: 0,
+        play: true,
+        rotX: 0.4,
+        rotY: 0.6,
+        zoom: 35,
+        trail: []
+      }
+
+      const MAX_TRAIL = 350
+
+      function project(x, y, z) {
+        const cx = canvas.width / 2
+        const cy = canvas.height / 2
+
+        const cX = Math.cos(state.rotX)
+        const sX = Math.sin(state.rotX)
+        const cY = Math.cos(state.rotY)
+        const sY = Math.sin(state.rotY)
+
+        const y1 = y * cX - z * sX
+        const z1 = y * sX + z * cX
+        const x1 = x * cY - z1 * sY
+        const z2 = x * sY + z1 * cY
+
+        const d = 150
+        const scale = (state.zoom * d) / (d + z2)
+
+        return {
+          x: cx + x1 * scale,
+          y: cy - y1 * scale,
+          z: z2,
+          s: scale
+        }
+      }
+
+      function helix(t) {
+        return {
+          x: state.r * Math.cos(state.w * t),
+          y: state.r * Math.sin(state.w * t),
+          z: state.h * t
+        }
+      }
+
+      function drawAxes() {
+        if (!document.getElementById('axes').checked) return
+
+        const len = 12
+        const axes = [
+          [[0, 0, 0], [len, 0, 0], '#ff4444', 'X'],
+          [[0, 0, 0], [0, len, 0], '#44ff44', 'Y'],
+          [[0, 0, 0], [0, 0, len], '#4444ff', 'Z']
+        ]
+
+        axes.forEach(([s, e, c, l]) => {
+          const p1 = project(...s)
+          const p2 = project(...e)
+
+          ctx.beginPath()
+          ctx.strokeStyle = c
+          ctx.lineWidth = 2.5
+          ctx.moveTo(p1.x, p1.y)
+          ctx.lineTo(p2.x, p2.y)
+          ctx.stroke()
+
+          ctx.fillStyle = c
+          ctx.font = 'bold 13px Arial'
+          ctx.fillText(l, p2.x + 8, p2.y + 4)
+        })
+      }
+
+      function drawCylinder() {
+        if (!document.getElementById('cylinder').checked) return
+
+        const segs = 40
+        const zMax = 25
+
+        for (let i = 0; i <= 5; i++) {
+          const z = -zMax + (2 * zMax * i) / 5
+          const alpha = 0.2 - (Math.abs(z) / zMax) * 0.1
+
+          ctx.beginPath()
+          ctx.strokeStyle = `rgba(102, 126, 234, ${alpha})`
+          ctx.lineWidth = 1.2
+
+          for (let j = 0; j <= segs; j++) {
+            const ang = (j / segs) * Math.PI * 2
+            const px = state.r * Math.cos(ang)
+            const py = state.r * Math.sin(ang)
+            const p = project(px, py, z)
+
+            if (j === 0) ctx.moveTo(p.x, p.y)
+            else ctx.lineTo(p.x, p.y)
+          }
+          ctx.stroke()
+        }
+
+        for (let i = 0; i < 10; i++) {
+          const ang = (i / 10) * Math.PI * 2
+          const px = state.r * Math.cos(ang)
+          const py = state.r * Math.sin(ang)
+
+          const p1 = project(px, py, -zMax)
+          const p2 = project(px, py, zMax)
+
+          ctx.beginPath()
+          ctx.strokeStyle = 'rgba(102, 126, 234, 0.15)'
+          ctx.lineWidth = 0.8
+          ctx.moveTo(p1.x, p1.y)
+          ctx.lineTo(p2.x, p2.y)
+          ctx.stroke()
+        }
+      }
+
+      function drawTrail() {
+        if (!document.getElementById('trail').checked || state.trail.length < 2) return
+
+        for (let i = 1; i < state.trail.length; i++) {
+          const alpha = (i / state.trail.length) * 0.6
+          const p1 = project(state.trail[i - 1].x, state.trail[i - 1].y, state.trail[i - 1].z)
+          const p2 = project(state.trail[i].x, state.trail[i].y, state.trail[i].z)
+
+          ctx.beginPath()
+          ctx.strokeStyle = `rgba(118, 75, 162, ${alpha})`
+          ctx.lineWidth = 2.2
+          ctx.moveTo(p1.x, p1.y)
+          ctx.lineTo(p2.x, p2.y)
+          ctx.stroke()
+        }
+      }
+
+      function drawParticle(pos) {
+        const p = project(pos.x, pos.y, pos.z)
+        const size = 9
+
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size * 1.6)
+        grad.addColorStop(0, 'rgba(255, 255, 255, 1)')
+        grad.addColorStop(0.4, 'rgba(102, 126, 234, 0.8)')
+        grad.addColorStop(1, 'rgba(118, 75, 162, 0)')
+
+        ctx.fillStyle = grad
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, size * 1.6, 0, Math.PI * 2)
+        ctx.fill()
+
+        ctx.fillStyle = 'white'
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, size * 0.5, 0, Math.PI * 2)
+        ctx.fill()
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, size, 0, Math.PI * 2)
+        ctx.stroke()
+      }
+
+      function drawVector(pos) {
+        if (!document.getElementById('vector').checked) return
+
+        const dt = 0.12
+        const next = helix(state.t + dt)
+        const scale = 2.2
+
+        const end = {
+          x: pos.x + ((next.x - pos.x) / dt) * scale,
+          y: pos.y + ((next.y - pos.y) / dt) * scale,
+          z: pos.z + ((next.z - pos.z) / dt) * scale
+        }
+
+        const p1 = project(pos.x, pos.y, pos.z)
+        const p2 = project(end.x, end.y, end.z)
+
+        ctx.beginPath()
+        ctx.strokeStyle = '#ffcc00'
+        ctx.lineWidth = 2.8
+        ctx.moveTo(p1.x, p1.y)
+        ctx.lineTo(p2.x, p2.y)
+        ctx.stroke()
+
+        const ang = Math.atan2(p2.y - p1.y, p2.x - p1.x)
+        const len = 7
+
+        ctx.fillStyle = '#ffcc00'
+        ctx.beginPath()
+        ctx.moveTo(p2.x, p2.y)
+        ctx.lineTo(p2.x - len * Math.cos(ang - 0.4), p2.y - len * Math.sin(ang - 0.4))
+        ctx.lineTo(p2.x - len * Math.cos(ang + 0.4), p2.y - len * Math.sin(ang + 0.4))
+        ctx.closePath()
+        ctx.fill()
+      }
+
+      function render() {
+        ctx.fillStyle = 'rgba(10, 14, 39, 0.3)'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+        drawCylinder()
+        drawAxes()
+
+        const pos = helix(state.t)
+        state.trail.push(pos)
+        if (state.trail.length > MAX_TRAIL) state.trail.shift()
+
+        drawTrail()
+        drawVector(pos)
+        drawParticle(pos)
+
+        document.getElementById('time').textContent = state.t.toFixed(2)
+        document.getElementById('cycles').textContent = Math.floor(
+          (state.t * state.w) / (2 * Math.PI)
+        )
+
+        const v = Math.sqrt(Math.pow(state.r * state.w, 2) + Math.pow(state.h, 2))
+        document.getElementById('vel').textContent = v.toFixed(3)
+
+        const deg = (((state.w * state.t * 180) / Math.PI) % 360).toFixed(0)
+        document.getElementById('angle').textContent = deg + '°'
+
+        if (state.play) state.t += 0.07 * state.speed
+
+        requestAnimationFrame(render)
+      }
+
+      let drag = false
+      let lastX = 0,
+        lastY = 0
+
+      canvas.onmousedown = e => {
+        drag = true
+        lastX = e.clientX
+        lastY = e.clientY
+      }
+
+      canvas.onmousemove = e => {
+        if (!drag) return
+        const dx = e.clientX - lastX
+        const dy = e.clientY - lastY
+        state.rotY += dx * 0.007
+        state.rotX += dy * 0.007
+        state.rotX = Math.max(-1.5, Math.min(1.5, state.rotX))
+        lastX = e.clientX
+        lastY = e.clientY
+      }
+
+      canvas.onmouseup = () => (drag = false)
+      canvas.onmouseleave = () => (drag = false)
+
+      canvas.onwheel = e => {
+        e.preventDefault()
+        state.zoom *= 1 - e.deltaY * 0.0007
+        state.zoom = Math.max(18, Math.min(70, state.zoom))
+      }
+
+      document.getElementById('r').oninput = e => {
+        state.r = +e.target.value
+        document.getElementById('rVal').textContent = state.r.toFixed(1)
+      }
+
+      document.getElementById('w').oninput = e => {
+        state.w = +e.target.value
+        document.getElementById('wVal').textContent = state.w.toFixed(3)
+      }
+
+      document.getElementById('h').oninput = e => {
+        state.h = +e.target.value
+        document.getElementById('hVal').textContent = state.h.toFixed(2)
+      }
+
+      document.getElementById('s').oninput = e => {
+        state.speed = +e.target.value
+        document.getElementById('sVal').textContent = state.speed.toFixed(1)
+      }
+
+      document.getElementById('play').onclick = e => {
+        state.play = !state.play
+        e.target.textContent = state.play ? '⏸️ 暂停' : '▶️ 播放'
+      }
+
+      document.getElementById('reset').onclick = () => {
+        state.t = 0
+        state.trail = []
+        state.rotX = 0.4
+        state.rotY = 0.6
+        state.zoom = 35
+      }
+
+      render()
+    </script>
+  </body>
+</html>
+     ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, size * 1.8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 粒子核心
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, size * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 粒子外圈
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        function drawVector(pos) {
+            if (!document.getElementById('vector').checked) return;
+            
+            const dt = 0.12;
+            const next = helix(state.t + dt);
+            const scale = 2.5;
+            
+            const end = {
+                x: pos.x + (next.x - pos.x) / dt * scale,
+                y: pos.y + (next.y - pos.y) / dt * scale,
+                z: pos.z + (next.z - pos.z) / dt * scale
+            };
+            
+            const p1 = project(pos.x, pos.y, pos.z);
+            const p2 = project(end.x, end.y, end.z);
+            
+            // 矢量发光效果
+            ctx.shadowColor = '#ffcc00';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.strokeStyle = '#ffcc00';
+            ctx.lineWidth = 3.2;
+            ctx.lineCap = 'round';
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            
+            // 矢量箭头
+            const ang = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            const len = 10;
+            
+            ctx.fillStyle = '#ffcc00';
+            ctx.beginPath();
+            ctx.moveTo(p2.x, p2.y);
+            ctx.lineTo(p2.x - len * Math.cos(ang - 0.4), p2.y - len * Math.sin(ang - 0.4));
+            ctx.lineTo(p2.x - len * Math.cos(ang + 0.4), p2.y - len * Math.sin(ang + 0.4));
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        function render() {
+            ctx.fillStyle = 'rgba(10, 14, 39, 0.25)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            drawCylinder();
+            drawAxes();
+            
+            const pos = helix(state.t);
+            state.trail.push(pos);
+            if (state.trail.length > MAX_TRAIL) state.trail.shift();
+            
+            drawTrail();
+            drawVector(pos);
+            drawParticle(pos);
+            
+            document.getElementById('time').textContent = state.t.toFixed(2);
+            document.getElementById('cycles').textContent = Math.floor(state.t * state.w / (2 * Math.PI));
+            
+            const v = Math.sqrt(Math.pow(state.r * state.w, 2) + Math.pow(state.h, 2));
+            document.getElementById('vel').textContent = v.toFixed(3);
+            
+            const deg = ((state.w * state.t * 180 / Math.PI) % 360).toFixed(0);
+            document.getElementById('angle').textContent = deg + '°';
+            
+            if (state.play) state.t += 0.07 * state.speed;
+            
+            requestAnimationFrame(render);
+        }
+        
+        let drag = false;
+        let lastX = 0, lastY = 0;
+        
+        canvas.onmousedown = e => {
+            drag = true;
+            lastX = e.clientX;
+            lastY = e.clientY;
+        };
+        
+        canvas.onmousemove = e => {
+            if (!drag) return;
+            const dx = e.clientX - lastX;
+            const dy = e.clientY - lastY;
+            state.rotY += dx * 0.007;
+            state.rotX += dy * 0.007;
+            state.rotX = Math.max(-1.5, Math.min(1.5, state.rotX));
+            lastX = e.clientX;
+            lastY = e.clientY;
+        };
+        
+        canvas.onmouseup = () => drag = false;
+        canvas.onmouseleave = () => drag = false;
+        
+        canvas.onwheel = e => {
+            e.preventDefault();
+            state.zoom *= 1 - e.deltaY * 0.0007;
+            state.zoom = Math.max(18, Math.min(70, state.zoom));
+        };
+        
+        // 参数控制
+        document.getElementById('r').oninput = e => {
+            state.r = +e.target.value;
+            document.getElementById('rVal').textContent = state.r.toFixed(1);
+        };
+        
+        document.getElementById('w').oninput = e => {
+            state.w = +e.target.value;
+            document.getElementById('wVal').textContent = state.w.toFixed(3);
+        };
+        
+        document.getElementById('h').oninput = e => {
+            state.h = +e.target.value;
+            document.getElementById('hVal').textContent = state.h.toFixed(2);
+        };
+        
+        document.getElementById('s').oninput = e => {
+            state.speed = +e.target.value;
+            document.getElementById('sVal').textContent = state.speed.toFixed(1);
+        };
+        
+        // 发光效果开关
+        document.getElementById('glow').onchange = e => {
+            state.showGlow = e.target.checked;
+        };
+        
+        document.getElementById('play').onclick = e => {
+            state.play = !state.play;
+            e.target.textContent = state.play ? '⏸️ 暂停' : '▶️ 播放';
+        };
+        
+        document.getElementById('reset').onclick = () => {
+            state.t = 0;
+            state.trail = [];
+            state.rotX = 0.4;
+            state.rotY = 0.6;
+            state.zoom = 35;
+        };
+        
+        render();
+    </script>
+</body>
+</html>

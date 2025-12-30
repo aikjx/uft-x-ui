@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>库仑定律几何重构：4π vs 8π 立体角可视化</title>
+    <script src=" https://cdn.plot.ly/plotly-latest.min.js "></script>
+    <style>
+        body { font-family: sans-serif; margin: 40px; background-color: #f5f5f5; }
+        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; }
+        .plot-container { width: 500px; height: 500px; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 15px;}
+        h1, h2, h3 { text-align: center; color: #333; }
+        .caption { text-align: center; margin-top: 10px; font-size: 0.9em; color: #666; max-width: 500px;}
+        .theory { max-width: 800px; margin: 30px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);}
+    </style>
+</head>
+<body>
+    <h1>库仑定律与高斯定律的几何化重构</h1>
+    <h2>从“单层球面”到“双层螺旋”的范式转变</h2>
+
+    <div class="theory">
+        <h3>核心理论对比</h3>
+        <table border="1" cellpadding="10" style="width:100%; border-collapse: collapse;">
+            <tr style="background-color: #e8f4f8;">
+                <th>模型特征</th>
+                <th>经典理论（麦克斯韦电磁学）</th>
+                <th>张祥前统一场论（几何化模型）</th>
+            </tr>
+            <tr>
+                <td><strong>时空背景</strong></td>
+                <td>静态、被动的三维欧几里得空间与一维时间。</td>
+                <td>动态、主动的时空。空间本身以光速作<strong>圆柱状螺旋运动</strong>。</td>
+            </tr>
+            <tr>
+                <td><strong>电荷与场源</strong></td>
+                <td>点电荷是基本实体，电场是其产生的“场”。</td>
+                <td>电荷是空间螺旋运动“旋转分量”强度的几何度量。电场是该运动状态的空间表现。</td>
+            </tr>
+            <tr>
+                <td><strong>立体角模型</strong></td>
+                <td><strong>单层球面</strong>。点电荷场各向同性，对闭合球面积分，立体角为 <strong>4π</strong>。</td>
+                <td><strong>双层螺旋</strong>。时空由<strong>右旋(+)</strong>与<strong>左旋(-)</strong>两层独立结构叠加。每层独立覆盖全空间，贡献 <strong>4π</strong> 立体角，总立体角为 <strong>8π</strong>。</td>
+            </tr>
+            <tr>
+                <td><strong>高斯定律形式</strong></td>
+                <td>∮ <strong>E</strong> · d<strong>A</strong> = Q / ε₀</td>
+                <td>∮ <strong>E</strong> · d<strong>A</strong> = Q / (<strong>8π</strong>ε₀)</td>
+            </tr>
+            <tr>
+                <td><strong>点电荷场强</strong></td>
+                <td>E = Q / (<strong>4π</strong>ε₀ r²)</td>
+                <td>E = Q / (<strong>8π</strong>ε₀ r²)</td>
+            </tr>
+             <tr>
+                <td><strong>耦合常数</strong></td>
+                <td>库仑常数 k = 1/(4πε₀)，为经验常数。</td>
+                <td>电磁几何常数 <strong>Z' = c/(8πε₀)</strong>。库仑定律重构为：<br> F = (<strong>2Z'/c</strong>) * (Qq/r²)</td>
+            </tr>
+            <tr>
+                <td><strong>物理意义</strong></td>
+                <td>4π 是三维空间球对称积分的纯几何结果，无更深层物理起源。</td>
+                <td>8π 是时空“双层螺旋”基本结构的直接数学体现。Z' 是连接电磁强度与时空几何（光速c）的核心桥梁。</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="container">
+        <div>
+            <div id="classic-model" class="plot-container"></div>
+            <div class="caption">
+                <h3>经典模型：单层球面 (4π立体角)</h3>
+                <p>一个静止点电荷产生的电场线（蓝色）从中心点各向同性地辐射而出，穿过一个闭合高斯球面。球面对球心所张的总立体角为 <strong>4π</strong> 球面度。通量积分 ∮ <strong>E</strong>·d<strong>A</strong> 在此模型下自然得到 4πr²E。</p>
+            </div>
+        </div>
+        <div>
+            <div id="double-helix-model" class="plot-container"></div>
+            <div class="caption">
+                <h3>几何化模型：双层螺旋 (8π立体角)</h3>
+                <p>点电荷的场由<strong>两个独立且完整</strong>的螺旋分量构成：<span style="color:red;">右旋场（红色螺旋线）</span>和<span style="color:blue;">左旋场（蓝色螺旋线）</span>。每个分量都<strong>独立覆盖</strong>整个球面（各贡献 4π 立体角）。总通量需对两层分别积分并求和，故有效总立体角为 <strong>4π + 4π = 8π</strong>。</p>
+                <p><strong>关键洞察：</strong> 4π 因子并非时空的基本属性，而是对“单层”球对称模型的近似。更基本的时空结构是“双层”的，因此修正因子 2 的出现是几何的必然。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. 经典单层球面模型
+        let classicLayout = {
+            title: '经典模型：单层各向同性场 (Ω = 4π)',
+            scene: {
+                xaxis: {title: 'X', range: [-1.5, 1.5]},
+                yaxis: {title: 'Y', range: [-1.5, 1.5]},
+                zaxis: {title: 'Z', range: [-1.5, 1.5]},
+                aspectratio: {x:1, y:1, z:1},
+                camera: {eye: {x: 1.8, y: 1.8, z: 1.8}}
+            },
+            showlegend: false
+        };
+
+        // 球面
+        let phi = [], theta = [], xs = [], ys = [], zs = [];
+        for(let ph = 0; ph <= 2*Math.PI; ph += Math.PI/20){
+            for(let th = 0; th <= Math.PI; th += Math.PI/20){
+                let x = Math.sin(th) * Math.cos(ph);
+                let y = Math.sin(th) * Math.sin(ph);
+                let z = Math.cos(th);
+                xs.push(x); ys.push(y); zs.push(z);
+            }
+        }
+        let sphereSurface = {
+            type: 'scatter3d',
+            mode: 'markers',
+            x: xs, y: ys, z: zs,
+            marker: {size: 2, color: 'lightgray', opacity: 0.6},
+            name: '高斯球面',
+            showlegend: false
+        };
+
+        // 径向电场线
+        let fieldLines = [];
+        let numLines = 12;
+        for(let i=0; i<numLines; i++){
+            let phi = 2*Math.PI * i/numLines;
+            let theta = Math.acos(2*Math.random()-1);
+            let x = [0, 1.5*Math.sin(theta)*Math.cos(phi)];
+            let y = [0, 1.5*Math.sin(theta)*Math.sin(phi)];
+            let z = [0, 1.5*Math.cos(theta)];
+            fieldLines.push({
+                type: 'scatter3d',
+                mode: 'lines',
+                x: x, y: y, z: z,
+                line: {color: 'blue', width: 3},
+                name: '电场线',
+                showlegend: (i===0)
+            });
+        }
+
+        let classicData = [sphereSurface, ...fieldLines];
+        Plotly.newPlot('classic-model', classicData, classicLayout);
+
+        // 2. 双层螺旋模型
+        let doubleHelixLayout = {
+            title: '几何化模型：双层螺旋覆盖 (Ω_total = 8π)',
+            scene: {
+                xaxis: {title: 'X', range: [-1.5, 1.5]},
+                yaxis: {title: 'Y', range: [-1.5, 1.5]},
+                zaxis: {title: 'Z', range: [-1.5, 1.5]},
+                aspectratio: {x:1, y:1, z:1},
+                camera: {eye: {x: 1.8, y: 1.8, z: 1.8}}
+            },
+            showlegend: true
+        };
+
+        // 透明球面
+        let sphereSurface2 = {
+            ...sphereSurface,
+            marker: {size: 2, color: 'lightgray', opacity: 0.3},
+            name: '高斯球面'
+        };
+
+        // 右旋螺旋层 (红色)
+        let rightHelix = {x:[], y:[], z:[], t:[]};
+        let leftHelix = {x:[], y:[], z:[], t:[]};
+        let steps = 100;
+        let maxT = 4*Math.PI;
+        for(let i=0; i<=steps; i++){
+            let t = maxT * i/steps;
+            // 右旋
+            let r = 1.0;
+            let x_r = r * Math.cos(t);
+            let y_r = r * Math.sin(t);
+            let z_r = 0.3 * t;
+            rightHelix.x.push(x_r); rightHelix.y.push(y_r); rightHelix.z.push(z_r);
+            // 左旋
+            let x_l = r * Math.cos(-t);
+            let y_l = r * Math.sin(-t);
+            let z_l = 0.3 * t;
+            leftHelix.x.push(x_l); leftHelix.y.push(y_l); leftHelix.z.push(z_l);
+        }
+        // 创建多个螺旋线以覆盖球面 (简化表示)
+        let helixTraces = [];
+        let numHelicesPerLayer = 6;
+        for(let h=0; h<numHelicesPerLayer; h++){
+            let phaseShift = 2*Math.PI * h/numHelicesPerLayer;
+            // 右旋族
+            let x_r = [], y_r = [], z_r = [];
+            for(let i=0; i<rightHelix.x.length; i++){
+                let theta = Math.atan2(rightHelix.y[i], rightHelix.x[i]) + phaseShift;
+                let r = Math.sqrt(rightHelix.x[i]**2 + rightHelix.y[i]**2);
+                x_r.push(r * Math.cos(theta));
+                y_r.push(r * Math.sin(theta));
+                z_r.push(rightHelix.z[i]);
+            }
+            helixTraces.push({
+                type: 'scatter3d',
+                mode: 'lines',
+                x: x_r, y: y_r, z: z_r,
+                line: {color: 'red', width: 2},
+                name: (h===0?'右旋螺旋层':''),
+                showlegend: (h===0),
+                opacity: 0.7
+            });
+            // 左旋族
+            let x_l = [], y_l = [], z_l = [];
+            for(let i=0; i<leftHelix.x.length; i++){
+                let theta = Math.atan2(leftHelix.y[i], leftHelix.x[i]) + phaseShift;
+                let r = Math.sqrt(leftHelix.x[i]**2 + leftHelix.y[i]**2);
+                x_l.push(r * Math.cos(theta));
+                y_l.push(r * Math.sin(theta));
+                z_l.push(leftHelix.z[i]);
+            }
+            helixTraces.push({
+                type: 'scatter3d',
+                mode: 'lines',
+                x: x_l, y: y_l, z: z_l,
+                line: {color: 'blue', width: 2},
+                name: (h===0?'左旋螺旋层':''),
+                showlegend: (h===0),
+                opacity: 0.7
+            });
+        }
+
+        let doubleHelixData = [sphereSurface2, ...helixTraces];
+        Plotly.newPlot('double-helix-model', doubleHelixData, doubleHelixLayout);
+    </script>
+</body>
+</html>

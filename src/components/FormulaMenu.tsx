@@ -142,7 +142,10 @@ const FormulaMenu = React.memo(({
                 scale: 1.02,
                 transition: { duration: 0.2 }
               }}
-              whileTap={{ scale: 0.96 }}
+              whileTap={{ 
+                scale: 0.96,
+                backgroundColor: 'rgba(99, 102, 241, 0.2)'
+              }}
               onClick={() => onSelectFormula(formula)}
               className={cn(
                 "menu-item flex items-center p-3 rounded-xl cursor-pointer transition-all duration-300",

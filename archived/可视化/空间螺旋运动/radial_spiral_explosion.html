@@ -1,377 +1,1032 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>四面八方螺旋发散运动 - Radial Spiral Explosion</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #000;
-            color: white;
-            overflow: hidden;
-            cursor: grab;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        background: #000;
+        color: white;
+        overflow: hidden;
+        cursor: grab;
+      }
+
+      body.grabbing {
+        cursor: grabbing;
+      }
+
+      #container {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+      }
+
+      #main-title {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      #main-title h1 {
+        font-size: 65px;
+        font-weight: 900;
+        background: linear-gradient(90deg, #ff0080, #ff4000, #ffff00, #00ff80, #0080ff, #8000ff);
+        background-size: 400% 100%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: rainbowFlow 4s linear infinite;
+        letter-spacing: 8px;
+        filter: drop-shadow(0 0 20px rgba(255, 0, 128, 0.8));
+      }
+
+      #main-title .subtitle {
+        font-size: 20px;
+        color: #ff4080;
+        margin-top: 8px;
+        text-shadow: 0 0 15px rgba(255, 64, 128, 0.8);
+      }
+
+      @keyframes rainbowFlow {
+        0% {
+          background-position: 0% 50%;
         }
-        
-        body.grabbing { cursor: grabbing; }
-        
-        #container { position: fixed; width: 100%; height: 100%; }
-        
-        #main-title {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            z-index: 100;
-            pointer-events: none;
+        100% {
+          background-position: 400% 50%;
         }
-        
-        #main-title h1 {
-            font-size: 65px;
-            font-weight: 900;
-            background: linear-gradient(90deg, #ff0080, #ff4000, #ffff00, #00ff80, #0080ff, #8000ff);
-            background-size: 400% 100%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: rainbowFlow 4s linear infinite;
-            letter-spacing: 8px;
-            filter: drop-shadow(0 0 20px rgba(255, 0, 128, 0.8));
+      }
+
+      .panel {
+        position: fixed;
+        background: rgba(5, 0, 15, 0.92);
+        backdrop-filter: blur(20px);
+        border: 2px solid rgba(255, 64, 128, 0.4);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 8px 30px rgba(255, 64, 128, 0.3);
+        transition: all 0.4s ease;
+        z-index: 50;
+        max-height: 70vh;
+        overflow-y: auto;
+      }
+
+      .panel.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(0.9);
+      }
+
+      #controls-panel {
+        top: 110px;
+        left: 20px;
+        width: 360px;
+      }
+
+      #info-panel {
+        top: 110px;
+        right: 20px;
+        width: 340px;
+      }
+
+      #toolbar {
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: auto;
+        display: flex;
+        gap: 10px;
+        padding: 15px 20px;
+      }
+
+      .panel h2 {
+        color: #ff4080;
+        font-size: 22px;
+        margin-bottom: 12px;
+        text-shadow: 0 0 10px rgba(255, 64, 128, 0.8);
+        border-bottom: 2px solid rgba(255, 64, 128, 0.3);
+        padding-bottom: 8px;
+      }
+
+      .slider-group {
+        margin: 12px 0;
+      }
+
+      .slider-group label {
+        display: flex;
+        justify-content: space-between;
+        color: #ff80c0;
+        margin-bottom: 6px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      input[type='range'] {
+        width: 100%;
+        height: 6px;
+        background: linear-gradient(90deg, #ff0080, #ff4080);
+        border-radius: 10px;
+        outline: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+      }
+
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        background: #ff4080;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 0 15px rgba(255, 64, 128, 0.8);
+      }
+
+      .check-group {
+        display: flex;
+        align-items: center;
+        margin: 10px 0;
+        padding: 8px;
+        background: rgba(255, 64, 128, 0.1);
+        border-radius: 6px;
+      }
+
+      .check-group input[type='checkbox'] {
+        width: 18px;
+        height: 18px;
+        margin-right: 10px;
+        cursor: pointer;
+        accent-color: #ff4080;
+      }
+
+      .check-group label {
+        color: #ff80c0;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      button {
+        background: linear-gradient(135deg, #ff0080, #ff4080);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 700;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(255, 0, 128, 0.4);
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 64, 128, 0.6);
+      }
+
+      .toggle-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        padding: 5px 12px;
+        font-size: 11px;
+        background: linear-gradient(135deg, #ff4000, #ff0080);
+      }
+
+      .view-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin: 10px 0;
+      }
+
+      .view-buttons button {
+        padding: 8px;
+        font-size: 12px;
+      }
+
+      #hint {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.85);
+        border: 1px solid rgba(255, 64, 128, 0.3);
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-size: 12px;
+        color: #ff80c0;
+        z-index: 100;
+      }
+
+      #hint div {
+        margin: 3px 0;
+      }
+
+      #loading {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        transition: opacity 0.5s;
+      }
+
+      #loading.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .spinner {
+        width: 60px;
+        height: 60px;
+        border: 5px solid rgba(255, 64, 128, 0.2);
+        border-top: 5px solid #ff4080;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
         }
-        
-        #main-title .subtitle {
-            font-size: 20px;
-            color: #ff4080;
-            margin-top: 8px;
-            text-shadow: 0 0 15px rgba(255, 64, 128, 0.8);
-        }
-        
-        @keyframes rainbowFlow {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 400% 50%; }
-        }
-        
+      }
+
+      #loading-text {
+        margin-top: 20px;
+        font-size: 18px;
+        color: #ff4080;
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(50, 0, 50, 0.5);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #ff0080, #ff4080);
+        border-radius: 10px;
+      }
+
+      @media (max-width: 1024px) {
         .panel {
-            position: fixed;
-            background: rgba(5, 0, 15, 0.92);
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 64, 128, 0.4);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 8px 30px rgba(255, 64, 128, 0.3);
-            transition: all 0.4s ease;
-            z-index: 50;
-            max-height: 70vh;
-            overflow-y: auto;
+          width: 90% !important;
+          position: relative !important;
+          margin: 10px auto !important;
         }
-        
-        .panel.hidden {
-            opacity: 0;
-            pointer-events: none;
-            transform: scale(0.9);
+        #main-title h1 {
+          font-size: 40px;
         }
-        
-        #controls-panel {
-            top: 110px;
-            left: 20px;
-            width: 360px;
-        }
-        
-        #info-panel {
-            top: 110px;
-            right: 20px;
-            width: 340px;
-        }
-        
-        #toolbar {
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: auto;
-            display: flex;
-            gap: 10px;
-            padding: 15px 20px;
-        }
-        
-        .panel h2 {
-            color: #ff4080;
-            font-size: 22px;
-            margin-bottom: 12px;
-            text-shadow: 0 0 10px rgba(255, 64, 128, 0.8);
-            border-bottom: 2px solid rgba(255, 64, 128, 0.3);
-            padding-bottom: 8px;
-        }
-        
-        .slider-group {
-            margin: 12px 0;
-        }
-        
-        .slider-group label {
-            display: flex;
-            justify-content: space-between;
-            color: #ff80c0;
-            margin-bottom: 6px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        input[type="range"] {
-            width: 100%;
-            height: 6px;
-            background: linear-gradient(90deg, #ff0080, #ff4080);
-            border-radius: 10px;
-            outline: none;
-            -webkit-appearance: none;
-            cursor: pointer;
-        }
-        
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #ff4080;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 15px rgba(255, 64, 128, 0.8);
-        }
-        
-        .check-group {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
-            padding: 8px;
-            background: rgba(255, 64, 128, 0.1);
-            border-radius: 6px;
-        }
-        
-        .check-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            margin-right: 10px;
-            cursor: pointer;
-            accent-color: #ff4080;
-        }
-        
-        .check-group label {
-            color: #ff80c0;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        
-        button {
-            background: linear-gradient(135deg, #ff0080, #ff4080);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 700;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(255, 0, 128, 0.4);
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 64, 128, 0.6);
-        }
-        
-        .toggle-btn {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            padding: 5px 12px;
-            font-size: 11px;
-            background: linear-gradient(135deg, #ff4000, #ff0080);
-        }
-        
-        .view-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin: 10px 0;
-        }
-        
-        .view-buttons button {
-            padding: 8px;
-            font-size: 12px;
-        }
-        
         #hint {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.85);
-            border: 1px solid rgba(255, 64, 128, 0.3);
-            border-radius: 8px;
-            padding: 10px 15px;
-            font-size: 12px;
-            color: #ff80c0;
-            z-index: 100;
+          display: none;
         }
-        
-        #hint div { margin: 3px 0; }
-        
-        #loading {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            transition: opacity 0.5s;
-        }
-        
-        #loading.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 5px solid rgba(255, 64, 128, 0.2);
-            border-top: 5px solid #ff4080;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        #loading-text {
-            margin-top: 20px;
-            font-size: 18px;
-            color: #ff4080;
-        }
-        
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(50, 0, 50, 0.5); }
-        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ff0080, #ff4080); border-radius: 10px; }
-        
-        @media (max-width: 1024px) {
-            .panel { width: 90% !important; position: relative !important; margin: 10px auto !important; }
-            #main-title h1 { font-size: 40px; }
-            #hint { display: none; }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="loading">
-        <div class="spinner"></div>
-        <div id="loading-text">加载中...</div>
+      <div class="spinner"></div>
+      <div id="loading-text">加载中...</div>
     </div>
-    
+
     <div id="container"></div>
-    
+
     <div id="main-title">
-        <h1>螺旋发散</h1>
-        <div class="subtitle">四面八方螺旋运动可视化</div>
+      <h1>螺旋发散</h1>
+      <div class="subtitle">四面八方螺旋运动可视化</div>
     </div>
-    
+
     <div id="controls-panel" class="panel">
-        <button class="toggle-btn" onclick="togglePanel('controls-panel')">隐藏</button>
-        <h2>⚙️ 控制参数</h2>
-        
-        <div class="slider-group">
-            <label><span>发散半径</span><span id="r-val">20.0</span></label>
-            <input type="range" id="radius" min="5" max="40" value="20" step="0.5">
-        </div>
-        
-        <div class="slider-group">
-            <label><span>螺旋角度</span><span id="s-val">45.0°</span></label>
-            <input type="range" id="angle" min="15" max="90" value="45" step="1">
-        </div>
-        
-        <div class="slider-group">
-            <label><span>发散速度</span><span id="v-val">2.0</span></label>
-            <input type="range" id="speed" min="0.5" max="5" value="2" step="0.1">
-        </div>
-        
-        <div class="slider-group">
-            <label><span>螺旋数量</span><span id="c-val">12</span></label>
-            <input type="range" id="count" min="6" max="24" value="12" step="1">
-        </div>
-        
-        <div class="slider-group">
-            <label><span>发散层级</span><span id="l-val">3</span></label>
-            <input type="range" id="layers" min="1" max="6" value="3" step="1">
-        </div>
-        
-        <h2>👁️ 显示选项</h2>
-        <div class="check-group">
-            <input type="checkbox" id="c1" checked><label for="c1">中心核心</label>
-        </div>
-        <div class="check-group">
-            <input type="checkbox" id="c2" checked><label for="c2">螺旋轨迹</label>
-        </div>
-        <div class="check-group">
-            <input type="checkbox" id="c3" checked><label for="c3">发散粒子</label>
-        </div>
-        <div class="check-group">
-            <input type="checkbox" id="c4" checked><label for="c4">光环效果</label>
-        </div>
-        <div class="check-group">
-            <input type="checkbox" id="c5" checked><label for="c5">自动旋转</label>
-        </div>
-        
-        <h2>🎥 视角预设</h2>
-        <div class="view-buttons">
-            <button onclick="setView(0)">正视</button>
-            <button onclick="setView(1)">俯视</button>
-            <button onclick="setView(2)">侧视</button>
-            <button onclick="setView(3)">斜视</button>
-        </div>
+      <button class="toggle-btn" onclick="togglePanel('controls-panel')">隐藏</button>
+      <h2>⚙️ 控制参数</h2>
+
+      <div class="slider-group">
+        <label><span>发散半径</span><span id="r-val">50.0</span></label>
+        <input type="range" id="radius" min="10" max="100" value="50" step="1" />
+      </div>
+
+      <div class="slider-group">
+        <label><span>螺旋角度</span><span id="s-val">45.0°</span></label>
+        <input type="range" id="angle" min="15" max="90" value="45" step="1" />
+      </div>
+
+      <div class="slider-group">
+        <label><span>发散速度</span><span id="v-val">2.0</span></label>
+        <input type="range" id="speed" min="0.5" max="5" value="2" step="0.1" />
+      </div>
+
+      <div class="slider-group">
+        <label><span>螺旋数量</span><span id="c-val">12</span></label>
+        <input type="range" id="count" min="6" max="24" value="12" step="1" />
+      </div>
+
+      <div class="slider-group">
+        <label><span>发散层级</span><span id="l-val">3</span></label>
+        <input type="range" id="layers" min="1" max="6" value="3" step="1" />
+      </div>
+
+      <h2>👁️ 显示选项</h2>
+      <div class="check-group">
+        <input type="checkbox" id="c1" checked /><label for="c1">中心核心</label>
+      </div>
+      <div class="check-group">
+        <input type="checkbox" id="c2" checked /><label for="c2">螺旋轨迹</label>
+      </div>
+      <div class="check-group">
+        <input type="checkbox" id="c3" checked /><label for="c3">发散粒子</label>
+      </div>
+      <div class="check-group">
+        <input type="checkbox" id="c4" checked /><label for="c4">光环效果</label>
+      </div>
+      <div class="check-group">
+        <input type="checkbox" id="c5" checked /><label for="c5">自动旋转</label>
+      </div>
+
+      <h2>🎥 视角预设</h2>
+      <div class="view-buttons">
+        <button onclick="setView(0)">正视</button>
+        <button onclick="setView(1)">俯视</button>
+        <button onclick="setView(2)">侧视</button>
+        <button onclick="setView(3)">斜视</button>
+      </div>
+
+      <h2>🎨 预设效果</h2>
+      <div class="view-buttons">
+        <button onclick="applyPreset('default')">默认</button>
+        <button onclick="applyPreset('galaxy')">星系</button>
+        <button onclick="applyPreset('flower')">花朵</button>
+        <button onclick="applyPreset('explosion')">爆炸</button>
+        <button onclick="applyPreset('crystal')">水晶</button>
+        <button onclick="applyPreset('storm')">风暴</button>
+      </div>
     </div>
-    
+
     <div id="info-panel" class="panel">
-        <button class="toggle-btn" onclick="togglePanel('info-panel')">隐藏</button>
-        <h2>📖 关于螺旋发散</h2>
-        <p style="line-height:1.6;color:#e0e0e0;font-size:14px;">
-            <strong>四面八方螺旋发散</strong><br><br>
-            从中心点向各个方向螺旋发散，形成爆炸式的三维螺旋运动模式。
-        </p>
-        <h2 style="margin-top:15px;">⚡ 核心概念</h2>
-        <p style="line-height:1.6;color:#e0e0e0;font-size:14px;">
-            <strong>R = r₀ × e^(k·θ)</strong><br><br>
-            发散半径随角度指数增长，创造出爆炸式的螺旋发散效果。
-        </p>
+      <button class="toggle-btn" onclick="toggleInfo()">隐藏</button>
+      <h2>📖 关于螺旋发散</h2>
+      <p style="line-height: 1.6; color: #e0e0e0; font-size: 14px">
+        <strong>四面八方螺旋发散</strong><br /><br />
+        从中心点向各个方向螺旋发散，形成爆炸式的三维螺旋运动模式。
+        每个螺旋沿着独特的三维路径运动，创造出复杂而有序的视觉效果。
+      </p>
+      <h2 style="margin-top: 15px">⚡ 核心概念</h2>
+      <p style="line-height: 1.6; color: #e0e0e0; font-size: 14px">
+        <strong>R = r₀ × e^(k·θ)</strong><br /><br />
+        发散半径随角度指数增长，创造出爆炸式的螺旋发散效果。
+        结合三维空间的旋转和波动，形成了动态的视觉奇观。
+      </p>
+      <h2 style="margin-top: 15px">🎮 交互指南</h2>
+      <p style="line-height: 1.4; color: #e0e0e0; font-size: 13px; margin-bottom: 0">
+        • 🖱️ 拖动：旋转视角<br />
+        • 🖱️ 滚轮：缩放大小<br />
+        • ⌨️ 空格：暂停/播放<br />
+        • ⌨️ R：重置参数<br />
+        • ⌨️ D：随机效果<br />
+        • ⌨️ F：全屏模式<br />
+        • ⌨️ H：显示/隐藏面板<br />
+        • ⌨️ 1-4：视角预设
+      </p>
     </div>
-    
+
     <div id="toolbar" class="panel">
-        <button onclick="reset()">🔄 重置</button>
-        <button onclick="randomize()">🎲 随机</button>
-        <button onclick="togglePause()"><span id="pt">⏸️ 暂停</span></button>
-        <button onclick="toggleAll()"><span id="at">👁️ 隐藏面板</span></button>
-        <button onclick="toggleFullscreen()">🖥️ 全屏</button>
+      <button onclick="reset()" title="重置参数 (R)">🔄 重置</button>
+      <button onclick="randomize()" title="随机效果 (D)">🎲 随机</button>
+      <button onclick="togglePause()" title="暂停/播放 (空格)"><span id="pt">⏸️ 暂停</span></button>
+      <button onclick="toggleAll()" title="显示/隐藏所有面板 (H)">
+        <span id="at">👁️ 隐藏面板</span>
+      </button>
+      <button onclick="toggleFullscreen()" title="全屏模式 (F)">🖥️ 全屏</button>
+      <button onclick="toggleInfo()" title="显示/隐藏信息"><span id="it">ℹ️ 信息</span></button>
+      <button onclick="togglePerformance()" title="显示/隐藏性能监控">📊 性能</button>
     </div>
-    
+
     <div id="hint">
-        <div>🖱️ 拖动：旋转</div>
-        <div>🖱️ 滚轮：缩放</div>
-        <div>⌨️ 空格：暂停</div>
+      <div>🖱️ 拖动：旋转 | 滚轮：缩放</div>
+      <div>⌨️ 空格：暂停 | R：重置 | D：随机 | F：全屏</div>
+      <div>⌨️ 1-4：视角 | H：隐藏面板 | A：自动旋转</div>
+      <div>⌨️ G：星系模式 | E：爆炸 | F：花朵 | C：水晶</div>
     </div>
-    
+
+    <div
+      id="performance-monitor"
+      style="
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background: rgba(5, 0, 15, 0.92);
+        backdrop-filter: blur(20px);
+        border: 2px solid rgba(0, 255, 128, 0.4);
+        color: #0f0;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-family: 'Courier New', monospace;
+        z-index: 100;
+        box-shadow: 0 4px 15px rgba(0, 255, 128, 0.3);
+        transition: all 0.3s ease;
+      "
+    >
+      <div>📊 FPS: <span id="fps">60</span></div>
+      <div>🎯 Objects: <span id="obj-count">0</span></div>
+      <div>🔺 Triangles: <span id="tri-count">0</span></div>
+    </div>
+
     <script>
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(0x000000);
-        document.getElementById('container').appendChild(renderer.domElement);
-        
-        camera.position.set(50, 30, 50);
-        camera.lookAt(0, 0, 0);
-        
-        let params = {
+      const scene = new THREE.Scene()
+      const camera = new THREE.PerspectiveCamera(
+        85,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        3000
+      )
+      const renderer = new THREE.WebGLRenderer({ antialias: true })
+
+      renderer.setSize(window.innerWidth, window.innerHeight)
+      renderer.setClearColor(0x000000)
+      document.getElementById('container').appendChild(renderer.domElement)
+
+      camera.position.set(50, 30, 50)
+      camera.lookAt(0, 0, 0)
+
+      let params = {
+        radius: 50,
+        spiralAngle: 45,
+        speed: 2,
+        count: 12,
+        layers: 3,
+        core: true,
+        spirals: true,
+        particles: true,
+        rings: true,
+        autoRotate: true
+      }
+
+      let paused = false
+      let time = 0
+      let deltaTime = 0 // 新增：deltaTime变量
+      let lastFrameTime = performance.now() // 新增：上一帧时间
+      let isDragging = false
+      let lastMouse = { x: 0, y: 0 }
+      let cameraAngle = { theta: Math.PI / 4, phi: Math.PI / 6 }
+      let cameraDist = 150
+
+      // 性能监控
+      let fps = 60
+      let frameCount = 0
+      let lastTime = performance.now()
+      let triangleCount = 0
+
+      const spiralLines = []
+      const spiralParticles = []
+      const particleSystems = []
+      let core,
+        rings = []
+
+      // 光源
+      scene.add(new THREE.AmbientLight(0x404040, 0.6))
+      const light1 = new THREE.PointLight(0xff4080, 3, 200)
+      light1.position.set(0, 0, 0)
+      scene.add(light1)
+
+      // 星空背景
+      function makeStars() {
+        const g = new THREE.BufferGeometry()
+        const p = [],
+          c = []
+        for (let i = 0; i < 5000; i++) {
+          p.push(
+            (Math.random() - 0.5) * 1000,
+            (Math.random() - 0.5) * 1000,
+            (Math.random() - 0.5) * 1000
+          )
+          const col = new THREE.Color().setHSL(Math.random() * 0.2 + 0.8, 0.8, 0.6)
+          c.push(col.r, col.g, col.b)
+        }
+        g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3))
+        g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3))
+        return new THREE.Points(
+          g,
+          new THREE.PointsMaterial({
+            size: 1.5,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8
+          })
+        )
+      }
+      const stars = makeStars()
+      scene.add(stars)
+
+      // 创建中心核心
+      function makeCore() {
+        if (core) scene.remove(core)
+
+        const g = new THREE.SphereGeometry(2, 32, 32)
+        core = new THREE.Mesh(
+          g,
+          new THREE.MeshPhongMaterial({
+            color: 0xff4080,
+            emissive: 0xff2060,
+            emissiveIntensity: 0.8,
+            transparent: true,
+            opacity: 0.9
+          })
+        )
+        scene.add(core)
+      }
+
+      // 创建光环效果
+      function makeRings() {
+        rings.forEach(r => scene.remove(r))
+        rings.length = 0
+
+        for (let i = 0; i < 8; i++) {
+          const ring = new THREE.Mesh(
+            new THREE.RingGeometry(3 + i * 2, 3.2 + i * 2, 64),
+            new THREE.MeshBasicMaterial({
+              color: new THREE.Color().setHSL(0.85 + i * 0.02, 1, 0.6),
+              transparent: true,
+              opacity: 0.6 - i * 0.05,
+              side: THREE.DoubleSide,
+              blending: THREE.AdditiveBlending
+            })
+          )
+          ring.rotation.x = Math.PI / 2 + Math.sin(i) * 0.3
+          ring.userData = { idx: i, baseRotation: i * 0.3 }
+          rings.push(ring)
+          scene.add(ring)
+        }
+      }
+
+      // 创建螺旋轨迹 - 优化版本
+      function makeSpirals() {
+        // 复用现有的几何体，只更新必要部分
+        const layers = params.layers
+        const spiralAngleRad = (params.spiralAngle * Math.PI) / 180
+
+        // 清理旧的螺旋线
+        spiralLines.forEach(s => scene.remove(s))
+        spiralLines.length = 0
+
+        // 使用预计算的颜色数组提高性能
+        const colors = []
+        for (let i = 0; i < Math.max(params.count, 24); i++) {
+          const hue = 0.8 + (i / params.count) * 0.2
+          colors.push(new THREE.Color().setHSL(hue, 1, 0.6))
+        }
+
+        // 使用 BufferGeometry 提高性能
+        for (let layer = 0; layer < layers; layer++) {
+          const layerOffset = (layer * Math.PI * 2) / layers
+          const layerRadius = params.radius * (0.3 + layer * 0.35)
+
+          for (let i = 0; i < params.count; i++) {
+            const pts = []
+            // 12条不同方向的螺旋线 - 调整初始角度，确保均匀分布
+            const direction = i % 12
+            const baseAngle = (direction / 12) * Math.PI * 2
+            const layerAngleOffset = layer * ((Math.PI * 2) / layers)
+            const angle0 = baseAngle + layerAngleOffset
+
+            // 更长的螺旋路径计算
+            for (let j = 0; j <= 800; j++) {
+              // 大幅增加点数量让路径更长
+              const t = j / 800
+              const distance = layerRadius * t
+
+              // 更丰富的螺旋运动，增加螺旋圈数
+              const spiralIntensity = Math.sin(t * Math.PI * 4) * 0.5 + 0.5
+              const spiralOffset =
+                distance * Math.tan(spiralAngleRad) * Math.sin(t * 20 + layer * 0.8)
+              const angle = angle0 + t * Math.PI * 12 * spiralIntensity + spiralOffset * 0.008
+
+              // 三维方向计算 - 根据方向索引调整Z轴，使每条螺旋线向不同方向延伸
+              const zFactor = Math.sin((direction / 12) * Math.PI * 2)
+              const yFactor = Math.cos((direction / 12) * Math.PI * 2)
+              const zDistance = spiralOffset * Math.cos(t * 15 + i * 0.15)
+
+              // 计算三维坐标，使每条螺旋线向不同方向延伸
+              const x = distance * Math.cos(angle)
+              const y = distance * Math.sin(angle) * (0.7 + yFactor * 0.3)
+              const z = zDistance * (0.7 + zFactor * 0.3) + zFactor * t * layerRadius * 0.5
+
+              pts.push(x, y, z)
+            }
+
+            // 使用 BufferGeometry 提高渲染性能
+            const geometry = new THREE.BufferGeometry()
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3))
+
+            // 添加渐变颜色效果
+            const colors_attr = []
+            for (let j = 0; j < pts.length / 3; j++) {
+              const t = j / (pts.length / 3 - 1)
+              const baseColor = colors[i]
+              const alpha = Math.sin(t * Math.PI) * 0.8 + 0.2 // 端点更亮
+              const r = baseColor.r * alpha
+              const g = baseColor.g * alpha
+              const b = baseColor.b * alpha
+              colors_attr.push(r, g, b)
+            }
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors_attr, 3))
+
+            const line = new THREE.Line(
+              geometry,
+              new THREE.LineBasicMaterial({
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.95,
+                linewidth: 3,
+                blending: THREE.AdditiveBlending
+              })
+            )
+            line.userData = { layer: layer, idx: i }
+            spiralLines.push(line)
+            scene.add(line)
+          }
+        }
+      }
+
+      // 创建粒子系统 - 优化版本
+      function makeParticles() {
+        spiralParticles.forEach(p => scene.remove(p))
+        spiralParticles.length = 0
+
+        const spiralAngleRad = (params.spiralAngle * Math.PI) / 180
+        const layers = params.layers
+
+        // 优化粒子数量和分布
+        for (let layer = 0; layer < layers; layer++) {
+          const layerOffset = (layer * Math.PI * 2) / layers
+          const layerRadius = params.radius * (0.3 + layer * 0.35)
+
+          // 动态粒子数量，根据参数调整
+          const particleCount = Math.floor(params.count * 40 * (1 + layer * 0.5))
+          const g = new THREE.BufferGeometry()
+          const pos = [],
+            col = [],
+            sizes = [],
+            velocities = []
+
+          // 预计算颜色调色板
+          const colorPalette = []
+          for (let i = 0; i < 8; i++) {
+            const hue = 0.8 + i * 0.025
+            colorPalette.push(new THREE.Color().setHSL(hue, 1, 0.6 + Math.random() * 0.2))
+          }
+
+          for (let i = 0; i < particleCount; i++) {
+            const t = Math.random()
+            const spiralIndex = Math.floor(i / 40)
+            const direction = spiralIndex % 12
+            // 12条不同方向的螺旋线 - 调整粒子的初始角度
+            const baseAngle = (direction / 12) * Math.PI * 2
+            const layerAngleOffset = layer * ((Math.PI * 2) / layers)
+            const angle0 = baseAngle + layerAngleOffset
+            const particleOffset = (i % 40) / 40
+
+            // 改进的螺旋分布算法 - 12条不同方向
+            const distance = layerRadius * Math.pow(t, 0.7) // 使用幂函数使分布更自然
+            const spiralIntensity = Math.sin(t * Math.PI * 3 + layer * 0.3) * 0.6 + 0.4
+            const spiralOffset =
+              distance * Math.tan(spiralAngleRad) * Math.sin(t * 15 + particleOffset * 2)
+            const angle = angle0 + t * Math.PI * 8 * spiralIntensity + spiralOffset * 0.003
+
+            // 12条不同方向的螺旋线 - 调整Z轴计算，与螺旋线保持一致
+            const zFactor = Math.sin((direction / 12) * Math.PI * 2)
+            const yFactor = Math.cos((direction / 12) * Math.PI * 2)
+            const zDistance = spiralOffset * Math.cos(t * 12 + particleOffset + layer * 0.2)
+
+            // 添加一些随机性但保持螺旋结构
+            const jitter = 0.8
+            const x = distance * Math.cos(angle) + (Math.random() - 0.5) * jitter
+            const y =
+              distance * Math.sin(angle) * (0.7 + yFactor * 0.3) + (Math.random() - 0.5) * jitter
+            const z =
+              zDistance * (0.7 + zFactor * 0.3) +
+              zFactor * t * layerRadius * 0.5 +
+              (Math.random() - 0.5) * jitter * 0.5
+
+            pos.push(x, y, z)
+
+            // 选择颜色并添加变化
+            const baseColor = colorPalette[i % colorPalette.length]
+            const brightness = 0.6 + Math.random() * 0.4
+            col.push(baseColor.r * brightness, baseColor.g * brightness, baseColor.b * brightness)
+
+            // 动态大小，基于螺旋位置
+            const size = 1.5 + Math.sin(t * Math.PI * 4 + particleOffset * 3) * 1.5
+            sizes.push(size)
+
+            // 添加速度属性用于动画
+            velocities.push(
+              (Math.random() - 0.5) * 0.2,
+              (Math.random() - 0.5) * 0.2,
+              (Math.random() - 0.5) * 0.2
+            )
+          }
+
+          g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+          g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3))
+          g.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1))
+          g.setAttribute('velocity', new THREE.Float32BufferAttribute(velocities, 3))
+
+          // 改进的粒子材质
+          const material = new THREE.PointsMaterial({
+            size: 3,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.85,
+            blending: THREE.AdditiveBlending,
+            sizeAttenuation: true,
+            depthWrite: false // 提高性能
+          })
+
+          const particles = new THREE.Points(g, material)
+          particles.userData = {
+            layer: layer,
+            particleCount: particleCount,
+            basePositions: pos.slice(), // 保存初始位置
+            timeOffset: Math.random() * Math.PI * 2 // 每个粒子系统的时间偏移
+          }
+          spiralParticles.push(particles)
+          scene.add(particles)
+        }
+      }
+
+      // 更新场景 - 优化版本
+      function updateScene() {
+        // 使用全局deltaTime，不再使用固定值
+
+        // 改进的核心动画
+        if (params.core && core) {
+          core.rotation.x += 0.015 * deltaTime * 60 // 使用deltaTime缩放速度
+          core.rotation.y += 0.025 * deltaTime * 60
+          // 更复杂的脉动效果
+          const pulse = Math.sin(time * 2.5) * 0.08 + Math.cos(time * 1.3) * 0.04
+          core.scale.setScalar(1 + pulse)
+          // 添加颜色变化
+          const hue = (time * 0.1) % 1
+          core.material.emissive.setHSL(hue, 0.8, 0.4)
+        }
+
+        // 改进的光环效果
+        if (params.rings) {
+          rings.forEach((ring, i) => {
+            ring.rotation.z += 0.008 * (i % 2 === 0 ? 1 : -1) * deltaTime * 60
+            // 更复杂的光环动画
+            const ringPulse = Math.sin(time * 2 + i * 0.5) * 0.06
+            ring.scale.setScalar(1 + ringPulse)
+            // 添加颜色渐变
+            const hue = (0.85 + i * 0.02 + time * 0.05) % 1
+            ring.material.color.setHSL(hue, 1, 0.6)
+            ring.material.opacity = 0.6 - i * 0.05 + Math.sin(time * 3 + i) * 0.1
+          })
+        }
+
+        // 改进的螺旋线动画
+        spiralLines.forEach((line, i) => {
+          const layer = line.userData.layer
+          const baseRotation = layer * 0.08
+          // 添加波浪式的旋转效果
+          const waveEffect = Math.sin(time * 1.5 + layer) * 0.1
+          line.rotation.z = baseRotation + time * 0.4 * params.speed + waveEffect
+
+          // 添加颜色动画
+          if (line.material.vertexColors) {
+            const colors = line.geometry.attributes.color
+            const positions = line.geometry.attributes.position
+
+            for (let j = 0; j < colors.count; j++) {
+              const t = j / (colors.count - 1)
+              const colorPhase = time * 0.8 + t * 2 + layer * 0.3
+              const brightness = 0.6 + Math.sin(colorPhase) * 0.3
+
+              colors.setXYZ(
+                j,
+                colors.getX(j) * brightness,
+                colors.getY(j) * brightness,
+                colors.getZ(j) * brightness
+              )
+            }
+            colors.needsUpdate = true
+          }
+        })
+
+        // 改进的粒子动画
+        spiralParticles.forEach((particles, i) => {
+          const layer = particles.userData.layer
+          const timeOffset = particles.userData.timeOffset
+          const baseRotation = layer * 0.06
+
+          // 旋转动画 - 使用deltaTime
+          const rotationSpeed = 0.2 * params.speed
+          particles.rotation.z =
+            baseRotation + time * rotationSpeed + Math.sin(time * 0.5 + timeOffset) * 0.1
+
+          // 粒子位置动画
+          const positions = particles.geometry.attributes.position
+          const colors = particles.geometry.attributes.color
+          const sizes = particles.geometry.attributes.size
+
+          for (let j = 0; j < positions.count; j++) {
+            const x = positions.getX(j)
+            const y = positions.getY(j)
+            const z = positions.getZ(j)
+
+            // 增强的浮动效果 - 更复杂的运动模式
+            const floatPhase = time * 2.5 + j * 0.008 + timeOffset
+            const floatX = Math.sin(floatPhase) * 0.12 + Math.cos(floatPhase * 1.5) * 0.08
+            const floatY = Math.cos(floatPhase * 0.8) * 0.12 + Math.sin(floatPhase * 1.2) * 0.06
+            const floatZ = Math.sin(floatPhase * 1.2) * 0.08 + Math.cos(floatPhase * 0.9) * 0.05
+
+            positions.setXYZ(j, x + floatX, y + floatY, z + floatZ)
+
+            // 增强的动态大小变化 - 呼吸效果
+            const sizePhase = time * 3.5 + j * 0.006
+            const newSize = 1.8 + Math.sin(sizePhase) * 1.2 + Math.cos(sizePhase * 0.7) * 0.8
+            sizes.setX(j, newSize)
+
+            // 增强的色彩变化 - 动态色相偏移
+            if (colors) {
+              const originalR = colors.getX(j)
+              const originalG = colors.getY(j)
+              const originalB = colors.getZ(j)
+              const colorHSL = new THREE.Color(originalR, originalG, originalB).getHSL()
+              const hueOffset = Math.sin(time * 1.5 + j * 0.003) * 0.1
+              const newColor = new THREE.Color().setHSL(
+                (colorHSL.h + hueOffset) % 1,
+                colorHSL.s,
+                Math.max(0.5, Math.min(0.8, colorHSL.l + Math.sin(time * 2 + j * 0.005) * 0.15))
+              )
+              colors.setXYZ(j, newColor.r, newColor.g, newColor.b)
+            }
+          }
+
+          positions.needsUpdate = true
+          sizes.needsUpdate = true
+          if (colors) colors.needsUpdate = true // 更新颜色属性
+        })
+      }
+
+      // 设置视角
+      function setView(index) {
+        const views = [
+          { pos: [0, 0, params.radius * 3.5], look: [0, 0, 0] },
+          { pos: [0, params.radius * 3.5, 0], look: [0, 0, 0] },
+          { pos: [params.radius * 3.5, 0, 0], look: [0, 0, 0] },
+          { pos: [params.radius * 2.5, params.radius * 2.5, params.radius * 2.5], look: [0, 0, 0] }
+        ]
+
+        const view = views[index]
+        camera.position.set(...view.pos)
+        camera.lookAt(...view.look)
+      }
+
+      // 控制面板切换
+      function togglePanel(id) {
+        document.getElementById(id).classList.toggle('hidden')
+      }
+
+      // 重置
+      function reset() {
+        params = {
+          radius: 20,
+          spiralAngle: 45,
+          speed: 2,
+          count: 12,
+          layers: 3,
+          core: true,
+          spirals: true,
+          particles: true,
+          rings: true,
+          autoRotate: true
+        }
+        updateUI()
+        rebuildScene()
+      }
+
+      // 随机化
+      function randomize() {
+        params.radius = Math.random() * 35 + 5
+        params.spiralAngle = Math.random() * 75 + 15
+        params.speed = Math.random() * 4 + 1
+        params.count = Math.floor(Math.random() * 18) + 6
+        params.layers = Math.floor(Math.random() * 5) + 1
+        updateUI()
+        rebuildScene()
+      }
+
+      // 更新UI
+      function updateUI() {
+        document.getElementById('r-val').textContent = params.radius.toFixed(1)
+        document.getElementById('s-val').textContent = params.spiralAngle.toFixed(1) + '°'
+        document.getElementById('v-val').textContent = params.speed.toFixed(1)
+        document.getElementById('c-val').textContent = params.count
+        document.getElementById('l-val').textContent = params.layers
+      }
+
+      // 重建场景
+      function rebuildScene() {
+        makeCore()
+        makeRings()
+        makeSpirals()
+        makeParticles()
+      }
+
+      // 暂停/播放
+      function togglePause() {
+        paused = !paused
+        document.getElementById('pt').textContent = paused ? '▶️ 播放' : '⏸️ 暂停'
+      }
+
+      // 切换所有面板
+      function toggleAll() {
+        const panels = ['controls-panel', 'info-panel', 'toolbar']
+        const controlsHidden = document
+          .getElementById('controls-panel')
+          .classList.contains('hidden')
+
+        panels.forEach(id => {
+          const panel = document.getElementById(id)
+          if (controlsHidden) {
+            panel.classList.remove('hidden')
+          } else {
+            panel.classList.add('hidden')
+          }
+        })
+
+        // 同时控制信息按钮状态
+        document.getElementById('it').textContent = controlsHidden ? 'ℹ️ 信息' : '🙈 隐藏信息'
+        document.getElementById('at').textContent = controlsHidden ? '👁️ 隐藏面板' : '👁️ 显示面板'
+      }
+
+      // 全屏
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen()
+        } else {
+          document.exitFullscreen()
+        }
+      }
+
+      // 全屏事件监听
+      document.addEventListener('fullscreenchange', () => {
+        const isFullscreen = !!document.fullscreenElement
+        if (isFullscreen) {
+          // 全屏模式下增强视觉效果
+          document.getElementById('toolbar').style.bottom = '30px'
+          document.getElementById('hint').style.bottom = '30px'
+        } else {
+          // 退出全屏时恢复
+          document.getElementById('toolbar').style.bottom = '20px'
+          document.getElementById('hint').style.bottom = '20px'
+        }
+      })
+
+      // 切换自动旋转
+      function toggleAutoRotate() {
+        params.autoRotate = !params.autoRotate
+        document.getElementById('c5').checked = params.autoRotate
+      }
+
+      // 切换信息面板
+      function toggleInfo() {
+        const infoPanel = document.getElementById('info-panel')
+        const isHidden = infoPanel.classList.contains('hidden')
+        if (isHidden) {
+          infoPanel.classList.remove('hidden')
+        } else {
+          infoPanel.classList.add('hidden')
+        }
+        document.getElementById('it').textContent = isHidden ? 'ℹ️ 信息' : '🙈 隐藏信息'
+      }
+
+      // 切换性能监控
+      function togglePerformance() {
+        const perfMonitor = document.getElementById('performance-monitor')
+        const isHidden = perfMonitor.style.display === 'none'
+        perfMonitor.style.display = isHidden ? 'block' : 'none'
+      }
+
+      // 预设效果
+      function applyPreset(name) {
+        const presets = {
+          default: {
             radius: 20,
             spiralAngle: 45,
             speed: 2,
@@ -382,418 +1037,314 @@
             particles: true,
             rings: true,
             autoRotate: true
-        };
-        
-        let paused = false;
-        let time = 0;
-        let isDragging = false;
-        let lastMouse = { x: 0, y: 0 };
-        let cameraAngle = { theta: Math.PI/4, phi: Math.PI/6 };
-        let cameraDist = 70;
-        
-        const spiralLines = [];
-        const spiralParticles = [];
-        const particleSystems = [];
-        let core, rings = [];
-        
-        // 光源
-        scene.add(new THREE.AmbientLight(0x404040, 0.6));
-        const light1 = new THREE.PointLight(0xff4080, 3, 200);
-        light1.position.set(0, 0, 0);
-        scene.add(light1);
-        
-        // 星空背景
-        function makeStars() {
-            const g = new THREE.BufferGeometry();
-            const p = [], c = [];
-            for (let i = 0; i < 5000; i++) {
-                p.push((Math.random() - 0.5) * 1000, (Math.random() - 0.5) * 1000, (Math.random() - 0.5) * 1000);
-                const col = new THREE.Color().setHSL(Math.random() * 0.2 + 0.8, 0.8, 0.6);
-                c.push(col.r, col.g, col.b);
+          },
+          galaxy: {
+            radius: 35,
+            spiralAngle: 60,
+            speed: 1.5,
+            count: 16,
+            layers: 4,
+            core: true,
+            spirals: true,
+            particles: true,
+            rings: true,
+            autoRotate: true
+          },
+          flower: {
+            radius: 25,
+            spiralAngle: 30,
+            speed: 1.8,
+            count: 8,
+            layers: 2,
+            core: true,
+            spirals: true,
+            particles: true,
+            rings: false,
+            autoRotate: true
+          },
+          explosion: {
+            radius: 40,
+            spiralAngle: 75,
+            speed: 3,
+            count: 20,
+            layers: 5,
+            core: true,
+            spirals: true,
+            particles: true,
+            rings: true,
+            autoRotate: false
+          },
+          crystal: {
+            radius: 18,
+            spiralAngle: 25,
+            speed: 1.2,
+            count: 6,
+            layers: 1,
+            core: true,
+            spirals: true,
+            particles: false,
+            rings: true,
+            autoRotate: false
+          },
+          storm: {
+            radius: 30,
+            spiralAngle: 80,
+            speed: 4,
+            count: 24,
+            layers: 6,
+            core: true,
+            spirals: true,
+            particles: true,
+            rings: false,
+            autoRotate: true
+          }
+        }
+
+        if (presets[name]) {
+          params = { ...params, ...presets[name] }
+          updateUI()
+          rebuildScene()
+        }
+      }
+
+      // 事件监听
+      document.getElementById('radius').addEventListener('input', e => {
+        params.radius = parseFloat(e.target.value)
+        updateUI()
+        rebuildScene()
+      })
+
+      document.getElementById('angle').addEventListener('input', e => {
+        params.spiralAngle = parseFloat(e.target.value)
+        updateUI()
+        rebuildScene()
+      })
+
+      document.getElementById('speed').addEventListener('input', e => {
+        params.speed = parseFloat(e.target.value)
+        updateUI()
+      })
+
+      document.getElementById('count').addEventListener('input', e => {
+        params.count = parseInt(e.target.value)
+        updateUI()
+        rebuildScene()
+      })
+
+      document.getElementById('layers').addEventListener('input', e => {
+        params.layers = parseInt(e.target.value)
+        updateUI()
+        rebuildScene()
+      })
+      ;['c1', 'c2', 'c3', 'c4', 'c5'].forEach((id, i) => {
+        const checkboxes = ['core', 'spirals', 'particles', 'rings', 'autoRotate']
+        document.getElementById(id).addEventListener('change', e => {
+          params[checkboxes[i]] = e.target.checked
+          rebuildScene()
+        })
+      })
+
+      // 平滑相机控制
+      let targetCameraAngle = { theta: Math.PI / 4, phi: Math.PI / 6 }
+      let targetCameraDist = 150
+      let cameraSmoothness = 0.08 // 平滑系数
+
+      // 鼠标控制 - 优化版本
+      document.addEventListener('mousedown', e => {
+        isDragging = true
+        lastMouse = { x: e.clientX, y: e.clientY }
+        document.body.classList.add('grabbing')
+      })
+
+      document.addEventListener('mousemove', e => {
+        if (!isDragging) return
+
+        const deltaX = e.clientX - lastMouse.x
+        const deltaY = e.clientY - lastMouse.y
+
+        // 更新目标角度，而不是直接更新当前角度
+        targetCameraAngle.theta -= deltaX * 0.01
+        targetCameraAngle.phi += deltaY * 0.01
+        targetCameraAngle.phi = Math.max(0.1, Math.min(Math.PI - 0.1, targetCameraAngle.phi))
+
+        lastMouse = { x: e.clientX, y: e.clientY }
+      })
+
+      document.addEventListener('mouseup', () => {
+        isDragging = false
+        document.body.classList.remove('grabbing')
+      })
+
+      document.addEventListener('wheel', e => {
+        // 更新目标距离，而不是直接更新当前距离
+        targetCameraDist += e.deltaY * 0.12
+        targetCameraDist = Math.max(20, Math.min(300, targetCameraDist))
+      })
+
+      // 增强的键盘控制
+      document.addEventListener('keydown', e => {
+        switch (e.code) {
+          case 'Space':
+            e.preventDefault()
+            togglePause()
+            break
+          case 'KeyR':
+            reset()
+            break
+          case 'KeyF':
+            toggleFullscreen()
+            break
+          case 'KeyL':
+            applyPreset('flower')
+            break
+          case 'Digit1':
+            setView(0)
+            break
+          case 'Digit2':
+            setView(1)
+            break
+          case 'Digit3':
+            setView(2)
+            break
+          case 'Digit4':
+            setView(3)
+            break
+          case 'KeyH':
+            toggleAll()
+            break
+          case 'KeyP':
+            params.core = !params.core
+            document.getElementById('c1').checked = params.core
+            rebuildScene()
+            break
+          case 'KeyS':
+            params.spirals = !params.spirals
+            document.getElementById('c2').checked = params.spirals
+            rebuildScene()
+            break
+          case 'KeyT':
+            params.particles = !params.particles
+            document.getElementById('c3').checked = params.particles
+            rebuildScene()
+            break
+          case 'KeyO':
+            params.rings = !params.rings
+            document.getElementById('c4').checked = params.rings
+            rebuildScene()
+            break
+          case 'KeyA':
+            toggleAutoRotate()
+            break
+          case 'KeyD':
+            randomize()
+            break
+          case 'KeyG':
+            applyPreset('galaxy')
+            break
+          case 'KeyE':
+            applyPreset('explosion')
+            break
+          case 'KeyC':
+            applyPreset('crystal')
+            break
+          case 'KeyM':
+            applyPreset('storm')
+            break
+        }
+      })
+
+      // 窗口调整
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight
+        camera.updateProjectionMatrix()
+        renderer.setSize(window.innerWidth, window.innerHeight)
+      })
+
+      // 动画循环 - 带性能监控
+      function animate() {
+        requestAnimationFrame(animate)
+
+        // 计算deltaTime
+        const currentTime = performance.now()
+        deltaTime = (currentTime - lastFrameTime) / 1000 // 转换为秒
+        lastFrameTime = currentTime
+
+        // 性能监控
+        frameCount++
+
+        if (currentTime >= lastTime + 1000) {
+          fps = Math.round((frameCount * 1000) / (currentTime - lastTime))
+          const fpsElement = document.getElementById('fps')
+          fpsElement.textContent = fps
+
+          // 根据FPS动态调整颜色
+          if (fps >= 50) {
+            fpsElement.style.color = '#0f0' // 绿色
+          } else if (fps >= 30) {
+            fpsElement.style.color = '#ffd700' // 黄色
+          } else {
+            fpsElement.style.color = '#ff4040' // 红色
+          }
+
+          frameCount = 0
+          lastTime = currentTime
+
+          // 更新场景统计
+          updatePerformanceStats()
+        }
+
+        if (!paused) {
+          time += deltaTime * params.speed // 使用deltaTime更新时间
+          updateScene()
+        }
+
+        // 平滑相机过渡
+        if (params.autoRotate && !isDragging) {
+          targetCameraAngle.theta += 0.005 * deltaTime * 60 // 使用deltaTime缩放自动旋转速度
+        }
+
+        // 平滑过渡到目标角度和距离
+        const smoothFactor = deltaTime * 30 * cameraSmoothness // 动态平滑因子
+        cameraAngle.theta += (targetCameraAngle.theta - cameraAngle.theta) * smoothFactor
+        cameraAngle.phi += (targetCameraAngle.phi - cameraAngle.phi) * smoothFactor
+        cameraDist += (targetCameraDist - cameraDist) * smoothFactor
+
+        // 更新相机位置
+        const x = cameraDist * Math.sin(cameraAngle.phi) * Math.cos(cameraAngle.theta)
+        const y = cameraDist * Math.cos(cameraAngle.phi)
+        const z = cameraDist * Math.sin(cameraAngle.phi) * Math.sin(cameraAngle.theta)
+        camera.position.set(x, y, z)
+        camera.lookAt(0, 0, 0)
+
+        renderer.render(scene, camera)
+      }
+
+      // 更新性能统计
+      function updatePerformanceStats() {
+        let objectCount = scene.children.length
+        let totalTriangles = 0
+
+        scene.traverse(child => {
+          if (child.geometry) {
+            if (child.geometry.index) {
+              totalTriangles += child.geometry.index.count / 3
+            } else if (child.geometry.attributes.position) {
+              totalTriangles += child.geometry.attributes.position.count / 3
             }
-            g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
-            g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
-            return new THREE.Points(g, new THREE.PointsMaterial({ size: 1.5, vertexColors: true, transparent: true, opacity: 0.8 }));
-        }
-        const stars = makeStars();
-        scene.add(stars);
-        
-        // 创建中心核心
-        function makeCore() {
-            if (core) scene.remove(core);
-            
-            const g = new THREE.SphereGeometry(2, 32, 32);
-            core = new THREE.Mesh(g, new THREE.MeshPhongMaterial({
-                color: 0xff4080,
-                emissive: 0xff2060,
-                emissiveIntensity: 0.8,
-                transparent: true,
-                opacity: 0.9
-            }));
-            scene.add(core);
-        }
-        
-        // 创建光环效果
-        function makeRings() {
-            rings.forEach(r => scene.remove(r));
-            rings.length = 0;
-            
-            for (let i = 0; i < 8; i++) {
-                const ring = new THREE.Mesh(
-                    new THREE.RingGeometry(3 + i * 2, 3.2 + i * 2, 64),
-                    new THREE.MeshBasicMaterial({
-                        color: new THREE.Color().setHSL(0.85 + i * 0.02, 1, 0.6),
-                        transparent: true,
-                        opacity: 0.6 - i * 0.05,
-                        side: THREE.DoubleSide,
-                        blending: THREE.AdditiveBlending
-                    })
-                );
-                ring.rotation.x = Math.PI / 2 + Math.sin(i) * 0.3;
-                ring.userData = { idx: i, baseRotation: i * 0.3 };
-                rings.push(ring);
-                scene.add(ring);
-            }
-        }
-        
-        // 创建螺旋轨迹
-        function makeSpirals() {
-            spiralLines.forEach(s => scene.remove(s));
-            spiralLines.length = 0;
-            
-            const spiralAngleRad = (params.spiralAngle * Math.PI) / 180;
-            const layers = params.layers;
-            
-            for (let layer = 0; layer < layers; layer++) {
-                const layerOffset = layer * Math.PI * 2 / layers;
-                const layerRadius = params.radius * (0.3 + layer * 0.35);
-                
-                for (let i = 0; i < params.count; i++) {
-                    const pts = [];
-                    const angle0 = (i / params.count) * Math.PI * 2 + layerOffset;
-                    
-                    for (let j = 0; j <= 200; j++) {
-                        const t = j / 200;
-                        const distance = layerRadius * t;
-                        const spiralOffset = distance * Math.tan(spiralAngleRad) * Math.sin(t * 10);
-                        const angle = angle0 + t * Math.PI * 4 + spiralOffset * 0.01;
-                        
-                        const x = distance * Math.cos(angle);
-                        const y = distance * Math.sin(angle);
-                        const z = spiralOffset * Math.cos(t * 8);
-                        
-                        pts.push(new THREE.Vector3(x, y, z));
-                    }
-                    
-                    const line = new THREE.Line(
-                        new THREE.BufferGeometry().setFromPoints(pts),
-                        new THREE.LineBasicMaterial({
-                            color: new THREE.Color().setHSL(0.8 + i / params.count * 0.2, 1, 0.6),
-                            transparent: true,
-                            opacity: 0.8,
-                            linewidth: 2
-                        })
-                    );
-                    line.userData = { layer: layer, idx: i };
-                    spiralLines.push(line);
-                    scene.add(line);
-                }
-            }
-        }
-        
-        // 创建粒子系统
-        function makeParticles() {
-            spiralParticles.forEach(p => scene.remove(p));
-            spiralParticles.length = 0;
-            
-            const spiralAngleRad = (params.spiralAngle * Math.PI) / 180;
-            const layers = params.layers;
-            
-            for (let layer = 0; layer < layers; layer++) {
-                const layerOffset = layer * Math.PI * 2 / layers;
-                const layerRadius = params.radius * (0.3 + layer * 0.35);
-                
-                const particleCount = params.count * 30;
-                const g = new THREE.BufferGeometry();
-                const pos = [], col = [], sizes = [];
-                
-                for (let i = 0; i < particleCount; i++) {
-                    const t = Math.random();
-                    const angle0 = (Math.floor(i / 30) / params.count) * Math.PI * 2 + layerOffset;
-                    const particleOffset = i % 30 / 30;
-                    
-                    const distance = layerRadius * t;
-                    const spiralOffset = distance * Math.tan(spiralAngleRad) * Math.sin(t * 10 + particleOffset);
-                    const angle = angle0 + t * Math.PI * 4 + spiralOffset * 0.01 + time * params.speed * 0.1;
-                    
-                    const x = distance * Math.cos(angle) + (Math.random() - 0.5) * 2;
-                    const y = distance * Math.sin(angle) + (Math.random() - 0.5) * 2;
-                    const z = spiralOffset * Math.cos(t * 8 + particleOffset) + (Math.random() - 0.5) * 2;
-                    
-                    pos.push(x, y, z);
-                    
-                    const c = new THREE.Color().setHSL(0.8 + Math.random() * 0.2, 1, 0.6);
-                    col.push(c.r, c.g, c.b);
-                    
-                    sizes.push(Math.random() * 3 + 1);
-                }
-                
-                g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-                g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-                g.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
-                
-                const material = new THREE.PointsMaterial({
-                    size: 2,
-                    vertexColors: true,
-                    transparent: true,
-                    opacity: 0.8,
-                    blending: THREE.AdditiveBlending,
-                    sizeAttenuation: true
-                });
-                
-                const particles = new THREE.Points(g, material);
-                particles.userData = { layer: layer };
-                spiralParticles.push(particles);
-                scene.add(particles);
-            }
-        }
-        
-        // 更新场景
-        function updateScene() {
-            if (params.core && core) {
-                core.rotation.x += 0.02;
-                core.rotation.y += 0.03;
-                core.scale.setScalar(1 + Math.sin(time * 2) * 0.1);
-            }
-            
-            if (params.rings) {
-                rings.forEach((ring, i) => {
-                    ring.rotation.z += 0.01 * (i % 2 === 0 ? 1 : -1);
-                    ring.scale.setScalar(1 + Math.sin(time * 1.5 + i) * 0.05);
-                });
-            }
-            
-            spiralLines.forEach((line, i) => {
-                const layer = line.userData.layer;
-                const baseRotation = layer * 0.1;
-                line.rotation.z = baseRotation + time * 0.5 * params.speed;
-            });
-            
-            spiralParticles.forEach((particles, i) => {
-                const layer = particles.userData.layer;
-                const baseRotation = layer * 0.1;
-                particles.rotation.z = baseRotation + time * 0.3 * params.speed;
-            });
-        }
-        
-        // 设置视角
-        function setView(index) {
-            const views = [
-                { pos: [0, 0, params.radius * 2.5], look: [0, 0, 0] },
-                { pos: [0, params.radius * 2.5, 0], look: [0, 0, 0] },
-                { pos: [params.radius * 2.5, 0, 0], look: [0, 0, 0] },
-                { pos: [params.radius * 1.5, params.radius * 1.5, params.radius * 1.5], look: [0, 0, 0] }
-            ];
-            
-            const view = views[index];
-            camera.position.set(...view.pos);
-            camera.lookAt(...view.look);
-        }
-        
-        // 控制面板切换
-        function togglePanel(id) {
-            document.getElementById(id).classList.toggle('hidden');
-        }
-        
-        // 重置
-        function reset() {
-            params = {
-                radius: 20, spiralAngle: 45, speed: 2, count: 12, layers: 3,
-                core: true, spirals: true, particles: true, rings: true, autoRotate: true
-            };
-            updateUI();
-            rebuildScene();
-        }
-        
-        // 随机化
-        function randomize() {
-            params.radius = Math.random() * 35 + 5;
-            params.spiralAngle = Math.random() * 75 + 15;
-            params.speed = Math.random() * 4 + 1;
-            params.count = Math.floor(Math.random() * 18) + 6;
-            params.layers = Math.floor(Math.random() * 5) + 1;
-            updateUI();
-            rebuildScene();
-        }
-        
-        // 更新UI
-        function updateUI() {
-            document.getElementById('r-val').textContent = params.radius.toFixed(1);
-            document.getElementById('s-val').textContent = params.spiralAngle.toFixed(1) + '°';
-            document.getElementById('v-val').textContent = params.speed.toFixed(1);
-            document.getElementById('c-val').textContent = params.count;
-            document.getElementById('l-val').textContent = params.layers;
-        }
-        
-        // 重建场景
-        function rebuildScene() {
-            makeCore();
-            makeRings();
-            makeSpirals();
-            makeParticles();
-        }
-        
-        // 暂停/播放
-        function togglePause() {
-            paused = !paused;
-            document.getElementById('pt').textContent = paused ? '▶️ 播放' : '⏸️ 暂停';
-        }
-        
-        // 切换所有面板
-        function toggleAll() {
-            const panels = ['controls-panel', 'info-panel', 'toolbar'];
-            const hidden = document.getElementById('controls-panel').classList.contains('hidden');
-            panels.forEach(id => {
-                if (hidden) document.getElementById(id).classList.remove('hidden');
-                else document.getElementById(id).classList.add('hidden');
-            });
-            document.getElementById('at').textContent = hidden ? '👁️ 隐藏面板' : '👁️ 显示面板';
-        }
-        
-        // 全屏
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-        }
-        
-        // 事件监听
-        document.getElementById('radius').addEventListener('input', (e) => {
-            params.radius = parseFloat(e.target.value);
-            updateUI();
-            rebuildScene();
-        });
-        
-        document.getElementById('angle').addEventListener('input', (e) => {
-            params.spiralAngle = parseFloat(e.target.value);
-            updateUI();
-            rebuildScene();
-        });
-        
-        document.getElementById('speed').addEventListener('input', (e) => {
-            params.speed = parseFloat(e.target.value);
-            updateUI();
-        });
-        
-        document.getElementById('count').addEventListener('input', (e) => {
-            params.count = parseInt(e.target.value);
-            updateUI();
-            rebuildScene();
-        });
-        
-        document.getElementById('layers').addEventListener('input', (e) => {
-            params.layers = parseInt(e.target.value);
-            updateUI();
-            rebuildScene();
-        });
-        
-        ['c1', 'c2', 'c3', 'c4', 'c5'].forEach((id, i) => {
-            const checkboxes = ['core', 'spirals', 'particles', 'rings', 'autoRotate'];
-            document.getElementById(id).addEventListener('change', (e) => {
-                params[checkboxes[i]] = e.target.checked;
-                rebuildScene();
-            });
-        });
-        
-        // 鼠标控制
-        document.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            lastMouse = { x: e.clientX, y: e.clientY };
-            document.body.classList.add('grabbing');
-        });
-        
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            
-            const deltaX = e.clientX - lastMouse.x;
-            const deltaY = e.clientY - lastMouse.y;
-            
-            cameraAngle.theta -= deltaX * 0.01;
-            cameraAngle.phi += deltaY * 0.01;
-            cameraAngle.phi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraAngle.phi));
-            
-            const x = cameraDist * Math.sin(cameraAngle.phi) * Math.cos(cameraAngle.theta);
-            const y = cameraDist * Math.cos(cameraAngle.phi);
-            const z = cameraDist * Math.sin(cameraAngle.phi) * Math.sin(cameraAngle.theta);
-            
-            camera.position.set(x, y, z);
-            camera.lookAt(0, 0, 0);
-            
-            lastMouse = { x: e.clientX, y: e.clientY };
-        });
-        
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-            document.body.classList.remove('grabbing');
-        });
-        
-        document.addEventListener('wheel', (e) => {
-            cameraDist += e.deltaY * 0.1;
-            cameraDist = Math.max(10, Math.min(200, cameraDist));
-            
-            const x = cameraDist * Math.sin(cameraAngle.phi) * Math.cos(cameraAngle.theta);
-            const y = cameraDist * Math.cos(cameraAngle.phi);
-            const z = cameraDist * Math.sin(cameraAngle.phi) * Math.sin(cameraAngle.theta);
-            
-            camera.position.set(x, y, z);
-            camera.lookAt(0, 0, 0);
-        });
-        
-        // 键盘控制
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                e.preventDefault();
-                togglePause();
-            }
-        });
-        
-        // 窗口调整
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-        
-        // 动画循环
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            if (!paused) {
-                time += 0.016 * params.speed;
-                updateScene();
-            }
-            
-            if (params.autoRotate && !isDragging) {
-                cameraAngle.theta += 0.005;
-                const x = cameraDist * Math.sin(cameraAngle.phi) * Math.cos(cameraAngle.theta);
-                const y = cameraDist * Math.cos(cameraAngle.phi);
-                const z = cameraDist * Math.sin(cameraAngle.phi) * Math.sin(cameraAngle.theta);
-                camera.position.set(x, y, z);
-                camera.lookAt(0, 0, 0);
-            }
-            
-            renderer.render(scene, camera);
-        }
-        
-        // 初始化
-        updateUI();
-        rebuildScene();
-        setTimeout(() => {
-            document.getElementById('loading').classList.add('hidden');
-            animate();
-        }, 1000);
+          }
+        })
+
+        document.getElementById('obj-count').textContent = objectCount
+        document.getElementById('tri-count').textContent = totalTriangles.toFixed(0)
+      }
+
+      // 初始化
+      updateUI()
+      rebuildScene()
+      setTimeout(() => {
+        document.getElementById('loading').classList.add('hidden')
+        animate()
+      }, 1000)
     </script>
-</body>
+  </body>
 </html>
