@@ -535,7 +535,10 @@ vi.mock('three', () => {
   class MockPoints {
     geometry: MockBufferGeometry
     material: any
-    rotation = { x: 0, y: 0, z: 0 }
+    rotation = { x: 0, y: 0, z: 0, set: vi.fn() }
+    scale = { x: 1, y: 1, z: 1, setScalar: vi.fn() }
+    add = vi.fn()
+    remove = vi.fn()
 
     constructor(geometry?: MockBufferGeometry, material?: any) {
       this.geometry = geometry || new MockBufferGeometry()
@@ -551,6 +554,10 @@ vi.mock('three', () => {
       return this
     }
 
+    setFromPoints(points: any[]): MockBufferGeometry {
+      return this
+    }
+
     dispose(): void {
       // 模拟清理
     }
@@ -561,7 +568,14 @@ vi.mock('three', () => {
   }
 
   class MockBufferAttribute {
+    array: any
+    itemSize: number
     needsUpdate = false
+
+    constructor(array: any, itemSize: number) {
+      this.array = array
+      this.itemSize = itemSize
+    }
 
     setUsage(usage: number): this {
       return this
@@ -572,10 +586,6 @@ vi.mock('three', () => {
     // 导出模拟的Three.js类
     Vector3: MockVector3,
     Ray: MockRay,
-    Raycaster: class {
-      setFromCamera = vi.fn()
-      intersectObjects = vi.fn(() => [])
-    },
     Scene: MockScene,
     PerspectiveCamera: MockPerspectiveCamera,
     WebGLRenderer: MockWebGLRenderer,
@@ -586,7 +596,6 @@ vi.mock('three', () => {
     CatmullRomCurve3: class {
       getPoints = vi.fn(() => [])
     },
-    AdditiveBlending: 2,
     DynamicDrawUsage: 1,
     StaticDrawUsage: 0,
     StreamDrawUsage: 2,
@@ -595,7 +604,7 @@ vi.mock('three', () => {
       add = vi.fn()
       remove = vi.fn()
       position = new MockVector3()
-      rotation = { x: 0, y: 0, z: 0 }
+      rotation = { x: 0, y: 0, z: 0, set: vi.fn() }
       scale = { x: 1, y: 1, z: 1 }
     },
     AmbientLight: class {
@@ -607,13 +616,63 @@ vi.mock('three', () => {
       }
       position: any
     },
+    // Base classes
+    Material: class {
+      dispose = vi.fn()
+    },
+    Geometry: class {
+      dispose = vi.fn()
+    },
+    // Mesh classes
     Mesh: class {
       geometry = { dispose: vi.fn() }
       material = { dispose: vi.fn() }
       position = new MockVector3()
-      rotation = { x: 0, y: 0, z: 0 }
+      rotation = { x: 0, y: 0, z: 0, set: vi.fn() }
+      scale = { x: 1, y: 1, z: 1, setScalar: vi.fn() }
+      add = vi.fn()
+      remove = vi.fn()
     },
     MeshBasicMaterial: class {
+      dispose = vi.fn()
+    },
+    MeshPhysicalMaterial: class {
+      dispose = vi.fn()
+    },
+    ShaderMaterial: class {
+      uniforms: any
+      vertexShader: string
+      fragmentShader: string
+      constructor(params: any) {
+        this.uniforms = params.uniforms || {}
+        this.vertexShader = params.vertexShader || ''
+        this.fragmentShader = params.fragmentShader || ''
+      }
+      dispose = vi.fn()
+    },
+    SpriteMaterial: class {
+      map: any
+      constructor(params: any) {
+        this.map = params.map
+      }
+      dispose = vi.fn()
+    },
+    Sprite: class {
+      material: any
+      scale = { x: 1, y: 1, z: 1, set: vi.fn() }
+      constructor(material: any) {
+        this.material = material
+      }
+    },
+    CanvasTexture: class {
+      dispose = vi.fn()
+    },
+    SphereGeometry: class {
+      constructor(radius = 1, widthSegments = 8, heightSegments = 6) {}
+      dispose = vi.fn()
+    },
+    TorusGeometry: class {
+      constructor(radius = 1, tube = 0.4, radialSegments = 8, tubularSegments = 6) {}
       dispose = vi.fn()
     },
     BoxGeometry: class {
@@ -623,7 +682,10 @@ vi.mock('three', () => {
       geometry = { dispose: vi.fn() }
       material = { dispose: vi.fn() }
       position = new MockVector3()
-      rotation = { x: 0, y: 0, z: 0 }
+      rotation = { x: 0, y: 0, z: 0, set: vi.fn() }
+      scale = { x: 1, y: 1, z: 1, setScalar: vi.fn() }
+      add = vi.fn()
+      remove = vi.fn()
     },
     LineBasicMaterial: class {
       dispose = vi.fn()
@@ -665,6 +727,21 @@ vi.mock('three', () => {
         this.b = b
         return this
       }
+
+      clone(): any {
+        const cloned = new (this.constructor as any)()
+        cloned.r = this.r
+        cloned.g = this.g
+        cloned.b = this.b
+        return cloned
+      }
+
+      lerp(color: any, alpha: number): this {
+        this.r += (color.r - this.r) * alpha
+        this.g += (color.g - this.g) * alpha
+        this.b += (color.b - this.b) * alpha
+        return this
+      }
     },
     Vector2: class {
       constructor(x = 0, y = 0) {}
@@ -691,7 +768,16 @@ vi.mock('three', () => {
     Plane: class {
       setFromNormalAndCoplanarPoint = vi.fn()
       intersectLine = vi.fn()
-    }
+    },
+    // Constants
+    FrontSide: 0,
+    BackSide: 1,
+    DoubleSide: 2,
+    AdditiveBlending: 2,
+    NormalBlending: 1,
+    SubtractiveBlending: 3,
+    MultiplyBlending: 4,
+    CustomBlending: 5
   }
 })
 

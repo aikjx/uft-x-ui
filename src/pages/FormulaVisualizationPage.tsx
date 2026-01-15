@@ -162,6 +162,11 @@ const FormulaVisualizationPage: React.FC = () => {
           ...currentExample?.config
         };
         strategy.createVisualization(visualizationGroup, combinedConfig);
+        
+        // 关键修复：将策略设置在Group上的更新函数挂载到场景上，确保动画循环能调用到
+        if (visualizationGroup.userData && typeof visualizationGroup.userData.update === 'function') {
+          scene.userData.update = visualizationGroup.userData.update;
+        }
       } catch (error) {
         console.error('Failed to create visualization:', error);
       }

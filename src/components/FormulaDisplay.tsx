@@ -537,6 +537,18 @@ const FormulaDisplay: React.FC<{
             >
               {formula.category}
             </span>
+            {formula.physicalDimension && (
+              <span
+                className="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide"
+                style={{
+                  backgroundColor: `${colors.variable}20`,
+                  color: colors.variable,
+                  border: `1px solid ${colors.variable}40`
+                }}
+              >
+                量纲: {formula.physicalDimension}
+              </span>
+            )}
           </motion.div>
         )}
       </div>

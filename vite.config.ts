@@ -13,4 +13,9 @@ function getPlugins() {
 
 export default defineConfig({
   plugins: getPlugins(),
+  optimizeDeps: {
+    // Only scan index.html and source files for dependencies
+    // This prevents Vite from scanning archived HTML files that might contain broken imports
+    entries: ['index.html', 'src/**/*.{ts,tsx}'] 
+  }
 });

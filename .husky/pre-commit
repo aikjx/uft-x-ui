@@ -1,6 +1,6 @@
 # Check if lint-staged is available, if not skip linting
-if command -v pnpm &>nul 2>&1; then
-  if pnpm exec which lint-staged &>nul 2>&1; then
+if command -v pnpm >/dev/null 2>&1; then
+  if pnpm exec which lint-staged >/dev/null 2>&1; then
     pnpm lint-staged
   else
     echo "lint-staged not found, skipping pre-commit linting"
