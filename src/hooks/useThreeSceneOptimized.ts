@@ -235,7 +235,9 @@ export const useThreeSceneOptimized = ({
         if (import.meta.env.DEV) {
           const threeStats = performanceMonitor.getStats()
           console.log(
-            `🎮 性能统计: FPS = ${fps}, 渲染时间 = ${renderTime.toFixed(2)}ms, 绘制调用 = ${threeStats.drawCalls}, 三角形 = ${threeStats.triangles}, 内存使用 = ${threeStats.memoryUsage}MB`
+            `🎮 性能统计: FPS = ${fps}, 渲染时间 = ${renderTime.toFixed(2)}ms, 绘制调用 = ${
+              threeStats.drawCalls
+            }, 三角形 = ${threeStats.triangles}, 内存使用 = ${threeStats.memoryUsage}MB`
           )
         }
       }
@@ -299,7 +301,7 @@ export const useThreeSceneOptimized = ({
       }
 
       // 禁用性能监控
-      performanceMonitor.disable();
+      performanceMonitor.disable()
 
       if (rendererRef.current) {
         rendererRef.current.dispose()
