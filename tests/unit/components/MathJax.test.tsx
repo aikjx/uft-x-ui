@@ -29,4 +29,15 @@ describe('MathJax Component', () => {
     // 确保当MathJax不可用时不会抛出错误
     expect(() => render(<MathJax formula="E=mc^2" />)).not.toThrow()
   })
+
+  it('applies fontSize and color styles', () => {
+    const { container } = render(
+      <MathJax formula="E=mc^2" fontSize={24} color="#ff0000" />
+    )
+    const wrapper = container.querySelector('.mathjax-wrapper')
+    expect(wrapper).toHaveStyle({
+      fontSize: '24px',
+      color: '#ff0000'
+    })
+  })
 })

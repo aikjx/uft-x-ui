@@ -244,7 +244,7 @@ export const useThreeSceneOptimized = ({
     }
 
     animate(0)
-  }, [onPerformanceUpdate])
+  }, []) // 移除 onPerformanceUpdate 依赖，因为它现在通过 ref 访问
 
   // 窗口大小调整处理
   const handleResize = useCallback(() => {

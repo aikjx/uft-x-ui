@@ -6,12 +6,15 @@ interface MathJaxProps {
   formula: string
   className?: string
   inline?: boolean
+  fontSize?: number | string
+  color?: string
 }
 
 export const MathJax: React.FC<MathJaxProps> = React.memo(
-  ({ formula, className = '', inline = false }) => {
+  ({ formula, className = '', inline = false, fontSize, color }) => {
     const wrapperRef = useRef<HTMLDivElement>(null)
     const [isReady, setIsReady] = useState(false)
+    const [hasError, setHasError] = useState(false)
 
     // 初始化MathJax服务
     useEffect(() => {
@@ -22,9 +25,15 @@ export const MathJax: React.FC<MathJaxProps> = React.memo(
         // 监听MathJax就绪状态
         const handleReady = () => {
           setIsReady(true)
+          setHasError(false)
         }
 
         MathJaxService.onReady(handleReady)
+        
+        // 检查是否已经就绪
+        if (MathJaxService.isReadyState) {
+          setIsReady(true)
+        }
 
         return () => {
           MathJaxService.offReady(handleReady)
@@ -40,25 +49,47 @@ export const MathJax: React.FC<MathJaxProps> = React.memo(
         
         // 清空容器并设置新内容
         wrapperRef.current.innerHTML = newContent
+        wrapperRef.current.removeAttribute('data-mjx-error')
 
         // 使用MathJaxService进行渲染
         try {
           MathJaxService.queueTypeset(wrapperRef.current)
+          setHasError(false)
         } catch (err) {
           console.warn('MathJax渲染错误:', err)
+          setHasError(true)
         }
       }
     }, [formula, isReady, inline])
 
-    // 优化：使用useMemo缓存容器元素的样式，避免每次渲染都重新计算
-    const containerStyle = React.useMemo(
-      () => ({
-        fontSize: '1.1em',
-        color: '#3b82f6',
-        fontWeight: 'normal'
-      }),
-      []
-    )
+    // 动态样式计算
+    const containerStyle = React.useMemo(() => {
+      const style: React.CSSProperties = {
+        fontWeight: 'normal',
+      }
+      
+      if (fontSize) {
+        style.fontSize = typeof fontSize === 'number' ? `${fontSize}px` : fontSize
+      } else {
+        style.fontSize = '1.1em' // 默认值
+      }
+      
+      if (color) {
+        style.color = color
+      } else {
+        style.color = '#3b82f6' // 默认值
+      }
+      
+      return style
+    }, [fontSize, color])
+
+    if (hasError) {
+      return (
+        <span className={cn('mathjax-error text-red-400 font-mono text-sm', className)} style={containerStyle}>
+          {formula}
+        </span>
+      )
+    }
 
     return (
       <div
@@ -66,7 +97,11 @@ export const MathJax: React.FC<MathJaxProps> = React.memo(
         className={cn('mathjax-wrapper', 'font-math', className)}
         style={containerStyle}
       >
-        {!isReady && <span className="text-blue-300 opacity-70">加载中...</span>}
+        {!isReady && (
+          <span className="text-blue-300 opacity-70 animate-pulse">
+            {inline ? '...' : '正在加载公式...'}
+          </span>
+        )}
       </div>
     )
   },
@@ -75,7 +110,9 @@ export const MathJax: React.FC<MathJaxProps> = React.memo(
     return (
       prevProps.formula === nextProps.formula &&
       prevProps.className === nextProps.className &&
-      prevProps.inline === nextProps.inline
+      prevProps.inline === nextProps.inline &&
+      prevProps.fontSize === nextProps.fontSize &&
+      prevProps.color === nextProps.color
     )
   }
 )

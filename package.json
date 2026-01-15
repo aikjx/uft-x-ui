@@ -7,7 +7,7 @@
     "dev:client": "vite --host --port 3000",
     "dev": "pnpm dev:client",
     "build:client": "vite build --outDir dist/static",
-    "build": "rd /s /q dist 2>nul || md dist && pnpm build:client && copy package.json dist 2>nul && type nul > dist/build.flag"
+    "build": "pnpm build:client && node -e \"try { require('fs').copyFileSync('package.json', 'dist/package.json'); require('fs').writeFileSync('dist/build.flag', ''); } catch(e) { console.error(e) }\""
   },
   "dependencies": {
     "clsx": "^2.1.1",

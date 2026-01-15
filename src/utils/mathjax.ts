@@ -31,13 +31,19 @@ class MathJaxService {
   private renderQueue: HTMLElement[] = []
   private renderTimeout: ReturnType<typeof setTimeout> | null = null
   private scriptElement: HTMLScriptElement | null = null
-  private retryCount: number = 0
-  private maxRetries: number = 3
   private isClient: boolean = typeof window !== 'undefined' && typeof document !== 'undefined'
   private mergedConfig: any = {}
   // 添加公式缓存，避免重复渲染相同的公式
   private formulaCache: Map<string, string> = new Map()
   private elementCache: Map<HTMLElement, string> = new Map()
+  
+  // CDN 列表和重试机制
+  private cdnList: string[] = [
+    'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js',
+    'https://unpkg.com/mathjax@3/es5/tex-svg.js'
+  ]
+  private currentCdnIndex: number = 0
 
   private constructor() {
     // 初始化时检查环境
@@ -187,16 +193,15 @@ class MathJaxService {
     }
 
     const script = document.createElement('script')
-    // 使用CDN的MathJax v3版本，确保兼容性
-    // 为生产环境优化，使用较小的包
-    const isProd = import.meta.env.MODE === 'production'
-    // 性能优化：使用最小化版本和适当的CDN
-    script.src = isProd
-      ? 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js'
-      : 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js'
+    
+    // 使用当前索引的CDN
+    const cdnUrl = this.cdnList[this.currentCdnIndex]
+    console.log(`正在尝试加载MathJax (源: ${cdnUrl})...`)
+    
+    script.src = cdnUrl
     script.async = true
     script.type = 'text/javascript'
-    script.crossOrigin = 'anonymous' // 添加crossorigin属性，解决credentials mode不匹配问题
+    script.crossOrigin = 'anonymous' // 添加crossorigin属性
     script.referrerPolicy = 'no-referrer-when-downgrade' // 添加referrer policy
 
     // 性能优化：添加加载优先级
@@ -204,7 +209,7 @@ class MathJaxService {
 
     // 增加超时处理
     const timeoutId = setTimeout(() => {
-      console.error('MathJax加载超时')
+      console.error(`MathJax加载超时 (源: ${cdnUrl})`)
       this.handleLoadError(new Error('加载超时'))
     }, 15000)
 
@@ -215,7 +220,7 @@ class MathJaxService {
 
     script.onerror = error => {
       clearTimeout(timeoutId)
-      console.error('MathJax加载失败:', error)
+      console.error(`MathJax加载失败 (源: ${cdnUrl}):`, error)
       this.handleLoadError(error)
     }
 
@@ -224,19 +229,22 @@ class MathJaxService {
   }
 
   /**
-   * 处理加载错误，实现自动重试
+   * 处理加载错误，实现CDN切换重试
    */
   private handleLoadError(error: any): void {
-    this.retryCount++
+    this.currentCdnIndex++
 
-    if (this.retryCount <= this.maxRetries) {
-      console.warn(`MathJax加载失败，尝试第${this.retryCount}次重试...`)
+    if (this.currentCdnIndex < this.cdnList.length) {
+      console.warn(`MathJax加载失败，切换到备用CDN (${this.cdnList[this.currentCdnIndex]})...`)
       // 延迟后重试
       setTimeout(() => {
         this.loadMathJaxScript()
-      }, 2000 * this.retryCount)
+      }, 1000)
     } else {
-      console.error('MathJax达到最大重试次数，加载失败')
+      console.error('MathJax所有CDN源均加载失败')
+      // 重置索引以便下次可能重新尝试（虽然单例模式下可能不需要）
+      this.currentCdnIndex = 0
+      
       // 通知所有等待的回调，提供降级处理机会
       this.readyCallbacks.forEach(callback => {
         try {
@@ -246,6 +254,9 @@ class MathJaxService {
         }
       })
       this.readyCallbacks = []
+      
+      // 标记为就绪（虽然是失败状态），避免阻塞UI
+      this.isReady = true 
     }
   }
 
@@ -274,8 +285,11 @@ class MathJaxService {
       }
 
       this.isReady = true
-      this.retryCount = 0 // 重置重试计数
-
+      // 重置索引，以便下次成功使用首选CDN（如果页面刷新）
+      // 这里不重置 currentCdnIndex，因为如果当前CDN成功了，下次应该继续用它？
+      // 或者为了稳定性，总是从头开始？考虑到CDN可能临时挂掉，保持当前成功的可能更好。
+      // 但如果是单例，下次initialize不会再调用。
+      
       // 执行所有等待的回调
       this.executeReadyCallbacks()
 
@@ -288,8 +302,6 @@ class MathJaxService {
       // Even if MathJax failed to initialize properly, mark as ready to prevent blocking the UI
       this.isReady = true
       this.executeReadyCallbacks()
-      // 尝试重试
-      // this.handleLoadError(error);
     }
   }
 
@@ -629,8 +641,6 @@ class MathJaxService {
     // 重置状态
     this.isReady = false
     this.isInitialized = false
-    this.retryCount = 0
-
     // 移除脚本元素
     if (this.scriptElement && this.scriptElement.parentNode) {
       try {
