@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统一场论可视化系统</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        #main-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            min-width: 200px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+        
+        .control-group button {
+            width: 100%;
+            padding: 8px;
+            margin: 2px 0;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .control-group button:hover {
+            background-color: #555;
+        }
+        
+        .equation-selector {
+            margin-top: 20px;
+        }
+        
+        .equation-selector select {
+            width: 100%;
+            padding: 8px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        
+        .info-panel {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            max-width: 300px;
+        }
+        
+        .info-panel h3 {
+            margin-top: 0;
+            font-size: 16px;
+        }
+        
+        .info-panel p {
+            margin: 5px 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="main-canvas"></canvas>
+    
+    <div class="controls">
+        <h3>控制面板</h3>
+        
+        <div class="control-group">
+            <label for="animation-speed">动画速度: <span id="speed-value">1.0</span></label>
+            <input type="range" id="animation-speed" min="0.1" max="3" step="0.1" value="1">
+        </div>
+        
+        <div class="control-group">
+            <label for="scale">缩放: <span id="scale-value">1.0</span></label>
+            <input type="range" id="scale" min="0.1" max="3" step="0.1" value="1">
+        </div>
+        
+        <div class="control-group equation-selector">
+            <label for="equation-select">选择方程</label>
+            <select id="equation-select">
+                <option value="spacetime">时空方程</option>
+                <option value="helix">螺旋时空方程</option>
+                <option value="perpendicular">垂直原理方程</option>
+                <option value="mass">质量定义方程</option>
+                <option value="energy">能量动量方程</option>
+                <option value="charge">电荷方程</option>
+                <option value="current">电流方程</option>
+                <option value="velocity">速度场方程</option>
+                <option value="acceleration">加速度场方程</option>
+                <option value="gravitational">引力场方程</option>
+                <option value="electromagnetic">电磁场方程</option>
+                <option value="nuclear">核力场方程</option>
+                <option value="wave">波函数方程</option>
+                <option value="probability">概率场方程</option>
+                <option value="entanglement">纠缠场方程</option>
+                <option value="quantum">量子场方程</option>
+                <option value="cosmological">宇宙学方程</option>
+                <option value="blackHole">黑洞方程</option>
+                <option value="wormhole">虫洞方程</option>
+                <option value="vacuum">真空方程</option>
+            </select>
+        </div>
+        
+        <div class="control-group">
+            <button onclick="toggleFullscreen()">全屏</button>
+            <button onclick="resetView()">重置视图</button>
+            <button onclick="toggleGrid()">显示/隐藏网格</button>
+        </div>
+    </div>
+    
+    <div class="info-panel">
+        <h3>统一场论可视化系统</h3>
+        <p><strong>功能特点:</strong></p>
+        <p>• 20个统一场论方程的可视化</p>
+        <p>• 实时3D渲染和动画</p>
+        <p>• 交互式控制面板</p>
+        <p>• 物理参数实时调整</p>
+        <p>• 多维度数据可视化</p>
+        <p><strong>操作指南:</strong></p>
+        <p>• 空格键: 切换方程</p>
+        <p>• 方向键: 调整速度和缩放</p>
+        <p>• 鼠标: 交互控制</p>
+    </div>
+    
+    <!-- 核心渲染引擎 -->
+    <script src="core/render_engine.js"></script>
+    <script src="physics/physics_engine.js"></script>
+    
+    <!-- 基础方程 -->
+    <script src="equations/spacetime_equation.js"></script>
+    <script src="equations/helix_spacetime_equation.js"></script>
+    <script src="equations/perpendicular_principle_equation.js"></script>
+    <script src="equations/mass_definition_equation.js"></script>
+    
+    <!-- 能量动量相关方程 -->
+    <script src="equations/energy_momentum_equation.js"></script>
+    <script src="equations/charge_equation.js"></script>
+    <script src="equations/current_equation.js"></script>
+    <script src="equations/velocity_field_equation.js"></script>
+    
+    <!-- 场论方程 -->
+    <script src="equations/acceleration_field_equation.js"></script>
+    <script src="equations/gravitational_field_equation.js"></script>
+    <script src="equations/electromagnetic_field_equation.js"></script>
+    <script src="equations/nuclear_force_equation.js"></script>
+    
+    <!-- 量子方程 -->
+    <script src="equations/wave_function_equation.js"></script>
+    <script src="equations/probability_field_equation.js"></script>
+    <script src="equations/entanglement_field_equation.js"></script>
+    <script src="equations/quantum_field_equation.js"></script>
+    
+    <!-- 宇宙学方程 -->
+    <script src="equations/cosmological_equation.js"></script>
+    <script src="equations/black_hole_equation.js"></script>
+    <script src="equations/wormhole_equation.js"></script>
+    <script src="equations/vacuum_equation.js"></script>
+    
+    <!-- 主应用程序 -->
+    <script src="app.js"></script>
+    
+    <script>
+        // 初始化Canvas尺寸
+        function resizeCanvas() {
+            const canvas = document.getElementById('main-canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // 事件监听器
+        document.getElementById('animation-speed').addEventListener('input', function(e) {
+            const speed = parseFloat(e.target.value);
+            document.getElementById('speed-value').textContent = speed.toFixed(1);
+            if (window.app) {
+                window.app.state.animationSpeed = speed;
+            }
+        });
+        
+        document.getElementById('scale').addEventListener('input', function(e) {
+            const scale = parseFloat(e.target.value);
+            document.getElementById('scale-value').textContent = scale.toFixed(1);
+            if (window.app) {
+                window.app.state.scale = scale;
+            }
+        });
+        
+        document.getElementById('equation-select').addEventListener('change', function(e) {
+            const equation = e.target.value;
+            if (window.app) {
+                window.app.state.currentEquation = equation;
+            }
+        });
+        
+        // 辅助函数
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+        
+        function resetView() {
+            document.getElementById('animation-speed').value = 1;
+            document.getElementById('speed-value').textContent = '1.0';
+            document.getElementById('scale').value = 1;
+            document.getElementById('scale-value').textContent = '1.0';
+            if (window.app) {
+                window.app.state.animationSpeed = 1;
+                window.app.state.scale = 1;
+            }
+        }
+        
+        function toggleGrid() {
+            // 实现网格显示/隐藏功能
+            console.log('Toggle grid');
+        }
+        
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (window.app) {
+                    window.app.toggleEquation();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

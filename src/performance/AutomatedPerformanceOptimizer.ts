@@ -11,6 +11,11 @@ import {
 import { eventSystem, APP_EVENTS } from '../utils/eventSystem'
 import { PerformanceOptimizer, OptimizationStrategy } from './PerformanceOptimizer'
 import { VISUALIZATION_CONFIG } from '../constants'
+import {
+  MLPerformancePredictor,
+  PerformanceData,
+  OptimizationParams
+} from './MLPerformancePredictor'
 
 // 自动化优化模式
 export enum AutomatedOptimizationMode {
@@ -63,6 +68,7 @@ export class AutomatedPerformanceOptimizer {
     metrics: UnifiedPerformanceMetrics
     actions: Array<{ type: string; value: any; expectedGain: number }>
   }> = []
+  private mlPredictor: MLPerformancePredictor = new MLPerformancePredictor()
 
   private constructor() {
     this.performanceManager = UnifiedPerformanceManager.getInstance()
@@ -103,6 +109,9 @@ export class AutomatedPerformanceOptimizer {
     eventSystem.on(APP_EVENTS.PERFORMANCE_METRICS_UPDATE, (data: any) => {
       this.currentMetrics = data.performanceData
       this.optimize()
+
+      // 收集性能数据用于模型训练
+      this.collectPerformanceData(data)
     })
 
     // 监听设备性能变化事件
@@ -118,6 +127,92 @@ export class AutomatedPerformanceOptimizer {
     this.isInitialized = true
     this.detectDevicePerformanceLevel()
     this.startOptimizationLoop()
+
+    // 初始化机器学习模型
+    this.initMLPredictor()
+  }
+
+  /**
+   * 初始化机器学习预测器
+   */
+  private async initMLPredictor(): Promise<void> {
+    try {
+      // 加载预训练模型
+      await this.mlPredictor.loadModel()
+
+      // 如果模型未训练，生成一些初始训练数据
+      if (!this.mlPredictor['isTrained']) {
+        this.generateInitialTrainingData()
+      }
+    } catch (error) {
+      console.warn('Failed to initialize ML predictor:', error)
+    }
+  }
+
+  /**
+   * 收集性能数据用于模型训练
+   */
+  private collectPerformanceData(data: any): void {
+    try {
+      const performanceData: PerformanceData = {
+        fps: data.fps || 60,
+        renderTime: data.renderTime || 16.67,
+        frameTime: data.frameTime || 16.67,
+        drawCalls: data.drawCalls || 0,
+        triangles: data.triangles || 0,
+        particleCount: data.particleCount || 1000,
+        renderScale: data.renderScale || 1.0,
+        shadowQuality: data.shadowQuality || 0.5,
+        postProcessing: data.postProcessing || false,
+        textureMemory: data.textureMemory || 50,
+        objectCount: data.objectCount || 100,
+        complexObjectCount: data.complexObjectCount || 10,
+        thermalState: data.thermalState || 'normal',
+        batteryLevel: data.batteryLevel || 1.0,
+        devicePerformanceLevel: this.devicePerformanceLevel as 'low' | 'medium' | 'high' | 'ultra'
+      }
+
+      this.mlPredictor.addTrainingData(performanceData)
+    } catch (error) {
+      console.warn('Failed to collect performance data:', error)
+    }
+  }
+
+  /**
+   * 生成初始训练数据
+   */
+  private generateInitialTrainingData(): void {
+    // 生成一些模拟的训练数据
+    const deviceLevels = ['low', 'medium', 'high', 'ultra'] as const
+    const thermalStates = ['normal', 'warm', 'hot'] as const
+
+    for (let i = 0; i < 100; i++) {
+      const deviceLevel = deviceLevels[Math.floor(Math.random() * deviceLevels.length)]
+      const thermalState = thermalStates[Math.floor(Math.random() * thermalStates.length)]
+
+      const performanceData: PerformanceData = {
+        fps: Math.random() * 30 + 30,
+        renderTime: 1000 / (Math.random() * 30 + 30),
+        frameTime: 1000 / (Math.random() * 30 + 30),
+        drawCalls: Math.random() * 800 + 200,
+        triangles: Math.random() * 500000 + 100000,
+        particleCount: Math.random() * 15000 + 5000,
+        renderScale: Math.random() * 1.5 + 0.5,
+        shadowQuality: Math.random(),
+        postProcessing: Math.random() > 0.5,
+        textureMemory: Math.random() * 150 + 50,
+        objectCount: Math.random() * 800 + 200,
+        complexObjectCount: Math.random() * 80 + 20,
+        thermalState: thermalState,
+        batteryLevel: Math.random(),
+        devicePerformanceLevel: deviceLevel
+      }
+
+      this.mlPredictor.addTrainingData(performanceData)
+    }
+
+    // 训练模型
+    this.mlPredictor.trainModel().catch(console.warn)
   }
 
   /**
@@ -187,8 +282,12 @@ export class AutomatedPerformanceOptimizer {
       clearInterval(this.optimizationTimer)
     }
 
-    this.optimizationTimer = window.setInterval(() => {
-      this.optimize()
+    this.optimizationTimer = window.setInterval(async () => {
+      try {
+        await this.optimize()
+      } catch (error) {
+        console.warn('Optimization loop error:', error)
+      }
     }, this.config.optimizationInterval) as unknown as number
   }
 
@@ -220,7 +319,7 @@ export class AutomatedPerformanceOptimizer {
   /**
    * 执行自动化优化
    */
-  public optimize(): void {
+  public async optimize(): Promise<void> {
     if (!this.currentMetrics) return
 
     const metrics = this.currentMetrics
@@ -248,7 +347,8 @@ export class AutomatedPerformanceOptimizer {
         break
       case AutomatedOptimizationMode.AUTO:
       default:
-        actions.push(...this.performAutoOptimization(metrics, analysis))
+        const autoActions = await this.performAutoOptimization(metrics, analysis)
+        actions.push(...autoActions)
         break
     }
 
@@ -621,10 +721,10 @@ export class AutomatedPerformanceOptimizer {
   /**
    * 根据性能分析结果执行自动优化
    */
-  private performAutoOptimization(
+  private async performAutoOptimization(
     metrics: UnifiedPerformanceMetrics,
     analysis: any
-  ): Array<{ type: string; value: any; expectedGain: number }> {
+  ): Promise<Array<{ type: string; value: any; expectedGain: number }>> {
     const actions: Array<{ type: string; value: any; expectedGain: number }> = []
 
     // 根据设备性能等级调整优化策略
@@ -653,7 +753,8 @@ export class AutomatedPerformanceOptimizer {
 
     // 根据性能分析结果执行智能优化
     if (this.config.enableAIOptimization) {
-      actions.push(...this.performAIOptimization(metrics, analysis))
+      const aiActions = await this.performAIOptimization(metrics, analysis)
+      actions.push(...aiActions)
     }
 
     return actions
@@ -662,10 +763,10 @@ export class AutomatedPerformanceOptimizer {
   /**
    * AI优化（基于历史数据和机器学习模型）
    */
-  private performAIOptimization(
+  private async performAIOptimization(
     metrics: UnifiedPerformanceMetrics,
     analysis: any
-  ): Array<{ type: string; value: any; expectedGain: number }> {
+  ): Promise<Array<{ type: string; value: any; expectedGain: number }>> {
     const actions: Array<{ type: string; value: any; expectedGain: number }> = []
 
     // 基于历史数据的智能优化
@@ -690,6 +791,14 @@ export class AutomatedPerformanceOptimizer {
           }
         }
       }
+    }
+
+    // 基于机器学习的优化
+    try {
+      const mlActions = await this.performMLOptimization(metrics, analysis)
+      actions.push(...mlActions)
+    } catch (error) {
+      console.warn('ML optimization failed:', error)
     }
 
     // 基于性能分析的针对性优化
@@ -724,6 +833,106 @@ export class AutomatedPerformanceOptimizer {
 
     // 自适应优化：根据当前设备状态调整优化策略
     actions.push(...this.performAdaptiveOptimization(metrics, analysis))
+
+    return actions
+  }
+
+  /**
+   * 基于机器学习的优化
+   */
+  private async performMLOptimization(
+    metrics: UnifiedPerformanceMetrics,
+    analysis: any
+  ): Promise<Array<{ type: string; value: any; expectedGain: number }>> {
+    const actions: Array<{ type: string; value: any; expectedGain: number }> = []
+
+    // 准备当前参数
+    const currentParams: OptimizationParams = {
+      particleCount: metrics.particleCount || 1000,
+      renderScale: metrics.renderScale || 1.0,
+      shadowQuality: metrics.shadowQuality || 0.5,
+      postProcessing: metrics.postProcessing || false,
+      textureMemory: metrics.textureMemory || 50,
+      objectCount: metrics.objectCount || 100,
+      complexObjectCount: metrics.complexObjectCount || 10
+    }
+
+    // 准备设备数据
+    const deviceData = {
+      thermalState: metrics.thermalState || 'normal',
+      batteryLevel: metrics.batteryLevel || 1.0,
+      devicePerformanceLevel: this.devicePerformanceLevel as 'low' | 'medium' | 'high' | 'ultra'
+    }
+
+    // 预测当前参数的性能
+    const currentPrediction = await this.mlPredictor.predictPerformance(currentParams, deviceData)
+
+    // 优化参数以达到目标FPS
+    const optimizedParams = await this.mlPredictor.optimizeParameters(
+      this.config.targetFPS,
+      deviceData,
+      {
+        maxParticleCount: metrics.particleCount * 1.2,
+        maxRenderScale: window.devicePixelRatio,
+        maxShadowQuality: 1.0,
+        allowPostProcessing: true,
+        maxTextureMemory: metrics.textureMemory * 1.2,
+        maxObjectCount: metrics.objectCount * 1.2,
+        maxComplexObjectCount: metrics.complexObjectCount * 1.2
+      }
+    )
+
+    // 预测优化后的性能
+    const optimizedPrediction = await this.mlPredictor.predictPerformance(
+      optimizedParams,
+      deviceData
+    )
+
+    // 计算预期性能提升
+    const expectedGain = optimizedPrediction.fps - currentPrediction.fps
+
+    if (expectedGain > 5) {
+      // 添加优化动作
+      if (optimizedParams.particleCount !== currentParams.particleCount) {
+        actions.push({
+          type: 'particleCount',
+          value: optimizedParams.particleCount,
+          expectedGain: expectedGain * 0.3
+        })
+      }
+
+      if (optimizedParams.renderScale !== currentParams.renderScale) {
+        actions.push({
+          type: 'renderScale',
+          value: optimizedParams.renderScale,
+          expectedGain: expectedGain * 0.25
+        })
+      }
+
+      if (optimizedParams.shadowQuality !== currentParams.shadowQuality) {
+        actions.push({
+          type: 'shadowQuality',
+          value: optimizedParams.shadowQuality,
+          expectedGain: expectedGain * 0.15
+        })
+      }
+
+      if (optimizedParams.postProcessing !== currentParams.postProcessing) {
+        actions.push({
+          type: 'postProcessing',
+          value: optimizedParams.postProcessing,
+          expectedGain: expectedGain * 0.2
+        })
+      }
+
+      if (optimizedParams.textureMemory !== currentParams.textureMemory) {
+        actions.push({
+          type: 'textureMemory',
+          value: optimizedParams.textureMemory,
+          expectedGain: expectedGain * 0.1
+        })
+      }
+    }
 
     return actions
   }

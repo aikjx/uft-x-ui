@@ -1877,6 +1877,7 @@ const FormulaVisualizationPage: React.FC = () => {
                 </div>
               </div>
             </motion.div>
+          </motion.div>
 
           {/* 动画选择器 */}
           {selectedFormula && selectedFormula.animations && selectedFormula.animations.length > 0 && (

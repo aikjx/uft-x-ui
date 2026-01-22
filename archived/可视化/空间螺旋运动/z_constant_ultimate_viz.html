@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Z-Constant Ultimate Visualization | 统一场论核心</title>
+    <style>
+        :root {
+            --primary-color: #00f3ff;
+            --secondary-color: #bc13fe;
+            --bg-color: #050505;
+            --panel-bg: rgba(10, 15, 30, 0.75);
+            --border-color: rgba(0, 243, 255, 0.3);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        
+        body {
+            font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            color: #fff;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* UI Overlay */
+        .ui-layer {
+            position: absolute;
+            z-index: 10;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            pointer-events: auto;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+            margin-top: 20px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            background: linear-gradient(to bottom, #fff, var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--secondary-color);
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        /* Controls Panel */
+        .panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 20px;
+            pointer-events: auto;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+            position: absolute;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: -1px; right: -1px; bottom: -1px;
+            border-radius: 4px;
+            z-index: -1;
+            background: linear-gradient(45deg, transparent 40%, var(--primary-color) 100%);
+            opacity: 0.1;
+        }
+
+        .controls {
+            top: 50%;
+            left: 30px;
+            transform: translateY(-50%);
+            width: 300px;
+        }
+
+        .controls h3 {
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            letter-spacing: 0.1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .control-group {
+            margin-bottom: 18px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .control-value {
+            color: var(--primary-color);
+            font-family: 'Consolas', monospace;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            appearance: none;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            box-shadow: 0 0 10px var(--primary-color);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Info Panel */
+        .info-panel {
+            top: 50%;
+            right: 30px;
+            transform: translateY(-50%);
+            width: 320px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .info-content p {
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+
+        .formula {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid var(--secondary-color);
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+            font-size: 1.1rem;
+            text-align: center;
+            margin: 15px 0;
+            color: #fff;
+        }
+
+        .highlight {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        /* Loading */
+        #loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease-out;
+        }
+
+        .loader-ring {
+            width: 80px;
+            height: 80px;
+            border: 2px solid transparent;
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loader-ring::before {
+            content: '';
+            position: absolute;
+            top: 5px; left: 5px; right: 5px; bottom: 5px;
+            border: 2px solid transparent;
+            border-top-color: var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 2s linear infinite;
+        }
+
+        .loader-text {
+            margin-top: 20px;
+            font-family: 'Rajdhani', sans-serif;
+            letter-spacing: 0.2em;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+        /* HUD Elements */
+        .hud-corner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--border-color);
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+        .hud-corner:hover { opacity: 1; }
+        .tl { top: 20px; left: 20px; border-right: 0; border-bottom: 0; }
+        .tr { top: 20px; right: 20px; border-left: 0; border-bottom: 0; }
+        .bl { bottom: 20px; left: 20px; border-right: 0; border-top: 0; }
+        .br { bottom: 20px; right: 20px; border-left: 0; border-top: 0; }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .controls, .info-panel {
+                width: calc(100% - 40px);
+                left: 20px;
+                right: 20px;
+                top: auto;
+                bottom: 20px;
+                transform: none;
+                max-height: 30vh;
+                overflow-y: auto;
+            }
+            .info-panel { display: none; } /* Hide info on mobile by default */
+            .controls { bottom: 20px; }
+            h1 { font-size: 2rem; }
+        }
+    </style>
+    <!-- Import Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Import Three.js and Post Processing -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="loader">
+        <div class="loader-ring"></div>
+        <div class="loader-text">INITIALIZING SYSTEM</div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div class="ui-layer">
+        <div class="hud-corner tl"></div>
+        <div class="hud-corner tr"></div>
+        <div class="hud-corner bl"></div>
+        <div class="hud-corner br"></div>
+
+        <div class="header">
+            <h1>Z ≈ 0.01</h1>
+            <div class="subtitle">UNIFIED FIELD THEORY VISUALIZATION</div>
+        </div>
+
+        <div class="panel controls">
+            <h3>
+                SYSTEM CONTROLS
+                <span style="font-size: 0.8rem; opacity: 0.7;">● LIVE</span>
+            </h3>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>SPIRAL RADIUS</span>
+                    <span id="val-radius" class="control-value">5.0</span>
+                </div>
+                <input type="range" id="radius" min="2" max="10" step="0.1" value="5">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>HELIX PITCH</span>
+                    <span id="val-pitch" class="control-value">2.0</span>
+                </div>
+                <input type="range" id="pitch" min="0.5" max="5" step="0.1" value="2">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>PARTICLE SPEED</span>
+                    <span id="val-speed" class="control-value">1.0</span>
+                </div>
+                <input type="range" id="speed" min="0" max="3" step="0.1" value="1">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>ENERGY INTENSITY</span>
+                    <span id="val-bloom" class="control-value">1.5</span>
+                </div>
+                <input type="range" id="bloom" min="0" max="3" step="0.1" value="1.5">
+            </div>
+        </div>
+
+        <div class="panel info-panel">
+            <h3>THEORY DATA</h3>
+            <div class="info-content">
+                <p>The <span class="highlight">Z Constant</span> represents the inherent spiral nature of space-time motion. Matter is formed by space moving in a cylindrical spiral pattern.</p>
+                
+                <div class="formula">
+                    Z = dn / (dV · dt)
+                </div>
+                
+                <p>Visualization demonstrates particles moving along the equipotential lines of the spatial field. The core represents the high-density energy singularity.</p>
+                
+                <div class="formula">
+                    G = 2Z / c
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // --- Configuration ---
+        const config = {
+            radius: 5.0,
+            pitch: 2.0,
+            speed: 1.0,
+            bloomStrength: 1.5,
+            helixCount: 8,
+            particleCount: 2000,
+            coreSize: 1.5
+        };
+
+        // --- Shaders ---
+        
+        // 1. Helix Shader - Glowing, flowing energy lines
+        const helixVertexShader = `
+            varying vec2 vUv;
+            varying float vProgress;
+            uniform float uTime;
+            uniform float uSpeed;
+            
+            attribute float aOffset;
+            
+            void main() {
+                vUv = uv;
+                // Calculate progress along the line for gradient
+                vProgress = position.y / 40.0 + 0.5; // Normalized height
+                
+                vec3 pos = position;
+                
+                // Subtle breathing effect
+                float breath = sin(uTime * 2.0 + aOffset) * 0.05;
+                pos.x *= 1.0 + breath;
+                pos.z *= 1.0 + breath;
+                
+                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `;
+
+        const helixFragmentShader = `
+            varying float vProgress;
+            uniform float uTime;
+            uniform vec3 uColor1;
+            uniform vec3 uColor2;
+            
+            void main() {
+                // Moving flow pattern
+                float flow = fract(vProgress * 5.0 - uTime * 0.5);
+                
+                // Edge glow
+                float intensity = 0.5 + 0.5 * sin(vProgress * 20.0 + uTime * 2.0);
+                
+                // Flow highlight
+                float beam = smoothstep(0.4, 0.6, flow) - smoothstep(0.6, 0.8, flow);
+                
+                vec3 finalColor = mix(uColor1, uColor2, vProgress);
+                finalColor += vec3(1.0) * beam * 0.8; // Add white beam
+                
+                float alpha = 0.6 + beam * 0.4;
+                
+                // Fade ends
+                float fade = smoothstep(0.0, 0.1, vProgress) * (1.0 - smoothstep(0.9, 1.0, vProgress));
+                
+                gl_FragColor = vec4(finalColor, alpha * fade);
+            }
+        `;
+
+        // 2. Core Shader - Pulsating energy sphere
+        const coreVertexShader = `
+            varying vec3 vNormal;
+            varying vec3 vPosition;
+            uniform float uTime;
+            
+            void main() {
+                vNormal = normalize(normalMatrix * normal);
+                
+                // Vertex displacement for organic pulse
+                vec3 pos = position;
+                float pulse = sin(uTime * 3.0 + position.y * 2.0) * 0.05;
+                pos += normal * pulse;
+                
+                vPosition = pos;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `;
+
+        const coreFragmentShader = `
+            varying vec3 vNormal;
+            uniform float uTime;
+            uniform vec3 uColor;
+            
+            void main() {
+                // Fresnel glow effect
+                vec3 viewDirection = normalize(cameraPosition - vPosition); // Approximation in view space usually requires varying vViewPosition
+                // Simplified fresnel based on z component of normal in view space
+                float fresnel = pow(1.0 - abs(vNormal.z), 3.0);
+                
+                // Dynamic texture pattern
+                float noise = sin(vNormal.x * 10.0 + uTime) * sin(vNormal.y * 10.0 - uTime) * sin(vNormal.z * 10.0);
+                
+                vec3 glowColor = uColor * (1.0 + fresnel * 2.0);
+                glowColor += vec3(0.5) * noise;
+                
+                gl_FragColor = vec4(glowColor, 0.9);
+            }
+        `;
+
+        // 3. Particle Shader - Instanced particles with trail simulation
+        const particleVertexShader = `
+            attribute vec3 aPosition;
+            attribute float aPhase;
+            attribute float aSpeed;
+            attribute vec3 aColor;
+            
+            uniform float uTime;
+            uniform float uRadius;
+            uniform float uPitch;
+            uniform float uTotalHeight;
+            uniform float uGlobalSpeed;
+            
+            varying vec3 vColor;
+            varying float vAlpha;
+            
+            void main() {
+                vColor = aColor;
+                
+                // Calculate particle position based on time and spiral equation
+                float t = mod(uTime * aSpeed * uGlobalSpeed + aPhase, 1.0);
+                
+                // Spiral math
+                float y = (t - 0.5) * uTotalHeight;
+                float angle = t * (uTotalHeight / uPitch) * 6.28318 + aPhase * 6.28;
+                
+                float r = uRadius + sin(t * 20.0) * 0.2; // Slight wobble
+                
+                vec3 newPos = vec3(
+                    r * cos(angle),
+                    y,
+                    r * sin(angle)
+                );
+                
+                // Billboard particles
+                vec4 mvPosition = modelViewMatrix * vec4(newPos, 1.0);
+                gl_Position = projectionMatrix * mvPosition;
+                gl_PointSize = (100.0 / -mvPosition.z) * (0.5 + sin(t * 10.0) * 0.5); // Size attenuation
+                
+                // Fade at top and bottom
+                vAlpha = smoothstep(0.0, 0.1, t) * (1.0 - smoothstep(0.9, 1.0, t));
+            }
+        `;
+
+        const particleFragmentShader = `
+            varying vec3 vColor;
+            varying float vAlpha;
+            
+            void main() {
+                // Circular particle
+                vec2 center = gl_PointCoord - 0.5;
+                float dist = length(center);
+                if (dist > 0.5) discard;
+                
+                // Soft glow
+                float glow = 1.0 - dist * 2.0;
+                glow = pow(glow, 1.5);
+                
+                gl_FragColor = vec4(vColor, vAlpha * glow);
+            }
+        `;
+
+        // --- Main System ---
+        class System {
+            constructor() {
+                this.container = document.getElementById('canvas-container');
+                this.width = this.container.clientWidth;
+                this.height = this.container.clientHeight;
+                this.time = 0;
+                
+                this.initRenderer();
+                this.initScene();
+                this.initPostProcessing();
+                this.initObjects();
+                this.initEvents();
+                
+                this.animate = this.animate.bind(this);
+                requestAnimationFrame(this.animate);
+                
+                // Hide loader
+                setTimeout(() => {
+                    document.getElementById('loader').style.opacity = 0;
+                    setTimeout(() => document.getElementById('loader').remove(), 800);
+                }, 1000);
+            }
+
+            initRenderer() {
+                this.renderer = new THREE.WebGLRenderer({ 
+                    antialias: false, // Disabled for performance with post-processing
+                    powerPreference: "high-performance"
+                });
+                this.renderer.setSize(this.width, this.height);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.toneMapping = THREE.ReinhardToneMapping;
+                this.container.appendChild(this.renderer.domElement);
+            }
+
+            initScene() {
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x020205);
+                this.scene.fog = new THREE.FogExp2(0x020205, 0.015);
+
+                this.camera = new THREE.PerspectiveCamera(60, this.width / this.height, 0.1, 1000);
+                this.camera.position.set(15, 8, 15);
+                
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.autoRotate = true;
+                this.controls.autoRotateSpeed = 0.5;
+                this.controls.maxDistance = 50;
+                this.controls.minDistance = 5;
+            }
+
+            initPostProcessing() {
+                this.composer = new EffectComposer(this.renderer);
+                
+                const renderPass = new RenderPass(this.scene, this.camera);
+                this.composer.addPass(renderPass);
+
+                this.bloomPass = new UnrealBloomPass(
+                    new THREE.Vector2(this.width, this.height),
+                    config.bloomStrength, // strength
+                    0.4, // radius
+                    0.85 // threshold
+                );
+                this.composer.addPass(this.bloomPass);
+            }
+
+            initObjects() {
+                // 1. Core Energy
+                const coreGeo = new THREE.IcosahedronGeometry(config.coreSize, 4);
+                this.coreMat = new THREE.ShaderMaterial({
+                    uniforms: {
+                        uTime: { value: 0 },
+                        uColor: { value: new THREE.Color(0xffaa00) }
+                    },
+                    vertexShader: coreVertexShader,
+                    fragmentShader: coreFragmentShader,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                });
+                this.core = new THREE.Mesh(coreGeo, this.coreMat);
+                this.scene.add(this.core);
+
+                // Core rings
+                const ringGeo = new THREE.TorusGeometry(config.coreSize * 1.8, 0.05, 16, 100);
+                const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff, transparent: true, opacity: 0.5 });
+                this.ring1 = new THREE.Mesh(ringGeo, ringMat);
+                this.ring2 = new THREE.Mesh(ringGeo, ringMat);
+                this.ring1.rotation.x = Math.PI / 2;
+                this.ring2.rotation.x = Math.PI / 2;
+                this.ring2.rotation.y = Math.PI / 4;
+                this.scene.add(this.ring1, this.ring2);
+
+                // 2. Helixes
+                this.helixGroup = new THREE.Group();
+                this.scene.add(this.helixGroup);
+                this.createHelixes();
+
+                // 3. Particles
+                this.createParticles();
+
+                // 4. Background Stars
+                this.createStars();
+                
+                // 5. Grid (Subtle)
+                const grid = new THREE.GridHelper(60, 60, 0x111111, 0x080808);
+                grid.position.y = -10;
+                this.scene.add(grid);
+            }
+
+            createHelixes() {
+                // Clear existing
+                while(this.helixGroup.children.length > 0){ 
+                    this.helixGroup.remove(this.helixGroup.children[0]); 
+                }
+
+                const height = 40;
+                const pointsPerHelix = 200;
+                
+                this.helixMat = new THREE.ShaderMaterial({
+                    uniforms: {
+                        uTime: { value: 0 },
+                        uColor1: { value: new THREE.Color(0x00f3ff) },
+                        uColor2: { value: new THREE.Color(0xbc13fe) },
+                        uSpeed: { value: config.speed }
+                    },
+                    vertexShader: helixVertexShader,
+                    fragmentShader: helixFragmentShader,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    side: THREE.DoubleSide,
+                    depthWrite: false
+                });
+
+                for (let i = 0; i < config.helixCount; i++) {
+                    const points = [];
+                    const angleOffset = (i / config.helixCount) * Math.PI * 2;
+                    const turns = height / config.pitch;
+                    
+                    for (let j = 0; j <= pointsPerHelix; j++) {
+                        const t = j / pointsPerHelix;
+                        const y = (t - 0.5) * height;
+                        const angle = angleOffset + t * turns * Math.PI * 2;
+                        const r = config.radius;
+                        
+                        points.push(new THREE.Vector3(r * Math.cos(angle), y, r * Math.sin(angle)));
+                    }
+                    
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    // Add offset attribute for variation
+                    const offsets = new Float32Array(points.length).fill(i);
+                    geometry.setAttribute('aOffset', new THREE.BufferAttribute(offsets, 1));
+                    
+                    const line = new THREE.Line(geometry, this.helixMat);
+                    this.helixGroup.add(line);
+                }
+            }
+
+            createParticles() {
+                if (this.particles) this.scene.remove(this.particles);
+
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(config.particleCount * 3); // Dummy positions, shader handles placement
+                const phases = new Float32Array(config.particleCount);
+                const speeds = new Float32Array(config.particleCount);
+                const colors = new Float32Array(config.particleCount * 3);
+
+                const color1 = new THREE.Color(0x00f3ff);
+                const color2 = new THREE.Color(0xbc13fe);
+
+                for (let i = 0; i < config.particleCount; i++) {
+                    phases[i] = Math.random();
+                    speeds[i] = 0.5 + Math.random() * 0.5;
+                    
+                    const mixColor = color1.clone().lerp(color2, Math.random());
+                    colors[i * 3] = mixColor.r;
+                    colors[i * 3 + 1] = mixColor.g;
+                    colors[i * 3 + 2] = mixColor.b;
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('aPosition', new THREE.BufferAttribute(positions, 3)); // For shader use
+                geometry.setAttribute('aPhase', new THREE.BufferAttribute(phases, 1));
+                geometry.setAttribute('aSpeed', new THREE.BufferAttribute(speeds, 1));
+                geometry.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
+
+                this.particleMat = new THREE.ShaderMaterial({
+                    uniforms: {
+                        uTime: { value: 0 },
+                        uRadius: { value: config.radius },
+                        uPitch: { value: config.pitch },
+                        uTotalHeight: { value: 40.0 },
+                        uGlobalSpeed: { value: config.speed }
+                    },
+                    vertexShader: particleVertexShader,
+                    fragmentShader: particleFragmentShader,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+
+                this.particles = new THREE.Points(geometry, this.particleMat);
+                this.scene.add(this.particles);
+            }
+
+            createStars() {
+                const geometry = new THREE.BufferGeometry();
+                const count = 3000;
+                const positions = new Float32Array(count * 3);
+                const colors = new Float32Array(count * 3);
+
+                for (let i = 0; i < count; i++) {
+                    const r = 50 + Math.random() * 100;
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    
+                    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                    positions[i * 3 + 2] = r * Math.cos(phi);
+
+                    const intensity = Math.random();
+                    colors[i * 3] = intensity;
+                    colors[i * 3 + 1] = intensity;
+                    colors[i * 3 + 2] = intensity;
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+                const material = new THREE.PointsMaterial({
+                    size: 0.5,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.6
+                });
+
+                this.stars = new THREE.Points(geometry, material);
+                this.scene.add(this.stars);
+            }
+
+            initEvents() {
+                window.addEventListener('resize', () => {
+                    this.width = this.container.clientWidth;
+                    this.height = this.container.clientHeight;
+                    this.camera.aspect = this.width / this.height;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(this.width, this.height);
+                    this.composer.setSize(this.width, this.height);
+                });
+
+                // UI Bindings
+                document.getElementById('radius').addEventListener('input', (e) => {
+                    config.radius = parseFloat(e.target.value);
+                    document.getElementById('val-radius').textContent = config.radius.toFixed(1);
+                    this.createHelixes();
+                    this.particleMat.uniforms.uRadius.value = config.radius;
+                });
+
+                document.getElementById('pitch').addEventListener('input', (e) => {
+                    config.pitch = parseFloat(e.target.value);
+                    document.getElementById('val-pitch').textContent = config.pitch.toFixed(1);
+                    this.createHelixes();
+                    this.particleMat.uniforms.uPitch.value = config.pitch;
+                });
+
+                document.getElementById('speed').addEventListener('input', (e) => {
+                    config.speed = parseFloat(e.target.value);
+                    document.getElementById('val-speed').textContent = config.speed.toFixed(1);
+                    this.helixMat.uniforms.uSpeed.value = config.speed;
+                    this.particleMat.uniforms.uGlobalSpeed.value = config.speed;
+                });
+
+                document.getElementById('bloom').addEventListener('input', (e) => {
+                    config.bloomStrength = parseFloat(e.target.value);
+                    document.getElementById('val-bloom').textContent = config.bloomStrength.toFixed(1);
+                    this.bloomPass.strength = config.bloomStrength;
+                });
+            }
+
+            animate() {
+                requestAnimationFrame(this.animate);
+                
+                this.time += 0.01;
+                
+                // Update Uniforms
+                if (this.coreMat) this.coreMat.uniforms.uTime.value = this.time;
+                if (this.helixMat) this.helixMat.uniforms.uTime.value = this.time;
+                if (this.particleMat) this.particleMat.uniforms.uTime.value = this.time;
+
+                // Rotations
+                this.controls.update();
+                
+                if (this.ring1) {
+                    this.ring1.rotation.y += 0.01;
+                    this.ring1.rotation.z += 0.005;
+                }
+                if (this.ring2) {
+                    this.ring2.rotation.x += 0.01;
+                    this.ring2.rotation.y += 0.005;
+                }
+                
+                if (this.stars) {
+                    this.stars.rotation.y += 0.0005;
+                }
+
+                // Render with Post-Processing
+                this.composer.render();
+            }
+        }
+
+        // Initialize System
+        new System();
+    </script>
+</body>
+</html>

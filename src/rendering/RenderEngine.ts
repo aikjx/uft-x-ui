@@ -21,6 +21,17 @@ import { CameraManager } from './CameraManager'
 import { renderOptimizer } from '../performance/performanceUtils'
 import { eventSystem, APP_EVENTS } from '../utils/eventSystem'
 import {
+  resourceManager,
+  ResourceType,
+  ResourcePriority
+} from '../utils/IntelligentResourceManager'
+import { BVHSystem, createRay } from '../utils/BVHSystem'
+import { PathTracingSystem, PathTracingConfig } from './PathTracingSystem'
+import {
+  AdvancedInteractionSystem,
+  InteractionMode
+} from '../interaction/AdvancedInteractionSystem'
+import {
   PBRMaterial,
   VolumetricLightMaterial,
   NebulaMaterial,
@@ -31,6 +42,10 @@ import {
   AdvancedParticleSystemManager,
   GPUParticleSystem
 } from '../visualization/AdvancedParticleSystem'
+import { WebGPURenderEngine, isWebGPUSupported } from './WebGPURenderEngine'
+import { AdvancedLODSystem } from '../performance/AdvancedLODSystem'
+import { mlPerformancePredictor } from '../performance/MLPerformancePredictor'
+import { AdvancedPostProcessingSystem } from './AdvancedPostProcessingSystem'
 
 interface RenderEngineConfig {
   container: HTMLElement
@@ -71,6 +86,21 @@ export class RenderEngine {
   public particleSystemManager: AdvancedParticleSystemManager | null = null
   public gpuParticleSystem: GPUParticleSystem | null = null
 
+  // 高级 LOD 系统
+  public lodSystem: AdvancedLODSystem | null = null
+
+  // 实时路径追踪系统
+  public pathTracingSystem: PathTracingSystem | null = null
+
+  // 高级交互系统
+  public interactionSystem: AdvancedInteractionSystem | null = null
+
+  // BVH 系统用于优化光线追踪和碰撞检测
+  public bvhSystem: BVHSystem | null = null
+
+  // 高级后处理系统
+  public postProcessingSystem: AdvancedPostProcessingSystem | null = null
+
   private controls: OrbitControls | null
   private config: RenderEngineConfig
   private animationId: number | null = null
@@ -78,6 +108,22 @@ export class RenderEngine {
   private lastTime: number = 0
   private rayTracingEnabled: boolean = false
   private globalIlluminationEnabled: boolean = false
+  private pathTracingEnabled: boolean = false
+
+  // 性能统计
+  private performanceData = {
+    frameCount: 0,
+    startTime: performance.now(),
+    lastMetricsUpdate: 0,
+    renderTimeHistory: [] as number[],
+    frameTimeHistory: [] as number[]
+  }
+
+  // 资源管理
+  private resourceIds: Set<string> = new Set()
+
+  // 存储调整大小的处理器，以便后续清理
+  private resizeHandler: ((event: Event) => void) | null = null
 
   constructor(config: RenderEngineConfig) {
     this.config = {
@@ -98,8 +144,196 @@ export class RenderEngine {
     this.renderer = this.createRenderer()
     this.controls = this.config.enableControls ? this.createControls() : null
 
+    // 初始化 LOD 系统
+    this.initializeLODSystem()
+
+    // 初始化资源管理
+    this.initializeResourceManagement()
+
+    // 初始化路径追踪系统
+    this.initializePathTracingSystem()
+
+    // 初始化交互系统
+    this.initializeInteractionSystem()
+
+    // 初始化 BVH 系统
+    this.initializeBVHSystem()
+
     this.setupScene()
     this.setupPostProcessing()
+
+    // 初始化高级后处理系统
+    this.initializeAdvancedPostProcessing()
+  }
+
+  /**
+   * 初始化路径追踪系统
+   */
+  private initializePathTracingSystem(): void {
+    try {
+      this.pathTracingSystem = new PathTracingSystem({
+        samplesPerPixel: 8,
+        maxBounces: 8,
+        enableDirectLighting: true,
+        enableIndirectLighting: true,
+        enableSoftShadows: true,
+        enableGlobalIllumination: true,
+        enableCaustics: false,
+        enableDenoiser: true,
+        resolutionScale: 0.5,
+        rayDepthLimit: 8,
+        russianRouletteThreshold: 0.8
+      })
+
+      this.pathTracingSystem.initialize(
+        this.sceneManager.getScene(),
+        this.cameraManager.getCamera(),
+        this.renderer
+      )
+
+      console.log('Path tracing system initialized')
+    } catch (error) {
+      console.warn('Path tracing system initialization failed:', error)
+      this.pathTracingSystem = null
+    }
+  }
+
+  /**
+   * 初始化交互系统
+   */
+  private initializeInteractionSystem(): void {
+    try {
+      this.interactionSystem = new AdvancedInteractionSystem({
+        mode: InteractionMode.ORBIT,
+        enableDamping: true,
+        dampingFactor: 0.05,
+        enableAutoRotate: false,
+        autoRotateSpeed: 2.0,
+        enableZoom: true,
+        zoomSpeed: 1.0,
+        enablePan: true,
+        panSpeed: 1.0,
+        enableRotate: true,
+        rotateSpeed: 1.0,
+        minDistance: 0.1,
+        maxDistance: 1000,
+        minPolarAngle: 0,
+        maxPolarAngle: Math.PI,
+        minAzimuthAngle: -Infinity,
+        maxAzimuthAngle: Infinity,
+        enableGestures: true,
+        enableVoiceControl: false,
+        enableGamepad: false,
+        enableMixedReality: false,
+        performanceMode: 'medium'
+      })
+
+      this.interactionSystem.initialize(
+        this.renderer,
+        this.sceneManager.getScene(),
+        this.cameraManager.getCamera()
+      )
+      this.interactionSystem.enable()
+
+      console.log('Advanced interaction system initialized')
+    } catch (error) {
+      console.warn('Advanced interaction system initialization failed:', error)
+      this.interactionSystem = null
+    }
+  }
+
+  /**
+   * 初始化资源管理
+   */
+  private initializeResourceManagement(): void {
+    // 监听资源事件
+    eventSystem.on(APP_EVENTS.RESOURCE_CLEANUP, data => {
+      console.log('Resource cleanup performed:', data)
+    })
+
+    eventSystem.on(APP_EVENTS.RESOURCE_ERROR, data => {
+      console.error('Resource error:', data)
+    })
+
+    // 配置资源管理器内存限制
+    resourceManager.setMemoryLimits({
+      total: 512 * 1024 * 1024, // 512MB
+      textures: 256 * 1024 * 1024, // 256MB
+      geometries: 128 * 1024 * 1024, // 128MB
+      materials: 64 * 1024 * 1024, // 64MB
+      other: 64 * 1024 * 1024 // 64MB
+    })
+  }
+
+  /**
+   * 初始化 LOD 系统
+   */
+  private initializeLODSystem(): void {
+    try {
+      this.lodSystem = new AdvancedLODSystem()
+      this.lodSystem.initialize(this.sceneManager.getScene(), this.cameraManager.getCamera())
+      console.log('LOD system initialized successfully')
+    } catch (error) {
+      console.warn('Failed to initialize LOD system:', error)
+      this.lodSystem = null
+    }
+  }
+
+  /**
+   * 初始化 BVH 系统
+   */
+  private initializeBVHSystem(): void {
+    try {
+      this.bvhSystem = new BVHSystem()
+      this.bvhSystem.buildFromScene(this.sceneManager.getScene())
+      console.log('BVH system initialized successfully')
+
+      // 输出 BVH 统计信息
+      const stats = this.bvhSystem.getStats()
+      console.log('BVH Stats:', stats)
+    } catch (error) {
+      console.warn('Failed to initialize BVH system:', error)
+      this.bvhSystem = null
+    }
+  }
+
+  /**
+   * 初始化高级后处理系统
+   */
+  private initializeAdvancedPostProcessing(): void {
+    try {
+      this.postProcessingSystem = new AdvancedPostProcessingSystem(
+        this.renderer,
+        this.sceneManager.getScene(),
+        this.cameraManager.getCamera(),
+        {
+          enableTAA: true,
+          enableBloom: false,
+          enableDOF: false,
+          enableOutline: false,
+          enableAfterimage: false,
+          enableFilm: false,
+          bloomStrength: 1.2,
+          bloomThreshold: 0.8,
+          bloomRadius: 0.5,
+          dofFocus: 5.0,
+          dofAperture: 0.00025,
+          dofMaxBlur: 0.01,
+          filmGrain: 0.1,
+          filmScanlines: 0.02,
+          filmNoise: 0.05,
+          filmGrayscale: false,
+          outlineStrength: 3.0,
+          outlineThickness: 1.0,
+          outlineGlow: 1.0,
+          afterimageDamp: 0.8
+        }
+      )
+      console.log('Advanced post-processing system initialized successfully')
+    } catch (error) {
+      console.warn('Failed to initialize advanced post-processing system:', error)
+      this.postProcessingSystem = null
+    }
   }
 
   /**
@@ -246,217 +480,6 @@ export class RenderEngine {
   /**
    * 创建并配置控制器
    */
-
-  /**
-   * 启用光线追踪效果
-   * @param enabled 是否启用
-   */
-  public enableRayTracing(enabled: boolean = true): void {
-    if (enabled && !this.rayTracingMaterial) {
-      this.rayTracingMaterial = new RayTracingMaterial()
-      this.rayTracingMaterial.updateCamera(this.cameraManager.getCamera())
-
-      // 添加到场景中
-      this.sceneManager.getScene().add(this.rayTracingMaterial)
-    }
-
-    this.rayTracingEnabled = enabled
-
-    // 触发性能状态更新事件
-    eventSystem.emit(APP_EVENTS.RENDER_QUALITY_UPDATED, {
-      qualityLevel: enabled ? 5 : 2,
-      feature: 'rayTracing'
-    })
-  }
-
-  /**
-   * 启用全局光照效果
-   * @param enabled 是否启用
-   */
-  public enableGlobalIllumination(enabled: boolean = true): void {
-    if (enabled && !this.globalIlluminationMaterial) {
-      this.globalIlluminationMaterial = new GlobalIlluminationMaterial()
-      this.globalIlluminationMaterial.updateTime(0)
-
-      // 添加到场景中
-      this.sceneManager.getScene().add(this.globalIlluminationMaterial)
-    }
-
-    this.globalIlluminationEnabled = enabled
-
-    // 触发性能状态更新事件
-    eventSystem.emit(APP_EVENTS.RENDER_QUALITY_UPDATED, {
-      qualityLevel: enabled ? 4 : 2,
-      feature: 'globalIllumination'
-    })
-  }
-
-  /**
-   * 创建PBR材质
-   * @param options 材质选项
-   * @returns PBR材质实例
-   */
-  public createPBRMaterial(
-    options: {
-      roughness?: number
-      metalness?: number
-      envMapIntensity?: number
-      color?: THREE.Color
-      emissive?: THREE.Color
-      emissiveIntensity?: number
-    } = {}
-  ): PBRMaterial {
-    const pbrMaterial = new PBRMaterial()
-    pbrMaterial.configure(options)
-    return pbrMaterial
-  }
-
-  /**
-   * 创建体积光材质
-   * @param options 材质选项
-   * @returns 体积光材质实例
-   */
-  public createVolumetricLightMaterial(
-    options: {
-      lightIntensity?: number
-      absorptionRate?: number
-      density?: number
-      scattering?: number
-      color?: THREE.Color
-      absorptionColor?: THREE.Color
-    } = {}
-  ): VolumetricLightMaterial {
-    const volumetricLightMaterial = new VolumetricLightMaterial()
-    volumetricLightMaterial.configure(options)
-    return volumetricLightMaterial
-  }
-
-  /**
-   * 创建星云材质
-   * @param options 材质选项
-   * @returns 星云材质实例
-   */
-  public createNebulaMaterial(
-    options: {
-      cloudDensity?: number
-      noiseScale?: number
-      noiseSpeed?: number
-      colorA?: THREE.Color
-      colorB?: THREE.Color
-      brightness?: number
-      opacity?: number
-    } = {}
-  ): NebulaMaterial {
-    const nebulaMaterial = new NebulaMaterial()
-    nebulaMaterial.configure(options)
-    return nebulaMaterial
-  }
-
-  /**
-   * 初始化高级粒子系统管理器
-   * @param maxParticles 最大粒子数
-   * @returns 粒子系统管理器实例
-   */
-  public initParticleSystemManager(maxParticles: number = 10000): AdvancedParticleSystemManager {
-    if (!this.particleSystemManager) {
-      this.particleSystemManager = new AdvancedParticleSystemManager({
-        maxParticles,
-        renderer: this.renderer
-      })
-    }
-    return this.particleSystemManager
-  }
-
-  /**
-   * 创建GPU粒子系统
-   * @param options 粒子系统选项
-   * @returns GPU粒子系统实例
-   */
-  public createGPUParticleSystem(
-    options: {
-      maxParticles?: number
-      position?: THREE.Vector3
-      rate?: number
-      lifetime?: number
-      lifetimeVariance?: number
-      velocity?: THREE.Vector3
-      velocityVariance?: number
-      size?: number
-      sizeVariance?: number
-      color?: THREE.Color
-      colorVariance?: number
-      spread?: number
-      gravity?: THREE.Vector3
-      turbulence?: number
-      damping?: number
-    } = {}
-  ): GPUParticleSystem {
-    if (!this.gpuParticleSystem) {
-      this.gpuParticleSystem = new GPUParticleSystem({
-        maxParticles: options.maxParticles || 5000,
-        position: options.position || new THREE.Vector3(),
-        rate: options.rate || 500,
-        lifetime: options.lifetime || 3.0,
-        lifetimeVariance: options.lifetimeVariance || 1.0,
-        velocity: options.velocity || new THREE.Vector3(0, 0, 0),
-        velocityVariance: options.velocityVariance || new THREE.Vector3(0.5, 0.5, 0.5),
-        size: options.size || 1.0,
-        sizeVariance: options.sizeVariance || 0.5,
-        color: options.color || new THREE.Color(0.5, 0.5, 1.0),
-        colorVariance: options.colorVariance || 0.2,
-        spread: options.spread || 0.5,
-        gravity: options.gravity || new THREE.Vector3(0, -0.5, 0),
-        turbulence: options.turbulence || 0.5,
-        damping: options.damping || 0.1
-      })
-    }
-    return this.gpuParticleSystem
-  }
-
-  /**
-   * 更新高级着色器和材质
-   * @param deltaTime 帧时间差
-   */
-  private updateAdvancedMaterials(deltaTime: number): void {
-    // 更新光线追踪材质
-    if (this.rayTracingMaterial && this.rayTracingEnabled) {
-      this.rayTracingMaterial.updateTime(deltaTime)
-      this.rayTracingMaterial.updateCamera(this.cameraManager.getCamera())
-    }
-
-    // 更新全局光照材质
-    if (this.globalIlluminationMaterial && this.globalIlluminationEnabled) {
-      this.globalIlluminationMaterial.updateTime(deltaTime)
-    }
-
-    // 更新体积光材质
-    if (this.volumetricLightMaterial) {
-      this.volumetricLightMaterial.updateTime(deltaTime)
-    }
-
-    // 更新星云材质
-    if (this.nebulaMaterial) {
-      this.nebulaMaterial.updateTime(deltaTime)
-    }
-  }
-
-  /**
-   * 更新后期处理效果
-   * @param deltaTime 帧时间差
-   */
-  private updatePostProcessingEffects(deltaTime: number): void {
-    // 更新景深效果参数
-    if (this.bokehPass && this.bokehPass.enabled) {
-      this.bokehPass.materialBokeh.uniforms['focus'].value = 5.0 + Math.sin(deltaTime * 0.5) * 2.0
-    }
-
-    // 更新泛光效果参数
-    if (this.bloomPass && this.bloomPass.enabled) {
-      this.bloomPass.materialBloom.uniforms['strength'].value =
-        1.2 + Math.sin(deltaTime * 0.2) * 0.3
-    }
-  }
-
   private createControls(): OrbitControls {
     const controls = new OrbitControls(this.cameraManager.getCamera(), this.renderer.domElement)
 
@@ -747,71 +770,232 @@ export class RenderEngine {
   }
 
   /**
-   * 性能监控数据
+   * 启用光线追踪效果
+   * @param enabled 是否启用
    */
-  private performanceData = {
-    frameCount: 0,
-    startTime: performance.now(),
-    lastMetricsUpdate: 0,
-    renderTimeHistory: [] as number[],
-    frameTimeHistory: [] as number[]
+  public enableRayTracing(enabled: boolean = true): void {
+    if (enabled && !this.rayTracingMaterial) {
+      this.rayTracingMaterial = new RayTracingMaterial()
+      this.rayTracingMaterial.updateCamera(this.cameraManager.getCamera())
+
+      // 添加到场景中
+      this.sceneManager.getScene().add(this.rayTracingMaterial)
+    }
+
+    this.rayTracingEnabled = enabled
+
+    // 触发性能状态更新事件
+    eventSystem.emit(APP_EVENTS.RENDER_QUALITY_UPDATED, {
+      qualityLevel: enabled ? 5 : 2,
+      feature: 'rayTracing'
+    })
   }
 
   /**
-   * 收集性能指标
+   * 启用全局光照效果
+   * @param enabled 是否启用
    */
-  private collectPerformanceMetrics(): void {
-    const now = performance.now()
-    const renderer = this.renderer
+  public enableGlobalIllumination(enabled: boolean = true): void {
+    if (enabled && !this.globalIlluminationMaterial) {
+      this.globalIlluminationMaterial = new GlobalIlluminationMaterial()
+      this.globalIlluminationMaterial.updateTime(0)
 
-    // 计算FPS
-    const elapsed = now - this.performanceData.startTime
-    const fps = (this.performanceData.frameCount / elapsed) * 1000
-
-    // 计算平均渲染时间
-    const avgRenderTime =
-      this.performanceData.renderTimeHistory.length > 0
-        ? this.performanceData.renderTimeHistory.reduce((a, b) => a + b, 0) /
-          this.performanceData.renderTimeHistory.length
-        : 0
-
-    // 计算平均帧时间
-    const avgFrameTime =
-      this.performanceData.frameTimeHistory.length > 0
-        ? this.performanceData.frameTimeHistory.reduce((a, b) => a + b, 0) /
-          this.performanceData.frameTimeHistory.length
-        : 0
-
-    // 内存使用情况（使用performance API，如果可用）
-    let memoryUsageMB = 0
-    if (performance.memory) {
-      memoryUsageMB = performance.memory.usedJSHeapSize / (1024 * 1024)
+      // 添加到场景中
+      this.sceneManager.getScene().add(this.globalIlluminationMaterial)
     }
 
-    // 发送性能指标事件
-    const metrics = {
-      fps: Math.round(fps),
-      renderTime: avgRenderTime,
-      frameTime: avgFrameTime,
-      memoryUsageMB: Math.round(memoryUsageMB),
-      drawCalls: renderer.info.render.calls,
-      triangles: renderer.info.render.triangles,
-      optimizationLevel: this.config.dynamicPixelRatio ? 2 : 1,
-      pixelRatio: renderer.getPixelRatio()
+    this.globalIlluminationEnabled = enabled
+
+    // 触发性能状态更新事件
+    eventSystem.emit(APP_EVENTS.RENDER_QUALITY_UPDATED, {
+      qualityLevel: enabled ? 4 : 2,
+      feature: 'globalIllumination'
+    })
+  }
+
+  /**
+   * 启用路径追踪效果
+   * @param enabled 是否启用
+   */
+  public enablePathTracing(enabled: boolean = true): void {
+    if (enabled && this.pathTracingSystem) {
+      this.pathTracingSystem.enable()
+    } else if (this.pathTracingSystem) {
+      this.pathTracingSystem.disable()
     }
 
-    // 触发性能指标更新事件
-    // @ts-ignore - 假设eventSystem存在
-    if (typeof eventSystem !== 'undefined') {
-      eventSystem.emit(APP_EVENTS.PERFORMANCE_METRICS_UPDATE, metrics)
+    this.pathTracingEnabled = enabled
+
+    // 触发性能状态更新事件
+    eventSystem.emit(APP_EVENTS.RENDER_QUALITY_UPDATED, {
+      qualityLevel: enabled ? 5 : 2,
+      feature: 'pathTracing'
+    })
+  }
+
+  /**
+   * 创建PBR材质
+   * @param options 材质选项
+   * @returns PBR材质实例
+   */
+  public createPBRMaterial(
+    options: {
+      roughness?: number
+      metalness?: number
+      envMapIntensity?: number
+      color?: THREE.Color
+      emissive?: THREE.Color
+      emissiveIntensity?: number
+    } = {}
+  ): PBRMaterial {
+    const pbrMaterial = new PBRMaterial()
+    pbrMaterial.configure(options)
+    return pbrMaterial
+  }
+
+  /**
+   * 创建体积光材质
+   * @param options 材质选项
+   * @returns 体积光材质实例
+   */
+  public createVolumetricLightMaterial(
+    options: {
+      lightIntensity?: number
+      absorptionRate?: number
+      density?: number
+      scattering?: number
+      color?: THREE.Color
+      absorptionColor?: THREE.Color
+    } = {}
+  ): VolumetricLightMaterial {
+    const volumetricLightMaterial = new VolumetricLightMaterial()
+    volumetricLightMaterial.configure(options)
+    return volumetricLightMaterial
+  }
+
+  /**
+   * 创建星云材质
+   * @param options 材质选项
+   * @returns 星云材质实例
+   */
+  public createNebulaMaterial(
+    options: {
+      cloudDensity?: number
+      noiseScale?: number
+      noiseSpeed?: number
+      colorA?: THREE.Color
+      colorB?: THREE.Color
+      brightness?: number
+      opacity?: number
+    } = {}
+  ): NebulaMaterial {
+    const nebulaMaterial = new NebulaMaterial()
+    nebulaMaterial.configure(options)
+    return nebulaMaterial
+  }
+
+  /**
+   * 初始化高级粒子系统管理器
+   * @param maxParticles 最大粒子数
+   * @returns 粒子系统管理器实例
+   */
+  public initParticleSystemManager(maxParticles: number = 10000): AdvancedParticleSystemManager {
+    if (!this.particleSystemManager) {
+      this.particleSystemManager = new AdvancedParticleSystemManager({
+        maxParticles,
+        renderer: this.renderer
+      })
+    }
+    return this.particleSystemManager
+  }
+
+  /**
+   * 创建GPU粒子系统
+   * @param options 粒子系统选项
+   * @returns GPU粒子系统实例
+   */
+  public createGPUParticleSystem(
+    options: {
+      maxParticles?: number
+      position?: THREE.Vector3
+      rate?: number
+      lifetime?: number
+      lifetimeVariance?: number
+      velocity?: THREE.Vector3
+      velocityVariance?: number
+      size?: number
+      sizeVariance?: number
+      color?: THREE.Color
+      colorVariance?: number
+      spread?: number
+      gravity?: THREE.Vector3
+      turbulence?: number
+      damping?: number
+    } = {}
+  ): GPUParticleSystem {
+    if (!this.gpuParticleSystem) {
+      this.gpuParticleSystem = new GPUParticleSystem({
+        maxParticles: options.maxParticles || 5000,
+        position: options.position || new THREE.Vector3(),
+        rate: options.rate || 500,
+        lifetime: options.lifetime || 3.0,
+        lifetimeVariance: options.lifetimeVariance || 1.0,
+        velocity: options.velocity || new THREE.Vector3(),
+        velocityVariance: options.velocityVariance || new THREE.Vector3(),
+        size: options.size || 1.0,
+        sizeVariance: options.sizeVariance || 0.5,
+        color: options.color || new THREE.Color(0.5, 0.5, 1.0),
+        colorVariance: options.colorVariance || 0.2,
+        spread: options.spread || 0.5,
+        gravity: options.gravity || new THREE.Vector3(),
+        turbulence: options.turbulence || 0.5,
+        damping: options.damping || 0.1
+      })
+    }
+    return this.gpuParticleSystem
+  }
+
+  /**
+   * 更新高级着色器和材质
+   * @param deltaTime 帧时间差
+   */
+  private updateAdvancedMaterials(deltaTime: number): void {
+    // 更新光线追踪材质
+    if (this.rayTracingMaterial && this.rayTracingEnabled) {
+      this.rayTracingMaterial.updateTime(deltaTime)
+      this.rayTracingMaterial.updateCamera(this.cameraManager.getCamera())
     }
 
-    // 限制历史数据长度，避免内存泄漏
-    if (this.performanceData.renderTimeHistory.length > 100) {
-      this.performanceData.renderTimeHistory.shift()
+    // 更新全局光照材质
+    if (this.globalIlluminationMaterial && this.globalIlluminationEnabled) {
+      this.globalIlluminationMaterial.updateTime(deltaTime)
     }
-    if (this.performanceData.frameTimeHistory.length > 100) {
-      this.performanceData.frameTimeHistory.shift()
+
+    // 更新体积光材质
+    if (this.volumetricLightMaterial) {
+      this.volumetricLightMaterial.updateTime(deltaTime)
+    }
+
+    // 更新星云材质
+    if (this.nebulaMaterial) {
+      this.nebulaMaterial.updateTime(deltaTime)
+    }
+  }
+
+  /**
+   * 更新后期处理效果
+   * @param deltaTime 帧时间差
+   */
+  private updatePostProcessingEffects(deltaTime: number): void {
+    // 更新景深效果参数
+    if (this.bokehPass && this.bokehPass.enabled) {
+      this.bokehPass.materialBokeh.uniforms['focus'].value = 5.0 + Math.sin(deltaTime * 0.5) * 2.0
+    }
+
+    // 更新泛光效果参数
+    if (this.bloomPass && this.bloomPass.enabled) {
+      this.bloomPass.materialBloom.uniforms['strength'].value =
+        1.2 + Math.sin(deltaTime * 0.2) * 0.3
     }
   }
 
@@ -870,15 +1054,28 @@ export class RenderEngine {
       this.sceneManager.update(deltaTime)
     }
 
+    // 更新 LOD 系统
+    if (this.lodSystem) {
+      this.lodSystem.updateAllLOD()
+    }
+
+    // 智能性能优化
+    this.optimizePerformance()
+
     // 渲染器统计信息重置
     this.renderer.info.reset()
 
     // 开始渲染计时
     const renderStartTime = performance.now()
 
-    // 渲染场景 - 优化：优先使用后处理，但回退到直接渲染
+    // 渲染场景 - 使用高级后处理系统或路径追踪
     try {
-      if (this.composer) {
+      if (this.pathTracingEnabled && this.pathTracingSystem) {
+        this.pathTracingSystem.render()
+      } else if (this.postProcessingSystem) {
+        this.postProcessingSystem.update(deltaTime)
+        this.postProcessingSystem.render()
+      } else if (this.composer) {
         this.composer.render()
       } else {
         this.renderer.render(this.sceneManager.getScene(), this.cameraManager.getCamera())
@@ -932,74 +1129,264 @@ export class RenderEngine {
   }
 
   /**
-   * 动态计算渲染比例，根据性能调整
+   * 智能性能优化
    */
-  private calculateDynamicRenderScale(): number {
-    if (!this.performanceOptimizer) return window.devicePixelRatio
+  private optimizePerformance(): void {
+    const performanceData = this.getPerformanceData()
+    const resourceStats = this.getResourceStats()
+    const memoryUsage = this.getMemoryUsage()
 
-    const fps = this.getAverageFPS()
-
-    // 动态调整渲染比例
-    if (fps < 30) {
-      return Math.max(0.5, window.devicePixelRatio * 0.5) // 降低渲染质量
-    } else if (fps < 45) {
-      return Math.max(0.7, window.devicePixelRatio * 0.7) // 轻微降低质量
-    } else if (fps > 55 && this.performanceOptimizer.isLowComplexity()) {
-      return Math.min(1.0, window.devicePixelRatio * 1.0) // 正常质量
-    } else if (fps > 55) {
-      return Math.min(0.9, window.devicePixelRatio * 0.9) // 稍降质量以保证性能
+    // 收集当前性能数据
+    const currentData = {
+      fps: performanceData.fps,
+      renderTime: performanceData.renderTime,
+      frameTime: performanceData.frameTime,
+      drawCalls: performanceData.drawCalls,
+      triangles: performanceData.triangles,
+      particleCount: this.gpuParticleSystem ? 10000 : 0, // 估算粒子数量
+      renderScale: this.renderer.getPixelRatio(),
+      shadowQuality: this.renderer.shadowMap.enabled ? 1 : 0,
+      postProcessing: this.composer !== null,
+      textureMemory: resourceStats.sizeByType?.texture || 0,
+      objectCount: resourceStats.countByType?.mesh || 0,
+      complexObjectCount: resourceStats.countByType?.mesh || 0,
+      thermalState: 'normal' as const, // 假设正常状态
+      batteryLevel: 1.0, // 假设满电
+      devicePerformanceLevel: 'high' as const // 假设高性能设备
     }
 
-    return window.devicePixelRatio
+    // 使用机器学习模型预测最佳性能设置
+    this.predictOptimalSettings(currentData)
   }
 
   /**
-   * 获取平均FPS
+   * 预测最佳性能设置
    */
-  private getAverageFPS(): number {
-    if (this.performanceData.renderTimeHistory.length === 0) return 60
+  private async predictOptimalSettings(currentData: any): Promise<void> {
+    try {
+      // 提取优化参数
+      const optimizationParams = {
+        particleCount: currentData.particleCount,
+        renderScale: currentData.renderScale,
+        shadowQuality: currentData.shadowQuality,
+        postProcessing: currentData.postProcessing,
+        textureMemory: currentData.textureMemory,
+        objectCount: currentData.objectCount,
+        complexObjectCount: currentData.complexObjectCount
+      }
 
+      // 提取设备数据
+      const deviceData = {
+        thermalState: currentData.thermalState,
+        batteryLevel: currentData.batteryLevel,
+        devicePerformanceLevel: currentData.devicePerformanceLevel
+      }
+
+      // 使用机器学习模型预测性能
+      const prediction = await mlPerformancePredictor.predictPerformance(
+        optimizationParams,
+        deviceData
+      )
+
+      // 根据预测结果调整性能设置
+      this.adjustPerformanceSettings(prediction)
+
+      // 记录预测数据用于模型训练
+      mlPerformancePredictor.addTrainingData(currentData)
+    } catch (error) {
+      console.error('Error predicting performance:', error)
+    }
+  }
+
+  /**
+   * 调整性能设置
+   */
+  private adjustPerformanceSettings(prediction: any): void {
+    // 根据预测的 FPS 调整性能设置
+    const targetFps = 60
+    const predictedFps = prediction.fps
+
+    if (predictedFps < targetFps * 0.8) {
+      // FPS 低于目标的 80%，需要降低性能设置
+      this.reducePerformance()
+    } else if (predictedFps > targetFps * 0.95) {
+      // FPS 高于目标的 95%，可以提高性能设置
+      this.increasePerformance()
+    }
+  }
+
+  /**
+   * 降低性能设置
+   */
+  private reducePerformance(): void {
+    // 降低渲染分辨率
+    const currentPixelRatio = this.renderer.getPixelRatio()
+    if (currentPixelRatio > 0.5) {
+      this.renderer.setPixelRatio(Math.max(0.5, currentPixelRatio - 0.2))
+    }
+
+    // 禁用后处理效果
+    if (this.composer) {
+      this.disableAllPostProcessing()
+    }
+
+    // 禁用阴影
+    if (this.renderer.shadowMap.enabled) {
+      this.renderer.shadowMap.enabled = false
+    }
+
+    // 减少粒子数量
+    if (this.gpuParticleSystem) {
+      // 这里可以添加减少粒子数量的逻辑
+    }
+  }
+
+  /**
+   * 提高性能设置
+   */
+  private increasePerformance(): void {
+    // 提高渲染分辨率
+    const currentPixelRatio = this.renderer.getPixelRatio()
+    const basePixelRatio = window.devicePixelRatio
+    if (currentPixelRatio < basePixelRatio) {
+      this.renderer.setPixelRatio(Math.min(basePixelRatio, currentPixelRatio + 0.2))
+    }
+
+    // 启用基本后处理效果
+    if (this.composer) {
+      this.enableBasicPostProcessing()
+    }
+
+    // 启用阴影
+    if (!this.renderer.shadowMap.enabled) {
+      this.renderer.shadowMap.enabled = true
+    }
+
+    // 增加粒子数量
+    if (this.gpuParticleSystem) {
+      // 这里可以添加增加粒子数量的逻辑
+    }
+  }
+
+  /**
+   * 收集性能指标
+   */
+  private collectPerformanceMetrics(): void {
+    const now = performance.now()
+    const renderer = this.renderer
+
+    // 计算FPS
+    const elapsed = now - this.performanceData.startTime
+    const fps = (this.performanceData.frameCount / elapsed) * 1000
+
+    // 计算平均渲染时间
     const avgRenderTime =
-      this.performanceData.renderTimeHistory.reduce((a, b) => a + b, 0) /
-      this.performanceData.renderTimeHistory.length
+      this.performanceData.renderTimeHistory.length > 0
+        ? this.performanceData.renderTimeHistory.reduce((a, b) => a + b, 0) /
+          this.performanceData.renderTimeHistory.length
+        : 0
 
-    return 1000 / avgRenderTime
-  }
+    // 计算平均帧时间
+    const avgFrameTime =
+      this.performanceData.frameTimeHistory.length > 0
+        ? this.performanceData.frameTimeHistory.reduce((a, b) => a + b, 0) /
+          this.performanceData.frameTimeHistory.length
+        : 0
 
-  /**
-   * 动态调整后期处理性能
-   */
-  private updatePostProcessingPerformance(): void {
-    const fps = this.getAverageFPS()
+    // 内存使用情况（使用performance API，如果可用）
+    let memoryUsageMB = 0
+    if (performance.memory) {
+      memoryUsageMB = performance.memory.usedJSHeapSize / (1024 * 1024)
+    }
 
-    // 根据FPS动态调整后期处理效果
-    if (fps < 30) {
-      // 严重卡顿，禁用所有高消耗的后期处理
-      if (this.bloomPass) this.bloomPass.enabled = false
-      if (this.outlinePass) this.outlinePass.enabled = false
-      if (this.bokehPass) this.bokehPass.enabled = false
-      if (this.afterimagePass) this.afterimagePass.enabled = false
-    } else if (fps < 45) {
-      // 轻微卡顿，只保留核心效果
-      if (this.bloomPass) this.bloomPass.enabled = true
-      if (this.outlinePass) this.outlinePass.enabled = false
-      if (this.bokehPass) this.bokehPass.enabled = false
-      if (this.afterimagePass) this.afterimagePass.enabled = false
-    } else if (fps > 55) {
-      // 流畅运行，可以启用所有效果
-      if (this.bloomPass) this.bloomPass.enabled = true
-      if (this.outlinePass) this.outlinePass.enabled = this.outlinePass.enabled
-      if (this.bokehPass) this.bokehPass.enabled = this.bokehPass.enabled
-      if (this.afterimagePass) this.afterimagePass.enabled = this.afterimagePass.enabled
+    // 发送性能指标事件
+    const metrics = {
+      fps: Math.round(fps),
+      renderTime: avgRenderTime,
+      frameTime: avgFrameTime,
+      memoryUsageMB: Math.round(memoryUsageMB),
+      drawCalls: renderer.info.render.calls,
+      triangles: renderer.info.render.triangles,
+      optimizationLevel: 2,
+      networkLatency: 0,
+      particleCount: 0,
+      objectCount: 0,
+      textureMemory: 0,
+      shadowQuality: 1.0,
+      postProcessing: true,
+      thermalState: 'normal',
+      batteryLevel: 1.0
+    }
+
+    eventSystem.emit(APP_EVENTS.PERFORMANCE_METRICS_UPDATE, metrics)
+
+    // 限制历史数据长度，避免内存泄漏
+    if (this.performanceData.renderTimeHistory.length > 100) {
+      this.performanceData.renderTimeHistory.shift()
+    }
+    if (this.performanceData.frameTimeHistory.length > 100) {
+      this.performanceData.frameTimeHistory.shift()
     }
   }
 
   /**
-   * 设置渲染质量级别
-   * @param level 质量级别 (1-5)
+   * 处理窗口大小变化
    */
-  public setRenderQuality(level: number): void {
-    level = Math.max(1, Math.min(5, level))
+  private onWindowResize(): void {
+    const { width, height } = this.container.getBoundingClientRect()
+
+    // 更新相机
+    this.cameraManager.updateAspectRatio(width / height)
+
+    // 优化：根据窗口大小动态调整像素比
+    const isLargeWindow = width > 1920 || height > 1080
+    const basePixelRatio = window.devicePixelRatio
+    let optimalPixelRatio = basePixelRatio
+
+    if (isLargeWindow) {
+      // 大屏幕使用较低的像素比，提高性能
+      optimalPixelRatio = Math.min(basePixelRatio, 1.5)
+    } else {
+      // 小屏幕可以使用较高的像素比，提高质量
+      optimalPixelRatio = Math.min(basePixelRatio, 2)
+    }
+
+    this.renderer.setPixelRatio(optimalPixelRatio)
+    this.renderer.setSize(width, height)
+
+    // 更新后期处理效果
+    if (this.composer) {
+      this.composer.setSize(width, height)
+
+      // 更新FXAA分辨率
+      if (this.fxaaPass) {
+        this.fxaaPass.material.uniforms['resolution'].value.x = 1 / width
+        this.fxaaPass.material.uniforms['resolution'].value.y = 1 / height
+      }
+
+      // 更新边缘轮廓通道
+      if (this.outlinePass) {
+        this.outlinePass.setSize(width, height)
+      }
+    }
+
+    // 更新高级后处理系统
+    if (this.postProcessingSystem) {
+      this.postProcessingSystem.resize(width, height)
+    }
+
+    // 优化：更新阴影贴图大小
+    if (this.renderer.shadowMap.enabled) {
+      this.renderer.shadowMap.needsUpdate = true
+    }
+  }
+
+  /**
+   * 设置渲染质量
+   * @param qualityLevel 质量级别 (1-5)
+   */
+  public setRenderQuality(qualityLevel: number): void {
+    level = Math.max(1, Math.min(5, qualityLevel))
 
     // 根据质量级别调整参数
     switch (level) {
@@ -1121,236 +1508,334 @@ export class RenderEngine {
   }
 
   /**
-   * 处理窗口大小变化
-   */
-  private onWindowResize(): void {
-    const { width, height } = this.container.getBoundingClientRect()
-
-    // 更新相机
-    this.cameraManager.updateAspectRatio(width / height)
-
-    // 优化：根据窗口大小动态调整像素比
-    const isLargeWindow = width > 1920 || height > 1080
-    const basePixelRatio = window.devicePixelRatio
-    let optimalPixelRatio = basePixelRatio
-
-    if (isLargeWindow) {
-      // 大屏幕使用较低的像素比，提高性能
-      optimalPixelRatio = Math.min(basePixelRatio, 1.5)
-    } else {
-      // 小屏幕可以使用较高的像素比，提高质量
-      optimalPixelRatio = Math.min(basePixelRatio, 2)
-    }
-
-    this.renderer.setPixelRatio(optimalPixelRatio)
-    this.renderer.setSize(width, height)
-
-    // 更新后期处理效果
-    if (this.composer) {
-      this.composer.setSize(width, height)
-
-      // 更新FXAA分辨率
-      if (this.fxaaPass) {
-        this.fxaaPass.material.uniforms['resolution'].value.x = 1 / width
-        this.fxaaPass.material.uniforms['resolution'].value.y = 1 / height
-      }
-
-      // 更新边缘轮廓通道
-      if (this.outlinePass) {
-        this.outlinePass.setSize(width, height)
-      }
-    }
-
-    // 优化：更新阴影贴图大小
-    if (this.renderer.shadowMap.enabled) {
-      this.renderer.shadowMap.needsUpdate = true
-    }
-  }
-
-  /**
-   * 计算动态渲染缩放因子
-   */
-  private calculateDynamicRenderScale(): number {
-    const fps = this.getPerformanceData().fps
-    const basePixelRatio = window.devicePixelRatio
-
-    if (fps < 20) {
-      return Math.min(basePixelRatio, 0.5)
-    } else if (fps < 30) {
-      return Math.min(basePixelRatio, 0.75)
-    } else if (fps < 45) {
-      return Math.min(basePixelRatio, 1.0)
-    } else if (fps < 55) {
-      return Math.min(basePixelRatio, 1.5)
-    } else {
-      return Math.min(basePixelRatio, 2.0)
-    }
-  }
-
-  /**
-   * 根据性能动态调整后期处理通道
-   */
-  private updatePostProcessingPerformance(): void {
-    const fps = this.getPerformanceData().fps
-
-    // 根据FPS动态启用/禁用后期处理通道
-    if (this.bloomPass) {
-      this.bloomPass.enabled = fps > 30
-    }
-
-    if (this.outlinePass) {
-      this.outlinePass.enabled = fps > 40
-    }
-
-    if (this.filmPass) {
-      this.filmPass.enabled = fps > 50
-    }
-
-    if (this.glitchPass) {
-      this.glitchPass.enabled = false // 始终禁用，性能消耗大
-    }
-  }
-
-  /**
-   * 启动渲染引擎
-   */
-  start(): void {
-    if (this.isRunning) return
-
-    this.isRunning = true
-    this.lastTime = performance.now()
-    this.animate()
-  }
-
-  /**
-   * 停止渲染引擎
-   */
-  stop(): void {
-    this.isRunning = false
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId)
-      this.animationId = null
-    }
-  }
-
-  /**
-   * 处理窗口大小变化
-   */
-  handleResize(): void {
-    const { width, height } = this.container.getBoundingClientRect()
-
-    // 更新相机
-    this.cameraManager.updateAspectRatio(width / height)
-
-    // 优化：根据窗口大小动态调整像素比
-    const isLargeWindow = width > 1920 || height > 1080
-    const basePixelRatio = window.devicePixelRatio
-    let optimalPixelRatio = basePixelRatio
-
-    if (isLargeWindow) {
-      // 大屏幕使用较低的像素比，提高性能
-      optimalPixelRatio = Math.min(basePixelRatio, 1.5)
-    } else {
-      // 小屏幕可以使用较高的像素比，提高质量
-      optimalPixelRatio = Math.min(basePixelRatio, 2)
-    }
-
-    this.renderer.setPixelRatio(optimalPixelRatio)
-    this.renderer.setSize(width, height)
-
-    // 更新后期处理效果
-    if (this.composer) {
-      this.composer.setSize(width, height)
-
-      // 更新FXAA分辨率
-      if (this.fxaaPass) {
-        this.fxaaPass.material.uniforms['resolution'].value.x = 1 / width
-        this.fxaaPass.material.uniforms['resolution'].value.y = 1 / height
-      }
-
-      // 更新边缘轮廓通道
-      if (this.outlinePass) {
-        this.outlinePass.setSize(width, height)
-      }
-    }
-
-    // 优化：更新阴影贴图大小
-    if (this.renderer.shadowMap.enabled) {
-      this.renderer.shadowMap.needsUpdate = true
-    }
-  }
-
-  /**
    * 添加对象到场景
    */
-  addObject(object: THREE.Object3D): void {
+  public addObject(object: THREE.Object3D): void {
     this.sceneManager.addObject(object)
+
+    // 将对象添加到 LOD 系统
+    if (this.lodSystem) {
+      this.lodSystem.addObject(object)
+    }
+
+    // 更新 BVH 系统
+    if (this.bvhSystem) {
+      this.bvhSystem.buildFromScene(this.sceneManager.getScene())
+    }
+
+    // 添加对象到资源管理器
+    this.addObjectToResourceManager(object)
+  }
+
+  /**
+   * 将对象添加到资源管理器
+   */
+  private addObjectToResourceManager(object: THREE.Object3D): void {
+    const objectId = object.uuid || Math.random().toString(36).substr(2, 9)
+
+    if (object instanceof THREE.Mesh) {
+      // 添加几何体资源
+      if (object.geometry) {
+        const geometryId = `geometry_${objectId}`
+        resourceManager.addResource(
+          geometryId,
+          ResourceType.GEOMETRY,
+          `Geometry for ${object.name || 'mesh'}`,
+          object.geometry,
+          this.calculateGeometrySize(object.geometry),
+          {
+            priority: ResourcePriority.MEDIUM
+          }
+        )
+        this.resourceIds.add(geometryId)
+      }
+
+      // 添加材质资源
+      if (object.material) {
+        const materials = Array.isArray(object.material) ? object.material : [object.material]
+        materials.forEach((material, index) => {
+          const materialId = `material_${objectId}_${index}`
+          resourceManager.addResource(
+            materialId,
+            ResourceType.MATERIAL,
+            `Material for ${object.name || 'mesh'}`,
+            material,
+            1024, // 估算材质大小
+            {
+              priority: ResourcePriority.MEDIUM
+            }
+          )
+          this.resourceIds.add(materialId)
+        })
+      }
+
+      // 添加网格资源
+      const meshId = `mesh_${objectId}`
+      resourceManager.addResource(
+        meshId,
+        ResourceType.MESH,
+        object.name || 'mesh',
+        object,
+        this.calculateMeshSize(object),
+        {
+          priority: ResourcePriority.HIGH
+        }
+      )
+      this.resourceIds.add(meshId)
+    } else if (object instanceof THREE.Light) {
+      // 添加光源资源
+      const lightId = `light_${objectId}`
+      resourceManager.addResource(
+        lightId,
+        ResourceType.OTHER,
+        object.name || 'light',
+        object,
+        512, // 估算光源大小
+        {
+          priority: ResourcePriority.HIGH
+        }
+      )
+      this.resourceIds.add(lightId)
+    }
+  }
+
+  /**
+   * 计算几何体大小
+   */
+  private calculateGeometrySize(geometry: THREE.BufferGeometry): number {
+    let size = 0
+    if (geometry.attributes) {
+      for (const attribute in geometry.attributes) {
+        const attr = geometry.attributes[attribute]
+        if (attr.array) {
+          size += attr.array.byteLength
+        }
+      }
+    }
+    return size
+  }
+
+  /**
+   * 计算网格大小
+   */
+  private calculateMeshSize(mesh: THREE.Mesh): number {
+    let size = 0
+    if (mesh.geometry) {
+      size += this.calculateGeometrySize(mesh.geometry)
+    }
+    if (mesh.material) {
+      size += 1024 // 估算材质大小
+    }
+    return size
   }
 
   /**
    * 从场景移除对象
    */
-  removeObject(object: THREE.Object3D): void {
+  public removeObject(object: THREE.Object3D): void {
     this.sceneManager.removeObject(object)
+
+    // 更新 BVH 系统
+    if (this.bvhSystem) {
+      this.bvhSystem.buildFromScene(this.sceneManager.getScene())
+    }
+
+    // 从资源管理器移除对象
+    this.removeObjectFromResourceManager(object)
+  }
+
+  /**
+   * 从资源管理器移除对象
+   */
+  private removeObjectFromResourceManager(object: THREE.Object3D): void {
+    const objectId = object.uuid || Math.random().toString(36).substr(2, 9)
+
+    // 移除相关资源
+    const resourcePatterns = [
+      `geometry_${objectId}`,
+      `material_${objectId}`,
+      `mesh_${objectId}`,
+      `light_${objectId}`
+    ]
+
+    for (const pattern of resourcePatterns) {
+      for (const resourceId of this.resourceIds) {
+        if (resourceId.includes(pattern)) {
+          resourceManager.unloadResource(resourceId)
+          this.resourceIds.delete(resourceId)
+        }
+      }
+    }
   }
 
   /**
    * 清理场景
    */
-  clearScene(): void {
+  public clearScene(): void {
     this.sceneManager.clear()
   }
 
   /**
    * 设置场景更新函数
    */
-  setUpdateFunction(updateFn: (deltaTime: number) => void): void {
+  public setUpdateFunction(updateFn: (deltaTime: number) => void): void {
     this.sceneManager.setUpdateFunction(updateFn)
   }
 
   /**
    * 获取场景实例
    */
-  getScene(): THREE.Scene {
+  public getScene(): THREE.Scene {
     return this.sceneManager.getScene()
   }
 
   /**
    * 获取相机实例
    */
-  getCamera(): THREE.PerspectiveCamera {
+  public getCamera(): THREE.PerspectiveCamera {
     return this.cameraManager.getCamera()
   }
 
   /**
    * 获取渲染器实例
    */
-  getRenderer(): THREE.WebGLRenderer {
+  public getRenderer(): THREE.WebGLRenderer {
     return this.renderer
   }
 
   /**
    * 获取控制器实例
    */
-  getControls(): OrbitControls | null {
+  public getControls(): OrbitControls | null {
     return this.controls
+  }
+
+  /**
+   * 使用 BVH 系统进行光线追踪
+   */
+  public rayTrace(origin: THREE.Vector3, direction: THREE.Vector3): any {
+    if (!this.bvhSystem) {
+      return { hit: false, distance: Infinity }
+    }
+
+    const ray = createRay(origin, direction)
+    return this.bvhSystem.traceRay(ray)
+  }
+
+  /**
+   * 检查点是否在任何对象内
+   */
+  public pointInObject(point: THREE.Vector3): THREE.Object3D | null {
+    if (!this.bvhSystem) {
+      return null
+    }
+    return this.bvhSystem.pointInObject(point)
+  }
+
+  /**
+   * 获取边界盒内的对象
+   */
+  public getObjectsInBox(min: THREE.Vector3, max: THREE.Vector3): THREE.Object3D[] {
+    if (!this.bvhSystem) {
+      return []
+    }
+    return this.bvhSystem.getObjectsInBox({ min, max })
+  }
+
+  /**
+   * 配置后处理效果
+   */
+  public configurePostProcessing(config: any): void {
+    if (this.postProcessingSystem) {
+      this.postProcessingSystem.updateConfig(config)
+    }
+  }
+
+  /**
+   * 启用/禁用后处理效果
+   */
+  public setPostProcessingEffect(effect: string, enabled: boolean): void {
+    if (!this.postProcessingSystem) return
+
+    const config: any = {}
+    switch (effect) {
+      case 'taa':
+        config.enableTAA = enabled
+        break
+      case 'bloom':
+        config.enableBloom = enabled
+        break
+      case 'dof':
+        config.enableDOF = enabled
+        break
+      case 'outline':
+        config.enableOutline = enabled
+        break
+      case 'afterimage':
+        config.enableAfterimage = enabled
+        break
+      case 'film':
+        config.enableFilm = enabled
+        break
+    }
+
+    this.postProcessingSystem.updateConfig(config)
+  }
+
+  /**
+   * 设置轮廓对象
+   */
+  public setOutlineObjects(objects: THREE.Object3D[]): void {
+    if (this.postProcessingSystem) {
+      this.postProcessingSystem.setOutlineObjects(objects)
+    }
   }
 
   /**
    * 重置渲染引擎
    */
-  reset(): void {
+  public reset(): void {
     this.stop()
     this.sceneManager.reset()
     this.cameraManager.reset()
     this.setupScene()
+
+    // 重建 BVH 系统
+    if (this.bvhSystem) {
+      this.bvhSystem.buildFromScene(this.sceneManager.getScene())
+    }
+
     this.start()
+  }
+
+  /**
+   * 停止渲染引擎
+   */
+  public stop(): void {
+    this.isRunning = false
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId)
+      this.animationId = null
+    }
+
+    // 清理 resize 事件监听器
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler)
+      this.resizeHandler = null
+    }
+  }
+
+  /**
+   * 启动渲染引擎
+   */
+  public start(): void {
+    this.startRenderLoop()
   }
 
   /**
    * 销毁渲染引擎
    */
-  dispose(): void {
+  public dispose(): void {
     this.stop()
     this.clearScene()
 
@@ -1382,6 +1867,27 @@ export class RenderEngine {
       this.renderer.domElement.parentNode.removeChild(this.renderer.domElement)
     }
 
+    // 清理 LOD 系统
+    if (this.lodSystem) {
+      this.lodSystem.dispose()
+      this.lodSystem = null
+    }
+
+    // 清理 BVH 系统
+    if (this.bvhSystem) {
+      this.bvhSystem.clear()
+      this.bvhSystem = null
+    }
+
+    // 清理后处理系统
+    if (this.postProcessingSystem) {
+      this.postProcessingSystem.dispose()
+      this.postProcessingSystem = null
+    }
+
+    // 清理资源管理器中的资源
+    this.cleanupResources()
+
     // 触发销毁事件
     eventSystem.emit(APP_EVENTS.RENDER_ENGINE_DISPOSED, {
       container: this.container
@@ -1389,9 +1895,55 @@ export class RenderEngine {
   }
 
   /**
+   * 清理资源
+   */
+  private cleanupResources(): void {
+    for (const resourceId of this.resourceIds) {
+      resourceManager.unloadResource(resourceId)
+    }
+    this.resourceIds.clear()
+  }
+
+  /**
+   * 优化资源
+   */
+  public optimizeResources(): void {
+    resourceManager.optimizeResources()
+  }
+
+  /**
+   * 获取资源统计信息
+   */
+  public getResourceStats(): any {
+    return resourceManager.getStats()
+  }
+
+  /**
+   * 获取内存使用情况
+   */
+  public getMemoryUsage(): number {
+    return resourceManager.getMemoryUsage()
+  }
+
+  /**
+   * 预加载资源
+   */
+  public async preloadResources(
+    resources: Array<{
+      id: string
+      type: ResourceType
+      name: string
+      url: string
+      options: any
+    }>
+  ): Promise<void> {
+    await resourceManager.preloadResources(resources)
+  }
+
+  /**
    * 获取当前性能数据
    */
-  getPerformanceData(): {
+  public getPerformanceData(): {
     fps: number
     renderTime: number
     frameTime: number
@@ -1424,92 +1976,21 @@ export class RenderEngine {
   }
 
   /**
-   * 动态调整渲染质量
-   * @param qualityLevel 质量级别 (1-5, 1最低, 5最高)
+   * 静态方法：创建渲染引擎实例
+   * 根据设备支持情况自动选择 WebGPU 或 WebGL
    */
-  setRenderQuality(qualityLevel: number): void {
-    const clampedQuality = Math.max(1, Math.min(5, qualityLevel))
-
-    // 调整像素比
-    const basePixelRatio = window.devicePixelRatio
-    const pixelRatioMap = [0.5, 0.75, 1, 1.5, 2]
-    const optimalPixelRatio = pixelRatioMap[clampedQuality - 1]
-    this.renderer.setPixelRatio(optimalPixelRatio)
-
-    // 调整阴影质量
-    const shadowMapSizeMap = [512, 1024, 2048, 4096, 8192]
-    const shadowMapSize = shadowMapSizeMap[clampedQuality - 1]
-
-    // 调整场景中的灯光阴影
-    const scene = this.sceneManager.getScene()
-    scene.traverse(object => {
-      if (object instanceof THREE.Light && 'shadow' in object && object.shadow) {
-        object.shadow.mapSize.width = shadowMapSize
-        object.shadow.mapSize.height = shadowMapSize
-
-        // 调整阴影相机参数
-        if (object.shadow.camera) {
-          const shadowCamera = object.shadow.camera as
-            | THREE.PerspectiveCamera
-            | THREE.OrthographicCamera
-          if (shadowCamera instanceof THREE.PerspectiveCamera) {
-            shadowCamera.near = 0.1
-            shadowCamera.far = 100
-          }
-        }
+  public static create(config: RenderEngineConfig): any {
+    if (isWebGPUSupported()) {
+      try {
+        console.log('Using WebGPU renderer')
+        return new WebGPURenderEngine(config)
+      } catch (error) {
+        console.warn('WebGPU initialization failed, falling back to WebGL:', error)
+        return new RenderEngine(config)
       }
-    })
-
-    // 触发渲染质量更新事件
-    eventSystem.emit(APP_EVENTS.RENDER_QUALITY_UPDATED, {
-      qualityLevel: clampedQuality,
-      pixelRatio: optimalPixelRatio,
-      shadowMapSize: shadowMapSize
-    })
-  }
-
-  /**
-   * 启用/禁用自动性能优化
-   * @param enabled 是否启用
-   */
-  setAutoPerformanceOptimization(enabled: boolean): void {
-    this.config.dynamicPixelRatio = enabled
-    // 触发自动优化状态变更事件
-    eventSystem.emit(APP_EVENTS.AUTO_OPTIMIZATION_STATE_CHANGED, {
-      enabled: enabled
-    })
-  }
-
-  /**
-   * 应用性能模式设置
-   */
-  applyPerformanceMode(performanceMode: boolean): void {
-    const optimalPixelRatio = renderOptimizer.calculateOptimalPixelRatio(performanceMode)
-    this.renderer.setPixelRatio(optimalPixelRatio)
-
-    // 阴影控制
-    if (this.renderer.shadowMap) {
-      const shouldEnableShadows =
-        !performanceMode && VISUALIZATION_CONFIG.performance?.enableShadowMap
-      if (this.renderer.shadowMap.enabled !== shouldEnableShadows) {
-        this.renderer.shadowMap.enabled = shouldEnableShadows
-        if (shouldEnableShadows) {
-          this.renderer.shadowMap.needsUpdate = true
-        }
-      }
-    }
-
-    // 优化：根据性能模式调整渲染质量设置
-    if (performanceMode) {
-      // 高性能模式
-      this.renderer.sortObjects = false // 禁用对象排序，提高性能
-      this.renderer.localClippingEnabled = false // 禁用局部裁剪
-      this.renderer.toneMapping = THREE.NoToneMapping // 禁用色调映射
     } else {
-      // 高质量模式
-      this.renderer.sortObjects = true // 启用对象排序
-      this.renderer.localClippingEnabled = false // 禁用局部裁剪（大多数情况不需要）
-      this.renderer.toneMapping = THREE.LinearToneMapping // 启用线性色调映射
+      console.log('Using WebGL renderer')
+      return new RenderEngine(config)
     }
   }
 }

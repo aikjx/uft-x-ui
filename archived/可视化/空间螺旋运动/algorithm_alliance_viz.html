@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALGORITHM ALLIANCE | Z-FIELD PROTOCOL</title>
+    <style>
+        :root {
+            --bg-color: #020408;
+            --primary: #00ffcc;
+            --secondary: #7000ff;
+            --alert: #ff3366;
+            --text: #e0f0ff;
+            --panel-bg: rgba(2, 4, 8, 0.85);
+        }
+
+        @font-face {
+            font-family: 'Share Tech Mono';
+            src: url('https://fonts.gstatic.com/s/sharetechmono/v15/J7aHnp1uDWRBEqV98eQX407Sqlm8wQ.woff2') format('woff2');
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+        }
+
+        /* UI Overlay */
+        .ui-layer {
+            position: absolute;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: grid;
+            grid-template-rows: 60px 1fr 60px;
+            grid-template-columns: 300px 1fr 300px;
+            padding: 20px;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.3);
+            background: linear-gradient(90deg, rgba(0,255,204,0) 0%, rgba(0,255,204,0.1) 50%, rgba(0,255,204,0) 100%);
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+            letter-spacing: 4px;
+            padding-left: 20px;
+        }
+
+        .status {
+            font-size: 12px;
+            color: var(--primary);
+            display: flex;
+            gap: 20px;
+            padding-right: 20px;
+        }
+
+        .status-item span { color: #fff; }
+
+        /* Panels */
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 10px; height: 10px;
+            border-top: 2px solid var(--primary);
+            border-left: 2px solid var(--primary);
+        }
+        .panel::after {
+            content: '';
+            position: absolute;
+            bottom: 0; right: 0; width: 10px; height: 10px;
+            border-bottom: 2px solid var(--primary);
+            border-right: 2px solid var(--primary);
+        }
+
+        .left-panel {
+            grid-row: 2;
+            grid-column: 1;
+            align-self: center;
+            transform: translateX(-10px);
+            transition: transform 0.3s;
+        }
+        .left-panel:hover { transform: translateX(0); }
+
+        .right-panel {
+            grid-row: 2;
+            grid-column: 3;
+            align-self: center;
+            transform: translateX(10px);
+            transition: transform 0.3s;
+        }
+        .right-panel:hover { transform: translateX(0); }
+
+        /* Controls */
+        h3 {
+            color: var(--primary);
+            font-size: 14px;
+            border-bottom: 1px dashed rgba(0, 255, 204, 0.3);
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 12px;
+            color: #aaa;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 2px;
+            background: #333;
+            appearance: none;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border: 1px solid #000;
+            cursor: pointer;
+        }
+
+        /* Terminal Log */
+        .terminal {
+            font-size: 10px;
+            color: #0f0;
+            height: 150px;
+            overflow: hidden;
+            opacity: 0.7;
+            font-family: monospace;
+            border-top: 1px solid #333;
+            padding-top: 10px;
+        }
+        
+        .log-entry { margin-bottom: 2px; }
+        .log-time { color: #666; margin-right: 5px; }
+
+        /* Bottom Bar */
+        .bottom-bar {
+            grid-row: 3;
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            letter-spacing: 2px;
+            opacity: 0.5;
+        }
+
+        /* Loading Screen */
+        #loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .glitch-text {
+            font-size: 40px;
+            font-weight: bold;
+            color: var(--primary);
+            position: relative;
+            animation: glitch 1s infinite;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); text-shadow: -2px 0 var(--alert), 2px 0 var(--secondary); }
+            25% { transform: translate(-2px, 2px); }
+            50% { transform: translate(2px, -2px); text-shadow: 2px 0 var(--alert), -2px 0 var(--secondary); }
+            75% { transform: translate(-2px, -2px); }
+            100% { transform: translate(0); text-shadow: -2px 0 var(--alert), 2px 0 var(--secondary); }
+        }
+
+        .loader-bar {
+            width: 200px;
+            height: 4px;
+            background: #333;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+        
+        .loader-progress {
+            position: absolute;
+            top: 0; left: 0; height: 100%; width: 0%;
+            background: var(--primary);
+            animation: load 2s ease-out forwards;
+            border-radius: 2px;
+        }
+
+        @keyframes load { to { width: 100%; } }
+
+        /* Responsive */
+        @media (max-width: 800px) {
+            .ui-layer { grid-template-columns: 1fr; grid-template-rows: 60px auto auto 40px; }
+            .left-panel, .right-panel { grid-column: 1; transform: none; width: 90%; margin: 0 auto; pointer-events: none; opacity: 0; }
+            .top-bar { justify-content: center; }
+            .status { display: none; }
+        }
+    </style>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="loader">
+        <div class="glitch-text">ALGORITHM ALLIANCE</div>
+        <div class="loader-bar"><div class="loader-progress"></div></div>
+        <div style="margin-top: 10px; font-size: 10px; color: #666;">INITIALIZING Z-FIELD PROTOCOL...</div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div class="ui-layer">
+        <div class="top-bar">
+            <div class="brand">ALGORITHM ALLIANCE</div>
+            <div class="status">
+                <div class="status-item">FPS: <span id="fps">60</span></div>
+                <div class="status-item">ENTITIES: <span id="entity-count">0</span></div>
+                <div class="status-item">SYSTEM: <span style="color:var(--primary)">ONLINE</span></div>
+            </div>
+        </div>
+
+        <div class="panel left-panel">
+            <h3>Parameters</h3>
+            
+            <div class="control-group">
+                <label><span>RADIUS</span><span id="val-radius" style="color:var(--primary)">5.0</span></label>
+                <input type="range" id="radius" min="2" max="10" step="0.1" value="5">
+            </div>
+
+            <div class="control-group">
+                <label><span>SPIRAL PITCH</span><span id="val-pitch" style="color:var(--primary)">2.0</span></label>
+                <input type="range" id="pitch" min="0.5" max="5" step="0.1" value="2">
+            </div>
+
+            <div class="control-group">
+                <label><span>FLOW SPEED</span><span id="val-speed" style="color:var(--primary)">1.0</span></label>
+                <input type="range" id="speed" min="0" max="3" step="0.1" value="1">
+            </div>
+            
+            <div class="control-group">
+                <label><span>DATA DENSITY</span><span id="val-density" style="color:var(--primary)">2000</span></label>
+                <input type="range" id="density" min="500" max="5000" step="100" value="2000">
+            </div>
+
+            <h3>Visuals</h3>
+            
+            <div class="control-group">
+                <label><span>GLOW INTENSITY</span><span id="val-bloom" style="color:var(--secondary)">1.5</span></label>
+                <input type="range" id="bloom" min="0" max="3" step="0.1" value="1.5">
+            </div>
+
+            <div class="control-group">
+                <label><span>CONNECTION DIST</span><span id="val-conn" style="color:var(--secondary)">1.5</span></label>
+                <input type="range" id="connection" min="0" max="3" step="0.1" value="1.5">
+            </div>
+        </div>
+
+        <div class="panel right-panel">
+            <h3>System Log</h3>
+            <div class="terminal" id="terminal">
+                <!-- Logs will be injected here -->
+            </div>
+            
+            <h3>Core Analysis</h3>
+            <div style="font-size: 11px; line-height: 1.4; color: #ccc;">
+                Z-CONSTANT: <span style="color:var(--primary)">DETECTED</span><br>
+                TOPOLOGY: <span style="color:var(--secondary)">HELICAL CYLINDER</span><br>
+                GRAVITY WAVE: <span style="color:var(--alert)">STABLE</span><br>
+                <br>
+                <div style="border: 1px solid #333; padding: 5px;">
+                    FORMULA:<br>
+                    <span style="color:var(--primary)">Z = dn / (dV · dt)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            // ALGORITHM ALLIANCE VISUALIZATION SYSTEM V2.0 // AUTHORIZED ACCESS ONLY //
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
+        // --- System Configuration ---
+        const config = {
+            radius: 5.0,
+            pitch: 2.0,
+            speed: 1.0,
+            density: 2000,
+            bloom: 1.5,
+            connectionDist: 1.5
+        };
+
+        // --- Logger ---
+        const terminal = document.getElementById('terminal');
+        function log(msg, type = 'info') {
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const color = type === 'error' ? 'var(--alert)' : (type === 'warn' ? 'var(--secondary)' : '#0f0');
+            div.innerHTML = `<span class="log-time">[${time}]</span> <span style="color:${color}">> ${msg}</span>`;
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+            
+            if (terminal.children.length > 20) terminal.removeChild(terminal.firstChild);
+        }
+
+        // --- Custom Shaders ---
+
+        // 1. Data Particle Shader (Instanced)
+        // Uses raw buffer geometry for max performance with thousands of particles
+        const particleVertexShader = `
+            attribute vec3 position;
+            attribute vec3 offset;     // Initial random position offset
+            attribute float speed;     // Individual speed multiplier
+            attribute float id;        // Particle ID
+            attribute vec3 color;      // Particle Color
+            
+            uniform mat4 modelViewMatrix;
+            uniform mat4 projectionMatrix;
+            uniform float uTime;
+            uniform float uRadius;
+            uniform float uPitch;
+            uniform float uGlobalSpeed;
+            uniform float uHeight;
+            
+            varying vec3 vColor;
+            varying float vAlpha;
+            varying vec3 vPos;
+
+            void main() {
+                vColor = color;
+                
+                // Spiral Motion Logic
+                // t moves from 0 to 1 repeatedly
+                float t = mod(uTime * 0.05 * speed * uGlobalSpeed + offset.y, 1.0);
+                
+                float h = uHeight; 
+                float y = (t - 0.5) * h;
+                
+                // Angle calculation: 2*PI * turns
+                float turns = h / uPitch;
+                float angle = t * turns * 6.28318 + offset.x * 6.28;
+                
+                // Radius variation (breathing) - REMOVED for perfect cylinder
+                float r = uRadius;
+                
+                // Calculate new position
+                vec3 newPos = vec3(
+                    r * cos(angle),
+                    y,
+                    r * sin(angle)
+                );
+                
+                vPos = newPos; // Pass to fragment for connection logic (if needed)
+
+                // Billboard effect + Instancing
+                // We add the local vertex position (scaled) to the calculated world position
+                vec4 mvPosition = modelViewMatrix * vec4(newPos, 1.0);
+                
+                // Size attenuation based on depth
+                float size = (100.0 / -mvPosition.z);
+                
+                gl_Position = projectionMatrix * mvPosition;
+                gl_PointSize = size * 2.0;
+                
+                // Fade edges
+                vAlpha = smoothstep(0.0, 0.1, t) * (1.0 - smoothstep(0.9, 1.0, t));
+            }
+        `;
+
+        const particleFragmentShader = `
+            varying vec3 vColor;
+            varying float vAlpha;
+            
+            void main() {
+                // Circular soft particle
+                vec2 center = gl_PointCoord - 0.5;
+                float dist = length(center);
+                if (dist > 0.5) discard;
+                
+                // Core glow
+                float glow = 1.0 - dist * 2.0;
+                glow = pow(glow, 2.0);
+                
+                gl_FragColor = vec4(vColor, vAlpha * glow);
+            }
+        `;
+
+        // 2. Holographic Grid Shader
+        const gridVertexShader = `
+            varying vec3 vPos;
+            void main() {
+                vPos = position;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const gridFragmentShader = `
+            varying vec3 vPos;
+            uniform float uTime;
+            uniform vec3 uColor;
+            
+            void main() {
+                // Grid pattern
+                float scale = 2.0;
+                vec2 coord = vPos.xz * scale;
+                
+                // Moving wave
+                float wave = sin(length(vPos.xz) - uTime * 2.0) * 0.5 + 0.5;
+                
+                // Grid lines
+                float grid = max(
+                    step(0.95, fract(coord.x)),
+                    step(0.95, fract(coord.y))
+                );
+                
+                // Circular fade out
+                float dist = length(vPos.xz);
+                float alpha = (1.0 - smoothstep(10.0, 40.0, dist)) * grid * wave * 0.5;
+                
+                gl_FragColor = vec4(uColor, alpha);
+            }
+        `;
+
+        // --- Main System Class ---
+        class AlgorithmSystem {
+            constructor() {
+                this.container = document.getElementById('canvas-container');
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+                this.time = 0;
+                
+                this.initRenderer();
+                this.initScene();
+                this.initPostProcessing();
+                this.initWorld();
+                this.initUI();
+                
+                // Remove loader
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                    log('SYSTEM INITIALIZED', 'info');
+                    log('Z-FIELD STABILIZED', 'info');
+                }, 2000);
+
+                window.addEventListener('resize', this.onResize.bind(this));
+                
+                this.animate();
+            }
+
+            initRenderer() {
+                this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+                this.renderer.setSize(this.width, this.height);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.container.appendChild(this.renderer.domElement);
+            }
+
+            initScene() {
+                this.scene = new THREE.Scene();
+                this.scene.fog = new THREE.FogExp2(0x020408, 0.02);
+                
+                this.camera = new THREE.PerspectiveCamera(60, this.width / this.height, 0.1, 1000);
+                this.camera.position.set(20, 15, 20);
+                
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.autoRotate = true;
+                this.controls.autoRotateSpeed = 0.5;
+            }
+
+            initPostProcessing() {
+                this.composer = new EffectComposer(this.renderer);
+                this.composer.addPass(new RenderPass(this.scene, this.camera));
+                
+                this.bloomPass = new UnrealBloomPass(
+                    new THREE.Vector2(this.width, this.height),
+                    config.bloom, 0.4, 0.85
+                );
+                this.composer.addPass(this.bloomPass);
+            }
+
+            initWorld() {
+                // 1. Central Core (The Algorithm)
+                const coreGeo = new THREE.IcosahedronGeometry(1.5, 1);
+                const coreMat = new THREE.MeshBasicMaterial({ 
+                    color: 0x00ffcc, 
+                    wireframe: true, 
+                    transparent: true,
+                    opacity: 0.8
+                });
+                this.core = new THREE.Mesh(coreGeo, coreMat);
+                this.scene.add(this.core);
+                
+                // Inner core
+                const innerGeo = new THREE.DodecahedronGeometry(0.8, 0);
+                const innerMat = new THREE.MeshBasicMaterial({ color: 0xff3366 });
+                this.innerCore = new THREE.Mesh(innerGeo, innerMat);
+                this.scene.add(this.innerCore);
+
+                // 2. Holographic Grids
+                const gridGeo = new THREE.PlaneGeometry(100, 100);
+                gridGeo.rotateX(-Math.PI / 2);
+                
+                this.topGrid = new THREE.Mesh(gridGeo, new THREE.ShaderMaterial({
+                    uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0x7000ff) } },
+                    vertexShader: gridVertexShader,
+                    fragmentShader: gridFragmentShader,
+                    transparent: true,
+                    side: THREE.DoubleSide,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending
+                }));
+                this.topGrid.position.y = 20;
+                this.scene.add(this.topGrid);
+
+                this.bottomGrid = new THREE.Mesh(gridGeo, new THREE.ShaderMaterial({
+                    uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0x00ffcc) } },
+                    vertexShader: gridVertexShader,
+                    fragmentShader: gridFragmentShader,
+                    transparent: true,
+                    side: THREE.DoubleSide,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending
+                }));
+                this.bottomGrid.position.y = -20;
+                this.scene.add(this.bottomGrid);
+
+                // 3. Data Particles System
+                this.initParticles();
+
+                // 4. Connecting Lines (Visualized using a separate LineSegments system for performance)
+                // Note: For massive amount of dynamic connections, CPU calc is heavy. 
+                // We will use a simplified approach: Static helical lines that pulse.
+                this.initConnections();
+            }
+
+            initParticles() {
+                if (this.particleSystem) this.scene.remove(this.particleSystem);
+
+                const count = config.density;
+                const geometry = new THREE.BufferGeometry();
+                
+                // Attributes
+                const positions = new Float32Array(count * 3); // Not used directly in shader calculation but needed for bounding box
+                const offsets = new Float32Array(count * 3);
+                const speeds = new Float32Array(count);
+                const ids = new Float32Array(count);
+                const colors = new Float32Array(count * 3);
+                
+                const c1 = new THREE.Color(0x00ffcc); // Cyan
+                const c2 = new THREE.Color(0x7000ff); // Purple
+                const c3 = new THREE.Color(0xffffff); // White
+
+                for (let i = 0; i < count; i++) {
+                    positions[i*3] = 0; positions[i*3+1] = 0; positions[i*3+2] = 0;
+                    
+                    offsets[i*3] = Math.random(); // phase
+                    offsets[i*3+1] = Math.random(); // t offset
+                    offsets[i*3+2] = Math.random(); // extra
+                    
+                    speeds[i] = 0.5 + Math.random();
+                    ids[i] = i;
+                    
+                    // Mix colors based on ID
+                    let c;
+                    const r = Math.random();
+                    if (r > 0.9) c = c3;
+                    else if (r > 0.5) c = c1;
+                    else c = c2;
+                    
+                    colors[i*3] = c.r;
+                    colors[i*3+1] = c.g;
+                    colors[i*3+2] = c.b;
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('offset', new THREE.BufferAttribute(offsets, 3));
+                geometry.setAttribute('speed', new THREE.BufferAttribute(speeds, 1));
+                geometry.setAttribute('id', new THREE.BufferAttribute(ids, 1));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+                this.particleUniforms = {
+                    uTime: { value: 0 },
+                    uRadius: { value: config.radius },
+                    uPitch: { value: config.pitch },
+                    uGlobalSpeed: { value: config.speed },
+                    uHeight: { value: 40.0 }
+                };
+
+                const material = new THREE.ShaderMaterial({
+                    uniforms: this.particleUniforms,
+                    vertexShader: particleVertexShader,
+                    fragmentShader: particleFragmentShader,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+
+                this.particleSystem = new THREE.Points(geometry, material);
+                this.scene.add(this.particleSystem);
+                
+                // Update UI count
+                document.getElementById('entity-count').innerText = count;
+            }
+
+            initConnections() {
+                // Creates a set of helical lines that represent the structure
+                if (this.connectionLines) this.scene.remove(this.connectionLines);
+                
+                const group = new THREE.Group();
+                const lineCount = 12;
+                const pointsPerLine = 100;
+                
+                for(let i=0; i<lineCount; i++) {
+                    const geometry = new THREE.BufferGeometry();
+                    const positions = new Float32Array(pointsPerLine * 3);
+                    
+                    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                    
+                    const material = new THREE.LineBasicMaterial({
+                        color: 0x00ffcc,
+                        transparent: true,
+                        opacity: 0.15
+                    });
+                    
+                    const line = new THREE.Line(geometry, material);
+                    line.userData = { 
+                        offset: (i / lineCount) * Math.PI * 2,
+                        speed: 0.5 + Math.random() * 0.5
+                    };
+                    group.add(line);
+                }
+                
+                this.connectionLines = group;
+                this.scene.add(group);
+            }
+
+            updateConnections() {
+                if (!this.connectionLines) return;
+                
+                const h = 40;
+                const turns = h / config.pitch;
+                
+                this.connectionLines.children.forEach(line => {
+                    const positions = line.geometry.attributes.position.array;
+                    const offset = line.userData.offset;
+                    
+                    for(let j=0; j<100; j++) {
+                        const t = j / 99;
+                        const y = (t - 0.5) * h;
+                        // Animate lines slowly
+                        const timeShift = this.time * 0.2 * line.userData.speed;
+                        const angle = (t * turns * Math.PI * 2) + offset + timeShift;
+                        
+                        const r = config.radius;
+                        
+                        positions[j*3] = r * Math.cos(angle);
+                        positions[j*3+1] = y;
+                        positions[j*3+2] = r * Math.sin(angle);
+                    }
+                    line.geometry.attributes.position.needsUpdate = true;
+                    
+                    // Dynamic opacity
+                    line.material.opacity = 0.1 + Math.sin(this.time + offset) * 0.1;
+                });
+            }
+
+            initUI() {
+                // Bind inputs
+                const bind = (id, key, onChange) => {
+                    const el = document.getElementById(id);
+                    el.addEventListener('input', (e) => {
+                        const val = parseFloat(e.target.value);
+                        config[key] = val;
+                        document.getElementById('val-' + id).innerText = val;
+                        if (onChange) onChange(val);
+                        log(`SET ${key.toUpperCase()} -> ${val}`);
+                    });
+                };
+
+                bind('radius', 'radius', (v) => {
+                    this.particleUniforms.uRadius.value = v;
+                    
+                    // Update cylinder guide radius
+                    if (this.cylinderGuide) {
+                        this.scene.remove(this.cylinderGuide);
+                        const cylGeo = new THREE.CylinderGeometry(v, v, 40, 64, 1, true);
+                        this.cylinderGuide = new THREE.Mesh(cylGeo, new THREE.MeshBasicMaterial({
+                            color: 0x00ffcc,
+                            transparent: true,
+                            opacity: 0.03,
+                            side: THREE.DoubleSide,
+                            blending: THREE.AdditiveBlending
+                        }));
+                        this.scene.add(this.cylinderGuide);
+                    }
+                    
+                    // Update rings
+                    if (this.ringTop) {
+                         const s = v / config.radius; // This scaling is tricky because thickness scales too. Recreating is better.
+                         // But for simplicity let's just recreate or scale. Scaling torus changes tube radius too.
+                         // Let's recreate.
+                         this.scene.remove(this.ringTop);
+                         this.scene.remove(this.ringBottom);
+                         
+                         const ringGeo = new THREE.TorusGeometry(v, 0.05, 16, 100);
+                         this.ringTop = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0x00ffcc, transparent: true, opacity: 0.3 }));
+                         this.ringTop.rotation.x = Math.PI / 2;
+                         this.ringTop.position.y = 20;
+                         this.scene.add(this.ringTop);
+                         
+                         this.ringBottom = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0x00ffcc, transparent: true, opacity: 0.3 }));
+                         this.ringBottom.rotation.x = Math.PI / 2;
+                         this.ringBottom.position.y = -20;
+                         this.scene.add(this.ringBottom);
+                    }
+                });
+                bind('pitch', 'pitch', (v) => this.particleUniforms.uPitch.value = v);
+                bind('speed', 'speed', (v) => this.particleUniforms.uGlobalSpeed.value = v);
+                bind('bloom', 'bloom', (v) => this.bloomPass.strength = v);
+                
+                document.getElementById('density').addEventListener('change', (e) => {
+                    config.density = parseInt(e.target.value);
+                    document.getElementById('val-density').innerText = config.density;
+                    log(`REBUILDING ENTITY MATRIX...`, 'warn');
+                    this.initParticles();
+                    log(`MATRIX REBUILT: ${config.density} NODES`);
+                });
+            }
+
+            onResize() {
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+                this.camera.aspect = this.width / this.height;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(this.width, this.height);
+                this.composer.setSize(this.width, this.height);
+            }
+
+            animate() {
+                requestAnimationFrame(this.animate.bind(this));
+                
+                this.time += 0.01;
+                
+                // Update Uniforms
+                this.particleUniforms.uTime.value = this.time;
+                this.topGrid.material.uniforms.uTime.value = this.time;
+                this.bottomGrid.material.uniforms.uTime.value = this.time;
+                
+                // Update Core
+                this.core.rotation.x += 0.005;
+                this.core.rotation.y += 0.01;
+                this.innerCore.rotation.x -= 0.02;
+                this.innerCore.rotation.z += 0.02;
+                
+                const scale = 1 + Math.sin(this.time * 2) * 0.1;
+                this.innerCore.scale.set(scale, scale, scale);
+                
+                // Update Connections
+                this.updateConnections();
+
+                this.controls.update();
+                this.composer.render();
+            }
+        }
+
+        // Start
+        new AlgorithmSystem();
+    </script>
+</body>
+</html>

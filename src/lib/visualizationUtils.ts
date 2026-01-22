@@ -488,7 +488,7 @@ export const createMathSymbolVisualization = (scene: THREE.Scene) => {
     return line
   }
 
-  // 添加多条交叉线，形成复杂的数学符号
+  // 创建多条交叉线，形成复杂的数学符号
   symbolGroup.add(
     createSymbolLine(new THREE.Vector3(-1, 1, 0), new THREE.Vector3(1, -1, 0)),
     createSymbolLine(new THREE.Vector3(1, 1, 0), new THREE.Vector3(-1, -1, 0)),
@@ -580,4 +580,671 @@ export const createSpaceTimeVisualization = (scene: THREE.Scene) => {
 
   // 添加粒子点
   addParticles(scene, 300, 0x00ffff)
+}
+
+/**
+ * 创建质量定义方程可视化
+ * @param scene Three.js场景
+ */
+export const createMassDefinitionVisualization = (scene: THREE.Scene) => {
+  // 创建质量几何化表示
+  const sphereGeometry = new THREE.SphereGeometry(1, 32, 32)
+  const sphereMaterial = new THREE.MeshPhongMaterial({
+    color: 0x00ffcc,
+    wireframe: false,
+    transparent: true,
+    opacity: 0.8,
+    emissive: 0x00ffcc,
+    emissiveIntensity: 0.6,
+    specular: 0xffffff,
+    shininess: 100
+  })
+  const massSphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
+  scene.add(massSphere)
+
+  // 添加质量动画
+  massSphere.userData = {
+    animate: (deltaTime: number) => {
+      massSphere.rotation.y += deltaTime * 0.001
+      massSphere.rotation.x += deltaTime * 0.0005
+
+      // 添加质量球体的呼吸效果
+      const scale = 1 + Math.sin(Date.now() * 0.003) * 0.15
+      massSphere.scale.setScalar(scale)
+
+      // 添加透明度变化
+      sphereMaterial.opacity = 0.7 + Math.sin(Date.now() * 0.003) * 0.3
+    }
+  }
+
+  // 添加质量周围的几何线条，表示空间几何变化
+  const geometryLinesCount = 12
+  for (let i = 0; i < geometryLinesCount; i++) {
+    const angle = (i / geometryLinesCount) * Math.PI * 2
+    const radius = 1.5
+    const height = 2
+
+    // 创建螺旋线表示空间几何变化
+    const points = []
+    for (let j = 0; j < 50; j++) {
+      const t = j / 49
+      const y = (t - 0.5) * height
+      const r = radius + Math.sin(t * Math.PI * 2) * 0.3
+      const x = r * Math.cos(angle + t * Math.PI * 2)
+      const z = r * Math.sin(angle + t * Math.PI * 2)
+      points.push(new THREE.Vector3(x, y, z))
+    }
+
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points)
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0x7000ff,
+      linewidth: 2,
+      transparent: true,
+      opacity: 0.6
+    })
+    const line = new THREE.Line(lineGeometry, lineMaterial)
+    scene.add(line)
+
+    // 添加线条动画
+    line.userData = {
+      animate: (deltaTime: number) => {
+        line.rotation.y += deltaTime * 0.0003
+        lineMaterial.opacity = 0.5 + Math.sin(Date.now() * 0.002 + i) * 0.3
+      }
+    }
+  }
+
+  // 添加粒子效果
+  addParticles(scene, 400, 0x00ffcc)
+}
+
+/**
+ * 创建引力场定义方程可视化
+ * @param scene Three.js场景
+ */
+export const createGravitationalFieldVisualization = (scene: THREE.Scene) => {
+  // 创建引力场源
+  const sourceGeometry = new THREE.SphereGeometry(0.5, 32, 32)
+  const sourceMaterial = new THREE.MeshPhongMaterial({
+    color: 0x00ffcc,
+    wireframe: false,
+    transparent: true,
+    opacity: 0.9,
+    emissive: 0x00ffcc,
+    emissiveIntensity: 0.7,
+    specular: 0xffffff,
+    shininess: 100
+  })
+  const sourceSphere = new THREE.Mesh(sourceGeometry, sourceMaterial)
+  scene.add(sourceSphere)
+
+  // 添加源球体动画
+  sourceSphere.userData = {
+    animate: (deltaTime: number) => {
+      sourceSphere.rotation.y += deltaTime * 0.001
+      sourceSphere.rotation.x += deltaTime * 0.0005
+
+      // 添加球体的呼吸效果
+      const scale = 1 + Math.sin(Date.now() * 0.003) * 0.15
+      sourceSphere.scale.setScalar(scale)
+
+      // 添加透明度变化
+      sourceMaterial.opacity = 0.8 + Math.sin(Date.now() * 0.003) * 0.2
+    }
+  }
+
+  // 创建引力场线
+  const fieldLinesCount = 16
+  for (let i = 0; i < fieldLinesCount; i++) {
+    const angle = (i / fieldLinesCount) * Math.PI * 2
+    const length = 4
+
+    // 创建引力场线
+    const points = []
+    for (let j = 0; j < 100; j++) {
+      const t = j / 99
+      const r = 0.5 + t * length
+      const x = r * Math.cos(angle)
+      const y = r * Math.sin(angle)
+      const z = Math.sin(t * Math.PI * 2) * 0.5
+      points.push(new THREE.Vector3(x, y, z))
+    }
+
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points)
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0x7000ff,
+      linewidth: 2,
+      transparent: true,
+      opacity: 0.6
+    })
+    const line = new THREE.Line(lineGeometry, lineMaterial)
+    scene.add(line)
+
+    // 添加场线动画
+    line.userData = {
+      animate: (deltaTime: number) => {
+        line.rotation.z += deltaTime * 0.0002
+        lineMaterial.opacity = 0.5 + Math.sin(Date.now() * 0.002 + i) * 0.3
+      }
+    }
+  }
+
+  // 添加粒子效果
+  addParticles(scene, 300, 0x00ffcc)
+}
+
+/**
+ * 创建电荷定义方程可视化
+ * @param scene Three.js场景
+ */
+export const createChargeDefinitionVisualization = (scene: THREE.Scene) => {
+  // 创建电荷旋转表示
+  const torusGeometry = new THREE.TorusGeometry(1, 0.3, 32, 100)
+  const torusMaterial = new THREE.MeshPhongMaterial({
+    color: 0xff00ff,
+    wireframe: false,
+    transparent: true,
+    opacity: 0.8,
+    emissive: 0xff00ff,
+    emissiveIntensity: 0.6,
+    specular: 0xffffff,
+    shininess: 100
+  })
+  const chargeTorus = new THREE.Mesh(torusGeometry, torusMaterial)
+  scene.add(chargeTorus)
+
+  // 添加电荷动画
+  chargeTorus.userData = {
+    animate: (deltaTime: number) => {
+      chargeTorus.rotation.y += deltaTime * 0.002
+      chargeTorus.rotation.x += deltaTime * 0.001
+
+      // 添加电荷环的呼吸效果
+      const scale = 1 + Math.sin(Date.now() * 0.003) * 0.15
+      chargeTorus.scale.setScalar(scale)
+
+      // 添加透明度变化
+      torusMaterial.opacity = 0.7 + Math.sin(Date.now() * 0.003) * 0.3
+    }
+  }
+
+  // 添加旋转电场线
+  const fieldLinesCount = 8
+  for (let i = 0; i < fieldLinesCount; i++) {
+    const angle = (i / fieldLinesCount) * Math.PI * 2
+    const radius = 1.5
+
+    // 创建旋转电场线
+    const points = []
+    for (let j = 0; j < 50; j++) {
+      const t = j / 49
+      const r = radius + t * 2
+      const x = r * Math.cos(angle + t * Math.PI * 4)
+      const y = r * Math.sin(angle + t * Math.PI * 4)
+      const z = Math.sin(t * Math.PI * 2) * 0.5
+      points.push(new THREE.Vector3(x, y, z))
+    }
+
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points)
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0x00ffff,
+      linewidth: 2,
+      transparent: true,
+      opacity: 0.6
+    })
+    const line = new THREE.Line(lineGeometry, lineMaterial)
+    scene.add(line)
+
+    // 添加场线动画
+    line.userData = {
+      animate: (deltaTime: number) => {
+        line.rotation.y += deltaTime * 0.0005
+        lineMaterial.opacity = 0.5 + Math.sin(Date.now() * 0.002 + i) * 0.3
+      }
+    }
+  }
+
+  // 添加粒子效果
+  addParticles(scene, 400, 0xff00ff)
+}
+
+/**
+ * 创建电场定义方程可视化
+ * @param scene Three.js场景
+ */
+export const createElectricFieldVisualization = (scene: THREE.Scene) => {
+  // 创建电场源
+  const sourceGeometry = new THREE.SphereGeometry(0.5, 32, 32)
+  const sourceMaterial = new THREE.MeshPhongMaterial({
+    color: 0xff00ff,
+    wireframe: false,
+    transparent: true,
+    opacity: 0.9,
+    emissive: 0xff00ff,
+    emissiveIntensity: 0.7,
+    specular: 0xffffff,
+    shininess: 100
+  })
+  const sourceSphere = new THREE.Mesh(sourceGeometry, sourceMaterial)
+  scene.add(sourceSphere)
+
+  // 添加源球体动画
+  sourceSphere.userData = {
+    animate: (deltaTime: number) => {
+      sourceSphere.rotation.y += deltaTime * 0.001
+      sourceSphere.rotation.x += deltaTime * 0.0005
+
+      // 添加球体的呼吸效果
+      const scale = 1 + Math.sin(Date.now() * 0.003) * 0.15
+      sourceSphere.scale.setScalar(scale)
+
+      // 添加透明度变化
+      sourceMaterial.opacity = 0.8 + Math.sin(Date.now() * 0.003) * 0.2
+    }
+  }
+
+  // 创建电场线
+  const fieldLinesCount = 16
+  for (let i = 0; i < fieldLinesCount; i++) {
+    const angle = (i / fieldLinesCount) * Math.PI * 2
+
+    // 创建径向电场线
+    const points = []
+    for (let j = 0; j < 100; j++) {
+      const t = j / 99
+      const r = 0.5 + t * 3
+      const x = r * Math.cos(angle)
+      const y = r * Math.sin(angle)
+      const z = Math.sin(t * Math.PI * 4) * 0.3
+      points.push(new THREE.Vector3(x, y, z))
+    }
+
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points)
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0x00ffff,
+      linewidth: 2,
+      transparent: true,
+      opacity: 0.6
+    })
+    const line = new THREE.Line(lineGeometry, lineMaterial)
+    scene.add(line)
+
+    // 添加场线动画
+    line.userData = {
+      animate: (deltaTime: number) => {
+        line.rotation.z += deltaTime * 0.0002
+        lineMaterial.opacity = 0.5 + Math.sin(Date.now() * 0.002 + i) * 0.3
+      }
+    }
+  }
+
+  // 添加粒子效果
+  addParticles(scene, 300, 0x00ffff)
+}
+
+/**
+ * 创建磁场定义方程可视化
+ * @param scene Three.js场景
+ */
+export const createMagneticFieldVisualization = (scene: THREE.Scene) => {
+  // 创建磁场源
+  const torusGeometry = new THREE.TorusGeometry(1, 0.3, 32, 100)
+  const torusMaterial = new THREE.MeshPhongMaterial({
+    color: 0x00ffcc,
+    wireframe: false,
+    transparent: true,
+    opacity: 0.8,
+    emissive: 0x00ffcc,
+    emissiveIntensity: 0.6,
+    specular: 0xffffff,
+    shininess: 100
+  })
+  const magneticTorus = new THREE.Mesh(torusGeometry, torusMaterial)
+  magneticTorus.rotation.x = Math.PI / 2
+  scene.add(magneticTorus)
+
+  // 添加磁场动画
+  magneticTorus.userData = {
+    animate: (deltaTime: number) => {
+      magneticTorus.rotation.y += deltaTime * 0.002
+      magneticTorus.rotation.x += deltaTime * 0.0005
+
+      // 添加磁场环的呼吸效果
+      const scale = 1 + Math.sin(Date.now() * 0.003) * 0.15
+      magneticTorus.scale.setScalar(scale)
+
+      // 添加透明度变化
+      torusMaterial.opacity = 0.7 + Math.sin(Date.now() * 0.003) * 0.3
+    }
+  }
+
+  // 创建磁场线
+  const fieldLinesCount = 8
+  for (let i = 0; i < fieldLinesCount; i++) {
+    const angle = (i / fieldLinesCount) * Math.PI * 2
+    const radius = 1.5
+
+    // 创建环绕磁场线
+    const points = []
+    for (let j = 0; j < 100; j++) {
+      const t = j / 99
+      const r = radius + Math.sin(t * Math.PI * 2) * 0.5
+      const x = r * Math.cos(angle + t * Math.PI * 4)
+      const y = r * Math.sin(angle + t * Math.PI * 4)
+      const z = (t - 0.5) * 3
+      points.push(new THREE.Vector3(x, y, z))
+    }
+
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points)
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0x7000ff,
+      linewidth: 2,
+      transparent: true,
+      opacity: 0.6
+    })
+    const line = new THREE.Line(lineGeometry, lineMaterial)
+    scene.add(line)
+
+    // 添加场线动画
+    line.userData = {
+      animate: (deltaTime: number) => {
+        line.rotation.y += deltaTime * 0.0005
+        lineMaterial.opacity = 0.5 + Math.sin(Date.now() * 0.002 + i) * 0.3
+      }
+    }
+  }
+
+  // 添加粒子效果
+  addParticles(scene, 400, 0x7000ff)
+}
+
+/**
+ * 创建空间波动方程可视化
+ * @param scene Three.js场景
+ */
+export const createSpaceWaveVisualization = (scene: THREE.Scene) => {
+  // 创建波动网格
+  const waveGeometry = new THREE.PlaneGeometry(5, 5, 50, 50)
+  const waveMaterial = new THREE.MeshPhongMaterial({
+    color: 0x00ffff,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.7,
+    emissive: 0x00ffff,
+    emissiveIntensity: 0.5,
+    specular: 0xffffff,
+    shininess: 100
+  })
+  const wavePlane = new THREE.Mesh(waveGeometry, waveMaterial)
+  wavePlane.rotation.x = -Math.PI / 2
+  scene.add(wavePlane)
+
+  // 添加波动动画
+  wavePlane.userData = {
+    animate: (deltaTime: number) => {
+      const positions = waveGeometry.attributes.position.array as Float32Array
+      for (let i = 0; i < positions.length; i += 3) {
+        // 为波动网格添加波动效果
+        positions[i + 2] = Math.sin(Date.now() * 0.001 + positions[i] * 0.5 + positions[i + 1] * 0.5) * 0.3
+      }
+      waveGeometry.attributes.position.needsUpdate = true
+
+      // 旋转波动平面
+      wavePlane.rotation.y += deltaTime * 0.0002
+    }
+  }
+
+  // 添加多个波动平面
+  for (let i = 1; i < 3; i++) {
+    const scale = 0.7 * i
+    const wavePlaneClone = wavePlane.clone()
+    wavePlaneClone.scale.setScalar(scale)
+    wavePlaneClone.position.y = i * 1.5
+    scene.add(wavePlaneClone)
+
+    // 添加克隆波动平面动画
+    wavePlaneClone.userData = {
+      animate: (deltaTime: number) => {
+        const cloneGeometry = wavePlaneClone.geometry as THREE.PlaneGeometry
+        const positions = cloneGeometry.attributes.position.array as Float32Array
+        for (let j = 0; j < positions.length; j += 3) {
+          // 为克隆波动网格添加波动效果，相位不同
+          positions[j + 2] = Math.sin(Date.now() * 0.001 + j * 0.1 + i) * 0.3
+        }
+        cloneGeometry.attributes.position.needsUpdate = true
+
+        // 旋转克隆波动平面
+        wavePlaneClone.rotation.y += deltaTime * 0.0002 + i * 0.0001
+      }
+    }
+  }
+
+  // 添加粒子效果
+  addParticles(scene, 300, 0x00ffff)
+}
+
+/**
+ * 创建能量方程可视化
+ * @param scene Three.js场景
+ */
+export const createEnergyEquationVisualization = (scene: THREE.Scene) => {
+  // 创建能量球体
+  const energyGeometry = new THREE.SphereGeometry(1, 32, 32)
+  const energyMaterial = new THREE.MeshPhongMaterial({
+    color: 0x7000ff,
+    wireframe: false,
+    transparent: true,
+    opacity: 0.8,
+    emissive: 0x7000ff,
+    emissiveIntensity: 0.6,
+    specular: 0xffffff,
+    shininess: 100
+  })
+  const energySphere = new THREE.Mesh(energyGeometry, energyMaterial)
+  scene.add(energySphere)
+
+  // 添加能量动画
+  energySphere.userData = {
+    animate: (deltaTime: number) => {
+      energySphere.rotation.y += deltaTime * 0.001
+      energySphere.rotation.x += deltaTime * 0.0005
+
+      // 添加能量球体的呼吸效果
+      const scale = 1 + Math.sin(Date.now() * 0.003) * 0.15
+      energySphere.scale.setScalar(scale)
+
+      // 添加透明度变化
+      energyMaterial.opacity = 0.7 + Math.sin(Date.now() * 0.003) * 0.3
+    }
+  }
+
+  // 添加能量环绕光效
+  const ringGeometry = new THREE.RingGeometry(2, 2.2, 64)
+  const ringMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.4,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending
+  })
+  const energyRing = new THREE.Mesh(ringGeometry, ringMaterial)
+  energyRing.rotation.x = Math.PI / 2
+  scene.add(energyRing)
+
+  // 添加能量环动画
+  energyRing.userData = {
+    animate: (deltaTime: number) => {
+      energyRing.rotation.z += deltaTime * 0.0005
+      ringMaterial.opacity = 0.3 + Math.sin(Date.now() * 0.002) * 0.3
+    }
+  }
+
+  // 添加粒子效果
+  addParticles(scene, 400, 0x7000ff)
+}
+
+/**
+ * 创建光速飞行器动力学方程可视化
+ * @param scene Three.js场景
+ */
+export const createLightSpeedCraftVisualization = (scene: THREE.Scene) => {
+  // 创建飞行器表示
+  const craftGeometry = new THREE.ConeGeometry(0.5, 1.5, 32)
+  const craftMaterial = new THREE.MeshPhongMaterial({
+    color: 0x00ffcc,
+    wireframe: false,
+    transparent: true,
+    opacity: 0.9,
+    emissive: 0x00ffcc,
+    emissiveIntensity: 0.7,
+    specular: 0xffffff,
+    shininess: 100
+  })
+  const craft = new THREE.Mesh(craftGeometry, craftMaterial)
+  craft.rotation.x = Math.PI
+  scene.add(craft)
+
+  // 添加飞行器动画
+  craft.userData = {
+    animate: (deltaTime: number) => {
+      craft.rotation.y += deltaTime * 0.001
+      craft.rotation.z += deltaTime * 0.0005
+
+      // 添加飞行器的推进效果
+      const scale = 1 + Math.sin(Date.now() * 0.003) * 0.05
+      craft.scale.setScalar(scale)
+    }
+  }
+
+  // 创建推进效果
+  const thrustGeometry = new THREE.ConeGeometry(0.8, 2, 32)
+  const thrustMaterial = new THREE.MeshBasicMaterial({
+    color: 0xff00ff,
+    transparent: true,
+    opacity: 0.6,
+    wireframe: true
+  })
+  const thrust = new THREE.Mesh(thrustGeometry, thrustMaterial)
+  thrust.position.z = -1
+  thrust.rotation.x = Math.PI
+  craft.add(thrust)
+
+  // 添加推进效果动画
+  thrust.userData = {
+    animate: (deltaTime: number) => {
+      // 添加推进效果的脉动
+      const scale = 1 + Math.sin(Date.now() * 0.01) * 0.3
+      thrust.scale.setScalar(scale)
+
+      // 添加透明度变化
+      thrustMaterial.opacity = 0.4 + Math.sin(Date.now() * 0.01) * 0.4
+    }
+  }
+
+  // 创建光速轨迹
+  const trailGeometry = new THREE.BufferGeometry()
+  const trailPoints = []
+  for (let i = 0; i < 50; i++) {
+    const t = i / 49
+    const x = Math.sin(t * Math.PI * 2) * 0.2
+    const y = Math.cos(t * Math.PI * 2) * 0.2
+    const z = -t * 5
+    trailPoints.push(new THREE.Vector3(x, y, z))
+  }
+  trailGeometry.setFromPoints(trailPoints)
+  const trailMaterial = new THREE.LineBasicMaterial({
+    color: 0x00ffff,
+    linewidth: 2,
+    transparent: true,
+    opacity: 0.6
+  })
+  const trail = new THREE.Line(trailGeometry, trailMaterial)
+  scene.add(trail)
+
+  // 添加轨迹动画
+  trail.userData = {
+    animate: (deltaTime: number) => {
+      trail.rotation.y += deltaTime * 0.0005
+      trailMaterial.opacity = 0.4 + Math.sin(Date.now() * 0.002) * 0.4
+    }
+  }
+
+  // 添加粒子效果
+  addParticles(scene, 400, 0x00ffcc)
+}
+
+/**
+ * 创建核力场定义方程可视化
+ * @param scene Three.js场景
+ */
+export const createNuclearForceVisualization = (scene: THREE.Scene) => {
+  // 创建核力场源
+  const nucleusGeometry = new THREE.SphereGeometry(0.8, 32, 32)
+  const nucleusMaterial = new THREE.MeshPhongMaterial({
+    color: 0xff00ff,
+    wireframe: false,
+    transparent: true,
+    opacity: 0.9,
+    emissive: 0xff00ff,
+    emissiveIntensity: 0.7,
+    specular: 0xffffff,
+    shininess: 100
+  })
+  const nucleus = new THREE.Mesh(nucleusGeometry, nucleusMaterial)
+  scene.add(nucleus)
+
+  // 添加核力场源动画
+  nucleus.userData = {
+    animate: (deltaTime: number) => {
+      nucleus.rotation.y += deltaTime * 0.001
+      nucleus.rotation.x += deltaTime * 0.0005
+
+      // 添加核力场源的呼吸效果
+      const scale = 1 + Math.sin(Date.now() * 0.003) * 0.15
+      nucleus.scale.setScalar(scale)
+
+      // 添加透明度变化
+      nucleusMaterial.opacity = 0.7 + Math.sin(Date.now() * 0.003) * 0.3
+    }
+  }
+
+  // 创建核力场线
+  const fieldLinesCount = 12
+  for (let i = 0; i < fieldLinesCount; i++) {
+    const angle = (i / fieldLinesCount) * Math.PI * 2
+    const radius = 1.2
+
+    // 创建核力场线
+    const points = []
+    for (let j = 0; j < 100; j++) {
+      const t = j / 49
+      const r = radius + Math.sin(t * Math.PI * 4) * 0.3
+      const x = r * Math.cos(angle + t * Math.PI * 2)
+      const y = r * Math.sin(angle + t * Math.PI * 2)
+      const z = Math.sin(t * Math.PI * 2) * 0.5
+      points.push(new THREE.Vector3(x, y, z))
+    }
+
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points)
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0x00ffcc,
+      linewidth: 2,
+      transparent: true,
+      opacity: 0.6
+    })
+    const line = new THREE.Line(lineGeometry, lineMaterial)
+    scene.add(line)
+
+    // 添加场线动画
+    line.userData = {
+      animate: (deltaTime: number) => {
+        line.rotation.y += deltaTime * 0.0005
+        line.rotation.x += deltaTime * 0.0002
+        lineMaterial.opacity = 0.5 + Math.sin(Date.now() * 0.002 + i) * 0.3
+      }
+    }
+  }
+
+  // 添加粒子效果
+  addParticles(scene, 400, 0x00ffcc)
 }

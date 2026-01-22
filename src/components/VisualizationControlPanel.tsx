@@ -85,138 +85,186 @@ const VisualizationControlPanel = ({
           </button>
         </div>
         
-        {/* 粒子数量控制 */}
-        <div className="mb-5">
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-semibold text-indigo-300">
-              粒子数量
-            </label>
-            <span className="text-xs text-gray-400">{particleCount}</span>
-          </div>
-          <input
-            type="range"
-            min="100"
-            max="5000"
-            step="100"
-            value={particleCount}
-            onChange={(e) => onParticleCountChange(parseInt(e.target.value))}
-            className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-          />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>100</span>
-            <span>5000</span>
-          </div>
-        </div>
-        
-        {/* 粒子大小控制 */}
-        <div className="mb-5">
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-semibold text-indigo-300">
-              粒子大小
-            </label>
-            <span className="text-xs text-gray-400">{size.toFixed(1)}</span>
-          </div>
-          <input
-            type="range"
-            min="0.5"
-            max="5"
-            step="0.1"
-            value={size}
-            onChange={(e) => onSizeChange(parseFloat(e.target.value))}
-            className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-          />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>小</span>
-            <span>大</span>
-          </div>
-        </div>
-        
-        {/* 粒子颜色控制 */}
-        <div className="mb-5">
-          <label className="block text-sm font-semibold text-indigo-300 mb-3">
-            粒子颜色
-          </label>
-          <div className="grid grid-cols-4 gap-2">
-            {colorSchemes.map((scheme) => (
-              <button
-                key={scheme.color}
-                onClick={() => onParticleColorChange(scheme.color)}
-                className={cn(
-                  'w-10 h-10 rounded-full border-2 transition-all duration-300 hover:scale-110',
-                  particleColor === scheme.color 
-                    ? 'border-indigo-400 ring-2 ring-offset-2 ring-indigo-500' 
-                    : 'border-gray-700 hover:border-gray-500'
-                )}
-                style={{ backgroundColor: scheme.color }}
-                aria-label={`Set color to ${scheme.name}`}
-              />
-            ))}
-          </div>
-        </div>
-        
-        {/* 粒子透明度控制 */}
-        <div className="mb-5">
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-semibold text-indigo-300">
-              粒子透明度
-            </label>
-            <span className="text-xs text-gray-400">{particleOpacity.toFixed(2)}</span>
-          </div>
-          <input
-            type="range"
-            min="0.1"
-            max="1"
-            step="0.05"
-            value={particleOpacity}
-            onChange={(e) => onParticleOpacityChange(parseFloat(e.target.value))}
-            className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-          />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>透明</span>
-            <span>不透明</span>
-          </div>
-        </div>
-        
-        {/* 自动旋转控制 */}
-        <div className="mb-5">
-          <div className="flex items-center justify-between">
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isAutoRotate}
-                onChange={(e) => onAutoRotateChange(e.target.checked)}
-                className="w-4 h-4 text-indigo-500 bg-gray-800 border-gray-700 rounded focus:ring-indigo-500"
-              />
-              <span className="ml-2 text-sm font-medium text-gray-300">自动旋转</span>
-            </label>
-            <button 
-              onClick={() => onAutoRotateChange(!isAutoRotate)}
-              className="text-xs px-3 py-1 bg-indigo-500/20 rounded-full hover:bg-indigo-500/30 transition-colors"
+        {/* 控制面板标签页 */}
+        <div className="mb-6">
+          <div className="flex border-b border-gray-700">
+            <button
+              className="px-4 py-2 text-sm font-medium text-indigo-400 border-b-2 border-indigo-500"
             >
-              {isAutoRotate ? '暂停' : '开始'}
+              粒子设置
+            </button>
+            <button
+              className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-indigo-300"
+            >
+              视图控制
+            </button>
+            <button
+              className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-indigo-300"
+            >
+              性能
             </button>
           </div>
-          
-          {/* 旋转速度控制 */}
-          {isAutoRotate && (
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-medium text-gray-400">
-                  旋转速度
-                </label>
-                <span className="text-xs text-gray-400">{speed.toFixed(1)}</span>
-              </div>
+        </div>
+
+        {/* 粒子设置 */}
+        <div className="space-y-5">
+          {/* 粒子数量控制 */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-indigo-300 flex items-center">
+                <i className="fa fa-microchip mr-2"></i>
+                粒子数量
+              </label>
+              <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded-full">
+                {particleCount}
+              </span>
+            </div>
+            <div className="relative">
               <input
                 type="range"
-                min="0.1"
-                max="3"
-                step="0.1"
-                value={speed}
-                onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
+                min="100"
+                max="5000"
+                step="100"
+                value={particleCount}
+                onChange={(e) => onParticleCountChange(parseInt(e.target.value))}
                 className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
               />
+              <div className="absolute -bottom-6 left-0 right-0 flex justify-between text-xs text-gray-500">
+                <span>低 (100)</span>
+                <span>中 (2500)</span>
+                <span>高 (5000)</span>
+              </div>
             </div>
-          )}
+          </div>
+          
+          {/* 粒子大小控制 */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-indigo-300 flex items-center">
+                <i className="fa fa-expand mr-2"></i>
+                粒子大小
+              </label>
+              <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded-full">
+                {size.toFixed(1)}
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0.5"
+              max="5"
+              step="0.1"
+              value={size}
+              onChange={(e) => onSizeChange(parseFloat(e.target.value))}
+              className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+            />
+          </div>
+          
+          {/* 粒子颜色控制 */}
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-indigo-300 flex items-center">
+              <i className="fa fa-paint-brush mr-2"></i>
+              粒子颜色
+            </label>
+            <div className="grid grid-cols-4 gap-3">
+              {colorSchemes.map((scheme) => (
+                <motion.button
+                  key={scheme.color}
+                  whileHover={{ scale: 1.15 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onParticleColorChange(scheme.color)}
+                  className={cn(
+                    'w-12 h-12 rounded-full border-2 transition-all duration-300',
+                    particleColor === scheme.color 
+                      ? 'border-indigo-400 ring-2 ring-offset-2 ring-indigo-500' 
+                      : 'border-gray-700 hover:border-gray-500'
+                  )}
+                  style={{ backgroundColor: scheme.color }}
+                  aria-label={`Set color to ${scheme.name}`}
+                >
+                  {particleColor === scheme.color && (
+                    <i className="fa fa-check text-white text-xs mt-6 ml-6"></i>
+                  )}
+                </motion.button>
+              ))}
+            </div>
+          </div>
+          
+          {/* 粒子透明度控制 */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-indigo-300 flex items-center">
+                <i className="fa fa-eye mr-2"></i>
+                粒子透明度
+              </label>
+              <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded-full">
+                {particleOpacity.toFixed(2)}
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="1"
+              step="0.05"
+              value={particleOpacity}
+              onChange={(e) => onParticleOpacityChange(parseFloat(e.target.value))}
+              className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+            />
+          </div>
+          
+          {/* 自动旋转控制 */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center cursor-pointer text-sm font-medium text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={isAutoRotate}
+                  onChange={(e) => onAutoRotateChange(e.target.checked)}
+                  className="w-4 h-4 text-indigo-500 bg-gray-800 border-gray-700 rounded focus:ring-indigo-500"
+                />
+                <span className="ml-2 flex items-center">
+                  <i className="fa fa-refresh mr-2"></i>
+                  自动旋转
+                </span>
+              </label>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onAutoRotateChange(!isAutoRotate)}
+                className="text-xs px-3 py-1 bg-indigo-500/20 hover:bg-indigo-500/30 rounded-full transition-colors"
+              >
+                {isAutoRotate ? '暂停' : '开始'}
+              </motion.button>
+            </div>
+            
+            {/* 旋转速度控制 */}
+            {isAutoRotate && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-3 space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-gray-400 flex items-center">
+                    <i className="fa fa-tachometer mr-2"></i>
+                    旋转速度
+                  </label>
+                  <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded-full">
+                    {speed.toFixed(1)}x
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="3"
+                  step="0.1"
+                  value={speed}
+                  onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                />
+              </motion.div>
+            )}
+          </div>
         </div>
         
         {/* 高级选项切换 */}

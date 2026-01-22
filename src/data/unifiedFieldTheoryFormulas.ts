@@ -24,8 +24,7 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     id: 'uf2',
     name: '三维螺旋时空方程',
     category: '时空基础方程',
-    formula:
-      '$$\\vec{r}(t) = r\\cos\\omega t \\cdot \\vec{i} + r\\sin\\omega t \\cdot \\vec{j} + ht \\cdot \\vec{k}$$',
+    formula: '$$\\vec{r}(t) = r\\cos\\omega t \\cdot \\vec{i} + r\\sin\\omega t \\cdot \\vec{j} + ht \\cdot \\vec{k}$$',
     description: '揭示物体在时空中的螺旋运动规律，结合旋转和平移运动。',
     physicalDimension: '长度 [L]',
     variables: [
@@ -58,13 +57,13 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     name: '引力场定义方程',
     category: '质量与动量方程',
     formula: '$$\\vec{A} = -Gk\\dfrac{\\Delta n}{\\Delta s}\\dfrac{\\vec{r}}{r}$$',
-    description: '定义引力场为空间运动量的变化率，表明引力场强度与空间运动量的梯度成正比。',
-    physicalDimension: '引力场强度 [L²T⁻²]',
+    description: '描述质量产生的空间效应，定义引力场为空间加速度。',
+    physicalDimension: '引力场强度 [LT⁻²]',
     variables: [
       { name: '$\\vec{A}$', description: '引力场强度', unit: 'm/s²' },
       { name: '$G$', description: '万有引力常数', unit: 'N·m²/kg²' },
       { name: '$k$', description: '空间-质量耦合常数', unit: 'kg' },
-      { name: '$\\Delta n/\\Delta s$', description: '空间运动量的梯度', unit: '1/m' },
+      { name: '$\\Delta n/\\Delta s$', description: '空间几何变化率', unit: '1/m' },
       { name: '$\\vec{r}$', description: '位置矢量', unit: 'm' },
       { name: '$r$', description: '距离', unit: 'm' }
     ],
@@ -103,8 +102,7 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     id: 'uf7',
     name: '宇宙大统一方程（力方程）',
     category: '统一场方程',
-    formula:
-      '$$\\vec{F} = \\dfrac{d\\vec{P}}{dt} = \\vec{c}\\dfrac{dm}{dt} - \\vec{v}\\dfrac{dm}{dt} + m\\dfrac{d\\vec{c}}{dt} - m\\dfrac{d\\vec{v}}{dt}$$',
+    formula: '$$\\vec{F} = \\dfrac{d\\vec{P}}{dt} = \\vec{c}\\dfrac{dm}{dt} - \\vec{v}\\dfrac{dm}{dt} + m\\dfrac{d\\vec{c}}{dt} - m\\dfrac{d\\vec{v}}{dt}$$',
     description: '统一描述各种力的本质，力源于动量随时间的变化。',
     physicalDimension: '力 [MLT⁻²]',
     variables: [
@@ -152,8 +150,7 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     id: 'uf10',
     name: '电场定义方程',
     category: '电磁场方程',
-    formula:
-      '$$\\vec{E} = -\\dfrac{kk^{\\prime}}{4\\pi\\varepsilon_0\\Omega^2}\\dfrac{d\\Omega}{dt}\\dfrac{\\vec{r}}{r^3}$$',
+    formula: '$$\\vec{E} = -\\dfrac{kk^{\\prime}}{4\\pi\\varepsilon_0\\Omega^2}\\dfrac{d\\Omega}{dt}\\dfrac{\\vec{r}}{r^3}$$',
     description: '定义电场为空间旋转运动变化率产生的几何效应。',
     physicalDimension: '电场强度 [LMT⁻²Q⁻¹]',
     variables: [
@@ -170,8 +167,7 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     id: 'uf11',
     name: '磁场定义方程',
     category: '电磁场方程',
-    formula:
-      '$$\\vec{B} = \\dfrac{\\mu_{0} \\gamma k k^{\\prime}}{4 \\pi \\Omega^{2}} \\dfrac{d \\Omega}{d t} \\dfrac{[(x-v t) \\vec{i}+y \\vec{j}+z \\vec{k}]}{\\left[\\gamma^{2}(x-v t)^{2}+y^{2}+z^{2}\\right]^{3/2}}$$',
+    formula: '$$\\vec{B} = \\dfrac{\\mu_{0} \\gamma k k^{\\prime}}{4 \\pi \\Omega^{2}} \\dfrac{d \\Omega}{d t} \\dfrac{[(x-v t) \\vec{i}+y \\vec{j}+z \\vec{k}]}{\\left[\\gamma^{2}(x-v t)^{2}+y^{2}+z^{2}\\right]^{3/2}}$$',
     description: '定义磁场为运动电荷产生的空间几何效应。',
     physicalDimension: '磁感应强度 [ML⁻¹Q⁻¹]',
     variables: [
@@ -189,8 +185,7 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     id: 'uf12',
     name: '变化的引力场产生电磁场',
     category: '场转化方程',
-    formula:
-      '$$\\dfrac{\\partial^{2}\\vec{A}}{\\partial t^{2}} = \\dfrac{\\vec{v}}{f}\\left(\\vec{\\nabla}\\cdot\\vec{E}\\right) - \\dfrac{c^{2}}{f}\\left(\\vec{\\nabla}\\times\\vec{B}\\right)$$',
+    formula: '$$\\dfrac{\\partial^{2}\\vec{A}}{\\partial t^{2}} = \\dfrac{\\vec{v}}{f}\\left(\\vec{\\nabla}\\cdot\\vec{E}\\right) - \\dfrac{c^{2}}{f}\\left(\\vec{\\nabla}\\times\\vec{B}\\right)$$',
     description: '揭示引力场变化与电磁场产生的内在联系。',
     physicalDimension: '场变化率 [LT⁻³]',
     variables: [
@@ -209,7 +204,7 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     name: '磁矢势方程',
     category: '电磁场方程',
     formula: '$$\\vec{\\nabla} \\times \\vec{A} = \\dfrac{\\vec{B}}{f}$$',
-    description: '描述磁矢势与磁场的关系。',
+    description: '建立引力场旋度与磁场的关系，揭示磁场的几何本质。',
     physicalDimension: '磁矢势 [T⁻¹]',
     variables: [
       { name: '$\\vec{\\nabla} \\times \\vec{A}$', description: '磁矢势的旋度', unit: 'T' },
@@ -224,8 +219,8 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     name: '变化的引力场产生电场',
     category: '场转化方程',
     formula: '$$\\vec{E} = -f\\dfrac{d\\vec{A}}{dt}$$',
-    description: '揭示引力场变化如何产生电场，表明变化的引力场可以直接产生电场。',
-    physicalDimension: '电场强度 [MLT⁻³Q⁻¹]',
+    description: '揭示引力场变化如何产生电场，与法拉第电磁感应定律类比。',
+    physicalDimension: '电场强度 [LMT⁻²Q⁻¹]',
     variables: [
       { name: '$\\vec{E}$', description: '电场强度', unit: 'V/m' },
       { name: '$f$', description: '场转化耦合常数', unit: 'kg/C' },
@@ -238,8 +233,7 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     id: 'uf15',
     name: '变化的磁场产生引力场和电场',
     category: '场转化方程',
-    formula:
-      '$$\\dfrac{d\\vec{B}}{dt} = -\\dfrac{\\vec{A}\\times\\vec{E}}{c^2} - \\dfrac{\\vec{v}}{c^{2}}\\times\\dfrac{d\\vec{E}}{dt}$$',
+    formula: '$$\\dfrac{d\\vec{B}}{dt} = -\\dfrac{\\vec{A}\\times\\vec{E}}{c^2} - \\dfrac{\\vec{v}}{c^{2}}\\times\\dfrac{d\\vec{E}}{dt}$$',
     description: '揭示磁场变化同时产生引力场和电场的统一机制。',
     physicalDimension: '磁场变化率 [MT⁻³Q⁻¹]',
     variables: [
@@ -320,7 +314,7 @@ export const unifiedFieldTheoryFormulas: FormulaData[] = [
     name: '电磁耦合常数',
     category: '核力与统一常数',
     formula: '$$Z^{\\prime} = \\dfrac{c}{8\\pi\\varepsilon_0}$$',
-    description: '描述电磁相互作用强度的基本常数，将光速、真空介电常数联系起来。',
+    description: '描述电磁相互作用强度的基本常数，将光速、真空介电常数联系起来，表征电磁场的内在强度。',
     physicalDimension: '电磁耦合 [L⁴MT⁻³Q⁻²]',
     variables: [
       { name: '$Z^{\\prime}$', description: '电磁耦合常数', unit: 'm/F · m/s' },

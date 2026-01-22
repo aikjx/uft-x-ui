@@ -196,20 +196,65 @@ const FormulaViewer = ({
   const createFormulaVisualization = (formulaId: number, scene: THREE.Scene) => {
     // 根据公式ID创建不同的可视化效果
     switch (formulaId) {
-      case 1: // 时空同一化方程 - 创建空间坐标系
-        createSpaceTimeVisualization(scene);
-        // 添加额外粒子
-        addParticles(scene, 300, 0x00ffff);
+      case 1: // 质量定义方程
+        createMassDefinitionVisualization(scene);
         break;
-      case 2: // 三维螺旋时空方程 - 创建螺旋线
-        createHelixVisualization(scene);
-        // 添加额外粒子
-        addParticles(scene, 500, 0xffffff);
+      case 2: // 引力场方程
+        createGravitationalFieldVisualization(scene);
         break;
-      case 7: // 宇宙大统一方程 - 创建场线可视化
-        createFieldLinesVisualization(scene);
-        // 添加额外粒子
-        addParticles(scene, 300, 0xffffff);
+      case 3: // 电场方程
+        createElectricFieldVisualization(scene);
+        break;
+      case 4: // 磁场方程
+        createMagneticFieldVisualization(scene);
+        break;
+      case 5: // 空间波动方程
+        createSpaceWaveVisualization(scene);
+        break;
+      case 6: // 能量方程
+        createEnergyEquationVisualization(scene);
+        break;
+      case 7: // 光速飞船动力学
+        createLightSpeedCraftVisualization(scene);
+        break;
+      case 8: // 核力方程
+        createNuclearForceVisualization(scene);
+        break;
+      case 9: // 统一力方程
+        createUnifiedForceVisualization(scene);
+        break;
+      case 10: // 波函数方程
+        createWaveFunctionVisualization(scene);
+        break;
+      case 11: // 量子引力方程
+        createQuantumGravityVisualization(scene);
+        break;
+      case 12: // 空间曲率方程
+        createSpaceCurvatureVisualization(scene);
+        break;
+      case 13: // 时间膨胀方程
+        createTimeDilationVisualization(scene);
+        break;
+      case 14: // 长度收缩方程
+        createLengthContractionVisualization(scene);
+        break;
+      case 15: // 相对论质量方程
+        createRelativisticMassVisualization(scene);
+        break;
+      case 16: // 四向量方程
+        createFourVectorVisualization(scene);
+        break;
+      case 17: // 洛伦兹变换方程
+        createLorentzTransformationVisualization(scene);
+        break;
+      case 18: // 场相互作用方程
+        createFieldInteractionVisualization(scene);
+        break;
+      case 19: // 真空能方程
+        createVacuumEnergyVisualization(scene);
+        break;
+      case 20: // 暗能量方程
+        createDarkEnergyVisualization(scene);
         break;
       default: // 默认创建数学符号和粒子云
         createMathSymbolVisualization(scene);

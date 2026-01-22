@@ -1,4 +1,5 @@
 import { Vector3, Matrix4 } from 'three'
+import { PhysicsEngineParallel } from './PhysicsEngineParallel'
 
 // 对象池 - 减少垃圾回收
 const vectorPool: Vector3[] = []
@@ -86,7 +87,9 @@ export class SpacetimeStateCalculator {
     cache: Map<string, number>
   ): SpacetimeState {
     // 生成缓存键 - 使用更高效的字符串生成方式
-    const cacheKey = `${position.x.toFixed(3)},${position.y.toFixed(3)},${position.z.toFixed(3)},${time.toFixed(2)}`
+    const cacheKey = `${position.x.toFixed(3)},${position.y.toFixed(3)},${position.z.toFixed(
+      3
+    )},${time.toFixed(2)}`
 
     // 检查缓存
     if (this.parameters.useOptimizedCalculations && cache.has(cacheKey)) {
@@ -290,7 +293,9 @@ export class UnifiedFieldCalculator {
   // 优化：生成高效的缓存键
   private generateCacheKey(position: Vector3, time: number, mass: number, charge: number): string {
     // 使用更高效的字符串生成方式，避免模板字符串的性能开销
-    return `${position.x.toFixed(3)},${position.y.toFixed(3)},${position.z.toFixed(3)},${time.toFixed(2)},${mass.toFixed(4)},${charge.toFixed(4)}`
+    return `${position.x.toFixed(3)},${position.y.toFixed(3)},${position.z.toFixed(
+      3
+    )},${time.toFixed(2)},${mass.toFixed(4)},${charge.toFixed(4)}`
   }
 
   calculateField(position: Vector3, time: number, mass: number, charge: number): UnifiedField {
@@ -561,7 +566,7 @@ export class PhysicsEngine implements IPhysicsEngine {
   setPerformanceMode(mode: 'high' | 'medium' | 'low'): void {
     // 优化：只在模式实际变化时更新
     if (this.parameters.performanceMode === mode) return
-    
+
     this.parameters.performanceMode = mode
 
     // 根据性能模式调整参数
@@ -583,7 +588,10 @@ export class PhysicsEngine implements IPhysicsEngine {
         // 清理缓存以节省内存
         this.curvatureCache.clear()
         // 清理统一场缓存
-        if (this.unifiedFieldCalculator && typeof this.unifiedFieldCalculator.dispose === 'function') {
+        if (
+          this.unifiedFieldCalculator &&
+          typeof this.unifiedFieldCalculator.dispose === 'function'
+        ) {
           this.unifiedFieldCalculator.dispose()
         }
         break
@@ -642,9 +650,6 @@ export class PhysicsEngine implements IPhysicsEngine {
     return matrix
   }
 }
-
-// 导出默认实现
-export { PhysicsEngine }
 
 // 创建默认实例，保持向后兼容
 export const physicsEngine = new PhysicsEngine()

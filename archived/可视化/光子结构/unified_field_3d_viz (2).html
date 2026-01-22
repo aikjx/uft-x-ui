@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -50,6 +50,30 @@
         margin-bottom: 15px;
       }
 
+      @media (max-width: 1024px) {
+        .main-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .controls {
+          order: -1;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .header h1 {
+          font-size: 1.5em;
+        }
+
+        .canvas-container {
+          height: 400px;
+        }
+
+        .stats {
+          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        }
+      }
+
       .canvas-wrapper {
         background: #0f1429;
         border-radius: 12px;
@@ -57,16 +81,68 @@
         border: 1px solid rgba(102, 126, 234, 0.3);
       }
 
-      #canvas3d {
-        width: 100%;
+      .tab-container {
+        margin-bottom: 15px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+        overflow-x: auto;
+        padding-bottom: 5px;
+      }
+
+      .tab {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        color: #e0e6ff;
+        cursor: pointer;
+        font-size: 0.85em;
+        font-weight: bold;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+
+      .tab:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .tab.active {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+      }
+
+      .canvas-container {
+        position: relative;
         height: 550px;
+      }
+
+      .canvas-panel {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: none;
+      }
+
+      .canvas-panel.active {
+        display: block;
+      }
+
+      .canvas-panel canvas {
+        width: 100%;
+        height: 100%;
         border-radius: 8px;
         background: radial-gradient(circle at center, #1a2340 0%, #0a0e1f 100%);
         cursor: grab;
         display: block;
       }
 
-      #canvas3d:active {
+      .canvas-panel canvas:active {
         cursor: grabbing;
       }
 
@@ -353,7 +429,28 @@
 
       <div class="main-grid">
         <div class="canvas-wrapper">
-          <canvas id="canvas3d"></canvas>
+          <div class="tab-container">
+            <div class="tabs">
+              <button class="tab active" data-tab="tab1">1️⃣ 时空同一化方程</button>
+              <button class="tab" data-tab="tab2">2️⃣ 三维螺旋时空方程</button>
+              <button class="tab" data-tab="tab3">3️⃣ 垂直原理</button>
+              <button class="tab" data-tab="tab4">4️⃣ 质量定义方程</button>
+            </div>
+            <div class="canvas-container">
+              <div class="canvas-panel active" id="tab1">
+                <canvas id="canvas1"></canvas>
+              </div>
+              <div class="canvas-panel" id="tab2">
+                <canvas id="canvas2"></canvas>
+              </div>
+              <div class="canvas-panel" id="tab3">
+                <canvas id="canvas3"></canvas>
+              </div>
+              <div class="canvas-panel" id="tab4">
+                <canvas id="canvas4"></canvas>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="controls">
@@ -486,6 +583,14 @@
           <h5>螺旋方向</h5>
           <div class="num upward" id="helixDir">↑ 向上</div>
         </div>
+        <div class="stat">
+          <h5>性能 FPS</h5>
+          <div class="num" id="fps">60</div>
+        </div>
+        <div class="stat">
+          <h5>轨迹点数量</h5>
+          <div class="num" id="trailCount">0</div>
+        </div>
       </div>
 
       <div class="equations">
@@ -559,17 +664,56 @@
     </div>
 
     <script>
-      const canvas = document.getElementById('canvas3d')
-      const ctx = canvas.getContext('2d')
+      // 标签页切换功能
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabId = tab.dataset.tab
 
-      function resize() {
+          // 更新标签页状态
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+          document
+            .querySelectorAll('.canvas-panel')
+            .forEach(panel => panel.classList.remove('active'))
+
+          tab.classList.add('active')
+          document.getElementById(tabId).classList.add('active')
+        })
+      })
+
+      // Canvas实例管理
+      const canvases = [
+        { id: 'canvas1', ctx: null, state: null },
+        { id: 'canvas2', ctx: null, state: null },
+        { id: 'canvas3', ctx: null, state: null },
+        { id: 'canvas4', ctx: null, state: null }
+      ]
+
+      function initCanvases() {
+        canvases.forEach(canvas => {
+          const element = document.getElementById(canvas.id)
+          if (element) {
+            canvas.ctx = element.getContext('2d')
+            resizeCanvas(element)
+          }
+        })
+      }
+
+      function resizeCanvas(canvas) {
         canvas.width = canvas.clientWidth
         canvas.height = canvas.clientHeight
       }
-      resize()
-      window.addEventListener('resize', resize)
 
-      const state = {
+      function resizeAllCanvases() {
+        canvases.forEach(canvas => {
+          const element = document.getElementById(canvas.id)
+          if (element) resizeCanvas(element)
+        })
+      }
+
+      window.addEventListener('resize', resizeAllCanvases)
+
+      // 共享状态
+      const sharedState = {
         r: 5,
         omega: 0.05,
         h: 0.3,
@@ -579,12 +723,30 @@
         rotX: 0.3,
         rotY: 0.8,
         zoom: 32,
-        trail: []
+        trail: [],
+        // 物理参数
+        c: 299792458, // 光速 m/s
+        // 渲染参数
+        showFPS: false,
+        fps: 0,
+        lastFrameTime: performance.now(),
+        // UI参数
+        currentTab: 'cylinder'
       }
 
-      const MAX_TRAIL = 400
+      // 为每个Canvas创建独立状态
+      function initStates() {
+        canvases.forEach((canvas, index) => {
+          canvas.state = {
+            ...JSON.parse(JSON.stringify(sharedState)),
+            trail: []
+          }
+        })
+      }
 
-      function project(x, y, z) {
+      function project(x, y, z, state, canvasId = 'canvas1') {
+        const canvas = document.getElementById(canvasId) // 使用指定的canvas或默认使用第一个
+        if (!canvas) return { x: 0, y: 0, z: 0 }
         const cx = canvas.width / 2
         const cy = canvas.height / 2
         const cosX = Math.cos(state.rotX)
@@ -600,7 +762,7 @@
         return { x: cx + x1 * scale, y: cy - y1 * scale, z: z2 }
       }
 
-      function helix(t) {
+      function helix(t, state) {
         // Z轴代表光速方向，使用光速c作为Z轴分量
         const c = 299792458 // 光速 m/s
         return {
@@ -610,7 +772,7 @@
         }
       }
 
-      function drawAxes() {
+      function drawAxes(ctx, state) {
         if (!document.getElementById('axes').checked) return
         const len = 13
         const axes = [
@@ -619,8 +781,8 @@
           [[0, 0, len], '#4444ff', 'Z']
         ]
         axes.forEach(([e, c, l]) => {
-          const o = project(0, 0, 0)
-          const p = project(...e)
+          const o = project(0, 0, 0, state)
+          const p = project(...e, state)
           ctx.beginPath()
           ctx.strokeStyle = c
           ctx.lineWidth = 2.5
@@ -633,7 +795,7 @@
         })
       }
 
-      function drawCylinder() {
+      function drawCylinder(ctx, state) {
         if (!document.getElementById('cylinder').checked) return
 
         // 优化圆柱绘制，添加深度感和动态效果
@@ -655,7 +817,7 @@
             const ang = (j / segs) * Math.PI * 2
             const x = state.r * Math.cos(ang)
             const y = state.r * Math.sin(ang)
-            const p = project(x, y, z)
+            const p = project(x, y, z, state)
 
             if (j === 0) {
               ctx.moveTo(p.x, p.y)
@@ -679,8 +841,8 @@
           const x = state.r * Math.cos(ang)
           const y = state.r * Math.sin(ang)
 
-          const p1 = project(x, y, -zMax)
-          const p2 = project(x, y, zMax)
+          const p1 = project(x, y, -zMax, state)
+          const p2 = project(x, y, zMax, state)
 
           // 动态透明度，中间亮两边暗
           ctx.beginPath()
@@ -697,7 +859,7 @@
         }
       }
 
-      function drawTrail() {
+      function drawTrail(ctx, state) {
         if (!document.getElementById('trail').checked || state.trail.length < 2) return
 
         // 优化轨迹绘制，添加渐变效果和动态透明度
@@ -713,8 +875,13 @@
           const color1 = `rgba(102, 126, 234, ${alpha})`
           const color2 = `rgba(118, 75, 162, ${alpha * 0.8})`
 
-          const p1 = project(state.trail[i - 1].x, state.trail[i - 1].y, state.trail[i - 1].z)
-          const p2 = project(state.trail[i].x, state.trail[i].y, state.trail[i].z)
+          const p1 = project(
+            state.trail[i - 1].x,
+            state.trail[i - 1].y,
+            state.trail[i - 1].z,
+            state
+          )
+          const p2 = project(state.trail[i].x, state.trail[i].y, state.trail[i].z, state)
 
           // 创建渐变线条
           const gradient = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y)
@@ -743,8 +910,8 @@
         ctx.lineJoin = 'miter'
       }
 
-      function drawParticle(pos) {
-        const p = project(pos.x, pos.y, pos.z)
+      function drawParticle(ctx, state, pos) {
+        const p = project(pos.x, pos.y, pos.z, state)
         const timePhase = state.t * 2
 
         // 外层动态光晕
@@ -792,20 +959,21 @@
         ctx.stroke()
       }
 
-      function drawVector(pos) {
+      function drawVector(ctx, state, pos) {
         if (!document.getElementById('vector').checked) return
 
         // 计算瞬时速度：v = dr/dt
         // v_x = -r*ω*sin(ωt)
         // v_y = r*ω*cos(ωt)
-        // v_z = h
+        // v_z = c (光速)
+        const c = 299792458 // 光速 m/s
         const omega_t = state.omega * state.t
         const vx = -state.r * state.omega * Math.sin(omega_t)
         const vy = state.r * state.omega * Math.cos(omega_t)
-        const vz = state.h
+        const vz = c // Z轴使用光速
 
         const scale = 2.5
-        const p1 = project(pos.x, pos.y, pos.z)
+        const p1 = project(pos.x, pos.y, pos.z, state)
 
         // 绘制速度分解
         if (document.getElementById('velocityDecomp').checked) {
@@ -815,7 +983,7 @@
             y: pos.y + vy * scale,
             z: pos.z
           }
-          const pXY = project(endXY.x, endXY.y, endXY.z)
+          const pXY = project(endXY.x, endXY.y, endXY.z, state)
 
           // 外层发光效果
           ctx.beginPath()
@@ -851,13 +1019,13 @@
           ctx.strokeText('v_XY', pXY.x + 15, pXY.y - 8)
           ctx.fillText('v_XY', pXY.x + 15, pXY.y - 8)
 
-          // Z轴分量 (蓝色) - 轴向速度
+          // Z轴分量 (蓝色) - 轴向光速
           const endZ = {
             x: pos.x,
             y: pos.y,
-            z: pos.z + vz * scale
+            z: pos.z + c * scale * 0.00000001 // 缩放光速以适应可视化
           }
-          const pZ = project(endZ.x, endZ.y, endZ.z)
+          const pZ = project(endZ.x, endZ.y, endZ.z, state)
 
           // 外层发光效果
           ctx.beginPath()
@@ -890,11 +1058,16 @@
           ctx.font = 'bold 14px Arial'
           ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)'
           ctx.lineWidth = 3
-          ctx.strokeText('v_Z', pZ.x + 15, pZ.y + 5)
-          ctx.fillText('v_Z', pZ.x + 15, pZ.y + 5)
+          ctx.strokeText('v_Z (c)', pZ.x + 15, pZ.y + 5)
+          ctx.fillText('v_Z (c)', pZ.x + 15, pZ.y + 5)
 
           // 连接虚线 - 显示矢量合成
-          const p2 = project(pos.x + vx * scale, pos.y + vy * scale, pos.z + vz * scale)
+          const p2 = project(
+            pos.x + vx * scale,
+            pos.y + vy * scale,
+            pos.z + c * scale * 0.00000001,
+            state
+          )
           ctx.beginPath()
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'
           ctx.lineWidth = 1.5
@@ -912,9 +1085,9 @@
         const end = {
           x: pos.x + vx * scale,
           y: pos.y + vy * scale,
-          z: pos.z + vz * scale
+          z: pos.z + c * scale * 0.00000001 // 缩放光速以适应可视化
         }
-        const p2 = project(end.x, end.y, end.z)
+        const p2 = project(end.x, end.y, end.z, state)
 
         // 外层发光
         ctx.beginPath()
@@ -955,7 +1128,7 @@
         ctx.font = 'bold 13px Arial'
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)'
         ctx.lineWidth = 3
-        const noteX = canvas.width - 220
+        const noteX = 180
         const noteY = 30
         ctx.strokeText('垂直原理核心: 几何垂直 ↔ 物理运动', noteX, noteY)
         ctx.fillText('垂直原理核心: 几何垂直 ↔ 物理运动', noteX, noteY)
@@ -966,43 +1139,110 @@
         ctx.fillText('空间因垂直属性而以光速作螺旋运动', noteX, noteY + 40)
       }
 
-      function render() {
-        // 优化背景填充，使用更高效的方式
-        ctx.fillStyle = 'rgba(10, 14, 39, 0.4)'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
+      // 性能优化：使用时间增量而不是固定步长，确保动画在不同设备上表现一致
+      let lastTime = 0
+      function render(timestamp) {
+        // 更新性能监控
+        performanceMonitor.update(timestamp)
 
-        drawCylinder()
-        drawAxes()
+        // 计算时间增量
+        const deltaTime = timestamp ? (timestamp - lastTime) / 16 : 1
+        lastTime = timestamp || 0
 
-        const pos = helix(state.t)
-        state.trail.push({ ...pos }) // 深拷贝，避免引用问题
-        if (state.trail.length > MAX_TRAIL) state.trail.shift()
+        // 计算FPS
+        if (timestamp) {
+          const currentTime = performance.now()
+          const fps = 1000 / (currentTime - sharedState.lastFrameTime)
+          sharedState.fps = Math.round(fps)
+          sharedState.lastFrameTime = currentTime
+        }
 
-        drawTrail()
-        drawVector(pos)
-        drawParticle(pos)
+        // 更新共享状态，使用时间增量确保动画平滑
+        if (sharedState.play) {
+          sharedState.t += 0.07 * sharedState.speed * deltaTime
+        }
+
+        // 为每个Canvas渲染
+        canvases.forEach((canvas, index) => {
+          if (canvas.ctx && canvas.state) {
+            // 同步共享状态到每个Canvas的状态
+            canvas.state.r = sharedState.r
+            canvas.state.omega = sharedState.omega
+            canvas.state.h = sharedState.h
+            canvas.state.speed = sharedState.speed
+            canvas.state.t = sharedState.t
+            canvas.state.play = sharedState.play
+            canvas.state.rotX = sharedState.rotX
+            canvas.state.rotY = sharedState.rotY
+            canvas.state.zoom = sharedState.zoom
+            // 同步新添加的物理参数
+            canvas.state.c = sharedState.c
+            canvas.state.showFPS = sharedState.showFPS
+            canvas.state.fps = sharedState.fps
+
+            // 优化轨迹渲染
+            canvas.state.trail = optimizeTrailVisibility(canvas.state.trail, canvas.state)
+
+            const ctx = canvas.ctx
+            const state = canvas.state
+            const canvasElement = document.getElementById(canvas.id)
+
+            // 优化背景填充，使用更高效的方式
+            ctx.fillStyle = 'rgba(10, 14, 39, 0.4)'
+            ctx.fillRect(0, 0, canvasElement.width, canvasElement.height)
+
+            // 根据Canvas索引渲染不同的内容
+            switch (index) {
+              case 0:
+                // 1️⃣ 时空同一化方程
+                renderSpacetimeEquation(ctx, state)
+                break
+              case 1:
+                // 2️⃣ 三维螺旋时空方程
+                renderHelixEquation(ctx, state)
+                break
+              case 2:
+                // 3️⃣ 垂直原理
+                renderPerpendicularPrinciple(ctx, state)
+                break
+              case 3:
+                // 4️⃣ 质量定义方程
+                renderMassDefinition(ctx, state)
+                break
+            }
+          }
+        })
 
         // 性能优化：减少DOM操作，批量更新
-        const time = state.t.toFixed(2)
-        const cycles = Math.floor(Math.abs(state.t * state.omega) / (2 * Math.PI))
-        const phase = ((state.omega * state.t * 180) / Math.PI) % 360
-        const zPos = (state.h * state.t).toFixed(2)
+        const time = sharedState.t.toFixed(2)
+        const cycles = Math.floor(Math.abs(sharedState.t * sharedState.omega) / (2 * Math.PI))
+        const phase = ((sharedState.omega * sharedState.t * 180) / Math.PI) % 360
 
         document.getElementById('time').textContent = time
         document.getElementById('cycles').textContent = cycles
         document.getElementById('phase').textContent = phase.toFixed(1) + '°'
+
         // Z轴位移更新为光速乘以时间
         const c = 299792458 // 光速 m/s
-        const zPos = (c * state.t).toFixed(2)
+        const zPos = (c * sharedState.t).toFixed(2)
         document.getElementById('zPos').textContent = zPos
+
+        // 更新坐标显示
+        const pos = helix(sharedState.t, sharedState)
+        const coordsElement = document.getElementById('coords')
+        if (coordsElement) {
+          coordsElement.textContent = `x = ${pos.x.toFixed(2)}, y = ${pos.y.toFixed(
+            2
+          )}, z = ${zPos}`
+        }
 
         // 时间流速方向（带颜色和符号）
         const timeElement = document.getElementById('timeDir')
-        if (state.speed > 0.05) {
-          timeElement.textContent = `▶ 正向 ${state.speed.toFixed(1)}x`
+        if (sharedState.speed > 0.05) {
+          timeElement.textContent = `▶ 正向 ${sharedState.speed.toFixed(1)}x`
           timeElement.className = 'num forward'
-        } else if (state.speed < -0.05) {
-          timeElement.textContent = `◀ 反向 ${Math.abs(state.speed).toFixed(1)}x`
+        } else if (sharedState.speed < -0.05) {
+          timeElement.textContent = `◀ 反向 ${Math.abs(sharedState.speed).toFixed(1)}x`
           timeElement.className = 'num backward'
         } else {
           timeElement.textContent = '⏸ 静止'
@@ -1010,8 +1250,7 @@
         }
 
         // 速度分解计算 - Z轴代表光速方向
-        const c = 299792458 // 光速 m/s
-        const v_xy = state.r * Math.abs(state.omega) // XY平面切向速度
+        const v_xy = sharedState.r * Math.abs(sharedState.omega) // XY平面切向速度
         const v_z = c // Z轴速度为光速
         const v_spatial = Math.sqrt(v_xy * v_xy + v_z * v_z) // 三维空间速度
 
@@ -1032,9 +1271,13 @@
           document.getElementById('velTime').textContent = ratio + '% c'
         }
 
+        // 更新性能监控显示
+        document.getElementById('fps').textContent = performanceMonitor.fps
+        document.getElementById('trailCount').textContent = canvases[0].state.trail.length
+
         // 旋转方向判断（带颜色和符号）
         const rotElement = document.getElementById('rotDir')
-        if (state.omega >= 0) {
+        if (sharedState.omega >= 0) {
           rotElement.textContent = '↺ 逆时针'
           rotElement.className = 'num ccw'
         } else {
@@ -1044,7 +1287,7 @@
 
         // 螺旋方向判断（带颜色和符号）- Z轴代表光速方向
         const helixElement = document.getElementById('helixDir')
-        const timeDirection = state.speed
+        const timeDirection = sharedState.speed
 
         if (timeDirection > 0.05) {
           helixElement.textContent = '↑ 光速方向'
@@ -1057,72 +1300,641 @@
           helixElement.className = 'num stopped'
         }
 
-        document.getElementById('coords').textContent =
-          `x = ${pos.x.toFixed(2)}, y = ${pos.y.toFixed(2)}, z = ${pos.z.toFixed(2)}`
-
-        // 优化动画平滑度，使用时间增量而非固定步长
-        if (state.play) {
-          state.t += 0.07 * state.speed
-        }
+        // 显示FPS
+        canvases.forEach(canvas => {
+          if (canvas.ctx && sharedState.showFPS) {
+            const ctx = canvas.ctx
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
+            ctx.fillRect(10, 10, 80, 25)
+            ctx.fillStyle = '#ffffff'
+            ctx.font = '12px Arial'
+            ctx.fillText(`FPS: ${sharedState.fps}`, 15, 28)
+          }
+        })
 
         requestAnimationFrame(render)
+      }
+
+      // 1️⃣ 时空同一化方程渲染
+      function renderSpacetimeEquation(ctx, state) {
+        drawAxes(ctx, state)
+
+        // 绘制4D时空可视化
+        const c = 299792458 // 光速 m/s
+        const timeScale = 0.1
+        const pos = {
+          x: state.r * Math.cos(state.omega * state.t),
+          y: state.r * Math.sin(state.omega * state.t),
+          z: c * state.t * timeScale
+        }
+
+        // 更新轨迹
+        state.trail.push({ ...pos })
+        if (state.trail.length > 400) state.trail.shift()
+
+        drawTrail(ctx, state)
+
+        // 绘制时空点
+        drawParticle(ctx, state, pos)
+
+        // 绘制动态时间轴
+        const timeLen = 15
+        const timeStart = project(0, 0, -timeLen, state)
+        const timeEnd = project(0, 0, timeLen, state)
+
+        // 时间轴动态效果
+        const timePhase = state.t * 1.5
+        const pulse = 1 + Math.sin(timePhase) * 0.1
+
+        ctx.beginPath()
+        ctx.strokeStyle = '#ff6600'
+        ctx.lineWidth = 3 * pulse
+        ctx.setLineDash([8, 4])
+        ctx.moveTo(timeStart.x, timeStart.y)
+        ctx.lineTo(timeEnd.x, timeEnd.y)
+        ctx.stroke()
+        ctx.setLineDash([])
+
+        // 绘制时空网格
+        const gridSize = 3
+        const gridCount = 10
+        for (let i = -gridCount; i <= gridCount; i++) {
+          for (let j = -gridCount; j <= gridCount; j++) {
+            const gridPos = {
+              x: i * gridSize,
+              y: j * gridSize,
+              z: 0
+            }
+            const p = project(gridPos.x, gridPos.y, gridPos.z, state)
+            ctx.beginPath()
+            ctx.fillStyle = `rgba(102, 126, 234, ${0.2 + Math.sin(state.t * 2 + i + j) * 0.1})`
+            ctx.arc(p.x, p.y, 2, 0, Math.PI * 2)
+            ctx.fill()
+          }
+        }
+
+        // 添加方程说明
+        ctx.fillStyle = '#ff6600'
+        ctx.font = 'bold 14px Arial'
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)'
+        ctx.lineWidth = 3
+        ctx.strokeText('时空同一化: r = C·t', 50, 30)
+        ctx.fillText('时空同一化: r = C·t', 50, 30)
+
+        // 添加时空同一化详细说明
+        ctx.font = '11px Arial'
+        ctx.strokeText('核心思想: 时间t就是空间', 50, 60)
+        ctx.fillText('核心思想: 时间t就是空间', 50, 60)
+        ctx.strokeText('所有物体以光速C在四维时空中运动', 50, 80)
+        ctx.fillText('所有物体以光速C在四维时空中运动', 50, 80)
+        ctx.strokeText('v_空间² + v_时间² = C² (四维速度守恒)', 50, 100)
+        ctx.fillText('v_空间² + v_时间² = C² (四维速度守恒)', 50, 100)
+
+        // 绘制光速不变原理可视化
+        const lightSpeedPos = {
+          x: 0,
+          y: 0,
+          z: c * state.t * timeScale
+        }
+        const lightP = project(lightSpeedPos.x, lightSpeedPos.y, lightSpeedPos.z, state)
+        ctx.beginPath()
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+        ctx.arc(lightP.x, lightP.y, 8, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = '#ffcc00'
+        ctx.font = '10px Arial'
+        ctx.fillText('光速C', lightP.x + 10, lightP.y - 5)
+      }
+
+      // 2️⃣ 三维螺旋时空方程渲染
+      function renderHelixEquation(ctx, state) {
+        drawAxes(ctx, state)
+        drawCylinder(ctx, state)
+
+        const pos = helix(state.t, state)
+
+        // 更新轨迹
+        state.trail.push({ ...pos })
+        if (state.trail.length > 400) state.trail.shift()
+
+        drawTrail(ctx, state)
+        drawVector(ctx, state, pos)
+        drawParticle(ctx, state, pos)
+
+        // 添加方程说明
+        ctx.fillStyle = '#4444ff'
+        ctx.font = 'bold 14px Arial'
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)'
+        ctx.lineWidth = 3
+        ctx.strokeText('三维螺旋时空: r(t) = r·cos(ωt)·i + r·sin(ωt)·j + C·t·k', 50, 30)
+        ctx.fillText('三维螺旋时空: r(t) = r·cos(ωt)·i + r·sin(ωt)·j + C·t·k', 50, 30)
+      }
+
+      // 3️⃣ 垂直原理渲染
+      function renderPerpendicularPrinciple(ctx, state) {
+        drawAxes(ctx, state)
+
+        // 绘制垂直原理可视化
+        const len = 10
+        const time = state.t
+        const c = state.c
+
+        // 绘制动态垂直坐标系
+        const axes = [
+          [[len, 0, 0], '#ff4444', 'X', time * 1.5],
+          [[0, len, 0], '#44ff44', 'Y', time * 1.2],
+          [[0, 0, len], '#4444ff', 'Z', time * 0.9]
+        ]
+
+        axes.forEach(([e, c, l, phase]) => {
+          const o = project(0, 0, 0, state)
+          const p = project(...e, state)
+
+          // 绘制动态轴线
+          const pulse = 1 + Math.sin(phase) * 0.1
+          ctx.beginPath()
+          ctx.strokeStyle = c
+          ctx.lineWidth = 3 * pulse
+          ctx.moveTo(o.x, o.y)
+          ctx.lineTo(p.x, p.y)
+          ctx.stroke()
+
+          // 添加轴线发光效果
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 + Math.sin(phase) * 0.1})`
+          ctx.lineWidth = 1
+          ctx.stroke()
+
+          // 绘制轴标签
+          ctx.fillStyle = c
+          ctx.font = 'bold 12px Arial'
+          ctx.fillText(l, p.x + 10, p.y + 4)
+        })
+
+        // 绘制几何垂直与物理运动等价关系
+        const center = project(0, 0, 0, state)
+
+        // 1. 绘制垂直状态点
+        const verticalPoint = {
+          x: 5 * Math.cos(time * 2),
+          y: 5 * Math.sin(time * 2),
+          z: 5 * Math.sin(time * 1.5)
+        }
+        const vp = project(verticalPoint.x, verticalPoint.y, verticalPoint.z, state)
+
+        // 绘制垂直状态点
+        const grad = ctx.createRadialGradient(vp.x, vp.y, 0, vp.x, vp.y, 12)
+        grad.addColorStop(0, 'rgba(255, 255, 255, 1)')
+        grad.addColorStop(0.4, 'rgba(255, 102, 0, 0.8)')
+        grad.addColorStop(1, 'rgba(255, 102, 0, 0)')
+        ctx.fillStyle = grad
+        ctx.beginPath()
+        ctx.arc(vp.x, vp.y, 12, 0, Math.PI * 2)
+        ctx.fill()
+
+        // 2. 绘制物理运动箭头
+        const speed = 2
+        const motionVector = {
+          x: -verticalPoint.x * speed,
+          y: -verticalPoint.y * speed,
+          z: -verticalPoint.z * speed
+        }
+        const mvEnd = {
+          x: verticalPoint.x + motionVector.x,
+          y: verticalPoint.y + motionVector.y,
+          z: verticalPoint.z + motionVector.z
+        }
+        const mvStart = project(verticalPoint.x, verticalPoint.y, verticalPoint.z, state)
+        const mvEndProj = project(mvEnd.x, mvEnd.y, mvEnd.z, state)
+
+        // 绘制运动矢量
+        ctx.beginPath()
+        ctx.strokeStyle = '#ffcc00'
+        ctx.lineWidth = 3
+        ctx.moveTo(mvStart.x, mvStart.y)
+        ctx.lineTo(mvEndProj.x, mvEndProj.y)
+        ctx.stroke()
+
+        // 绘制箭头
+        const ang = Math.atan2(mvEndProj.y - mvStart.y, mvEndProj.x - mvStart.x)
+        ctx.fillStyle = '#ffcc00'
+        ctx.beginPath()
+        ctx.moveTo(mvEndProj.x, mvEndProj.y)
+        ctx.lineTo(mvEndProj.x - 10 * Math.cos(ang - 0.35), mvEndProj.y - 10 * Math.sin(ang - 0.35))
+        ctx.lineTo(mvEndProj.x - 10 * Math.cos(ang + 0.35), mvEndProj.y - 10 * Math.sin(ang + 0.35))
+        ctx.closePath()
+        ctx.fill()
+
+        // 3. 绘制垂直原理数学公式
+        const formulaX = 20
+        const formulaY = 30
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
+        ctx.fillRect(formulaX - 10, formulaY - 10, 300, 100)
+
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 14px Arial'
+        ctx.fillText('垂直原理核心公式:', formulaX, formulaY + 20)
+        ctx.font = '12px Arial'
+        ctx.fillText('几何垂直 ↔ 物理运动', formulaX, formulaY + 40)
+        ctx.font = 'bold 12px Arial'
+        ctx.fillText('v旋² + v直² = c²', formulaX, formulaY + 60)
+        ctx.font = '10px Arial'
+        ctx.fillText('(合速度恒为光速)', formulaX + 100, formulaY + 60)
+        ctx.font = '11px Arial'
+        ctx.fillText('空间因垂直属性而以光速作螺旋运动', formulaX, formulaY + 80)
+
+        // 4. 绘制螺旋运动轨迹
+        const helixRadius = 4
+        const helixPoints = []
+        for (let i = 0; i < 20; i++) {
+          const t = time + i * 0.1
+          helixPoints.push({
+            x: helixRadius * Math.cos(t * 3),
+            y: helixRadius * Math.sin(t * 3),
+            z: helixRadius * t * 0.5
+          })
+        }
+
+        // 绘制螺旋轨迹
+        ctx.beginPath()
+        ctx.strokeStyle = 'rgba(102, 126, 234, 0.8)'
+        ctx.lineWidth = 2
+        for (let i = 1; i < helixPoints.length; i++) {
+          const p1 = project(
+            helixPoints[i - 1].x,
+            helixPoints[i - 1].y,
+            helixPoints[i - 1].z,
+            state
+          )
+          const p2 = project(helixPoints[i].x, helixPoints[i].y, helixPoints[i].z, state)
+          ctx.moveTo(p1.x, p1.y)
+          ctx.lineTo(p2.x, p2.y)
+        }
+        ctx.stroke()
+
+        // 5. 绘制当前运动点
+        const currentPoint = helixPoints[helixPoints.length - 1]
+        const cp = project(currentPoint.x, currentPoint.y, currentPoint.z, state)
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
+        ctx.beginPath()
+        ctx.arc(cp.x, cp.y, 6, 0, Math.PI * 2)
+        ctx.fill()
+
+        // 6. 绘制垂直原理说明
+        const infoX = ctx.canvas.width - 220
+        const infoY = 30
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
+        ctx.fillRect(infoX - 10, infoY - 10, 210, 120)
+
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 12px Arial'
+        ctx.fillText('垂直原理核心含义:', infoX, infoY + 20)
+        ctx.font = '10px Arial'
+        ctx.fillText('1. 空间任意点具有三维垂直属性', infoX, infoY + 40)
+        ctx.fillText('2. 处于垂直状态的空间点必须运动', infoX, infoY + 60)
+        ctx.fillText('3. 运动轨迹重新构成垂直状态', infoX, infoY + 80)
+        ctx.fillText('4. 几何垂直 ↔ 物理运动', infoX, infoY + 100)
+      }
+
+      // 4️⃣ 质量定义方程渲染
+      function renderMassDefinition(ctx, state) {
+        drawAxes(ctx, state)
+
+        // 绘制质量定义可视化 - 空间密度分布
+        const time = state.t
+        const center = project(0, 0, 0, state)
+
+        // 绘制动态密度分布
+        for (let i = 1; i <= 8; i++) {
+          const radius = 15 * i
+          const alpha = 0.4 / i
+          const pulse = 1 + Math.sin(time * 2 + i) * 0.1
+          ctx.beginPath()
+          ctx.strokeStyle = `rgba(102, 126, 234, ${alpha})`
+          ctx.lineWidth = 2 * pulse
+          ctx.arc(center.x, center.y, radius * pulse, 0, Math.PI * 2)
+          ctx.stroke()
+
+          // 添加径向渐变效果
+          ctx.strokeStyle = `rgba(255, 204, 0, ${alpha * 0.5})`
+          ctx.lineWidth = 1
+          ctx.arc(center.x, center.y, radius * pulse, 0, Math.PI * 2)
+          ctx.stroke()
+        }
+
+        // 绘制密度变化 - 立体角可视化
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2 + time
+          const distance = 40 + Math.sin(time * 1.5 + i) * 10
+          const densityPos = {
+            x: distance * Math.cos(angle),
+            y: distance * Math.sin(angle),
+            z: 10 * Math.sin(time * 0.8 + i)
+          }
+          const p = project(densityPos.x, densityPos.y, densityPos.z, state)
+
+          // 绘制密度点
+          const size = 8 + Math.sin(time * 3 + i) * 2
+          ctx.beginPath()
+          ctx.fillStyle = 'rgba(255, 204, 0, 0.7)'
+          ctx.arc(p.x, p.y, size, 0, Math.PI * 2)
+          ctx.fill()
+
+          // 绘制密度连接线
+          ctx.beginPath()
+          ctx.strokeStyle = `rgba(255, 204, 0, ${0.3 + Math.sin(time * 2 + i) * 0.1})`
+          ctx.lineWidth = 1
+          ctx.moveTo(center.x, center.y)
+          ctx.lineTo(p.x, p.y)
+          ctx.stroke()
+        }
+
+        // 绘制质量定义公式
+        ctx.fillStyle = '#ffcc00'
+        ctx.font = 'bold 16px Arial'
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)'
+        ctx.lineWidth = 4
+        ctx.strokeText('m = k · (dn/dΩ)', 50, 30)
+        ctx.fillText('m = k · (dn/dΩ)', 50, 30)
+
+        // 添加说明
+        ctx.fillStyle = '#ffcc00'
+        ctx.font = 'bold 13px Arial'
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)'
+        ctx.lineWidth = 3
+        ctx.strokeText('质量 = 空间密度对立体角的变化率', 50, 60)
+        ctx.fillText('质量 = 空间密度对立体角的变化率', 50, 60)
+
+        // 添加物理意义说明
+        ctx.font = '11px Arial'
+        ctx.strokeText('物理意义: 质量的几何本质是空间密度分布', 50, 85)
+        ctx.fillText('物理意义: 质量的几何本质是空间密度分布', 50, 85)
       }
 
       let drag = false,
         lastX = 0,
         lastY = 0
-      canvas.onmousedown = e => {
-        drag = true
-        lastX = e.clientX
-        lastY = e.clientY
-      }
-      canvas.onmousemove = e => {
-        if (!drag) return
-        state.rotY += (e.clientX - lastX) * 0.007
-        state.rotX += (e.clientY - lastY) * 0.007
-        state.rotX = Math.max(-1.4, Math.min(1.4, state.rotX))
-        lastX = e.clientX
-        lastY = e.clientY
-      }
-      canvas.onmouseup = () => (drag = false)
-      canvas.onmouseleave = () => (drag = false)
-      canvas.onwheel = e => {
-        e.preventDefault()
-        state.zoom *= 1 - e.deltaY * 0.0008
-        state.zoom = Math.max(18, Math.min(70, state.zoom))
+
+      // 为所有Canvas添加事件监听
+      function initEventListeners() {
+        canvases.forEach(canvas => {
+          const element = document.getElementById(canvas.id)
+          if (element) {
+            element.onmousedown = e => {
+              drag = true
+              lastX = e.clientX
+              lastY = e.clientY
+            }
+            element.onmousemove = e => {
+              if (!drag) return
+              sharedState.rotY += (e.clientX - lastX) * 0.007
+              sharedState.rotX += (e.clientY - lastY) * 0.007
+              sharedState.rotX = Math.max(-1.4, Math.min(1.4, sharedState.rotX))
+              lastX = e.clientX
+              lastY = e.clientY
+            }
+            element.onmouseup = () => (drag = false)
+            element.onmouseleave = () => (drag = false)
+            element.onwheel = e => {
+              e.preventDefault()
+              sharedState.zoom *= 1 - e.deltaY * 0.0008
+              sharedState.zoom = Math.max(18, Math.min(70, sharedState.zoom))
+            }
+          }
+        })
       }
 
-      document.getElementById('r').oninput = e => {
-        state.r = +e.target.value
-        document.getElementById('rVal').textContent = state.r.toFixed(1)
-      }
-      document.getElementById('w').oninput = e => {
-        state.omega = +e.target.value
-        document.getElementById('wVal').textContent = state.omega.toFixed(3)
-      }
-      document.getElementById('h').oninput = e => {
-        state.h = +e.target.value
-        document.getElementById('hVal').textContent = state.h.toFixed(2)
-      }
-      document.getElementById('s').oninput = e => {
-        state.speed = +e.target.value
-        document.getElementById('sVal').textContent = state.speed.toFixed(1) + '×'
-      }
-      document.getElementById('play').onclick = function () {
-        state.play = !state.play
-        this.textContent = state.play ? '⏸️ 暂停' : '▶️ 播放'
-      }
-      document.getElementById('reset').onclick = () => {
-        state.t = 0
-        state.trail = []
-        state.rotX = 0.3
-        state.rotY = 0.8
-        state.zoom = 32
+      // 初始化参数控件
+      function initControls() {
+        // 螺旋半径控件
+        const rControl = document.getElementById('r')
+        if (rControl) {
+          rControl.oninput = e => {
+            sharedState.r = +e.target.value
+            const rVal = document.getElementById('rVal')
+            if (rVal) rVal.textContent = sharedState.r.toFixed(1)
+          }
+        }
+
+        // 角速度控件
+        const wControl = document.getElementById('w')
+        if (wControl) {
+          wControl.oninput = e => {
+            sharedState.omega = +e.target.value
+            const wVal = document.getElementById('wVal')
+            if (wVal) wVal.textContent = sharedState.omega.toFixed(3)
+          }
+        }
+
+        // 螺距控件
+        const hControl = document.getElementById('h')
+        if (hControl) {
+          hControl.oninput = e => {
+            sharedState.h = +e.target.value
+            const hVal = document.getElementById('hVal')
+            if (hVal) hVal.textContent = sharedState.h.toFixed(2)
+          }
+        }
+
+        // 时间流速控件
+        const sControl = document.getElementById('s')
+        if (sControl) {
+          sControl.oninput = e => {
+            sharedState.speed = +e.target.value
+            const sVal = document.getElementById('sVal')
+            if (sVal) sVal.textContent = sharedState.speed.toFixed(1) + '×'
+          }
+        }
+
+        // 播放/暂停按钮
+        const playButton = document.getElementById('play')
+        if (playButton) {
+          playButton.onclick = function () {
+            sharedState.play = !sharedState.play
+            this.textContent = sharedState.play ? '⏸️ 暂停' : '▶️ 播放'
+          }
+        }
+
+        // 重置按钮
+        const resetButton = document.getElementById('reset')
+        if (resetButton) {
+          resetButton.onclick = () => {
+            sharedState.t = 0
+            canvases.forEach(canvas => {
+              if (canvas.state) {
+                canvas.state.trail = []
+              }
+            })
+            sharedState.rotX = 0.3
+            sharedState.rotY = 0.8
+            sharedState.zoom = 32
+          }
+        }
       }
 
-      console.log('🌌 张祥前统一场论可视化系统启动')
-      console.log('方程: r⃗(t) = r·cos(ωt)·i⃗ + r·sin(ωt)·j⃗ + h·t·k⃗')
-      render()
+      // ==================== 高级优化技术 ====================
+
+      // 1. Web Worker 优化：将复杂计算移至后台线程
+      function initWorker() {
+        // 检查浏览器是否支持 Web Worker
+        if (typeof Worker !== 'undefined') {
+          // 创建内联 Web Worker
+          const workerCode = `
+            self.onmessage = function(e) {
+              const { type, data } = e.data;
+              if (type === 'calculateHelix') {
+                const { t, r, omega, c } = data;
+                const result = {
+                  x: r * Math.cos(omega * t),
+                  y: r * Math.sin(omega * t),
+                  z: c * t
+                };
+                self.postMessage({ type: 'helixResult', result });
+              }
+            };
+          `
+
+          const blob = new Blob([workerCode], { type: 'application/javascript' })
+          const worker = new Worker(URL.createObjectURL(blob))
+
+          worker.onmessage = function (e) {
+            const { type, result } = e.data
+            if (type === 'helixResult') {
+              // 处理计算结果
+              console.log('Web Worker 计算结果:', result)
+            }
+          }
+
+          return worker
+        }
+        return null
+      }
+
+      // 2. 缓存优化：缓存频繁计算的结果
+      const calculationCache = {
+        helix: new Map(),
+        project: new Map()
+      }
+
+      function getCachedHelix(t, state) {
+        const key = `${t.toFixed(2)}-${state.r}-${state.omega}`
+        if (calculationCache.helix.has(key)) {
+          return calculationCache.helix.get(key)
+        }
+        const result = helix(t, state)
+        calculationCache.helix.set(key, result)
+        // 限制缓存大小
+        if (calculationCache.helix.size > 1000) {
+          const firstKey = calculationCache.helix.keys().next().value
+          calculationCache.helix.delete(firstKey)
+        }
+        return result
+      }
+
+      // 3. LOD (Level of Detail) 优化：根据距离调整细节级别
+      function getLODLevel(distance) {
+        if (distance < 5) return 4 // 最高细节
+        if (distance < 10) return 3
+        if (distance < 20) return 2
+        return 1 // 最低细节
+      }
+
+      // 4. 内存管理优化：对象池模式
+      const objectPool = {
+        vectors: [],
+        getVector() {
+          return this.vectors.pop() || { x: 0, y: 0, z: 0 }
+        },
+        releaseVector(vec) {
+          vec.x = 0
+          vec.y = 0
+          vec.z = 0
+          this.vectors.push(vec)
+        }
+      }
+
+      // 5. 渲染优化：使用离屏Canvas进行复杂绘制
+      let offscreenCanvas = null
+      let offscreenCtx = null
+
+      function initOffscreenCanvas() {
+        if (typeof OffscreenCanvas !== 'undefined') {
+          offscreenCanvas = new OffscreenCanvas(1024, 1024)
+          offscreenCtx = offscreenCanvas.getContext('2d')
+        }
+      }
+
+      // 6. 性能监控：实时性能分析
+      const performanceMonitor = {
+        frameCount: 0,
+        lastTime: 0,
+        fps: 0,
+        update(timestamp) {
+          this.frameCount++
+          if (timestamp - this.lastTime >= 1000) {
+            this.fps = this.frameCount
+            this.frameCount = 0
+            this.lastTime = timestamp
+            // 可选：显示FPS
+            // console.log('FPS:', this.fps);
+          }
+        }
+      }
+
+      // 7. 空间分区优化：视锥体剔除算法
+      function optimizeTrailVisibility(trail, state) {
+        if (trail.length < 100) return trail // 轨迹点较少时直接返回
+
+        const visiblePoints = []
+        const canvas = document.getElementById('canvas1')
+        if (!canvas) return trail
+
+        const canvasWidth = canvas.width
+        const canvasHeight = canvas.height
+
+        // 视锥体剔除：只保留屏幕可见区域内的点
+        for (const point of trail) {
+          const projected = project(point.x, point.y, point.z, state)
+          if (
+            projected.x >= -50 &&
+            projected.x <= canvasWidth + 50 &&
+            projected.y >= -50 &&
+            projected.y <= canvasHeight + 50 &&
+            projected.z > -100 // 剔除过于遥远的点
+          ) {
+            visiblePoints.push(point)
+          }
+        }
+
+        // 如果可见点太少，返回原始轨迹
+        return visiblePoints.length > 10 ? visiblePoints : trail
+      }
+
+      // 8. 初始化高级优化
+      function initAdvancedOptimizations() {
+        initWorker()
+        initOffscreenCanvas()
+        console.log('🌌 高级优化技术初始化完成')
+      }
+
+      // 初始化系统
+      function init() {
+        try {
+          initCanvases()
+          initStates()
+          initControls() // 初始化控件
+          initEventListeners()
+          initAdvancedOptimizations() // 添加高级优化初始化
+          console.log('🌌 张祥前统一场论可视化系统启动')
+          console.log('方程: r⃗(t) = r·cos(ωt)·i⃗ + r·sin(ωt)·j⃗ + h·t·k⃗')
+          render()
+        } catch (error) {
+          console.error('初始化系统时出错:', error)
+        }
+      }
+
+      // 启动系统
+      window.addEventListener('load', init)
     </script>
   </body>
 </html>

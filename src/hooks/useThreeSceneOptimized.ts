@@ -2,6 +2,11 @@ import { useRef, useEffect, useState, useCallback } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { PerformanceMonitor, performanceMonitor } from '../performance/PerformanceMonitor'
+import {
+  initializeLODSystem,
+  updateLODSystem,
+  addObjectToLOD
+} from '../performance/AdvancedLODSystem'
 
 interface PerformanceStats {
   fps: number
@@ -141,6 +146,9 @@ export const useThreeSceneOptimized = ({
     // 启用性能监控
     performanceMonitor.enable()
 
+    // 初始化LOD系统
+    initializeLODSystem(scene, camera)
+
     setIsLoading(false)
 
     return { scene, camera, renderer, controls }
@@ -198,6 +206,9 @@ export const useThreeSceneOptimized = ({
           object.userData.animate(deltaTime)
         }
       })
+
+      // 更新LOD系统
+      updateLODSystem()
 
       renderer.render(scene, camera)
 

@@ -13,7 +13,8 @@ const Navbar: React.FC = () => {
     { path: '/formulas', label: '📐 公式可视化', icon: '📐' },
     { path: '/artificial-field', label: '⚡ 人工场技术', icon: '⚡' },
     { path: '/interactive', label: '🔭 交互探索', icon: '🔭' },
-    { path: '/knowledge', label: '📚 知识学习', icon: '📚' }
+    { path: '/knowledge', label: '📚 知识学习', icon: '📚' },
+    { path: '/algorithm-alliance', label: '🧬 算法联盟', icon: '🧬' }
   ]
 
   useEffect(() => {
